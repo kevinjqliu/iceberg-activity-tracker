@@ -15,13 +15,13 @@ python3 -m pip install -e ".[dev]"
 Collect the default recent window, currently the last 45 days:
 
 ```bash
-iceberg-activity collect
+make collect
 ```
 
 Backfill a specific date range:
 
 ```bash
-iceberg-activity collect --since 2026-05-01 --until 2026-05-31
+make collect COLLECT_ARGS="--since 2026-05-01 --until 2026-05-31"
 ```
 
 Useful options:
