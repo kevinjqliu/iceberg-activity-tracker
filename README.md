@@ -55,7 +55,7 @@ The workflow runs once per day and can also be triggered manually. It uses:
 
 ```yaml
 permissions:
-  contents: read
+  contents: write
 ```
 
-The generated CSV is uploaded as a workflow artifact. The workflow does not commit generated files back to the repository and does not require secrets for reading the public Apache repository.
+The generated CSV is committed back to `data/commits/` when it changes and is also uploaded as a workflow artifact. The workflow uses the built-in `GITHUB_TOKEN`; no repository secrets are required for reading the public Apache repository.
