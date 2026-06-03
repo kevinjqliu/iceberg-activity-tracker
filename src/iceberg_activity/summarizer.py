@@ -1,0 +1,260 @@
+from __future__ import annotations
+
+import csv
+import re
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
+from .git_client import CSV_FIELDS
+
+SCORED_FIELDS = [
+    *CSV_FIELDS,
+    "score",
+    "score_reasons",
+    "summary_bullet",
+]
+
+IMPORTANT_AREAS = {
+    "api",
+    "core",
+    "spark",
+    "flink",
+    "rest",
+    "rest spec",
+    "openapi",
+    "open-api",
+    "catalog",
+    "spec",
+}
+STRATEGIC_TERMS = {
+    "v4",
+    "variant",
+    "encryption",
+    "row lineage",
+    "partition statistics",
+    "manifest",
+    "catalog",
+}
+FEATURE_RE = re.compile(r"\b(add|support|implement|introduce|enable|allow|expose|promote)\b", re.I)
+FIX_RE = re.compile(r"\b(fix|avoid|prevent|correct|resolve)\b", re.I)
+ROUTINE_RE = re.compile(
+    r"\b(build|dependency|dependencies|deps|maven|gradle|bump|format|formatting)\b",
+    re.I,
+)
+IMPORTANT_INFRA_RE = re.compile(r"\b(cve|security|release|license|notice|blocking|block)\b", re.I)
+LOW_SIGNAL_RE = re.compile(r"\b(docs?|javadoc|readme|tests?|benchmark|benchmarks?)\b", re.I)
+
+
+@dataclass(frozen=True)
+class SummaryResult:
+    scored_csv_path: Path
+    markdown_path: Path
+    candidate_count: int
+    selected_count: int
+
+
+def parse_month(value: str) -> tuple[int, int]:
+    if not re.fullmatch(r"\d{4}-\d{2}", value):
+        raise ValueError("--month must use YYYY-MM")
+    year, month = value.split("-")
+    month_number = int(month)
+    if not 1 <= month_number <= 12:
+        raise ValueError("--month must use a month from 01 to 12")
+    return int(year), month_number
+
+
+def parse_iso_datetime(value: str) -> datetime:
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def row_month(row: dict[str, str]) -> tuple[int, int]:
+    parsed = parse_iso_datetime(row["committer_date"])
+    return parsed.year, parsed.month
+
+
+def int_field(row: dict[str, str], field: str) -> int:
+    try:
+        return int(row.get(field) or "0")
+    except ValueError:
+        return 0
+
+
+def split_values(value: str) -> list[str]:
+    return [part.strip() for part in value.split(";") if part.strip()]
+
+
+def prefix_parts(subject: str) -> set[str]:
+    if ":" not in subject:
+        return set()
+    prefix = subject.split(":", 1)[0]
+    return {part.strip().lower() for part in re.split(r"[,/]", prefix) if part.strip()}
+
+
+def score_commit(row: dict[str, str]) -> tuple[int, str]:
+    subject = row.get("subject", "")
+    body = row.get("body", "")
+    text = f"{subject}\n{body}"
+    lowered = text.lower()
+    reasons: list[str] = ["base"]
+    score = 10
+
+    if FEATURE_RE.search(subject):
+        score += 25
+        reasons.append("feature/api verb")
+    if FIX_RE.search(subject):
+        score += 8
+        reasons.append("fix")
+
+    areas = prefix_parts(subject)
+    important_area_hits = sorted(areas & IMPORTANT_AREAS)
+    if important_area_hits:
+        score += 15
+        reasons.append(f"important area: {', '.join(important_area_hits)}")
+
+    strategic_hits = sorted(term for term in STRATEGIC_TERMS if term in lowered)
+    if strategic_hits:
+        score += 20
+        reasons.append(f"strategic: {', '.join(strategic_hits)}")
+
+    files_changed = int_field(row, "files_changed")
+    churn = int_field(row, "insertions") + int_field(row, "deletions")
+    if files_changed >= 20:
+        score += 8
+        reasons.append("large file count")
+    elif files_changed >= 5:
+        score += 4
+        reasons.append("medium file count")
+    if churn >= 1000:
+        score += 8
+        reasons.append("large churn")
+    elif churn >= 200:
+        score += 4
+        reasons.append("medium churn")
+
+    top_paths = split_values(row.get("top_level_paths", ""))
+    if len(top_paths) >= 2:
+        score += 5
+        reasons.append("multi-area change")
+    if row.get("co_authors"):
+        score += 3
+        reasons.append("co-authored")
+    if IMPORTANT_INFRA_RE.search(text):
+        score += 20
+        reasons.append("release/security/notice signal")
+
+    author = row.get("author_name", "").lower()
+    is_bot = "bot" in author or "dependabot" in author
+    has_important_infra = bool(IMPORTANT_INFRA_RE.search(text))
+    if is_bot and not has_important_infra:
+        score -= 25
+        reasons.append("downrank bot")
+    if LOW_SIGNAL_RE.search(subject):
+        score -= 12
+        reasons.append("downrank docs/tests/benchmarks")
+    if ROUTINE_RE.search(subject) and not has_important_infra:
+        score -= 15
+        reasons.append("downrank routine build/deps")
+
+    if row.get("pr_number"):
+        score += 2
+        reasons.append("has PR number")
+
+    return score, "; ".join(reasons)
+
+
+def contributor_names(row: dict[str, str]) -> list[str]:
+    names: list[str] = []
+    seen: set[str] = set()
+    for name in [row.get("author_name", ""), *split_values(row.get("co_authors", ""))]:
+        for clean in expand_contributor_name(name):
+            if not clean or clean.lower() == "github" or clean in seen:
+                continue
+            seen.add(clean)
+            names.append(clean)
+    return names
+
+
+def expand_contributor_name(name: str) -> list[str]:
+    clean = name.strip()
+    if not clean:
+        return []
+    parts = [part.strip() for part in re.split(r"\s*/\s*|\s+&\s+", clean) if part.strip()]
+    return parts or [clean]
+
+
+def join_names(names: list[str]) -> str:
+    if not names:
+        return "the community"
+    if len(names) == 1:
+        return names[0]
+    if len(names) == 2:
+        return f"{names[0]} and {names[1]}"
+    return f"{', '.join(names[:-1])}, and {names[-1]}"
+
+
+def summary_bullet(row: dict[str, str]) -> str:
+    return f"■\t{row['subject']} <Thanks {join_names(contributor_names(row))}!>"
+
+
+def sort_key(row: dict[str, str]) -> tuple[int, str, int, str]:
+    pr_number = int_field(row, "pr_number")
+    return (
+        int_field(row, "score"),
+        row.get("committer_date", ""),
+        pr_number,
+        row.get("commit_sha", ""),
+    )
+
+
+def read_commit_rows(input_path: Path) -> list[dict[str, str]]:
+    with input_path.open(newline="", encoding="utf-8") as csv_file:
+        return list(csv.DictReader(csv_file))
+
+
+def write_scored_csv(rows: list[dict[str, str]], output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", newline="", encoding="utf-8") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=SCORED_FIELDS, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def write_markdown(rows: list[dict[str, str]], output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    lines = ["○\tJava", *[row["summary_bullet"] for row in rows], ""]
+    output_path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def summarize_month(
+    *,
+    month: str,
+    input_path: Path,
+    output_dir: Path,
+    top: int = 10,
+) -> SummaryResult:
+    target = parse_month(month)
+    rows = [row for row in read_commit_rows(input_path) if row_month(row) == target]
+    scored_rows: list[dict[str, str]] = []
+    for row in rows:
+        row = {field: row.get(field, "") for field in CSV_FIELDS} | row
+        score, reasons = score_commit(row)
+        row["score"] = str(score)
+        row["score_reasons"] = reasons
+        row["summary_bullet"] = summary_bullet(row)
+        scored_rows.append(row)
+
+    scored_rows.sort(key=sort_key, reverse=True)
+    selected_rows = scored_rows[:top]
+
+    month_dir = output_dir / month
+    scored_csv_path = month_dir / "apache_iceberg_scored.csv"
+    markdown_path = month_dir / "java_highlights.md"
+    write_scored_csv(scored_rows, scored_csv_path)
+    write_markdown(selected_rows, markdown_path)
+    return SummaryResult(
+        scored_csv_path=scored_csv_path,
+        markdown_path=markdown_path,
+        candidate_count=len(scored_rows),
+        selected_count=len(selected_rows),
+    )

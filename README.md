@@ -32,6 +32,18 @@ make collect OUTPUT_DIR=data/commits CACHE_DIR=.cache/repos
 
 The collector fetches `apache/iceberg` over read-only HTTPS, stores a bare git cache under `.cache/repos/apache_iceberg`, and writes `data/commits/apache_iceberg.csv`.
 
+Generate a monthly Java highlights draft and scored CSV:
+
+```bash
+make summarize MONTH=2026-06
+```
+
+Collect fresh commits and then summarize a month:
+
+```bash
+make monthly MONTH=2026-06
+```
+
 ## CSV Fields
 
 Each CSV row contains:

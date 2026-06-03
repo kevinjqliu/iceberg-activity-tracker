@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .collector import collect_repository
 from .config import TARGET_REPOSITORIES
+from .summarizer import summarize_month
 
 DEFAULT_LOOKBACK_DAYS = 45
 
@@ -51,6 +52,27 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path(".cache/repos"),
         help="Directory for local bare git repository caches",
     )
+
+    summarize = subparsers.add_parser("summarize", help="Create a monthly Java summary")
+    summarize.add_argument("--month", required=True, help="Month to summarize, as YYYY-MM")
+    summarize.add_argument(
+        "--input",
+        type=Path,
+        default=Path("data/commits/apache_iceberg.csv"),
+        help="Commit CSV to summarize",
+    )
+    summarize.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/summaries"),
+        help="Directory for generated summary files",
+    )
+    summarize.add_argument(
+        "--top",
+        type=int,
+        default=10,
+        help="Number of top commits to include in markdown",
+    )
     return parser
 
 
@@ -72,11 +94,33 @@ def run_collect(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_summarize(args: argparse.Namespace) -> int:
+    if args.top < 1:
+        raise SystemExit("--top must be at least 1")
+    try:
+        result = summarize_month(
+            month=args.month,
+            input_path=args.input,
+            output_dir=args.output_dir,
+            top=args.top,
+        )
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    print(
+        f"scored {result.candidate_count} commits and wrote {result.selected_count} "
+        f"highlights to {result.markdown_path}"
+    )
+    print(f"scored CSV: {result.scored_csv_path}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     if args.command == "collect":
         return run_collect(args)
+    if args.command == "summarize":
+        return run_summarize(args)
     parser.error(f"unknown command {args.command}")
     return 2
 
