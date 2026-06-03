@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: collect-commit-activity
+  cancel-in-progress: false
+
 jobs:
   collect:
     runs-on: ubuntu-latest
@@ -36,6 +40,7 @@ jobs:
             echo "No CSV changes to commit"
           else
             git commit -m "Update Iceberg commit activity [auto]"
+            git pull --rebase
             git push
           fi
 
