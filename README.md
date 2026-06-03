@@ -9,7 +9,7 @@ The first version tracks only `apache/iceberg`. Additional repositories can be a
 Install locally:
 
 ```bash
-python3 -m pip install -e ".[dev]"
+uv sync --group dev
 ```
 
 Collect the default recent window, currently the last 45 days:
@@ -27,7 +27,7 @@ make collect COLLECT_ARGS="--since 2026-05-01 --until 2026-05-31"
 Useful options:
 
 ```bash
-iceberg-activity collect --output-dir data/commits --cache-dir .cache/repos
+make collect OUTPUT_DIR=data/commits CACHE_DIR=.cache/repos
 ```
 
 The collector fetches `apache/iceberg` over read-only HTTPS, stores a bare git cache under `.cache/repos/apache_iceberg`, and writes `data/commits/apache_iceberg.csv`.
