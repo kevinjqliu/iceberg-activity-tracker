@@ -48,6 +48,12 @@ Collect fresh commits and then summarize a month:
 make monthly MONTH=2026-06
 ```
 
+Backtest ranked candidates against Java sections in the community sync notes:
+
+```bash
+make backtest BACKTEST_ARGS="--start-date 2026-05-13 --end-date 2026-06-03"
+```
+
 ## CSV Fields
 
 Each CSV row contains:

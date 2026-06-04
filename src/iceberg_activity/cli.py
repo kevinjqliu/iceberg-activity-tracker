@@ -4,6 +4,7 @@ import argparse
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
+from .backtester import backtest_java_highlights
 from .collector import collect_repository
 from .config import TARGET_REPOSITORIES
 from .summarizer import summarize_month
@@ -85,6 +86,44 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path(".cache/lancedb"),
         help="Directory for the local LanceDB ranking index",
     )
+
+    backtest = subparsers.add_parser(
+        "backtest",
+        help="Backtest Java summary ranking against community sync notes",
+    )
+    backtest.add_argument(
+        "--notes",
+        type=Path,
+        default=Path("Iceberg Community Sync Notes.md"),
+        help="Community sync notes to backtest against",
+    )
+    backtest.add_argument(
+        "--input",
+        type=Path,
+        default=Path("data/commits/apache_iceberg.csv"),
+        help="Commit CSV to score",
+    )
+    backtest.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/backtests"),
+        help="Directory for backtest report files",
+    )
+    backtest.add_argument(
+        "--lancedb-dir",
+        type=Path,
+        default=Path(".cache/lancedb-backtest"),
+        help="Directory for temporary LanceDB backtest indexes",
+    )
+    backtest.add_argument("--top", type=int, default=10, help="Primary hit threshold")
+    backtest.add_argument(
+        "--comparison-top",
+        type=int,
+        default=20,
+        help="Secondary hit threshold",
+    )
+    backtest.add_argument("--start-date", type=parse_iso_date, help="First sync date to evaluate")
+    backtest.add_argument("--end-date", type=parse_iso_date, help="Last sync date to evaluate")
     return parser
 
 
@@ -128,6 +167,32 @@ def run_summarize(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_backtest(args: argparse.Namespace) -> int:
+    if args.top < 1:
+        raise SystemExit("--top must be at least 1")
+    if args.comparison_top < args.top:
+        raise SystemExit("--comparison-top must be greater than or equal to --top")
+    result = backtest_java_highlights(
+        notes_path=args.notes,
+        input_path=args.input,
+        output_dir=args.output_dir,
+        lancedb_dir=args.lancedb_dir,
+        top=args.top,
+        comparison_top=args.comparison_top,
+        start_date=args.start_date,
+        end_date=args.end_date,
+    )
+    print(
+        f"backtested {result.sections_evaluated} sections: "
+        f"found {result.found_prs}/{result.note_prs} note PRs, "
+        f"hits@{args.top}={result.hits_at_top}/{result.found_prs}, "
+        f"hits@{args.comparison_top}={result.hits_at_comparison_top}/{result.found_prs}"
+    )
+    print(f"report: {result.markdown_path}")
+    print(f"details: {result.csv_path}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -135,6 +200,8 @@ def main(argv: list[str] | None = None) -> int:
         return run_collect(args)
     if args.command == "summarize":
         return run_summarize(args)
+    if args.command == "backtest":
+        return run_backtest(args)
     parser.error(f"unknown command {args.command}")
     return 2
 

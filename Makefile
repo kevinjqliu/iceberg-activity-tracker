@@ -1,4 +1,4 @@
-.PHONY: all sync install collect summarize monthly test clean
+.PHONY: all sync install collect summarize monthly backtest test clean
 
 UV ?= uv
 UV_CACHE_DIR ?= .cache/uv
@@ -8,10 +8,14 @@ CACHE_DIR ?= .cache/repos
 COLLECT_ARGS ?=
 MONTH ?=
 TOP ?= 10
+COMPARISON_TOP ?= 20
 SUMMARY_OUTPUT_DIR ?= data/summaries
 SUMMARY_INPUT ?= data/commits/apache_iceberg.csv
 NOTES ?= Iceberg Community Sync Notes.md
 LANCEDB_DIR ?= .cache/lancedb
+BACKTEST_OUTPUT_DIR ?= data/backtests
+BACKTEST_LANCEDB_DIR ?= .cache/lancedb-backtest
+BACKTEST_ARGS ?=
 
 all: collect
 
@@ -29,8 +33,11 @@ summarize:
 
 monthly: collect summarize
 
+backtest:
+	UV_CACHE_DIR=$(UV_CACHE_DIR) $(UV) run --python $(PYTHON_VERSION) iceberg-activity backtest --notes "$(NOTES)" --input $(SUMMARY_INPUT) --output-dir $(BACKTEST_OUTPUT_DIR) --lancedb-dir $(BACKTEST_LANCEDB_DIR) --top $(TOP) --comparison-top $(COMPARISON_TOP) $(BACKTEST_ARGS)
+
 test:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) $(UV) run --python $(PYTHON_VERSION) --group dev pytest
 
 clean:
-	rm -rf $(CACHE_DIR) $(UV_CACHE_DIR) $(LANCEDB_DIR) .venv
+	rm -rf $(CACHE_DIR) $(UV_CACHE_DIR) $(LANCEDB_DIR) $(BACKTEST_LANCEDB_DIR) .venv
