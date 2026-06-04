@@ -83,7 +83,9 @@ def row_commit_date(row: dict[str, str]) -> date:
 def month_date_range(month: str) -> tuple[date, date]:
     year, month_number = parse_month(month)
     last_day = monthrange(year, month_number)[1]
-    return date(year, month_number, 1), date(year, month_number, last_day)
+    month_start = date(year, month_number, 1)
+    next_month = month_start.replace(day=last_day) + date.resolution
+    return month_start, next_month
 
 
 def summary_period_label(since: date, until: date) -> str:
@@ -254,8 +256,8 @@ def summarize_period(
     lancedb_dir: Path | None = None,
     label: str | None = None,
 ) -> SummaryResult:
-    if since > until:
-        raise ValueError("--since must be on or before --until")
+    if since >= until:
+        raise ValueError("--since must be before --until")
     use_lancedb = bool(notes_path and notes_path.exists() and lancedb_dir)
     indexed_examples = 0
     if use_lancedb:
@@ -265,7 +267,7 @@ def summarize_period(
     rows = [
         row
         for row in read_commit_rows(input_path)
-        if since <= row_commit_date(row) <= until
+        if since <= row_commit_date(row) < until
     ]
     scored_rows: list[dict[str, str]] = []
     for row in rows:

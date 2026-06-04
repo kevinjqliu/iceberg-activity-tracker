@@ -33,8 +33,10 @@ make collect OUTPUT_DIR=data/commits CACHE_DIR=.cache/repos
 The collector fetches `apache/iceberg` over read-only HTTPS, stores a bare git cache under `.cache/repos/apache_iceberg`, and writes `data/commits/apache_iceberg.csv`.
 
 Generate a Java highlights draft and scored CSV for a community sync meeting.
-Meeting summaries default to the 21-day inclusive window ending on the meeting
-date:
+Meeting summaries default to the half-open 21-day window ending on the meeting
+date. For example, a 2026-06-03 meeting includes commits from 2026-05-13 and
+excludes commits from 2026-06-03, so those handoff-day commits appear in the
+next meeting:
 
 ```bash
 make summarize MEETING_DATE=2026-06-03
@@ -47,7 +49,7 @@ part of the ranking.
 Backfill an explicit meeting window:
 
 ```bash
-make summarize SUMMARY_SINCE=2026-05-14 SUMMARY_UNTIL=2026-06-03
+make summarize SUMMARY_SINCE=2026-05-13 SUMMARY_UNTIL=2026-06-03
 ```
 
 Calendar-month summaries are still available for older backfills:

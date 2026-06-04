@@ -35,7 +35,7 @@ def test_resolve_summary_range_defaults_to_21_day_meeting_window(
 
     since, until = cli.resolve_summary_range(since=None, until=None, meeting_date=None)
 
-    assert since == date(2026, 5, 14)
+    assert since == date(2026, 5, 13)
     assert until == date(2026, 6, 3)
 
 
@@ -46,7 +46,7 @@ def test_resolve_summary_range_uses_meeting_date() -> None:
         meeting_date=date(2026, 6, 3),
     )
 
-    assert since == date(2026, 5, 14)
+    assert since == date(2026, 5, 13)
     assert until == date(2026, 6, 3)
 
 
@@ -67,6 +67,15 @@ def test_resolve_summary_range_rejects_conflicting_meeting_date_and_until() -> N
             since=None,
             until=date(2026, 6, 4),
             meeting_date=date(2026, 6, 3),
+        )
+
+
+def test_resolve_summary_range_rejects_empty_half_open_window() -> None:
+    with pytest.raises(ValueError, match="before"):
+        cli.resolve_summary_range(
+            since=date(2026, 6, 3),
+            until=date(2026, 6, 3),
+            meeting_date=None,
         )
 
 

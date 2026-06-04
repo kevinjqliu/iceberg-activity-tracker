@@ -10,7 +10,7 @@ from .config import TARGET_REPOSITORIES
 from .summarizer import summarize_month, summarize_period
 
 DEFAULT_LOOKBACK_DAYS = 45
-DEFAULT_SUMMARY_WINDOW_DAYS = 21
+MEETING_INTERVAL_DAYS = 21
 
 
 def parse_iso_date(value: str) -> date:
@@ -41,9 +41,9 @@ def resolve_summary_range(
     if meeting_date and until and meeting_date != until:
         raise ValueError("--meeting-date and --until must match when both are provided")
     resolved_until = meeting_date or until or default_until()
-    resolved_since = since or (resolved_until - timedelta(days=DEFAULT_SUMMARY_WINDOW_DAYS - 1))
-    if resolved_since > resolved_until:
-        raise ValueError("--since must be on or before --until")
+    resolved_since = since or (resolved_until - timedelta(days=MEETING_INTERVAL_DAYS))
+    if resolved_since >= resolved_until:
+        raise ValueError("--since must be before --until")
     return resolved_since, resolved_until
 
 
@@ -81,7 +81,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Community sync meeting date. Defaults to today when no date range is provided.",
     )
     summarize.add_argument("--since", type=parse_iso_date, help="Start date, inclusive")
-    summarize.add_argument("--until", type=parse_iso_date, help="End date, inclusive")
+    summarize.add_argument("--until", type=parse_iso_date, help="End date, exclusive")
     summarize.add_argument(
         "--input",
         type=Path,
@@ -205,7 +205,7 @@ def run_summarize(args: argparse.Namespace) -> int:
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
     print(
-        f"scored {result.candidate_count} commits from {result.since} to {result.until} "
+        f"scored {result.candidate_count} commits from {result.since} before {result.until} "
         f"and wrote {result.selected_count} highlights to {result.markdown_path}"
     )
     print(f"scored CSV: {result.scored_csv_path}")

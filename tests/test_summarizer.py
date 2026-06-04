@@ -132,7 +132,7 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
     assert result.candidate_count == 2
     assert result.selected_count == 1
     assert result.since == date(2026, 6, 1)
-    assert result.until == date(2026, 6, 30)
+    assert result.until == date(2026, 7, 1)
     with result.scored_csv_path.open(newline="", encoding="utf-8") as csv_file:
         scored = list(csv.DictReader(csv_file))
     assert len(scored) == 2
@@ -158,7 +158,7 @@ def test_summarize_period_uses_meeting_window_output_dir(tmp_path: Path) -> None
             commit_sha="1",
             short_sha="1",
             subject="Spark: Implement row lineage support (#16100)",
-            committer_date="2026-05-14T00:00:00+00:00",
+            committer_date="2026-05-13T00:00:00+00:00",
             author_name="Spark Dev",
             top_level_paths="spark",
             pr_number="16100",
@@ -178,7 +178,7 @@ def test_summarize_period_uses_meeting_window_output_dir(tmp_path: Path) -> None
             commit_sha="3",
             short_sha="3",
             subject="Docs: Fix typo (#16000)",
-            committer_date="2026-05-13T23:59:59+00:00",
+            committer_date="2026-05-14T23:59:59+00:00",
             author_name="Doc Writer",
             top_level_paths="docs",
             pr_number="16000",
@@ -187,7 +187,7 @@ def test_summarize_period_uses_meeting_window_output_dir(tmp_path: Path) -> None
     write_rows(input_path, rows)
 
     result = summarize_period(
-        since=date(2026, 5, 14),
+        since=date(2026, 5, 13),
         until=date(2026, 6, 3),
         input_path=input_path,
         output_dir=output_dir,
@@ -197,8 +197,11 @@ def test_summarize_period_uses_meeting_window_output_dir(tmp_path: Path) -> None
     assert result.candidate_count == 2
     assert result.selected_count == 2
     assert result.scored_csv_path == (
-        output_dir / "2026-05-14_to_2026-06-03" / "apache_iceberg_scored.csv"
+        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_scored.csv"
     )
+    with result.scored_csv_path.open(newline="", encoding="utf-8") as csv_file:
+        commit_shas = {row["commit_sha"] for row in csv.DictReader(csv_file)}
+    assert commit_shas == {"1", "3"}
 
 
 def commit_row(**overrides: str) -> dict[str, str]:
