@@ -1,4 +1,17 @@
 repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-go,41f5c54c2841780f2a9ddd62702b2ee8326daf77,41f5c54,Tanmay Rauth,t_rauth@apple.com,2026-04-23T09:47:03-07:00,GitHub,noreply@github.com,2026-04-23T12:47:03-04:00,feat(io): add BulkRemovableIO interface(#914) (#916),"Why: Orphan cleanup and snapshot expiration delete files one at a time
+with Remove(). On cloud object stores (S3, GCS, Azure), this means one
+HTTP round-trip per file — extremely slow when cleaning up thousands of
+orphans.
+
+This PR adds a BulkRemovableIO interface with DeleteFiles(ctx, paths)
+for batch deletion. blobFileIO implements it. Orphan cleanup and
+snapshot expiration try bulk delete first when available, falling back
+to per-file deletion on failure or when a custom delete function is set.
+Missing files are treated as successful deletions. Tests cover bulk
+path, fallback path, partial failure, and edge cases.
+
+Fixes #914",fe9bcf47c5adf98c1e4d0009a489b0c6e5b25073,916,false,,6,232,10,io; table,115,8,123,base; feature/api verb; important area: io; strategic: round-trip; summary signal: round-trip; community signal: bulk delete; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.26,Core: populate manifest created/replaced/kept count when commit a snapshot,- feat(io): add BulkRemovableIO interface(#914) (#916) (Thanks Tanmay Rauth!)
 apache/iceberg-go,f026751eee9710275b6e25590a3388d1e816fcc4,f026751,Tanmay Rauth,t_rauth@apple.com,2026-05-01T13:16:23-07:00,GitHub,noreply@github.com,2026-05-01T22:16:23+02:00,feat(catalog): add version-hint management for Hadoop catalog,"[Version-hint
 management](https://github.com/apache/iceberg-go/issues/798#issuecomment-4320784323)
 Implement readVersionHint (reads the integer from version-hint.text,
@@ -14,19 +27,6 @@ no-metadata-files case.
 
 
 Relates to #798",5f3462960491261397a1f01b82ee5b1f7ba2b378,,false,,2,264,0,catalog,98,7,105,"base; feature/api verb; important area: catalog; strategic: catalog, round-trip, v3; summary signal: round-trip; medium churn; correctness signal; LanceDB similarity 0.23",Flink: Add the possibility to use Coordinator Lock when using Flink SQL,- feat(catalog): add version-hint management for Hadoop catalog (Thanks Tanmay Rauth!)
-apache/iceberg-go,41f5c54c2841780f2a9ddd62702b2ee8326daf77,41f5c54,Tanmay Rauth,t_rauth@apple.com,2026-04-23T09:47:03-07:00,GitHub,noreply@github.com,2026-04-23T12:47:03-04:00,feat(io): add BulkRemovableIO interface(#914) (#916),"Why: Orphan cleanup and snapshot expiration delete files one at a time
-with Remove(). On cloud object stores (S3, GCS, Azure), this means one
-HTTP round-trip per file — extremely slow when cleaning up thousands of
-orphans.
-                                                            
-This PR adds a BulkRemovableIO interface with DeleteFiles(ctx, paths)
-for batch deletion. blobFileIO implements it. Orphan cleanup and
-snapshot expiration try bulk delete first when available, falling back
-to per-file deletion on failure or when a custom delete function is set.
-Missing files are treated as successful deletions. Tests cover bulk
-path, fallback path, partial failure, and edge cases.
-
-Fixes #914",fe9bcf47c5adf98c1e4d0009a489b0c6e5b25073,916,false,,6,232,10,io; table,97,8,105,base; feature/api verb; important area: io; strategic: round-trip; summary signal: round-trip; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.26,Core: populate manifest created/replaced/kept count when commit a snapshot,- feat(io): add BulkRemovableIO interface(#914) (#916) (Thanks Tanmay Rauth!)
 apache/iceberg-go,be4cf4cfed619e4940829935b305977210b58b12,be4cf4c,Tobias Pütz,tobias@minio.io,2026-05-12T11:58:53+02:00,GitHub,noreply@github.com,2026-05-12T11:58:53+02:00,feat(table): add RewriteFiles snapshot-op builder (#1033),"Decompose the atomic rewrite-snapshot of `Transaction.RewriteDataFiles`
 which assumes in-process compaction to enable out-of-process distributed
 compaction, by exposing a builder similar to what iceberg-java has with
@@ -69,14 +69,14 @@ lineage is already fully implemented on main:
 (snapshot_producers.go:1029)
 - validateAndUpdateRowLineage advances next-row-id at commit time
 (metadata.go:507)
-  - Scanner synthesizes _row_id at read time (arrow_scanner.go:425)    
-  
+  - Scanner synthesizes _row_id at read time (arrow_scanner.go:425)
+
 All I added was two tests that prove the existing code works correctly
 under the specific scenarios:
   1. Fast-append + OCC retry → first_row_id rebases correctly
 2. Merge-append + OCC retry → merged manifests get correct first_row_id
 from list writer
-  
+
 
 
 Closes: #998",774c8addea96522897e161216ebd456c96165406,1043,false,,1,249,0,table,100,3,103,"base; feature/api verb; important area: table; strategic: manifest, occ, row lineage, v3; summary signal: occ; medium churn; validation/regression test signal; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit",Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- test(table): add v3 OCC row lineage regression tests (#998) (#1043) (Thanks Tanmay Rauth!)
@@ -323,25 +323,6 @@ after commit
 Signed-off-by: mzzz-zzm <80936176+mzzz-zzm@users.noreply.github.com>
 Signed-off-by: masa hoashi <mhoashi@ea.com>
 Co-authored-by: masa hoashi <mhoashi@ea.com>",9d8ec298d32914007917df0c1599b1c059174f82,982,false,masa hoashi,10,1965,18,table,79,8,87,"base; fix; strategic: catalog, manifest, occ; summary signal: occ; medium file count; large churn; co-authored; correctness signal; has PR number; LanceDB similarity 0.27",Core: Add partition to TrackedFile,- fix(occ): manifest list rebuild (#982) (Thanks Masa and masa hoashi!)
-apache/iceberg-go,fe9bcf47c5adf98c1e4d0009a489b0c6e5b25073,fe9bcf4,Matt Topol,zotthewizard@gmail.com,2026-04-23T12:46:01-04:00,GitHub,noreply@github.com,2026-04-23T12:46:01-04:00,"feat(config,cmd/iceberg): support more rest options in config (#933)","When testing and playing around with AWS S3 Tables, I discovered that we
-need a way to specify more of the REST options (and likely more for
-other catalogs in the future) to be able to leverage and connect to s3
-tables using the `iceberg` binary that is created here.
-
-This PR creates an initial pattern (modeled somewhat on how pyiceberg
-manages it's config) that introduces a subsection in the catalog yaml
-definition for adding more options. I also add a test case here that
-matches what you'd have to do for the `cmd/iceberg` mainprog to be able
-to access s3 tables using the yaml config.
-
-More options for rest and other catalogs can be added in follow-up PRs
-now that this establishes a pattern to follow.",c576fd1726f29845f4810c6d877c34cfc8a870d0,933,false,,3,54,6,cmd; config,77,7,84,base; feature/api verb; important area: cmd; strategic: catalog; multi-area change; has PR number; LanceDB similarity 0.23,Flink: Backport Add the possibility to use Coordinator Lock when using Flink SQL to 2.0 and 1.20,"- feat(config,cmd/iceberg): support more rest options in config (#933) (Thanks Matt Topol!)"
-apache/iceberg-go,4950803db409505bf310fd144d78f22c5b716057,4950803,Tanmay Rauth,t_rauth@apple.com,2026-05-12T13:41:11-07:00,GitHub,noreply@github.com,2026-05-12T22:41:11+02:00,feat(cli): add partition-stats command (#1065),"Add `iceberg partition-stats TABLE_ID` to list partition statistics
-files with snapshot ID, path, and size. Supports --snapshot-id filter
-and --all flag.
-
-Related: #957
-Depends On: #1073",40b81252526c658740541d87f78531c7a9f8c70b,1065,false,,2,253,6,cmd,76,7,83,base; feature/api verb; important area: cli; strategic: partition statistics; medium churn; has PR number; LanceDB similarity 0.22,"API, Core: Add FileIO to Scan API",- feat(cli): add partition-stats command (#1065) (Thanks Tanmay Rauth!)
 apache/iceberg-go,a38f57ff5171ff10ebc354992d8d49c253893ccf,a38f57f,Masa,80936176+mzzz-zzm@users.noreply.github.com,2026-05-13T02:21:21+10:00,GitHub,noreply@github.com,2026-05-12T09:21:21-07:00,fix(manifest): restore data_file.distinct_counts on v1/v2 Avro schemas (#1044),"v1 and v2 manifest writers silently dropped data_file.distinct_counts
 (field id 111) because it was missing from the data_file_v1 and
 data_file_v2 record declarations in internal/avro_schemas.go. The
@@ -415,13 +396,32 @@ clustered writer; the fanout writer is unaffected.
 Fixes a pre-existing leak in partitionedFanoutWriter.processRecord where
 compute.Take sub-records were retained by Add but never released
 locally.",d9714931dc2aef95049c6244bbc37ba979ac773c,948,false,,8,1041,62,table,71,5,76,"base; important area: table; strategic: clustered, compaction, rewritedatafiles; summary signal: clustered, compaction, rewritedatafiles; medium file count; large churn; has PR number; LanceDB similarity 0.18","Core, Hive: Detect if a view already exists when registering a table",- feat(table): clustered partitioned write path (#948) (Thanks Tobias Pütz!)
+apache/iceberg-go,fe9bcf47c5adf98c1e4d0009a489b0c6e5b25073,fe9bcf4,Matt Topol,zotthewizard@gmail.com,2026-04-23T12:46:01-04:00,GitHub,noreply@github.com,2026-04-23T12:46:01-04:00,"feat(config,cmd/iceberg): support more rest options in config (#933)","When testing and playing around with AWS S3 Tables, I discovered that we
+need a way to specify more of the REST options (and likely more for
+other catalogs in the future) to be able to leverage and connect to s3
+tables using the `iceberg` binary that is created here.
+
+This PR creates an initial pattern (modeled somewhat on how pyiceberg
+manages it's config) that introduces a subsection in the catalog yaml
+definition for adding more options. I also add a test case here that
+matches what you'd have to do for the `cmd/iceberg` mainprog to be able
+to access s3 tables using the yaml config.
+
+More options for rest and other catalogs can be added in follow-up PRs
+now that this establishes a pattern to follow.",c576fd1726f29845f4810c6d877c34cfc8a870d0,933,false,,3,54,6,cmd; config,69,7,76,base; feature/api verb; important area: cmd; strategic: catalog; multi-area change; downrank narrow CLI change; has PR number; LanceDB similarity 0.23,Flink: Backport Add the possibility to use Coordinator Lock when using Flink SQL to 2.0 and 1.20,"- feat(config,cmd/iceberg): support more rest options in config (#933) (Thanks Matt Topol!)"
+apache/iceberg-go,4950803db409505bf310fd144d78f22c5b716057,4950803,Tanmay Rauth,t_rauth@apple.com,2026-05-12T13:41:11-07:00,GitHub,noreply@github.com,2026-05-12T22:41:11+02:00,feat(cli): add partition-stats command (#1065),"Add `iceberg partition-stats TABLE_ID` to list partition statistics
+files with snapshot ID, path, and size. Supports --snapshot-id filter
+and --all flag.
+
+Related: #957
+Depends On: #1073",40b81252526c658740541d87f78531c7a9f8c70b,1065,false,,2,253,6,cmd,68,7,75,base; feature/api verb; important area: cli; strategic: partition statistics; medium churn; downrank narrow CLI change; has PR number; LanceDB similarity 0.22,"API, Core: Add FileIO to Scan API",- feat(cli): add partition-stats command (#1065) (Thanks Tanmay Rauth!)
 apache/iceberg-go,c62af3c624bcf7afd9f75123fbc6ce60362f8da8,c62af3c,Tanmay Rauth,t_rauth@apple.com,2026-05-07T12:26:32-07:00,GitHub,noreply@github.com,2026-05-07T15:26:32-04:00,feat(table): support zstd metadata compression codec (#1020),"Adds MetadataCompressionCodecZstd alongside gzip/none and wires it
 through both read (decompress .metadata.json.zstd) and write
 (write.metadata.compression-codec=zstd) paths. Uses
 klauspost/compress/zstd already present as a transitive dependency.
 
 Closes #1005",4bf2ece3cd0c6855546256ead0f16a7115da9a13,1020,false,,9,255,18,catalog; go.mod; table,65,8,73,base; feature/api verb; important area: table; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.28,REST Spec: clarify uniqueness of ETags for table metadata responses,- feat(table): support zstd metadata compression codec (#1020) (Thanks Tanmay Rauth!)
-apache/iceberg-go,6fdbf69efb2bb4433f0b0f5931a7ae2a8f0a08b9,6fdbf69,Andrei Tserakhau,laskoviymishka@gmail.com,2026-04-27T18:23:17+02:00,GitHub,noreply@github.com,2026-04-27T12:23:17-04:00,feat(table): wire conflict validators into producers (#934),"Part of #830: fourth of five PRs. 
+apache/iceberg-go,6fdbf69efb2bb4433f0b0f5931a7ae2a8f0a08b9,6fdbf69,Andrei Tserakhau,laskoviymishka@gmail.com,2026-04-27T18:23:17+02:00,GitHub,noreply@github.com,2026-04-27T12:23:17-04:00,feat(table): wire conflict validators into producers (#934),"Part of #830: fourth of five PRs.
 
 The conflict-validation framework from the previous slice is now
 reachable: every producer runs a validate() pre-flight before
@@ -458,7 +458,6 @@ CommitNumRetriesDefault 0 → 4; wrap ErrCommitFailed in Glue/SQL/Hive so
 retry fires outside REST.
 - Separate follow-up, WIP: restructure table/ into sub-packages on
 transaction boundaries.",0e7b58671fff7980f24ec1963cb60d53ba624a0c,934,false,,8,735,19,table,67,6,73,base; important area: table; strategic: rewritedatafiles; summary signal: rewritedatafiles; medium file count; medium churn; has PR number; LanceDB similarity 0.21,"CI: Make CVE scan blocking on PRs, informational on main",- feat(table): wire conflict validators into producers (#934) (Thanks Andrei Tserakhau!)
-apache/iceberg-go,b4ca5150b6b43c60f35566ee4cc2677354c7b583,b4ca515,Artem Alperin,75543763+hdnpth@users.noreply.github.com,2026-05-06T21:32:47+02:00,GitHub,noreply@github.com,2026-05-06T15:32:47-04:00,feat(manifest): Add tests for Entries and migrate snapshotProducer (#1031),Related to https://github.com/apache/iceberg-go/pull/985,082d3378243c54eab9dcdb6d99cb361927cf27de,1031,false,,3,183,34,manifest.go; manifest_test.go; table,69,3,72,base; feature/api verb; important area: manifest; strategic: manifest; medium churn; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Docs: Add informational properties section for table comment,- feat(manifest): Add tests for Entries and migrate snapshotProducer (#1031) (Thanks Artem Alperin!)
 apache/iceberg-go,32e6273077e803bae56d2a489ec9f1b515e9f926,32e6273,Alessandro Nori,alessandro.nori@datadoghq.com,2026-05-06T18:28:58+02:00,GitHub,noreply@github.com,2026-05-06T12:28:58-04:00,feat(io): add native in-memory FS (#1025),"## Summary
 
 - Adds `MemFS`: an in-memory `IO` implementation with no external
@@ -643,7 +642,7 @@ error. Tests cover list empty namespace, list with tables, list
 non-existent namespace, drop existing table and verify directory is
 removed, drop non-existent table, and rename returns error.
 
-Depends on #968 #963 
+Depends on #968 #963
 Relates to #798",0c4b5b7171d6882934ff0f0c8061484c175536c3,970,false,,6,513,35,Makefile; README.md; catalog; internal,60,4,64,base; important area: catalog; strategic: catalog; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.12,Add Flink Quickstart docker image,- feat(catalog): hadoop list drop rename operations (#970) (Thanks Tanmay Rauth!)
 apache/iceberg-go,c576fd1726f29845f4810c6d877c34cfc8a870d0,c576fd1,Ashley Jeffs,ash@jeffail.uk,2026-04-23T17:45:23+01:00,GitHub,noreply@github.com,2026-04-23T12:45:23-04:00,fix(table): seed UpdateSchema id counter from metadata LastColumnID (#936),"## Problem
 
@@ -685,24 +684,6 @@ failing on `main` before the fix and passing after.
 Fixes #935
 
 Signed-off-by: Ashley Jeffs <ash@jeffail.uk>",f8df330465c722387f2a2b0032332700ea68a32d,936,false,,3,60,3,table,55,8,63,base; fix; important area: table; strategic: catalog; has PR number; LanceDB similarity 0.28,Kafka Connect: fix table UUID check,- fix(table): seed UpdateSchema id counter from metadata LastColumnID (#936) (Thanks Ashley Jeffs!)
-apache/iceberg-go,d21df2da13dce1519a9038d7f7c8a8fd148a0ebf,d21df2d,Tanmay Rauth,t_rauth@apple.com,2026-05-11T13:01:41-07:00,GitHub,noreply@github.com,2026-05-11T22:01:41+02:00,feat(cli): add info command for single-screen table summary (#1064),"Add `iceberg info TABLE_ID` showing UUID, format version, location,
-schema, partition spec, sort order, snapshot/ref counts, properties.
-
-
-Related: #957",055eee547baf6fc6e00d66a61479b22b471b92ca,1064,false,,4,387,0,cmd,56,5,61,base; feature/api verb; important area: cli; medium churn; has PR number; LanceDB similarity 0.18,Docs: Add informational properties section for table comment,- feat(cli): add info command for single-screen table summary (#1064) (Thanks Tanmay Rauth!)
-apache/iceberg-go,b2446c45d7d003efd13c5417c89eb060223af48c,b2446c4,Tanmay Rauth,t_rauth@apple.com,2026-04-29T09:34:37-07:00,GitHub,noreply@github.com,2026-04-29T12:34:37-04:00,fix(table): remove double Release() on struct array in ToRequestedSchema (#956),"The defer on line 1085 already handles releasing st. The explicit
-st.Release() before building the output record caused a double-free on
-the Struct wrapper.
-
-Fixes #955",6fdbf69efb2bb4433f0b0f5931a7ae2a8f0a08b9,956,false,,1,0,1,table,55,6,61,base; fix; important area: table; release/security/notice signal; has PR number; LanceDB similarity 0.21,OpenAPI: Promote the S3 signing endpoint to the main spec,- fix(table): remove double Release() on struct array in ToRequestedSchema (#956) (Thanks Tanmay Rauth!)
-apache/iceberg-go,a1d883edd53dabb076ec4cfa44f706f8f204d7b9,a1d883e,Tanmay Rauth,t_rauth@apple.com,2026-04-23T09:47:46-07:00,GitHub,noreply@github.com,2026-04-23T12:47:46-04:00,feat(cli): add --schema-from-file flag to infer table schema from parquet files (#927),"Added a new --schema-from-file flag to `iceberg create table` that
-infers the table schema from a local data file. Currently supports
-Parquet (.parquet, .parq), with the dispatch designed to support
-additional formats (e.g. Avro, ORC) in the future.
-When a Parquet file contains Iceberg field IDs, they are preserved.
-Files without field IDs are assigned fresh sequential IDs. The flag is
-mutually exclusive with --schema, and the inferred schema is printed
-before table creation for user verification.",41f5c54c2841780f2a9ddd62702b2ee8326daf77,927,false,,1,83,5,cmd,52,7,59,base; feature/api verb; important area: cli; has PR number; LanceDB similarity 0.25,Bump to Parquet 1.17.0,- feat(cli): add --schema-from-file flag to infer table schema from parquet files (#927) (Thanks Tanmay Rauth!)
 apache/iceberg-go,2a37a19e4be40f471d9eeba2ceeeb25e0077e051,2a37a19,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-12T18:33:39+02:00,GitHub,noreply@github.com,2026-05-12T09:33:39-07:00,feat(table/dv): plumb cardinality validation through ReadDV (#1056),"Closes #1049. ReadDV used to pass -1 to DeserializeDV unconditionally,
 skipping the spec-mandated cardinality check entirely. The puffin blob
 property ""cardinality"" — what the writer attaches — is now read out of
@@ -880,21 +861,20 @@ three error paths so operators can see what changed during commit
 conflicts. Also fixes incorrect pointer formatting with %d.
 
 Fixes #940",70f1c33fb64d626e30a4217a42810531f6d58c4a,952,false,,2,51,3,table,47,8,55,base; fix; important area: table; correctness signal; has PR number; LanceDB similarity 0.27,Core: Add properties to InMemoryFileIO,- fix(table): include expected vs found snapshot id in AssertRefSnapshotID errors (#940) (#952) (Thanks Tanmay Rauth!)
-apache/iceberg-go,330fcdf6c371ce2e3d469badf8ef2e8861fdcfca,330fcdf,Tanmay Rauth,t_rauth@apple.com,2026-05-05T02:04:03-07:00,GitHub,noreply@github.com,2026-05-05T11:04:03+02:00,feat(test): add Spark integration test infrastructure for Hadoop catalog (#968),"Set up Docker and Spark infrastructure for Hadoop catalog
-cross-compatibility testing with Java's HadoopCatalog.
-
-- Add hadoop_validation.py: SparkSession configured with
-spark.sql.catalog.hadoop_test (type=hadoop,
-warehouse=/home/iceberg/hadoop-warehouse)
-- Add shared volume mount in docker-compose.yml:
-/tmp/iceberg-hadoop-warehouse (host) <-> /home/iceberg/hadoop-warehouse
-(Spark)
-- Copy hadoop_validation.py into Spark container via Dockerfile
-- Add make integration-hadoop target
+apache/iceberg-go,d21df2da13dce1519a9038d7f7c8a8fd148a0ebf,d21df2d,Tanmay Rauth,t_rauth@apple.com,2026-05-11T13:01:41-07:00,GitHub,noreply@github.com,2026-05-11T22:01:41+02:00,feat(cli): add info command for single-screen table summary (#1064),"Add `iceberg info TABLE_ID` showing UUID, format version, location,
+schema, partition spec, sort order, snapshot/ref counts, properties.
 
 
-Depends on: #963 
-Relates to #798",bb1b1489c13d20ddc15bf325ae991520475443c8,968,false,,4,90,7,Makefile; internal,50,3,53,base; feature/api verb; strategic: catalog; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,"Spark: Backport: Add Spark app name to env context for Spark v3.4, 3.5, 4.0 <Varun Lakhyani>",- feat(test): add Spark integration test infrastructure for Hadoop catalog (#968) (Thanks Tanmay Rauth!)
+Related: #957",055eee547baf6fc6e00d66a61479b22b471b92ca,1064,false,,4,387,0,cmd,48,5,53,base; feature/api verb; important area: cli; medium churn; downrank narrow CLI change; has PR number; LanceDB similarity 0.18,Docs: Add informational properties section for table comment,- feat(cli): add info command for single-screen table summary (#1064) (Thanks Tanmay Rauth!)
+apache/iceberg-go,b4ca5150b6b43c60f35566ee4cc2677354c7b583,b4ca515,Artem Alperin,75543763+hdnpth@users.noreply.github.com,2026-05-06T21:32:47+02:00,GitHub,noreply@github.com,2026-05-06T15:32:47-04:00,feat(manifest): Add tests for Entries and migrate snapshotProducer (#1031),Related to https://github.com/apache/iceberg-go/pull/985,082d3378243c54eab9dcdb6d99cb361927cf27de,1031,false,,3,183,34,manifest.go; manifest_test.go; table,49,3,52,base; feature/api verb; important area: manifest; medium churn; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Docs: Add informational properties section for table comment,- feat(manifest): Add tests for Entries and migrate snapshotProducer (#1031) (Thanks Artem Alperin!)
+apache/iceberg-go,a1d883edd53dabb076ec4cfa44f706f8f204d7b9,a1d883e,Tanmay Rauth,t_rauth@apple.com,2026-04-23T09:47:46-07:00,GitHub,noreply@github.com,2026-04-23T12:47:46-04:00,feat(cli): add --schema-from-file flag to infer table schema from parquet files (#927),"Added a new --schema-from-file flag to `iceberg create table` that
+infers the table schema from a local data file. Currently supports
+Parquet (.parquet, .parq), with the dispatch designed to support
+additional formats (e.g. Avro, ORC) in the future.
+When a Parquet file contains Iceberg field IDs, they are preserved.
+Files without field IDs are assigned fresh sequential IDs. The flag is
+mutually exclusive with --schema, and the inferred schema is printed
+before table creation for user verification.",41f5c54c2841780f2a9ddd62702b2ee8326daf77,927,false,,1,83,5,cmd,44,7,51,base; feature/api verb; important area: cli; downrank narrow CLI change; has PR number; LanceDB similarity 0.25,Bump to Parquet 1.17.0,- feat(cli): add --schema-from-file flag to infer table schema from parquet files (#927) (Thanks Tanmay Rauth!)
 apache/iceberg-go,9bf24ecf26137d71ccaca9e860983712b1abb72a,9bf24ec,Tanmay Rauth,t_rauth@apple.com,2026-05-05T08:29:37-07:00,GitHub,noreply@github.com,2026-05-05T11:29:37-04:00,refactor(cli): migrate from docopt-go to go-arg (#965) (#980),"Replace flat Config struct and boolean dispatch with typed subcommand
 structs. Each command owns its flags, subcommand help is auto-generated,
 and adding new commands is self-contained.
@@ -928,6 +908,11 @@ apache/iceberg-go,2b104941c92d13adf23c5772bcd159218145a60d,2b10494,David D Zhao,
 ---------
 
 Signed-off-by: happydave1 <dzhao2004@gmail.com>",f026751eee9710275b6e25590a3388d1e816fcc4,972,false,,2,93,4,catalog,35,6,41,base; fix; important area: rest; has PR number; LanceDB similarity 0.21,Core: Implement register view for REST catalog,- fix(rest): making non 200 rest errors more informative (#972) (Thanks David D Zhao!)
+apache/iceberg-go,b2446c45d7d003efd13c5417c89eb060223af48c,b2446c4,Tanmay Rauth,t_rauth@apple.com,2026-04-29T09:34:37-07:00,GitHub,noreply@github.com,2026-04-29T12:34:37-04:00,fix(table): remove double Release() on struct array in ToRequestedSchema (#956),"The defer on line 1085 already handles releasing st. The explicit
+st.Release() before building the output record caused a double-free on
+the Struct wrapper.
+
+Fixes #955",6fdbf69efb2bb4433f0b0f5931a7ae2a8f0a08b9,956,false,,1,0,1,table,35,6,41,base; fix; important area: table; has PR number; LanceDB similarity 0.21,OpenAPI: Promote the S3 signing endpoint to the main spec,- fix(table): remove double Release() on struct array in ToRequestedSchema (#956) (Thanks Tanmay Rauth!)
 apache/iceberg-go,40b81252526c658740541d87f78531c7a9f8c70b,40b8125,Tanmay Rauth,t_rauth@apple.com,2026-05-12T13:38:39-07:00,GitHub,noreply@github.com,2026-05-12T22:38:39+02:00,feat(table): port remaining v3 metadata-upgrade validation rules (#1070),"Add missing validation rules to SetFormatVersion that mirror Java's
 TableMetadata upgrade checks:
 
@@ -952,11 +937,6 @@ The hash `634933edcd8ababfe52f92936142cc22ac488b1b` resolves to tag
 `ref-version-mismatch` audit to fail in CI.
 
 Updates the comment to match the actual tag the hash points to.",158255c00913a0adea8f7c30fabfb0b76141b02b,1026,false,,1,1,1,.github,20,9,29,base; fix; has PR number; LanceDB similarity 0.29,AWS: Merge catalog properties with properties prefixed with client.credentials-provider. <Thomas Powell>,- fix(ci): correct labeler action version tag (#1026) (Thanks Alessandro Nori!)
-apache/iceberg-go,89f36c164c3e1cd65c7b3857b16464d779b0d522,89f36c1,Ankit Sharma,67190631+Hashcode-Ankit@users.noreply.github.com,2026-05-10T23:15:03+05:30,GitHub,noreply@github.com,2026-05-10T19:45:03+02:00,feat: added override of http client as well as readme on utils.WithAw… (#981),"This pr intends to solve issue:
-(https://github.com/apache/iceberg-go/issues/958)
-
--> overriding of the HTTP client when no configuration is provided
--> as well as adding a comment on the glue NewCatalog function",775d8aa56e5f509ecd6a0be148787ec6230139bc,981,false,,2,26,0,catalog; io,25,3,28,base; strategic: catalog; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Spark 3.4 | 3.5: Enable remote scan planning <Prashant Singh>,- feat: added override of http client as well as readme on utils.WithAw… (#981) (Thanks Ankit Sharma!)
 apache/iceberg-go,ac1ead73460291da098f06af1279d43a2ed4c7e5,ac1ead7,Tanmay Rauth,t_rauth@apple.com,2026-05-06T09:11:37-07:00,GitHub,noreply@github.com,2026-05-06T18:11:37+02:00,feat(schema): reject complex type defaults #1011  (#1017),"Validates that initial-default / write-default on struct, list, and map
 fields match the expected JSON shape (object for struct/map, array for
 list). Walks the full schema tree including nested fields within
@@ -977,6 +957,26 @@ Maps Iceberg unknown fields to plain Arrow null fields, and maps Arrow
 null fields back to Iceberg unknown.
 
 Checked with `go test ./table -run TestArrow`.",5675b8cfeed542802ca6142ab36fec2abba0603c,1035,false,,2,4,3,table,12,4,16,base; has PR number; LanceDB similarity 0.13,Core: Add properties to InMemoryFileIO,- feat(arrow): map unknown type to null (#1035) (Thanks TT!)
+apache/iceberg-go,89f36c164c3e1cd65c7b3857b16464d779b0d522,89f36c1,Ankit Sharma,67190631+Hashcode-Ankit@users.noreply.github.com,2026-05-10T23:15:03+05:30,GitHub,noreply@github.com,2026-05-10T19:45:03+02:00,feat: added override of http client as well as readme on utils.WithAw… (#981),"This pr intends to solve issue:
+(https://github.com/apache/iceberg-go/issues/958)
+
+-> overriding of the HTTP client when no configuration is provided
+-> as well as adding a comment on the glue NewCatalog function",775d8aa56e5f509ecd6a0be148787ec6230139bc,981,false,,2,26,0,catalog; io,5,3,8,base; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Spark 3.4 | 3.5: Enable remote scan planning <Prashant Singh>,- feat: added override of http client as well as readme on utils.WithAw… (#981) (Thanks Ankit Sharma!)
+apache/iceberg-go,330fcdf6c371ce2e3d469badf8ef2e8861fdcfca,330fcdf,Tanmay Rauth,t_rauth@apple.com,2026-05-05T02:04:03-07:00,GitHub,noreply@github.com,2026-05-05T11:04:03+02:00,feat(test): add Spark integration test infrastructure for Hadoop catalog (#968),"Set up Docker and Spark infrastructure for Hadoop catalog
+cross-compatibility testing with Java's HadoopCatalog.
+
+- Add hadoop_validation.py: SparkSession configured with
+spark.sql.catalog.hadoop_test (type=hadoop,
+warehouse=/home/iceberg/hadoop-warehouse)
+- Add shared volume mount in docker-compose.yml:
+/tmp/iceberg-hadoop-warehouse (host) <-> /home/iceberg/hadoop-warehouse
+(Spark)
+- Copy hadoop_validation.py into Spark container via Dockerfile
+- Add make integration-hadoop target
+
+
+Depends on: #963
+Relates to #798",bb1b1489c13d20ddc15bf325ae991520475443c8,968,false,,4,90,7,Makefile; internal,-5,3,-2,base; feature/api verb; multi-area change; downrank docs/tests/benchmarks; downrank low-signal sync item; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,"Spark: Backport: Add Spark app name to env context for Spark v3.4, 3.5, 4.0 <Varun Lakhyani>",- feat(test): add Spark integration test infrastructure for Hadoop catalog (#968) (Thanks Tanmay Rauth!)
 apache/iceberg-go,af2ddd4adf060124c88e6e2314e441fe3dcaf92f,af2ddd4,Ben Bellick,36523439+benbellick@users.noreply.github.com,2026-04-29T15:00:22-05:00,GitHub,noreply@github.com,2026-04-29T16:00:22-04:00,build(deps): bump arrow-go to v18.6.0 and substrait-go to v8.1.0 (#949),"This PR bumps arrow-go from v18.5.2 to v18.6.0, which includes a bump of
 substrait-go from v7.6.0 to v8.1.0.
 

@@ -10,9 +10,6 @@ be at the same place.",44145262d2e4e8b79b1e681f8182af72f43ae66d,15873,false,,4,9
 apache/iceberg,7897d57fbe6c9c52de93195debbd24ebb41fc163,7897d57,Han You,hanyourmd@gmail.com,2026-04-17T04:37:33-05:00,GitHub,noreply@github.com,2026-04-17T11:37:33+02:00,Flink: Add passthroughRecords option to DynamicIcebergSink (#15433),"Co-authored-by: Han You <han.you@imc.com>
 Co-authored-by: Jordan Epstein <jordan.epstein@imc.com>",dde712ec9ed6c9d28183ee4615d50f97b246af5d,15433,false,Han You; Jordan Epstein,5,361,46,docs; flink,68,8,76,base; feature/api verb; important area: flink; medium file count; medium churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.28,"Docker, Docs, Site: Add Flink quickstart",- Flink: Add passthroughRecords option to DynamicIcebergSink (#15433) (Thanks Han You and Jordan Epstein!)
 apache/iceberg,dfe16c1abc188ebb09d956976b4eb87f00cdc477,dfe16c1,Anoop Johnson,anoop@apache.org,2026-04-15T08:03:16-07:00,GitHub,noreply@github.com,2026-04-15T08:03:16-07:00,"Core, API, Spark: Add FileContent.fromId (#15953)",,5e3c28438570f0d526616e44d1d41f57aa49f585,15953,false,,7,60,14,api; core; spark,61,13,74,"base; feature/api verb; important area: api, core, spark; medium file count; multi-area change; has PR number; LanceDB similarity 0.43","API, Core: Add FileIO to Scan API","- Core, API, Spark: Add FileContent.fromId (#15953) (Thanks Anoop Johnson!)"
-apache/iceberg,f984c28b215c56846c632ccc5a368f4f4afe0b5d,f984c28,Han You,hanyourmd@gmail.com,2026-04-20T09:07:47-05:00,GitHub,noreply@github.com,2026-04-20T16:07:47+02:00,Flink: Backport add passthroughRecords option to DynamicIcebergSink (#16019),"Backports #15433 and #16026
-
-Co-authored-by: Han You <han.you@imc.com>",49839545d0027f17970868c5044f8005abce1267,16019,false,Han You,8,663,90,flink,63,9,72,base; feature/api verb; important area: flink; medium file count; medium churn; co-authored; has PR number; LanceDB similarity 0.29,"API, CORE, Flink, Spark: Deprecate Snapshot.changes Methods with SnapshotChange Utility",- Flink: Backport add passthroughRecords option to DynamicIcebergSink (#16019) (Thanks Han You!)
 apache/iceberg,a8b7ba6d5ffb47f3e6d4ba937e191c7648c0fe0f,a8b7ba6,Alexandre Dutra,adutra@apache.org,2026-04-20T17:21:38+02:00,GitHub,noreply@github.com,2026-04-20T08:21:38-07:00,Core: Expose HostnameVerificationPolicy in TLSConfigurer (#15500),"* Expose HostnameVerificationPolicy in TLSConfigurer
 
 Apache HttpClient 5.4 introduced a new component: `HostnameVerificationPolicy`, which determines whether hostname verification is done by the JSSE provider (at socket level, during TLS handshake), the HttpClient (after TLS handshake), or both.
@@ -65,35 +62,6 @@ apache/iceberg,56092bc8cbfa19380cdd4513fc707c6d97ef8e36,56092bc,Neelesh Salian,n
 * Update error message check in test
 
 * PR comments",0ed7f7791f5179a924f8c7772428587c1d8cbdfe,15934,false,,2,29,0,parquet,40,25,65,base; fix; strategic: variant; has PR number; LanceDB similarity 0.83,Fix NPE in `ParquetAvroWriter` when schema contains variant type,- Parquet: Fix NPE in ParquetAvroWriter when schema contains variant type (#15934) (Thanks Neelesh Salian!)
-apache/iceberg,1b27a582d385d4b3341e8246f5327af237c41052,1b27a58,jackylee,qcsd2011@gmail.com,2026-04-11T04:52:39+08:00,GitHub,noreply@github.com,2026-04-10T13:52:39-07:00,Docs: Add Hive Metastore schema validation warnings for schema evolution with Hive catalog (#15814),"* Docs: Add Hive Metastore schema validation warnings for DROP COLUMN and REORDER
-
-When using a Hive catalog, ALTER TABLE DROP COLUMN (non-last column) and
-ALTER COLUMN REORDER fail because the Hive Metastore validates schema
-changes by comparing column types positionally. Dropping a middle column
-shifts subsequent columns, causing HMS to reject the change as an
-incompatible type change via MetaStoreUtils#throwExceptionIfIncompatibleColTypeChange.
-
-Add warning admonitions to spark-ddl.md (DROP COLUMN and REORDER sections)
-and flink-ddl.md (Hive catalog section) documenting the limitation,
-workaround (hive.metastore.disallow.incompatible.col.type.changes=false),
-and trade-off (Hive engine can no longer read the table).
-
-* Docs: Clarify HMS workaround for embedded vs remote deployment
-
-* Docs: add more warning for spark-ddl.md
-
-* Apply suggestions from code review
-
-Co-authored-by: Copilot <175728472+Copilot@users.noreply.github.com>
-
-* Apply suggestions from code review
-
-Co-authored-by: Manu Zhang <OwenZhang1990@gmail.com>
-
----------
-
-Co-authored-by: Copilot <175728472+Copilot@users.noreply.github.com>
-Co-authored-by: Manu Zhang <OwenZhang1990@gmail.com>",9586899fab3cc15fc0d0a5c9060b98ff632974e6,15814,false,Copilot; Manu Zhang,2,52,0,docs,60,3,63,base; feature/api verb; strategic: catalog; co-authored; correctness signal; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.31; capped LanceDB boost for routine/low-signal commit,Docs: Add informational properties section for table comment,"- Docs: Add Hive Metastore schema validation warnings for schema evolution with Hive catalog (#15814) (Thanks jackylee, Copilot, and Manu Zhang!)"
 apache/iceberg,2a6f127842a8f21e8e16efed45fdd5d538af29ae,2a6f127,Yuya Ebihara,ebyhry@gmail.com,2026-04-14T07:11:36+09:00,GitHub,noreply@github.com,2026-04-13T15:11:36-07:00,Core: Expose MetricsConfig.from method with 3-parameter version (#15819),,3f18cd4f69a2110327161972646da226fbbecc13,15819,false,,1,1,1,core,52,10,62,base; feature/api verb; important area: core; has PR number; LanceDB similarity 0.34,Core: Convert metrics to Content Stats,- Core: Expose MetricsConfig.from method with 3-parameter version (#15819) (Thanks Yuya Ebihara!)
 apache/iceberg,5e3c28438570f0d526616e44d1d41f57aa49f585,5e3c284,Russell Spitzer,russell.spitzer@GMAIL.COM,2026-04-14T17:34:12-05:00,GitHub,noreply@github.com,2026-04-14T15:34:12-07:00,API: Relax partition name check when source column is dropped (#15967),"Skip the identity name pairing when the partition source id no longer
 resolves in the schema, so historical specs do not block re-adding a
@@ -150,12 +118,44 @@ apache/iceberg,8f1f483985bfbef3c19472b9e2ec474593fee219,8f1f483,Sachin Ranjalkar
 apache/iceberg,f2ed6a9dba16e2a7e7015e92c60b3749a385dd75,f2ed6a9,Rulin Xing,xjdkcsq3@gmail.com,2026-04-16T02:35:35-07:00,GitHub,noreply@github.com,2026-04-16T02:35:35-07:00,AWS: Close custom AwsCredentialsProvider in RESTSigV4AuthSession (#15818),"* Close custom AwsCredentialsProvider properly
 
 * Address comments",f0cf4de766a9377771eb3273d4e86d9b01b107c1,15818,false,,2,57,1,aws,32,6,38,base; strategic: v4; has PR number; LanceDB similarity 0.20,API: Use Transform#isIdentity in PartitionSpec#identitySourceIds,- AWS: Close custom AwsCredentialsProvider in RESTSigV4AuthSession (#15818) (Thanks Rulin Xing!)
+apache/iceberg,f984c28b215c56846c632ccc5a368f4f4afe0b5d,f984c28,Han You,hanyourmd@gmail.com,2026-04-20T09:07:47-05:00,GitHub,noreply@github.com,2026-04-20T16:07:47+02:00,Flink: Backport add passthroughRecords option to DynamicIcebergSink (#16019),"Backports #15433 and #16026
+
+Co-authored-by: Han You <han.you@imc.com>",49839545d0027f17970868c5044f8005abce1267,16019,false,Han You,8,663,90,flink,28,9,37,base; feature/api verb; important area: flink; medium file count; medium churn; co-authored; downrank low-signal sync item; has PR number; LanceDB similarity 0.29,"API, CORE, Flink, Spark: Deprecate Snapshot.changes Methods with SnapshotChange Utility",- Flink: Backport add passthroughRecords option to DynamicIcebergSink (#16019) (Thanks Han You!)
 apache/iceberg,5dae5fc856e228cd8e1b69ba14909d0067006650,5dae5fc,alpbeysir,94457197+alpbeysir@users.noreply.github.com,2026-04-21T22:59:33+03:00,GitHub,noreply@github.com,2026-04-21T12:59:33-07:00,Core: Use Stream overload for reading response in HTTPClient (#15648),,a675f88b0d8b1bc5b9f37bc8db304bd694cf5f18,15648,false,,1,6,16,core,27,9,36,base; important area: core; has PR number; LanceDB similarity 0.30,Core: Freshness-aware table loading in REST catalog,- Core: Use Stream overload for reading response in HTTPClient (#15648) (Thanks alpbeysir!)
 apache/iceberg,d4db77be070a780cb54b84a6024d6e4ba095bc1e,d4db77b,drexler-sky,evan123wu@gmail.com,2026-04-21T03:38:48-07:00,GitHub,noreply@github.com,2026-04-21T12:38:48+02:00,Spark: Replace deprecated registerTempTable with createOrReplaceTempView (#16063),,bbd121220a79baa18f305a3666530db32065f614,16063,false,,4,4,4,spark,27,9,36,base; important area: spark; has PR number; LanceDB similarity 0.29,Upgrade to Spark 3.5.8,- Spark: Replace deprecated registerTempTable with createOrReplaceTempView (#16063) (Thanks drexler-sky!)
 apache/iceberg,44145262d2e4e8b79b1e681f8182af72f43ae66d,4414526,Sebastian Baunsgaard,baunsgaard@apache.org,2026-04-16T00:26:29+02:00,GitHub,noreply@github.com,2026-04-15T15:26:29-07:00,Core: Optimize RoaringPositionBitmap.setRange with native range API (#15791),* Core: Optimize RoaringPositionBitmap.setRange with native bulk range add,304c00f3c17a67a7eb2306cf018fe8ba5647e4b1,15791,false,,2,155,5,core,27,9,36,base; important area: core; has PR number; LanceDB similarity 0.31,Core: Fix compute_table_stats failures with concurrent writes,- Core: Optimize RoaringPositionBitmap.setRange with native range API (#15791) (Thanks Sebastian Baunsgaard!)
 apache/iceberg,e4d15333279594e95869ae8636764cd5f3b51832,e4d1533,Eduard Tudenhoefner,etudenhoefner@gmail.com,2026-04-12T07:46:31+02:00,GitHub,noreply@github.com,2026-04-12T07:46:31+02:00,API: Include size unit in avg/max value size fields (#15939),,b156f3414e402aa4c0aea5eaa397f34da23e4a05,15939,false,,1,4,4,api,27,8,35,base; important area: api; has PR number; LanceDB similarity 0.28,Spark: Add Spark app name to env context <Stas Pak>,- API: Include size unit in avg/max value size fields (#15939) (Thanks Eduard Tudenhoefner!)
 apache/iceberg,3550bcef7a6979e425f7eec7964e7fd0c07c9f7c,3550bce,Eduard Tudenhoefner,etudenhoefner@gmail.com,2026-04-03T16:14:19+02:00,GitHub,noreply@github.com,2026-04-03T16:14:19+02:00,Core: Upgrade Jetty to 12.1.5 (#10837),Co-authored-by: manuzhang <owenzhang1990@gmail.com>,1a2a8a5ecc701629183405ca842f2d1eb23505ee,10837,false,manuzhang,145,568,119,aws; core; gradle; open-api; spark,32,3,35,base; important area: core; large file count; medium churn; multi-area change; co-authored; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,Core: Add partition to TrackedFile,- Core: Upgrade Jetty to 12.1.5 (#10837) (Thanks Eduard Tudenhoefner and manuzhang!)
 apache/iceberg,53fde56a87d49517a9688fe73600eca10def1283,53fde56,Shohei Okumiya,okumin@apache.org,2026-04-18T02:02:45+09:00,GitHub,noreply@github.com,2026-04-17T10:02:45-07:00,Docs: Add Apache Hive 4.2 to website (#15998),,ecbe8a84b1897015bdaf0e7c3fdcbb8575aa9971,15998,false,,2,7,8,docs; site,30,3,33,base; feature/api verb; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.33; capped LanceDB boost for routine/low-signal commit,"Docker, Docs, Site: Add Flink quickstart",- Docs: Add Apache Hive 4.2 to website (#15998) (Thanks Shohei Okumiya!)
+apache/iceberg,1b27a582d385d4b3341e8246f5327af237c41052,1b27a58,jackylee,qcsd2011@gmail.com,2026-04-11T04:52:39+08:00,GitHub,noreply@github.com,2026-04-10T13:52:39-07:00,Docs: Add Hive Metastore schema validation warnings for schema evolution with Hive catalog (#15814),"* Docs: Add Hive Metastore schema validation warnings for DROP COLUMN and REORDER
+
+When using a Hive catalog, ALTER TABLE DROP COLUMN (non-last column) and
+ALTER COLUMN REORDER fail because the Hive Metastore validates schema
+changes by comparing column types positionally. Dropping a middle column
+shifts subsequent columns, causing HMS to reject the change as an
+incompatible type change via MetaStoreUtils#throwExceptionIfIncompatibleColTypeChange.
+
+Add warning admonitions to spark-ddl.md (DROP COLUMN and REORDER sections)
+and flink-ddl.md (Hive catalog section) documenting the limitation,
+workaround (hive.metastore.disallow.incompatible.col.type.changes=false),
+and trade-off (Hive engine can no longer read the table).
+
+* Docs: Clarify HMS workaround for embedded vs remote deployment
+
+* Docs: add more warning for spark-ddl.md
+
+* Apply suggestions from code review
+
+Co-authored-by: Copilot <175728472+Copilot@users.noreply.github.com>
+
+* Apply suggestions from code review
+
+Co-authored-by: Manu Zhang <OwenZhang1990@gmail.com>
+
+---------
+
+Co-authored-by: Copilot <175728472+Copilot@users.noreply.github.com>
+Co-authored-by: Manu Zhang <OwenZhang1990@gmail.com>",9586899fab3cc15fc0d0a5c9060b98ff632974e6,15814,false,Copilot; Manu Zhang,2,52,0,docs,28,3,31,base; feature/api verb; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.31; capped LanceDB boost for routine/low-signal commit,Docs: Add informational properties section for table comment,"- Docs: Add Hive Metastore schema validation warnings for schema evolution with Hive catalog (#15814) (Thanks jackylee, Copilot, and Manu Zhang!)"
 apache/iceberg,3f18cd4f69a2110327161972646da226fbbecc13,3f18cd4,kumarpritam863,148938310+kumarpritam863@users.noreply.github.com,2026-04-14T02:32:10+05:30,GitHub,noreply@github.com,2026-04-13T14:02:10-07:00,Kafka Connect: Fix source offset tracking when SMTs modify the record topic (#15880),"Fix source offset tracking when SMTs modify the record topic
 
 ---------

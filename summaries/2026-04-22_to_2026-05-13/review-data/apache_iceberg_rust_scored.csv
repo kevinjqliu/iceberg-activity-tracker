@@ -61,10 +61,10 @@ reader and scan tests pass (updated to use `ScanResult::stream()`).
 ---------
 
 Co-authored-by: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
-Co-authored-by: blackmwk <liurenjie1024@outlook.com>",36ae6460c4792af11169fc984a644989a6a9e4fd,2349,false,Claude Opus 4.6 (1M context); blackmwk,10,245,75,crates,68,5,73,base; feature/api verb; strategic: storage; medium file count; medium churn; co-authored; has PR number; LanceDB similarity 0.16,https://github.com/apache/iceberg/milestone/59,"- feat(reader): Add read_with_metrics() for scan I/O metrics (#2349) (Thanks Matt Butrovich, Claude Opus 4.6 (1M context), and blackmwk!)"
+Co-authored-by: blackmwk <liurenjie1024@outlook.com>",36ae6460c4792af11169fc984a644989a6a9e4fd,2349,false,Claude Opus 4.6 (1M context); blackmwk,10,245,75,crates,86,5,91,base; feature/api verb; strategic: storage; community signal: fileio; medium file count; medium churn; co-authored; has PR number; LanceDB similarity 0.16,https://github.com/apache/iceberg/milestone/59,"- feat(reader): Add read_with_metrics() for scan I/O metrics (#2349) (Thanks Matt Butrovich, Claude Opus 4.6 (1M context), and blackmwk!)"
 apache/iceberg-rust,88ca8b6fdc2146d48e9bbcc7c7cb1bfda096af5a,88ca8b6,Xander,zander181@googlemail.com,2026-04-28T10:42:22+01:00,GitHub,noreply@github.com,2026-04-28T17:42:22+08:00,feat(encryption) [3/N] Support encryption: KMS (#2339),"## Which issue does this PR close?
 
-Part of #2034 
+Part of #2034
 
 ## What changes are included in this PR?
 
@@ -226,13 +226,13 @@ cargo test -p iceberg-sqllogictest
 ```",2839c1a5c40ff43c3d5c1ae49593cb16770dff4d,2386,false,,1,1,1,crates,45,5,50,base; feature/api verb; fix; has PR number; LanceDB similarity 0.15,Fix Internal to Generic conversion of TIMESTAMP_NANO,- fix(sqllogictest): add missing tokio `rt-multi-thread` feature (#2386) (Thanks Charles-Antoine Leger!)
 apache/iceberg-rust,02e28d9ecca32d350979573004964e856bd1197c,02e28d9,Jem Bishop,40360024+jembishop@users.noreply.github.com,2026-04-24T23:26:07+01:00,GitHub,noreply@github.com,2026-04-24T15:26:07-07:00,fix: allow missing sequence-number in v2 snapshots for v1-upgraded tables (#2127),"## Which issue does this PR close?
 
-Didn't make an issue sorry. Very small change. 
+Didn't make an issue sorry. Very small change.
 
 ## What changes are included in this PR?
 
 After upgrading to v2 table I got complaints that this field does not
 exist, so
-Added a default for sequence number for this struct. 
+Added a default for sequence number for this struct.
 
 I think this should be ok, as this is treated as 0 for iceberg v1 wrt to
 v2 compat in other contexts? But would like some confirmation.
@@ -294,7 +294,7 @@ preserving nulls. Non-float types return all false. `is_nan` and
 
 ## Are these changes tested?
 Yes, test added",ad44fc3b99f941ecb6d6d7e5a40647077068361e,2351,false,,1,121,5,crates,32,6,38,base; fix; correctness signal; has PR number; LanceDB similarity 0.20,[SPEC] Add relative paths to v4 spec,- fix: NaN pushdown correctly pushes down NaNs correctness issue  (#2351) (Thanks Xander!)
-apache/iceberg-rust,40cc78767eaaf5c2a7463cc28212b8a0972ad629,40cc787,Shawn Chang,yexiangchang@gmail.com,2026-04-28T18:23:18-07:00,GitHub,noreply@github.com,2026-04-29T09:23:18+08:00,chore: Improve release process (#2381),"## Which issue does this PR close?
+apache/iceberg-rust,976b689dd311c40986f72d98b95daccb5da37ef5,976b689,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-04-29T19:48:25-04:00,GitHub,noreply@github.com,2026-04-29T16:48:25-07:00,ci(python): verify wheel abi3 compatibility with --no-build (#2388),"## Which issue does this PR close?
 
 <!--
 We generally require a GitHub issue to be filed for all bug fixes and
@@ -306,23 +306,48 @@ You can link an issue to this PR using the GitHub syntax. For example
 - Closes #.
 
 ## What changes are included in this PR?
-- Improve release process doc
+Verify that `pyiceberg-core` does not need to be built when installing
+
+Adds a `uv pip install --no-build` check after maturin builds to verify
+the produced wheel is abi3-compatible with Python 3.12.
+
+This prevents a repeat of
+https://github.com/apache/iceberg-python/issues/3190 where maturin
+picked Python 3.8 inside a manylinux container, producing a `cp38-cp38`
+wheel instead of `cp310-abi3`.
+**With `--no-build`, the install fails if the wheel isn't compatible —
+no fallback to source builds.**
+
+**Changes:**
+- `bindings_python_ci.yml`: use `--no-build` when installing the built
+wheel in CI
+- `release_python.yml` / `release_python_nightly.yml`: add verification
+step after each maturin build
+
 <!--
 Provide a summary of the modifications in this PR. List the main changes
 such as new features, bug fixes, refactoring, or any other updates.
 -->
 
 ## Are these changes tested?
-not needed
+
 <!--
 Specify what test covers (unit test, integration test, etc.).
 
 If tests are not included in your PR, please explain why (for example,
 are they covered by existing tests)?
--->",88ca8b6fdc2146d48e9bbcc7c7cb1bfda096af5a,2381,false,,1,27,24,website,32,4,36,base; release/security/notice signal; has PR number; LanceDB similarity 0.13,Core: Add V4 location relativization utilities,- chore: Improve release process (#2381) (Thanks Shawn Chang!)
+-->
+
+Yes
+* .github/workflows/bindings_python_ci.yml in CI
+*
+[release_python.yml](https://github.com/kevinjqliu/iceberg-rust/actions/runs/25125359496)
+/
+[release_python_nightly.yml](https://github.com/kevinjqliu/iceberg-rust/actions/runs/25125566003)
+in fork",7290ef0b831a13d3f626f2f5f5315e5de59b8dee,2388,false,,3,28,1,.github,30,3,33,base; community signal: pyiceberg-core; has PR number; LanceDB similarity 0.14; capped LanceDB boost for routine/low-signal commit,Spark 4.1: Rename expectedSchema to projection for clarity,- ci(python): verify wheel abi3 compatibility with --no-build (#2388) (Thanks Kevin Liu!)
 apache/iceberg-rust,4b0b35255469039d9877218049f93b07556124b5,4b0b352,blackmwk,liurenjie1024@outlook.com,2026-04-24T05:30:28+08:00,GitHub,noreply@github.com,2026-04-23T14:30:28-07:00,Split arrow reader into smaller modules (#2358),"## Which issue does this PR close?
 
-- Closes #2309  
+- Closes #2309
 
 ## What changes are included in this PR?
 
@@ -337,35 +362,9 @@ ut.
 ---------
 
 Co-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>",c82c42eb20f4bb2b33bec7c53d52742404ac0b55,2358,false,Claude Opus 4.7 (1M context),9,5865,5583,crates,27,4,31,base; medium file count; large churn; co-authored; has PR number; LanceDB similarity 0.14,Core: Fix BinPackRewriteFilePlanner producing incorrect output file count with max-files-to-rewrite,- Split arrow reader into smaller modules (#2358) (Thanks blackmwk and Claude Opus 4.7 (1M context)!)
-apache/iceberg-rust,36ae6460c4792af11169fc984a644989a6a9e4fd,36ae646,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-04-27T16:07:59-04:00,GitHub,noreply@github.com,2026-04-27T13:07:59-07:00,docs: bump version for python binding (#2377),"## Which issue does this PR close?
-
-<!--
-We generally require a GitHub issue to be filed for all bug fixes and
-enhancements and this helps us generate change logs for our releases.
-You can link an issue to this PR using the GitHub syntax. For example
-`Closes #123` indicates that this PR will close issue #123.
--->
-
-- Closes #.
-
-## What changes are included in this PR?
-Include bumping `bindings/python/Cargo.toml` version in release docs
-<!--
-Provide a summary of the modifications in this PR. List the main changes
-such as new features, bug fixes, refactoring, or any other updates.
--->
-
-## Are these changes tested?
-
-<!--
-Specify what test covers (unit test, integration test, etc.).
-
-If tests are not included in your PR, please explain why (for example,
-are they covered by existing tests)?
--->",00eb1601f6216f8cb31d19aaf7921eba436a66af,2377,false,,1,1,0,website,20,7,27,base; release/security/notice signal; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.23,Spark 4.1: Rename expectedSchema to projection for clarity,- docs: bump version for python binding (#2377) (Thanks Kevin Liu!)
 apache/iceberg-rust,83b4595e2b5f522974d24d51c8ecbd09a093fa92,83b4595,blackmwk,liurenjie1024@outlook.com,2026-05-13T00:25:53+08:00,GitHub,noreply@github.com,2026-05-12T09:25:53-07:00,Fix RUSTSEC-2026-0122 (#2437),"## Which issue does this PR close?
 
-- Closes #2435 
+- Closes #2435
 
 ## What changes are included in this PR?
 
@@ -460,6 +459,32 @@ are they covered by existing tests)?
 Yes: new `EXPLAIN ... LIMIT 3` assertion in
 `crates/sqllogictest/testdata/slts/df_test/basic_queries.slt`. Existing
 snapshots are unchanged, which confirms the additive-only behavior.",4b4ffd0a6a7e3d52f7ea219647407290b0d46e93,2360,false,,2,17,1,crates,12,7,19,base; has PR number; LanceDB similarity 0.22,"Core, Orc: Remove deprecated partition stats read functionality",- feat(datafusion): show pushed-down limit in IcebergTableScan EXPLAIN output (#2360) (Thanks Charles-Antoine Leger!)
+apache/iceberg-rust,40cc78767eaaf5c2a7463cc28212b8a0972ad629,40cc787,Shawn Chang,yexiangchang@gmail.com,2026-04-28T18:23:18-07:00,GitHub,noreply@github.com,2026-04-29T09:23:18+08:00,chore: Improve release process (#2381),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Closes #.
+
+## What changes are included in this PR?
+- Improve release process doc
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+not needed
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",88ca8b6fdc2146d48e9bbcc7c7cb1bfda096af5a,2381,false,,1,27,24,website,12,4,16,base; has PR number; LanceDB similarity 0.13,Core: Add V4 location relativization utilities,- chore: Improve release process (#2381) (Thanks Shawn Chang!)
 apache/iceberg-rust,5eb342ff1618171c52db0f1727372bf1f9589e27,5eb342f,Liang Gong,145010810+TwinklerG@users.noreply.github.com,2026-05-07T19:14:22+08:00,GitHub,noreply@github.com,2026-05-07T19:14:22+08:00,fix(tests): remove unnecessary `.to_string()` calls for metadata_location (#2407),"## Which issue does this PR close?
 
 <!--
@@ -537,7 +562,7 @@ just data files. Docstring now reflects that.
 ## Are these changes tested?
 
 Docstring-only change, no behavior change, so no new tests.",40cc78767eaaf5c2a7463cc28212b8a0972ad629,2379,false,,1,1,1,crates,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.14; capped LanceDB boost for routine/low-signal commit,Fix Internal to Generic conversion of TIMESTAMP_NANO,- docs(arrow): clarify ScanMetrics::bytes_read includes delete files (#2379) (Thanks Matt Butrovich!)
-apache/iceberg-rust,976b689dd311c40986f72d98b95daccb5da37ef5,976b689,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-04-29T19:48:25-04:00,GitHub,noreply@github.com,2026-04-29T16:48:25-07:00,ci(python): verify wheel abi3 compatibility with --no-build (#2388),"## Which issue does this PR close?
+apache/iceberg-rust,36ae6460c4792af11169fc984a644989a6a9e4fd,36ae646,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-04-27T16:07:59-04:00,GitHub,noreply@github.com,2026-04-27T13:07:59-07:00,docs: bump version for python binding (#2377),"## Which issue does this PR close?
 
 <!--
 We generally require a GitHub issue to be filed for all bug fixes and
@@ -549,24 +574,7 @@ You can link an issue to this PR using the GitHub syntax. For example
 - Closes #.
 
 ## What changes are included in this PR?
-Verify that `pyiceberg-core` does not need to be built when installing 
-
-Adds a `uv pip install --no-build` check after maturin builds to verify
-the produced wheel is abi3-compatible with Python 3.12.
-
-This prevents a repeat of
-https://github.com/apache/iceberg-python/issues/3190 where maturin
-picked Python 3.8 inside a manylinux container, producing a `cp38-cp38`
-wheel instead of `cp310-abi3`.
-**With `--no-build`, the install fails if the wheel isn't compatible —
-no fallback to source builds.**
-
-**Changes:**
-- `bindings_python_ci.yml`: use `--no-build` when installing the built
-wheel in CI
-- `release_python.yml` / `release_python_nightly.yml`: add verification
-step after each maturin build
-
+Include bumping `bindings/python/Cargo.toml` version in release docs
 <!--
 Provide a summary of the modifications in this PR. List the main changes
 such as new features, bug fixes, refactoring, or any other updates.
@@ -579,15 +587,7 @@ Specify what test covers (unit test, integration test, etc.).
 
 If tests are not included in your PR, please explain why (for example,
 are they covered by existing tests)?
--->
-
-Yes
-* .github/workflows/bindings_python_ci.yml in CI
-*
-[release_python.yml](https://github.com/kevinjqliu/iceberg-rust/actions/runs/25125359496)
-/
-[release_python_nightly.yml](https://github.com/kevinjqliu/iceberg-rust/actions/runs/25125566003)
-in fork",7290ef0b831a13d3f626f2f5f5315e5de59b8dee,2388,false,,3,28,1,.github,-3,3,0,base; downrank routine build/deps; has PR number; LanceDB similarity 0.14; capped LanceDB boost for routine/low-signal commit,Spark 4.1: Rename expectedSchema to projection for clarity,- ci(python): verify wheel abi3 compatibility with --no-build (#2388) (Thanks Kevin Liu!)
+-->",00eb1601f6216f8cb31d19aaf7921eba436a66af,2377,false,,1,1,0,website,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Spark 4.1: Rename expectedSchema to projection for clarity,- docs: bump version for python binding (#2377) (Thanks Kevin Liu!)
 apache/iceberg-rust,4f21e503afc5363c10fafac917f0febe136c464e,4f21e50,Krisztián Szűcs,szucs.krisztian@gmail.com,2026-05-08T14:50:39+02:00,GitHub,noreply@github.com,2026-05-08T20:50:39+08:00,"chore(deps): bump opendal to 0.56, migrate to reqsign-core 3.0 (#2401)","## Summary
 
 Bumps `opendal` from `0.55` to `0.56`, which is now published on
@@ -4026,104 +4026,6 @@ PR or upgrade to it yourself)
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7e84157818bb09e9d6bdfc7d3bdc4061a6d078b6,2372,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,Core: Add partition to TrackedFile,- chore(deps): Bump crate-ci/typos from 1.45.0 to 1.45.1 (#2372) (Thanks dependabot[bot]!)
-apache/iceberg-rust,7e84157818bb09e9d6bdfc7d3bdc4061a6d078b6,7e84157,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-27T09:20:03+08:00,GitHub,noreply@github.com,2026-04-27T09:20:03+08:00,chore(deps): Bump datafusion-cli from 53.0.0 to 53.1.0 (#2373),"Bumps [datafusion-cli](https://github.com/apache/datafusion) from 53.0.0
-to 53.1.0.
-<details>
-<summary>Commits</summary>
-<ul>
-<li><a
-href=""https://github.com/apache/datafusion/commit/eae7bf4fa1c037c0a065d1f36d0669f5bb97a9cf""><code>eae7bf4</code></a>
-[branch-53] Update version and add Changelog (<a
-href=""https://redirect.github.com/apache/datafusion/issues/21559"">#21559</a>)</li>
-<li><a
-href=""https://github.com/apache/datafusion/commit/637acc4d48d07af71189736bac2f7b25d3905e0e""><code>637acc4</code></a>
-[branch-53] chore: update deps for cargo audit (<a
-href=""https://redirect.github.com/apache/datafusion/issues/21415"">#21415</a>)
-(<a
-href=""https://redirect.github.com/apache/datafusion/issues/21587"">#21587</a>)</li>
-<li><a
-href=""https://github.com/apache/datafusion/commit/01f2d91dec3cfcc6c385d0ebd3770f23cea451ca""><code>01f2d91</code></a>
-[branch-53] Restore Sort unparser guard for correct ORDER BY placement
-(<a
-href=""https://redirect.github.com/apache/datafusion/issues/2065"">#2065</a>...</li>
-<li><a
-href=""https://github.com/apache/datafusion/commit/242fb7672241830cc19b7f1c109e001a15c4115f""><code>242fb76</code></a>
-[branch-53] fix: foreign inner ffi types (<a
-href=""https://redirect.github.com/apache/datafusion/issues/21439"">#21439</a>)
-(<a
-href=""https://redirect.github.com/apache/datafusion/issues/21524"">#21524</a>)</li>
-<li><a
-href=""https://github.com/apache/datafusion/commit/6fc71149587f9e81e889a9915da728f40a16e236""><code>6fc7114</code></a>
-[branch-53] fix: FilterExec should drop projection when apply projection
-push...</li>
-<li><a
-href=""https://github.com/apache/datafusion/commit/61d8483fa6ff0a42b83c319f0aa3abab7ceef998""><code>61d8483</code></a>
-[branch-53] fix: use datafusion_expr instead of datafusion crate in
-spark bit...</li>
-<li><a
-href=""https://github.com/apache/datafusion/commit/3224e0cdf1d44367d9a6924f8e30944c515b9c8a""><code>3224e0c</code></a>
-[branch-53] fix: use spill writer's schema instead of the first batch
-schema ...</li>
-<li><a
-href=""https://github.com/apache/datafusion/commit/d24faa0134b75ea3a17fff94c2a271d858ef88e2""><code>d24faa0</code></a>
-[branch-53] chore: Optimize schema rewriter usages (<a
-href=""https://redirect.github.com/apache/datafusion/issues/21158"">#21158</a>)
-(<a
-href=""https://redirect.github.com/apache/datafusion/issues/21183"">#21183</a>)</li>
-<li><a
-href=""https://github.com/apache/datafusion/commit/c45c2ce4a9da6fb5e487c9585b2fda3110c9067d""><code>c45c2ce</code></a>
-[branch-53] Substrait join consumer should not merge nullability of join
-keys...</li>
-<li><a
-href=""https://github.com/apache/datafusion/commit/2c3a360f1afe84ae4f8349ddcc2497d4ccd63685""><code>2c3a360</code></a>
-[branch-53] Fix push_down_filter for children with non-empty fetch
-fields (<a
-href=""https://redirect.github.com/apache/datafusion/issues/2"">#2</a>...</li>
-<li>Additional commits viewable in <a
-href=""https://github.com/apache/datafusion/compare/53.0.0...53.1.0"">compare
-view</a></li>
-</ul>
-</details>
-<br />
-
-
-[![Dependabot compatibility
-score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=datafusion-cli&package-manager=cargo&previous-version=53.0.0&new-version=53.1.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
-
-Dependabot will resolve any conflicts with this PR as long as you don't
-alter it yourself. You can also trigger a rebase manually by commenting
-`@dependabot rebase`.
-
-[//]: # (dependabot-automerge-start)
-[//]: # (dependabot-automerge-end)
-
----
-
-<details>
-<summary>Dependabot commands and options</summary>
-<br />
-
-You can trigger Dependabot actions by commenting on this PR:
-- `@dependabot rebase` will rebase this PR
-- `@dependabot recreate` will recreate this PR, overwriting any edits
-that have been made to it
-- `@dependabot show <dependency name> ignore conditions` will show all
-of the ignore conditions of the specified dependency
-- `@dependabot ignore this major version` will close this PR and stop
-Dependabot creating any more for this major version (unless you reopen
-the PR or upgrade to it yourself)
-- `@dependabot ignore this minor version` will close this PR and stop
-Dependabot creating any more for this minor version (unless you reopen
-the PR or upgrade to it yourself)
-- `@dependabot ignore this dependency` will close this PR and stop
-Dependabot creating any more for this dependency (unless you reopen the
-PR or upgrade to it yourself)
-
-
-</details>
-
-Signed-off-by: dependabot[bot] <support@github.com>
-Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",bcc2b5a444fe97e0f4e00ebca707dbaa0c0ed5e1,2373,false,dependabot[bot],1,5,5,Cargo.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- chore(deps): Bump datafusion-cli from 53.0.0 to 53.1.0 (#2373) (Thanks dependabot[bot]!)
 apache/iceberg-rust,bcc2b5a444fe97e0f4e00ebca707dbaa0c0ed5e1,bcc2b5a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-27T08:56:38+08:00,GitHub,noreply@github.com,2026-04-27T08:56:38+08:00,chore(deps): Bump tokio from 1.51.1 to 1.52.1 (#2374),"Bumps [tokio](https://github.com/tokio-rs/tokio) from 1.51.1 to 1.52.1.
 <details>
 <summary>Release notes</summary>
@@ -4338,3 +4240,101 @@ PR or upgrade to it yourself)
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",02e28d9ecca32d350979573004964e856bd1197c,2374,false,dependabot[bot],1,16,16,Cargo.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,"Core, Hive: Detect if a view already exists when registering a table",- chore(deps): Bump tokio from 1.51.1 to 1.52.1 (#2374) (Thanks dependabot[bot]!)
 apache/iceberg-rust,d7c647ff792649460dc3ac38193bcbe6882990da,d7c647f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-27T10:31:58+08:00,GitHub,noreply@github.com,2026-04-27T10:31:58+08:00,chore(deps): Bump datafusion-sqllogictest from 53.0.0 to 53.1.0 (#2369),,94426495aafbf328de3fa614113a776f542b82a0,2369,false,,1,6,6,Cargo.lock,-73,3,-70,base; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.28; capped LanceDB boost for routine/low-signal commit,Bump to Parquet 1.17.0,- chore(deps): Bump datafusion-sqllogictest from 53.0.0 to 53.1.0 (#2369) (Thanks dependabot[bot]!)
+apache/iceberg-rust,7e84157818bb09e9d6bdfc7d3bdc4061a6d078b6,7e84157,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-27T09:20:03+08:00,GitHub,noreply@github.com,2026-04-27T09:20:03+08:00,chore(deps): Bump datafusion-cli from 53.0.0 to 53.1.0 (#2373),"Bumps [datafusion-cli](https://github.com/apache/datafusion) from 53.0.0
+to 53.1.0.
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/apache/datafusion/commit/eae7bf4fa1c037c0a065d1f36d0669f5bb97a9cf""><code>eae7bf4</code></a>
+[branch-53] Update version and add Changelog (<a
+href=""https://redirect.github.com/apache/datafusion/issues/21559"">#21559</a>)</li>
+<li><a
+href=""https://github.com/apache/datafusion/commit/637acc4d48d07af71189736bac2f7b25d3905e0e""><code>637acc4</code></a>
+[branch-53] chore: update deps for cargo audit (<a
+href=""https://redirect.github.com/apache/datafusion/issues/21415"">#21415</a>)
+(<a
+href=""https://redirect.github.com/apache/datafusion/issues/21587"">#21587</a>)</li>
+<li><a
+href=""https://github.com/apache/datafusion/commit/01f2d91dec3cfcc6c385d0ebd3770f23cea451ca""><code>01f2d91</code></a>
+[branch-53] Restore Sort unparser guard for correct ORDER BY placement
+(<a
+href=""https://redirect.github.com/apache/datafusion/issues/2065"">#2065</a>...</li>
+<li><a
+href=""https://github.com/apache/datafusion/commit/242fb7672241830cc19b7f1c109e001a15c4115f""><code>242fb76</code></a>
+[branch-53] fix: foreign inner ffi types (<a
+href=""https://redirect.github.com/apache/datafusion/issues/21439"">#21439</a>)
+(<a
+href=""https://redirect.github.com/apache/datafusion/issues/21524"">#21524</a>)</li>
+<li><a
+href=""https://github.com/apache/datafusion/commit/6fc71149587f9e81e889a9915da728f40a16e236""><code>6fc7114</code></a>
+[branch-53] fix: FilterExec should drop projection when apply projection
+push...</li>
+<li><a
+href=""https://github.com/apache/datafusion/commit/61d8483fa6ff0a42b83c319f0aa3abab7ceef998""><code>61d8483</code></a>
+[branch-53] fix: use datafusion_expr instead of datafusion crate in
+spark bit...</li>
+<li><a
+href=""https://github.com/apache/datafusion/commit/3224e0cdf1d44367d9a6924f8e30944c515b9c8a""><code>3224e0c</code></a>
+[branch-53] fix: use spill writer's schema instead of the first batch
+schema ...</li>
+<li><a
+href=""https://github.com/apache/datafusion/commit/d24faa0134b75ea3a17fff94c2a271d858ef88e2""><code>d24faa0</code></a>
+[branch-53] chore: Optimize schema rewriter usages (<a
+href=""https://redirect.github.com/apache/datafusion/issues/21158"">#21158</a>)
+(<a
+href=""https://redirect.github.com/apache/datafusion/issues/21183"">#21183</a>)</li>
+<li><a
+href=""https://github.com/apache/datafusion/commit/c45c2ce4a9da6fb5e487c9585b2fda3110c9067d""><code>c45c2ce</code></a>
+[branch-53] Substrait join consumer should not merge nullability of join
+keys...</li>
+<li><a
+href=""https://github.com/apache/datafusion/commit/2c3a360f1afe84ae4f8349ddcc2497d4ccd63685""><code>2c3a360</code></a>
+[branch-53] Fix push_down_filter for children with non-empty fetch
+fields (<a
+href=""https://redirect.github.com/apache/datafusion/issues/2"">#2</a>...</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/apache/datafusion/compare/53.0.0...53.1.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=datafusion-cli&package-manager=cargo&previous-version=53.0.0&new-version=53.1.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",bcc2b5a444fe97e0f4e00ebca707dbaa0c0ed5e1,2373,false,dependabot[bot],1,5,5,Cargo.lock,-78,3,-75,base; co-authored; downrank bot; downrank dependency bump; downrank narrow CLI change; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- chore(deps): Bump datafusion-cli from 53.0.0 to 53.1.0 (#2373) (Thanks dependabot[bot]!)

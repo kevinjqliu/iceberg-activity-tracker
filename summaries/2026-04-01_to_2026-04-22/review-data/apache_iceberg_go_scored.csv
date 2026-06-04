@@ -65,17 +65,6 @@ manifest list
 propagation
 - New Transaction.ReplaceFiles() validates both data and delete files
 exist in the table with content-type gating before commit",77c45f9a93329bbc15b0e7e9f9c50ad41b6ad45b,851,false,,3,443,37,table,88,6,94,"base; feature/api verb; important area: table; strategic: compaction, manifest; summary signal: compaction; medium churn; has PR number; LanceDB similarity 0.20",Core: Avro: Row Lineage Column (ROW_ID) is not populated correctly in case the Data File doesn't have them,- feat(table): support delete file removal in overwrite commits (#851) (Thanks Andrei Tserakhau!)
-apache/iceberg-go,40c33635deed8e39332307c5f2642d80e11d51fc,40c3363,Andrei Tserakhau,laskoviymishka@gmail.com,2026-04-15T15:24:09-07:00,GitHub,noreply@github.com,2026-04-15T18:24:09-04:00,feat(cli): add compact analyze and compact run commands (#903),"Add `iceberg compact analyze TABLE_ID` for dry-run compaction planning
-and `iceberg compact run TABLE_ID` for executing bin-pack compaction.
-
-- Plans via compaction.Analyze, executes via
-Transaction.RewriteDataFiles
-- Flags: --target-file-size, --partial-progress
-- Prints per-group breakdown table with partition, file count, size,
-deletes
-- Partial progress message printed before fatal error on failure
-
-Part of #832 (table compaction).",0c2543de3a131f6cbcbfb2cc4149e789e0a2a9eb,903,false,,2,180,19,cmd,84,7,91,"base; feature/api verb; important area: cli; strategic: compaction, rewritedatafiles; summary signal: compaction, rewritedatafiles; has PR number; LanceDB similarity 0.25",Core: Add builders for v4 structs,- feat(cli): add compact analyze and compact run commands (#903) (Thanks Andrei Tserakhau!)
 apache/iceberg-go,758b24a31ad91a68b183702efc3edda65b2c43a5,758b24a,Abhi Rathod,abhirathod95@users.noreply.github.com,2026-04-15T10:55:31-05:00,GitHub,noreply@github.com,2026-04-15T11:55:31-04:00,perf(table): Add optional skip duplicate check on AddDataFiles (#901),"AddDataFiles unconditionally scans every manifest in the current
 snapshot to check whether any file being added already exists in the
 table. Each manifest requires a storage read (e.g. an S3 GET). For
@@ -128,6 +117,17 @@ Configurable via:
   commit.retry.total-timeout-ms  (default 1800000)
 
 Part of #830 (concurrent writer conflict detection).",93d8c6e91d0f478af82bffacacd28881c7d64b92,912,false,,6,459,4,catalog; table; types.go; types_test.go,80,7,87,"base; fix; important area: table; strategic: catalog, commit-conflict, occ; summary signal: commit-conflict, occ; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.25",BigQuery: Eliminate redundant table load by using ETag for conflict detection,- feat(table): retry doCommit on commit-conflict errors (#830) (#912) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,40c33635deed8e39332307c5f2642d80e11d51fc,40c3363,Andrei Tserakhau,laskoviymishka@gmail.com,2026-04-15T15:24:09-07:00,GitHub,noreply@github.com,2026-04-15T18:24:09-04:00,feat(cli): add compact analyze and compact run commands (#903),"Add `iceberg compact analyze TABLE_ID` for dry-run compaction planning
+and `iceberg compact run TABLE_ID` for executing bin-pack compaction.
+
+- Plans via compaction.Analyze, executes via
+Transaction.RewriteDataFiles
+- Flags: --target-file-size, --partial-progress
+- Prints per-group breakdown table with partition, file count, size,
+deletes
+- Partial progress message printed before fatal error on failure
+
+Part of #832 (table compaction).",0c2543de3a131f6cbcbfb2cc4149e789e0a2a9eb,903,false,,2,180,19,cmd,76,7,83,"base; feature/api verb; important area: cli; strategic: compaction, rewritedatafiles; summary signal: compaction, rewritedatafiles; downrank narrow CLI change; has PR number; LanceDB similarity 0.25",Core: Add builders for v4 structs,- feat(cli): add compact analyze and compact run commands (#903) (Thanks Andrei Tserakhau!)
 apache/iceberg-go,df817dc25d566f5f4f2b2a374759a9a3973af9a2,df817dc,Andrei Tserakhau,laskoviymishka@gmail.com,2026-04-14T13:16:07-07:00,GitHub,noreply@github.com,2026-04-14T16:16:07-04:00,feat(compaction): add Analyze for dry-run compaction planning (#893),"Add compaction.Analyze(ctx, tbl, cfg) as a read-only entry point that
 scans the table via PlanFiles and produces a compaction Plan without
 modifying anything. Useful for dry-run analysis, CLI tooling, and
@@ -212,7 +212,7 @@ Fixes #836
 ## Test plan
 
 - [x] `go test ./...`
-- [x] `gofmt` clean  
+- [x] `gofmt` clean
 - [x] `TestRemoveSnapshotsPrunesStatistics` — seeds statistics for two
 snapshots, removes one, asserts the right entry is pruned and the result
 survives `Build()`.
@@ -225,30 +225,6 @@ Signed-off-by: Ali <alliasgher123@gmail.com>
 ---------
 
 Signed-off-by: Ali <alliasgher123@gmail.com>",653375c6fd999072b3fef8a44df6a140ee9f2d18,873,false,,2,139,0,table,67,8,75,base; fix; important area: table; strategic: round-trip; summary signal: round-trip; has PR number; LanceDB similarity 0.27,Kafka Connect: fix table UUID check,- fix(table): prune StatisticsList and PartitionStatsList in RemoveSnapshots (#873) (Thanks Ali Asghar!)
-apache/iceberg-go,93d8c6e91d0f478af82bffacacd28881c7d64b92,93d8c6e,Tanmay Rauth,t_rauth@apple.com,2026-04-17T10:33:28-07:00,GitHub,noreply@github.com,2026-04-17T13:33:28-04:00,fix: decode pre-1.4 Java Iceberg legacy manifest list field names (#889) (#890),"Iceberg Java used added_data_files_count, existing_data_files_count, and
-deleted_data_files_count as manifest list field names (IDs 504/505/506)
-until apache/iceberg#5338 renamed them to match the spec in the 1.4
-release.
-
-Tables written before that fix, or by engines still on older Java
-versions (Athena, some Trino deployments), embed the legacy names in the
-writer schema of every manifest list OCF file. When iceberg-go read such
-a file, hamba/avro could not match writer-schema fields to struct tags
-and silently left the three count fields at zero.
-
-Zero counts caused HasAddedFiles() and HasExistingFiles() to return
-false, which broke fast-append manifest inheritance and caused
-Table.Scan() to return no data.
-
-Fix: add parallel struct fields with the legacy avro tags to
-manifestFileV1 and manifestFile. Accessors coalesce — preferring the
-spec-correct name, falling back to the legacy name. No write-path or
-schema-registration changes are made.
-
-Adds two tests (V1 and V2) that write raw Avro OCF using the pre-1.4
-field names and assert the counts decode correctly.
-
-Fixes #889",17090ae42bc3c85333e42eb1d59ebb8e0283b247,890,false,,4,277,168,go.mod; go.sum; manifest.go; manifest_test.go,69,5,74,base; fix; strategic: manifest; medium churn; multi-area change; release/security/notice signal; has PR number; LanceDB similarity 0.16,Flink: TableMaintenance Support Coordinator Lock,- fix: decode pre-1.4 Java Iceberg legacy manifest list field names (#889) (#890) (Thanks Tanmay Rauth!)
 apache/iceberg-go,e5a1118d50faa7d75689252595c9488510c136b1,e5a1118,Andrei Tserakhau,laskoviymishka@gmail.com,2026-04-03T19:16:08+02:00,GitHub,noreply@github.com,2026-04-03T13:16:08-04:00,feat(table)!: multi-arg transforms in partition and sort fields (#824),"Add SourceIDs field to PartitionField and SortField for multi-argument
 transform support per the Iceberg v3 spec. The spec defines source-ids
 as infrastructure for future multi-argument transforms — no concrete
@@ -540,17 +516,6 @@ Iceberg v3 spec for row lineage and must not be used by user-defined
 fields.
 
 Together with #735  should close #727",588ca00612d4138627bffdf8ad6a62282d44f330,821,false,,3,22,1,metadata_columns.go; table,52,8,60,"base; important area: table; strategic: row lineage, v3; multi-area change; has PR number; LanceDB similarity 0.26",REST Spec: clarify uniqueness of ETags for table metadata responses,- feat(table): reject reserved metadata column IDs in user schemas (#821) (Thanks Andrei Tserakhau!)
-apache/iceberg-go,a0827dcbeaca8e9655d8e830c8c472c6e26c6114,a0827dc,Abhi Rathod,abhirathod95@users.noreply.github.com,2026-04-13T16:33:26-05:00,GitHub,noreply@github.com,2026-04-13T17:33:26-04:00,perf(table): Decrease memory pressure by releasing records (#886),"The fanout function currently defer's `record.Release()`. This isn't a
-big deal if the iterable it reads from contains a small amount of data.
-However, if it's a long lived streaming channel or contains a lot of
-data, the fanout function will hold on to **all ** the records until it
-processes all of them. This dramatically increases memory use,
-especially in a streaming use case.
-
-This PR extracts out the code to process each record into it's own
-function, and calls `defer record.Release()` there. No functional
-modifications were made. This will release each record after
-successfully processing the data.",8ab09f560fe8b234723bd16c231a50fb77e9b1d7,886,false,,2,238,23,table,51,9,60,base; important area: table; medium churn; release/security/notice signal; has PR number; LanceDB similarity 0.28,"Core, Hive: Detect if a view already exists when registering a table",- perf(table): Decrease memory pressure by releasing records (#886) (Thanks Abhi Rathod!)
 apache/iceberg-go,aa6f01d768087fc85a6d2ea4b754042421204bf4,aa6f01d,Ali Asghar,98263017+alliasgher@users.noreply.github.com,2026-04-15T02:00:17+05:00,GitHub,noreply@github.com,2026-04-14T17:00:17-04:00,feat(table): support committing snapshots to branches other than main (#899),"Fixes #714.
 
 Adds `Table.NewTransactionOnBranch(branch string)` so callers can commit
@@ -633,18 +598,30 @@ newTable, err := tx.Commit(ctx)
 apache/iceberg-go,42184e186a7be910ca40fcdd3ff24940fefe63f8,42184e1,Dao Thanh Tung,ttdao.2015@accountancy.smu.edu.sg,2026-04-03T21:28:02+01:00,GitHub,noreply@github.com,2026-04-03T16:28:02-04:00,feat(table): Add statistics files to orphan cleanup referenced set (#848),"Fixes https://github.com/apache/iceberg-go/issues/835
 
 Signed-off-by: dttung2905 <ttdao.2015@accountancy.smu.edu.sg>",311cc3c7f333c860ff30e32970948fbbff739a59,848,false,,2,67,2,table,52,6,58,base; feature/api verb; important area: table; has PR number; LanceDB similarity 0.20,Core: Unlink table metadata's last-updated timestamp from snapshot timestamp,- feat(table): Add statistics files to orphan cleanup referenced set (#848) (Thanks Dao Thanh Tung!)
-apache/iceberg-go,17090ae42bc3c85333e42eb1d59ebb8e0283b247,17090ae,Tanmay Rauth,t_rauth@apple.com,2026-04-17T10:30:18-07:00,GitHub,noreply@github.com,2026-04-17T13:30:18-04:00,"docs(website): add scanner, writer, and transaction API documentation (#919)","The api.md page documented catalog and schema operations but was missing
-documentation for the primary data-path APIs that users needs:
+apache/iceberg-go,93d8c6e91d0f478af82bffacacd28881c7d64b92,93d8c6e,Tanmay Rauth,t_rauth@apple.com,2026-04-17T10:33:28-07:00,GitHub,noreply@github.com,2026-04-17T13:33:28-04:00,fix: decode pre-1.4 Java Iceberg legacy manifest list field names (#889) (#890),"Iceberg Java used added_data_files_count, existing_data_files_count, and
+deleted_data_files_count as manifest list field names (IDs 504/505/506)
+until apache/iceberg#5338 renamed them to match the spec in the 1.4
+release.
 
-- Scanner: reading data with column projection, row filtering, time
-travel, and snapshot selection
-- Writer: appending, overwriting, and deleting data using Arrow
-RecordReaders and Tables
-- Transactions: grouping multiple operations into atomic commits,
-including branch transactions
+Tables written before that fix, or by engines still on older Java
+versions (Athena, some Trino deployments), embed the legacy names in the
+writer schema of every manifest list OCF file. When iceberg-go read such
+a file, hamba/avro could not match writer-schema fields to struct tags
+and silently left the three count fields at zero.
 
-Also fixed an outdated text claiming only the REST catalog is
-implemented when Hive, Glue, and SQL catalogs are all available.",dd38a995f099a3c3cb931b1f1896bc32b77702ba,919,false,,1,259,1,website,49,3,52,base; feature/api verb; strategic: catalog; medium churn; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Spark: Add ordering to TestSelect to remove flakiness <Huaxin Gao>,"- docs(website): add scanner, writer, and transaction API documentation (#919) (Thanks Tanmay Rauth!)"
+Zero counts caused HasAddedFiles() and HasExistingFiles() to return
+false, which broke fast-append manifest inheritance and caused
+Table.Scan() to return no data.
+
+Fix: add parallel struct fields with the legacy avro tags to
+manifestFileV1 and manifestFile. Accessors coalesce — preferring the
+spec-correct name, falling back to the legacy name. No write-path or
+schema-registration changes are made.
+
+Adds two tests (V1 and V2) that write raw Avro OCF using the pre-1.4
+field names and assert the counts decode correctly.
+
+Fixes #889",17090ae42bc3c85333e42eb1d59ebb8e0283b247,890,false,,4,277,168,go.mod; go.sum; manifest.go; manifest_test.go,49,5,54,base; fix; strategic: manifest; medium churn; multi-area change; has PR number; LanceDB similarity 0.16,Flink: TableMaintenance Support Coordinator Lock,- fix: decode pre-1.4 Java Iceberg legacy manifest list field names (#889) (#890) (Thanks Tanmay Rauth!)
 apache/iceberg-go,5d312c6068dde48bd1be8c1ce354aec744e6554a,5d312c6,Rohil Surana,rohilsurana96@gmail.com,2026-04-14T03:04:10+05:30,GitHub,noreply@github.com,2026-04-13T17:34:10-04:00,fix(deletes): change equality_ids array elements avro schema type from Long to Integer to match spec (#880),"## Description
 
 The `equality_ids` field (field-id 135) in the manifest entry's
@@ -747,31 +724,23 @@ predicates from both sides, Or suppresses collection
 - Add TestBloomFilterRowGroupPruning covering present/absent/In/unknown
 field ID cases; add TestLiteralToPhysBytes and
 TestBloomPredicateCollector",f3b406da279fe765afd535493f7127edf13aec3a,891,false,,6,629,13,table,35,7,42,base; important area: table; medium file count; medium churn; has PR number; LanceDB similarity 0.22,API: Implement properties method in EncryptingFileIO,- feat(table): bloom filter scan pruning for Parquet row groups (#834) (#891) (Thanks Tanmay Rauth!)
-apache/iceberg-go,7f6ab3a35da582c82e8a28f521fc5913dfdeb690,7f6ab3a,Ali Asghar,98263017+alliasgher@users.noreply.github.com,2026-04-15T01:51:29+05:00,GitHub,noreply@github.com,2026-04-14T16:51:29-04:00,cmd/iceberg: fix CLI YAML config being ignored when docopt sets defaults (#898),"Fixes #324.
-
-`mergeConf` was checking `len(resConfig.Field) == 0` before applying
-values from the YAML config file. Since `docopt` populates `resConfig`
-with default values (e.g. `Output=""text""`) before `mergeConf` runs,
-the file-config was silently ignored for any option that has a docopt
-default.
-
-**Fix:** scan `os.Args` to record which flags were explicitly provided,
-then apply the file-config value only when the corresponding flag was
-absent from the command line. CLI-provided values always take
-precedence; file-config fills in everything else.
-
-**Precedence after this change:**
-1. Explicit CLI flag (highest)
-2. YAML config file
-3. docopt default (lowest)
-
-Signed-off-by: alliasgher <alliasgher123@gmail.com>",285632c52ef829addb14254704f14b4368ac1f13,898,false,,1,23,7,cmd,35,7,42,base; fix; important area: cmd; has PR number; LanceDB similarity 0.24,"Spark, Arrow, Parquet: Add vectorized read support for parquet BYTE_STREAM_SPLIT encoding",- cmd/iceberg: fix CLI YAML config being ignored when docopt sets defaults (#898) (Thanks Ali Asghar!)
 apache/iceberg-go,fc0e7673ce8791b6847a5c7b59948ddeb1ea8856,fc0e767,Matt Topol,zotthewizard@gmail.com,2026-04-15T17:57:50-04:00,GitHub,noreply@github.com,2026-04-15T17:57:50-04:00,ci: fix triage labeler (#910),"Looks like the current config is incorrect based on the updated labeler
 action
 
 ---------
 
 Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",22115e0a38960a30e233ecf059e34c48b515013b,910,false,Kevin Liu,1,10,6,.github,35,5,40,base; fix; co-authored; correctness signal; has PR number; LanceDB similarity 0.17,Core: Reduce manifest logging noise on drop table,- ci: fix triage labeler (#910) (Thanks Matt Topol and Kevin Liu!)
+apache/iceberg-go,a0827dcbeaca8e9655d8e830c8c472c6e26c6114,a0827dc,Abhi Rathod,abhirathod95@users.noreply.github.com,2026-04-13T16:33:26-05:00,GitHub,noreply@github.com,2026-04-13T17:33:26-04:00,perf(table): Decrease memory pressure by releasing records (#886),"The fanout function currently defer's `record.Release()`. This isn't a
+big deal if the iterable it reads from contains a small amount of data.
+However, if it's a long lived streaming channel or contains a lot of
+data, the fanout function will hold on to **all ** the records until it
+processes all of them. This dramatically increases memory use,
+especially in a streaming use case.
+
+This PR extracts out the code to process each record into it's own
+function, and calls `defer record.Release()` there. No functional
+modifications were made. This will release each record after
+successfully processing the data.",8ab09f560fe8b234723bd16c231a50fb77e9b1d7,886,false,,2,238,23,table,31,9,40,base; important area: table; medium churn; has PR number; LanceDB similarity 0.28,"Core, Hive: Detect if a view already exists when registering a table",- perf(table): Decrease memory pressure by releasing records (#886) (Thanks Abhi Rathod!)
 apache/iceberg-go,311cc3c7f333c860ff30e32970948fbbff739a59,311cc3c,TT,70463940+Herrtian@users.noreply.github.com,2026-04-03T22:00:20+02:00,GitHub,noreply@github.com,2026-04-03T16:00:20-04:00,Thread context.Context through deletedEntries() (#847),"## Summary
 - Thread `context.Context` through the `deletedEntries()` call chain,
 replacing `context.TODO()` with a real context propagated from the write
@@ -807,15 +776,25 @@ compatibility checks.
 - Added test to ensure nil transform is rejected
 - Added test to verify valid transform is accepted
 - Added compatibility test with valid schema and transform",7f350219c76b04ef0bf48089058ef634de19f6c0,859,false,,2,42,2,table,33,3,36,base; feature/api verb; fix; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,"Core, Hive: Detect if a view already exists when registering a table",- fix: require Transform in NewSortOrder and add related tests (#859) (Thanks Narwhal-fish!)
-apache/iceberg-go,dd38a995f099a3c3cb931b1f1896bc32b77702ba,dd38a99,Tanmay Rauth,t_rauth@apple.com,2026-04-17T10:29:05-07:00,GitHub,noreply@github.com,2026-04-17T13:29:05-04:00,docs(website): sync feature tables with README.md (#918),"The feature support tables in website/src/introduction.md had diverged
-from README.md:
+apache/iceberg-go,7f6ab3a35da582c82e8a28f521fc5913dfdeb690,7f6ab3a,Ali Asghar,98263017+alliasgher@users.noreply.github.com,2026-04-15T01:51:29+05:00,GitHub,noreply@github.com,2026-04-14T16:51:29-04:00,cmd/iceberg: fix CLI YAML config being ignored when docopt sets defaults (#898),"Fixes #324.
 
-- Hive catalog: shown as unsupported despite full implementation
-- Write operations: missing Overwrite Files, Copy-On-Write Delete, and
-Write Pos Delete which are all implemented
-- Catalog table header alignment was inconsistent
+`mergeConf` was checking `len(resConfig.Field) == 0` before applying
+values from the YAML config file. Since `docopt` populates `resConfig`
+with default values (e.g. `Output=""text""`) before `mergeConf` runs,
+the file-config was silently ignored for any option that has a docopt
+default.
 
-Sync all tables to match README.md, which reflects the actual code.",48e640c677016d07a226430445d5a46ee3e954dc,918,false,,1,33,32,website,32,3,35,"base; strategic: catalog, copy-on-write; summary signal: copy-on-write; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit",Core: Avoid exceptions for accessing schema for metadata tables in SnapshotUtil,- docs(website): sync feature tables with README.md (#918) (Thanks Tanmay Rauth!)
+**Fix:** scan `os.Args` to record which flags were explicitly provided,
+then apply the file-config value only when the corresponding flag was
+absent from the command line. CLI-provided values always take
+precedence; file-config fills in everything else.
+
+**Precedence after this change:**
+1. Explicit CLI flag (highest)
+2. YAML config file
+3. docopt default (lowest)
+
+Signed-off-by: alliasgher <alliasgher123@gmail.com>",285632c52ef829addb14254704f14b4368ac1f13,898,false,,1,23,7,cmd,27,7,34,base; fix; important area: cmd; downrank narrow CLI change; has PR number; LanceDB similarity 0.24,"Spark, Arrow, Parquet: Add vectorized read support for parquet BYTE_STREAM_SPLIT encoding",- cmd/iceberg: fix CLI YAML config being ignored when docopt sets defaults (#898) (Thanks Ali Asghar!)
 apache/iceberg-go,bb81e9c59ac1c1f4380fa48ff9cf58a2b7895693,bb81e9c,Tyler Rockwood,rockwood@redpanda.com,2026-04-13T11:30:29-05:00,GitHub,noreply@github.com,2026-04-13T12:30:29-04:00,fix: handle missing format-version in NewManifestReader for v1 manifests (#868),"## Problem
 
 `NewManifestReader` in `manifest.go` calls `strconv.Atoi`
@@ -851,6 +830,18 @@ version 1.
 - Follows the same pattern as #826 which fixed `ReadManifestList`
 - Spec reference: `format/spec.md` Avro manifest file metadata table —
 `format-version` is `optional` for v1, `required` for v2",993d2170e575e2c997f11a9b681ffa2fa8b0c8a3,868,false,,2,64,3,manifest.go; manifest_test.go,30,3,33,base; fix; strategic: manifest; multi-area change; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Core: Fix rewriting delete manifests in RewriteTablePathUtil,- fix: handle missing format-version in NewManifestReader for v1 manifests (#868) (Thanks Tyler Rockwood!)
+apache/iceberg-go,17090ae42bc3c85333e42eb1d59ebb8e0283b247,17090ae,Tanmay Rauth,t_rauth@apple.com,2026-04-17T10:30:18-07:00,GitHub,noreply@github.com,2026-04-17T13:30:18-04:00,"docs(website): add scanner, writer, and transaction API documentation (#919)","The api.md page documented catalog and schema operations but was missing
+documentation for the primary data-path APIs that users needs:
+
+- Scanner: reading data with column projection, row filtering, time
+travel, and snapshot selection
+- Writer: appending, overwriting, and deleting data using Arrow
+RecordReaders and Tables
+- Transactions: grouping multiple operations into atomic commits,
+including branch transactions
+
+Also fixed an outdated text claiming only the REST catalog is
+implemented when Hive, Glue, and SQL catalogs are all available.",dd38a995f099a3c3cb931b1f1896bc32b77702ba,919,false,,1,259,1,website,29,3,32,base; feature/api verb; medium churn; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Spark: Add ordering to TestSelect to remove flakiness <Huaxin Gao>,"- docs(website): add scanner, writer, and transaction API documentation (#919) (Thanks Tanmay Rauth!)"
 apache/iceberg-go,8587fd1d251602cb35e4f9e933207e65abab5831,8587fd1,Ali Asghar,98263017+alliasgher@users.noreply.github.com,2026-04-14T00:11:03+05:00,GitHub,noreply@github.com,2026-04-13T15:11:03-04:00,feat(table): wire bloom filter properties into Parquet writer (#878),"## Summary
 
 `GetWriteProperties` read compression, page size, row group size etc.
@@ -926,6 +917,15 @@ apache/iceberg-go,7f350219c76b04ef0bf48089058ef634de19f6c0,7f35021,Dao Thanh Tun
 from @laskoviymishka
 
 Signed-off-by: dttung2905 <ttdao.2015@accountancy.smu.edu.sg>",b4722bb1f1a43160598e6d469810173bf5d92d87,856,false,,2,11,0,table,15,3,18,base; important area: table; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.29; capped LanceDB boost for routine/low-signal commit,REST Spec: Add unregister table endpoint,- feat(table): strengthen orphan-cleanup stats referenced-set tests and document empty-path guard (#856) (Thanks Dao Thanh Tung!)
+apache/iceberg-go,dd38a995f099a3c3cb931b1f1896bc32b77702ba,dd38a99,Tanmay Rauth,t_rauth@apple.com,2026-04-17T10:29:05-07:00,GitHub,noreply@github.com,2026-04-17T13:29:05-04:00,docs(website): sync feature tables with README.md (#918),"The feature support tables in website/src/introduction.md had diverged
+from README.md:
+
+- Hive catalog: shown as unsupported despite full implementation
+- Write operations: missing Overwrite Files, Copy-On-Write Delete, and
+Write Pos Delete which are all implemented
+- Catalog table header alignment was inconsistent
+
+Sync all tables to match README.md, which reflects the actual code.",48e640c677016d07a226430445d5a46ee3e954dc,918,false,,1,33,32,website,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,Core: Avoid exceptions for accessing schema for metadata tables in SnapshotUtil,- docs(website): sync feature tables with README.md (#918) (Thanks Tanmay Rauth!)
 apache/iceberg-go,dbc261601256ce3d23e5003b8a5c793e587b66f8,dbc2616,Andrei Tserakhau,laskoviymishka@gmail.com,2026-04-13T11:51:22-07:00,GitHub,noreply@github.com,2026-04-13T14:51:22-04:00,docs: expand CONTRIBUTING.md with issue claiming and PR guidelines (#887),"Add a contribution guideline rules for new-contributors, especially how
 to claim issue, work with reviews and where to seek for feedback and
 ping people.",bb81e9c59ac1c1f4380fa48ff9cf58a2b7895693,887,false,,1,42,1,CONTRIBUTING.md,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,Docs: Add informational properties section for table comment,- docs: expand CONTRIBUTING.md with issue claiming and PR guidelines (#887) (Thanks Andrei Tserakhau!)

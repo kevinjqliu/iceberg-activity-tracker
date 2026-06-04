@@ -13,14 +13,12 @@ _Top 20 themes from 71 scored commits._
 - Core: Introduce default values in RESTCatalogProperties (#15873) (Thanks gaborkaszab!)
 - Flink: Add passthroughRecords option to DynamicIcebergSink (#15433) (Thanks Han You and Jordan Epstein!)
 - Core, API, Spark: Add FileContent.fromId (#15953) (Thanks Anoop Johnson!)
-- Flink: Backport add passthroughRecords option to DynamicIcebergSink (#16019) (Thanks Han You!)
 - Core: Expose HostnameVerificationPolicy in TLSConfigurer (#15500) (Thanks Alexandre Dutra!)
 - Spec: Add 404 response for config endpoint (#15746) (Thanks Oguzhan Unlu!)
 - Spark (4.0, 3.5): Set data file sort_order_id in manifest for writes from Spark (#15832) (Thanks jbewing!)
 - AWS: Add chunked encoding configuration for S3 requests (#15242) (Thanks Jiajia Li!)
 - API, Core: Move stats classes to core as package-private (#15971) (Thanks Eduard Tudenhoefner!)
 - Parquet: Fix NPE in ParquetAvroWriter when schema contains variant type (#15934) (Thanks Neelesh Salian!)
-- Docs: Add Hive Metastore schema validation warnings for schema evolution with Hive catalog (#15814) (Thanks jackylee, Copilot, and Manu Zhang!)
 - Core: Expose MetricsConfig.from method with 3-parameter version (#15819) (Thanks Yuya Ebihara!)
 - API: Relax partition name check when source column is dropped (#15967) (Thanks Russell Spitzer!)
 - AWS: Add proxy system property and environment variable configuration for HTTP clients (#15506) (Thanks Mervyn Lobo!)
@@ -29,6 +27,8 @@ _Top 20 themes from 71 scored commits._
 - Core: Fix StructLikeWrapper.equals exception with mismatched partition types (#15945) (Thanks Yuya Ebihara!)
 - Hive encryption nits (#14659) (Thanks Sreesh Maheshwar and Claude Opus 4.6 (1M context)!)
 - AWS, Core: Switch Jetty to use new Compression API for GZIP (#15043) (Thanks Eduard Tudenhoefner!)
+- Add .factorypath to .gitignore (#16067) (Thanks Yuming Wang!)
+- Flink 2.1: Fix forward-writer chaining regression in DynamicIcebergSink (#16026) (Thanks drexler-sky!)
 
 ## apache/iceberg-python
 
@@ -64,14 +64,14 @@ _Top 20 themes from 24 scored commits._
 _Top 20 themes from 23 scored commits._
 
 - feat(encryption) [2/N] Support encryption: Add streaming encryption/decryption (#2286) (Thanks Xander!)
-- refactor(storage): remove the configured_scheme parameter from storage impls (#2338) (Thanks R. Conner Howell!)
-- tests(s3tables): add s3tables end-to-end test to verify table creation/loading plus reading/writing (#2315) (Thanks Daniel Carl Jones!)
-- fix: build_fallback_field_id_map produces incorrect column indices for schemas with nested types (#2307) (Thanks Matt Butrovich and blackmwk!)
 - fix(storage/s3): default to virtual-host-style addressing (#2330) (Thanks Jiajia Li!)
+- fix: build_fallback_field_id_map produces incorrect column indices for schemas with nested types (#2307) (Thanks Matt Butrovich and blackmwk!)
 - fix: incorrect Parquet INT96 timestamp values from ArrowReader (#2301) (Thanks Matt Butrovich!)
 - fix(s3tables): use 's3' as the default scheme (#2313) (Thanks R. Conner Howell!)
+- refactor(storage): remove the configured_scheme parameter from storage impls (#2338) (Thanks R. Conner Howell!)
 - support fixedbinary(n) (#2348) (Thanks jeff-sqds!)
 - Fix RUSTSEC-2026-0097 (#2331) (Thanks blackmwk!)
+- tests(s3tables): add s3tables end-to-end test to verify table creation/loading plus reading/writing (#2315) (Thanks Daniel Carl Jones!)
 - chore: update comment tag to match the exact version to fix zizmor (#2333) (Thanks Shawn Chang!)
 - Fix zizmor workflow (#2324) (Thanks blackmwk!)
 - ci: fix zizmor workflow (#2334) (Thanks Kevin Liu!)
@@ -97,7 +97,6 @@ _Top 20 themes from 58 scored commits._
 - feat(catalog): add `WithOAuthTLSConfig` for separate OAuth server TLS (#895) (Thanks Lovro Mažgon!)
 - fix(table): populate WriteTask.SortOrderID in data file writers (#875) (Thanks Ali Asghar!)
 - fix(table): prune StatisticsList and PartitionStatsList in RemoveSnapshots (#873) (Thanks Ali Asghar!)
-- fix: decode pre-1.4 Java Iceberg legacy manifest list field names (#889) (#890) (Thanks Tanmay Rauth!)
 - feat(table)!: multi-arg transforms in partition and sort fields (#824) (Thanks Andrei Tserakhau!)
 - feat(#492): implement SetStatistics, RemoveStatistics, AddEncryptionKey, RemoveEncryptionKey updates (#902) (Thanks Tanmay Rauth and Matt Topol!)
 - fix(table): warn on row count mismatch in Overwrite (#894) (Thanks Andrei Tserakhau!)
@@ -109,7 +108,8 @@ _Top 20 themes from 58 scored commits._
 - fix(rest): apply header.* additional props as HTTP headers on all requests (#921) (Thanks Ali Asghar!)
 - docs(website): add generator scaffold for example-driven concept pages (#920) (Thanks Andrei Tserakhau!)
 - feat(avro): replace hamba/avro with twmb/avro v1.5.0 (#871) (Thanks Travis Bischel and Claude Opus 4.6 (1M context)!)
-- perf(table): Decrease memory pressure by releasing records (#886) (Thanks Abhi Rathod!)
+- feat(table): support committing snapshots to branches other than main (#899) (Thanks Ali Asghar!)
+- refactor(table): collapse DataFileStatistics.ToDataFile args into DataFileOpts (#888) (Thanks Ali Asghar!)
 
 ## apache/iceberg-cpp
 
@@ -117,8 +117,8 @@ _Top 20 themes from 58 scored commits._
 
 _Top 10 themes from 10 scored commits._
 
-- feat(puffin): add format constants, utilities, and JSON serde (#603) (Thanks ZhaoXuan!)
 - feat: add s3 file io integration (#548) (Thanks liuxiaoyu!)
+- feat(puffin): add format constants, utilities, and JSON serde (#603) (Thanks ZhaoXuan!)
 - feat(data): add DeleteLoader for position and equality delete files (#610) (Thanks Gang Wu!)
 - feat(rest): support namespace separator (#617) (Thanks Gang Wu!)
 - feat: implement incremental changelog scan (#611) (Thanks wzhuo!)
