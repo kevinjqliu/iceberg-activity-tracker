@@ -1,5 +1,125 @@
 repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths
-apache/iceberg-cpp,a9114ceafe4c0954ae409210258149e5ec110945,a9114ce,Gang Wu,ustcwg@gmail.com,2026-04-22T13:03:34+08:00,GitHub,noreply@github.com,2026-04-22T13:03:34+08:00,chore: bump arrow-cpp to 24.0.0 (#623),,,623,false,,0,0,0,
+apache/iceberg-cpp,a1dc2f859e57ec67bc8a128111ae82310e690868,a1dc2f8,Gang Wu,ustcwg@gmail.com,2026-04-04T23:25:27+08:00,GitHub,noreply@github.com,2026-04-04T23:25:27+08:00,feat(data): add DeleteLoader for position and equality delete files (#610),"- LoadPositionDeletes dispatches to LoadPositionDelete (file-based) and
+LoadDV (deletion vectors, not yet implemented).
+- LoadEqualityDeletes reads equality delete files into a StructLikeSet.",,610,false,,0,0,0,
+apache/iceberg-cpp,42b00d40a29cf447a73ec0e0eaa79d75cfe8b83a,42b00d4,Sebastian Baunsgaard,seb@bgaard.dk,2026-04-04T17:26:20+02:00,GitHub,noreply@github.com,2026-04-04T23:26:20+08:00,feat(perf): optimize AddRange in RoaringPositionBitmap (#608),"Replace the per-position loop in `RoaringPositionBitmap::AddRange` with
+direct calls to `roaring::Roaring::addRange`, matching the optimization
+in the Java implementation
+(https://github.com/apache/iceberg/pull/15791).
+
+Added tests for single-position ranges, large contiguous ranges,
+three-key spanning ranges, and invalid inputs.",a1dc2f859e57ec67bc8a128111ae82310e690868,608,false,,3,111,4,src
+apache/iceberg-cpp,cda8fc4061e4f4a70868f991c8e0aa84cbb2e034,cda8fc4,Gang Wu,ustcwg@gmail.com,2026-04-15T09:44:12+08:00,GitHub,noreply@github.com,2026-04-15T09:44:12+08:00,feat(rest): support namespace separator (#617),,42b00d40a29cf447a73ec0e0eaa79d75cfe8b83a,617,false,,7,71,35,src
+apache/iceberg-cpp,a5fc25f3ab3444670af3f91a75a532c64c53510a,a5fc25f,liuxiaoyu,45345701+MisterRaindrop@users.noreply.github.com,2026-04-16T23:12:58+08:00,GitHub,noreply@github.com,2026-04-16T23:12:58+08:00,feat: add s3 file io integration (#548),,cda8fc4061e4f4a70868f991c8e0aa84cbb2e034,548,false,,30,1244,17,.github; CMakeLists.txt; ci; cmake_modules; src
+apache/iceberg-cpp,c38b392e8b87d2f07eea426643a60e00adf4dcca,c38b392,ZhaoXuan,425932451@qq.com,2026-04-16T23:28:03+08:00,GitHub,noreply@github.com,2026-04-16T23:28:03+08:00,"feat(puffin): add format constants, utilities, and JSON serde (#603)",,a5fc25f3ab3444670af3f91a75a532c64c53510a,603,false,,15,645,27,src
+apache/iceberg-cpp,633965f7eb94aeb082b211ae6c79c7e2fcbeb184,633965f,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-04-16T09:24:18-07:00,GitHub,noreply@github.com,2026-04-16T09:24:18-07:00,ci: apply github workflow best practice (zizmor/codeql/asf-allowlist-check) (#618),"Adding these 3 checks for all apache/iceberg* repos as part of
+https://github.com/apache/iceberg/issues/15742",c38b392e8b87d2f07eea426643a60e00adf4dcca,618,false,,11,179,36,.github
+apache/iceberg-cpp,4876d7c5469628ecea41d4f89776e6ae81521e80,4876d7c,wzhuo,wngzhuo@gmail.com,2026-04-17T09:44:12+08:00,GitHub,noreply@github.com,2026-04-17T09:44:12+08:00,feat: implement incremental changelog scan (#611),,633965f7eb94aeb082b211ae6c79c7e2fcbeb184,611,false,,5,872,10,src
+apache/iceberg-cpp,e7b228bd00a86e5304dcadf3919060f6c1cedba8,e7b228b,Zehua Zou,zehuazou2000@gmail.com,2026-04-17T11:27:53+08:00,GitHub,noreply@github.com,2026-04-17T11:27:53+08:00,chore: add more ai related .gitignore (#621),,4876d7c5469628ecea41d4f89776e6ae81521e80,621,false,,1,3,0,.gitignore
+apache/iceberg-cpp,8adb304350f734c1c5b64a27a386273107972ec6,8adb304,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-04-16T20:28:24-07:00,GitHub,noreply@github.com,2026-04-17T11:28:24+08:00,ci: set zizmor min-severity and min-confidence to medium (#620),"Part of https://github.com/apache/iceberg/issues/16000
+
+Gets rid of `zizmor: ignore[cache-poisoning]`, its low confidence.
+Set `min-severity: medium` and `min-confidence: medium` in
+`.github/workflows/zizmor.yml`
+
+
+Validated locally:
+```
+GH_TOKEN=`gh auth token` uvx zizmor --min-severity medium --min-confidence medium .github/
+```",e7b228bd00a86e5304dcadf3919060f6c1cedba8,620,false,,2,3,1,.github
+apache/iceberg-cpp,65321e32e7f37e6f6cfcc7f6a5ad8fee9c7f5404,65321e3,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-20T11:42:17+08:00,GitHub,noreply@github.com,2026-04-20T11:42:17+08:00,chore(deps): bump actions/upload-artifact from 7.0.0 to 7.0.1 (#622),"Bumps
+[actions/upload-artifact](https://github.com/actions/upload-artifact)
+from 7.0.0 to 7.0.1.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/upload-artifact/releases"">actions/upload-artifact's
+releases</a>.</em></p>
+<blockquote>
+<h2>v7.0.1</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Update the readme with direct upload details by <a
+href=""https://github.com/danwkennedy""><code>@​danwkennedy</code></a> in
+<a
+href=""https://redirect.github.com/actions/upload-artifact/pull/795"">actions/upload-artifact#795</a></li>
+<li>Readme: bump all the example versions to v7 by <a
+href=""https://github.com/danwkennedy""><code>@​danwkennedy</code></a> in
+<a
+href=""https://redirect.github.com/actions/upload-artifact/pull/796"">actions/upload-artifact#796</a></li>
+<li>Include changes in typespec/ts-http-runtime 0.3.5 by <a
+href=""https://github.com/yacaovsnc""><code>@​yacaovsnc</code></a> in <a
+href=""https://redirect.github.com/actions/upload-artifact/pull/797"">actions/upload-artifact#797</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/upload-artifact/compare/v7...v7.0.1"">https://github.com/actions/upload-artifact/compare/v7...v7.0.1</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/actions/upload-artifact/commit/043fb46d1a93c77aae656e7c1c64a875d1fc6a0a""><code>043fb46</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/actions/upload-artifact/issues/797"">#797</a>
+from actions/yacaovsnc/update-dependency</li>
+<li><a
+href=""https://github.com/actions/upload-artifact/commit/634250c1388765ea7ed0f053e636f1f399000b94""><code>634250c</code></a>
+Include changes in typespec/ts-http-runtime 0.3.5</li>
+<li><a
+href=""https://github.com/actions/upload-artifact/commit/e454baaac2be505c9450e11b8f3215c6fc023ce8""><code>e454baa</code></a>
+Readme: bump all the example versions to v7 (<a
+href=""https://redirect.github.com/actions/upload-artifact/issues/796"">#796</a>)</li>
+<li><a
+href=""https://github.com/actions/upload-artifact/commit/74fad66b98a6d799dc004d3353ccd0e6f6b2530e""><code>74fad66</code></a>
+Update the readme with direct upload details (<a
+href=""https://redirect.github.com/actions/upload-artifact/issues/795"">#795</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/actions/upload-artifact/compare/bbbca2ddaa5d8feaa63e36b76fdaad77386f024f...043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=actions/upload-artifact&package-manager=github_actions&previous-version=7.0.0&new-version=7.0.1)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",8adb304350f734c1c5b64a27a386273107972ec6,622,false,dependabot[bot],2,2,2,.github
+apache/iceberg-cpp,a9114ceafe4c0954ae409210258149e5ec110945,a9114ce,Gang Wu,ustcwg@gmail.com,2026-04-22T13:03:34+08:00,GitHub,noreply@github.com,2026-04-22T13:03:34+08:00,chore: bump arrow-cpp to 24.0.0 (#623),,65321e32e7f37e6f6cfcc7f6a5ad8fee9c7f5404,623,false,,3,9,6,cmake_modules; src
 apache/iceberg-cpp,b94fa7ccc720a1920d5fb010a8c5c223a20fa5a3,b94fa7c,Xinli Shang,shangx@uber.com,2026-04-24T03:01:17-07:00,GitHub,noreply@github.com,2026-04-24T18:01:17+08:00,feat: add ReachableFileCleanup to expire snapshots (#592),,a9114ceafe4c0954ae409210258149e5ec110945,592,false,,9,889,24,src
 apache/iceberg-cpp,8809e0f4ae59969e9cbd62ad0f3c4801943ffbe2,8809e0f,SkylerLin,44233950+linguoxuan@users.noreply.github.com,2026-04-24T22:48:51+08:00,GitHub,noreply@github.com,2026-04-24T22:48:51+08:00,feat: retry failed transaction commit (#626),"This commit implements the retry for transaction commits. It introduces
 a generic RetryRunner utility with exponential backoff and error-kind
@@ -1203,7 +1323,7 @@ yet update `ExpireSnapshots` to use `DeleteFiles(...)`, and it does not
 introduce
 parallel deletion.
 
-Fixed: #658 
+Fixed: #658
 
 ## Motivation
 
@@ -1656,7 +1776,7 @@ apache/iceberg-cpp,d6c1da02c2b4fb53479ba1b3a7f5ad2a44d9784f,d6c1da0,Yingfan Guo,
 `nan_value_counts` map, and `false` for non-floating-point types
 - Add regression tests covering the missing-entry scenario
 
-Close #685 
+Close #685
 
 ## Motivation
 

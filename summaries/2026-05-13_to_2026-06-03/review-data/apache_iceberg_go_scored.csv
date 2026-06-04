@@ -107,7 +107,7 @@ Also documents that `next-row-id` accounting intentionally overcounts
 - `TestCoWRewritePreservesRowID` : verifies surviving rows keep original
 `_row_id` after a CoW delete
 - `TestCoWRewriteRowIDNextRowIDAccounting` : validates next-row-id
-advances correctly",7db5a38379e49e2cf2848ee745833dd9f6c66e61,1099,false,,10,992,448,metadata_columns.go; table,88,6,94,"base; important area: table; strategic: compaction, copy-on-write, manifest, row lineage, v3, v4; summary signal: compaction, copy-on-write; medium file count; large churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.19",Flink: Support UUID type in Avro and Parquet readers and writers,- feat(table): preserve row lineage through copy-on-write rewrites (#1099) (Thanks Tanmay Rauth!)
+advances correctly",7db5a38379e49e2cf2848ee745833dd9f6c66e61,1099,false,,10,992,448,metadata_columns.go; table,88,6,94,"base; important area: table; strategic: compaction, copy-on-write, manifest, row lineage, v3, v4; summary signal: compaction, copy-on-write; medium file count; large churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.21",Flink: Support UUID type in Avro and Parquet readers and writers,- feat(table): preserve row lineage through copy-on-write rewrites (#1099) (Thanks Tanmay Rauth!)
 apache/iceberg-go,efe96b6f826d674c9edb0e09f6558dedc524e16b,efe96b6,Tobias Pütz,tobias@minio.io,2026-05-20T09:54:21+02:00,GitHub,noreply@github.com,2026-05-20T09:54:21+02:00,feat: add wire codec helpers for DataFile and FileScanTask (#1075),"Adds on-the-wire encoding for DataFile and FileScanTask to enable
 distributed compaction. With #1033, we decomposed compaction into a
 coordinator and worker portion. This enables plumbing them together over
@@ -425,6 +425,19 @@ snapshot refs with --type filter.
 
 Depends On: #1073",14470e5b24fecdd7867e6bb9724762268f29c06b,1072,false,,2,403,11,cmd,48,7,55,base; feature/api verb; important area: cli; medium churn; downrank narrow CLI change; has PR number; LanceDB similarity 0.25,Core: Add partition to TrackedFile,- feat(cli): add snapshots and refs commands (#1072) (Thanks Tanmay Rauth!)
 apache/iceberg-go,77c0f63a030e318012e339f7472463a63d5173fb,77c0f63,Lei Zhang,1091517373@qq.com,2026-05-13T15:01:12+08:00,GitHub,noreply@github.com,2026-05-13T09:01:12+02:00,feat(io): register oss scheme for aliyun oss S3-compatible storage (#1074),,d64fd545fadbbd535f7681789e1ee74d1d4de443,1074,false,,2,4,0,io,47,8,55,base; important area: io; strategic: storage; has PR number; LanceDB similarity 0.26,Make StandardEncryptionManager serializable,- feat(io): register oss scheme for aliyun oss S3-compatible storage (#1074) (Thanks Lei Zhang!)
+apache/iceberg-go,1401cb6be0656b36771ac7d5d13e87cb224db006,1401cb6,Tanmay Rauth,t_rauth@apple.com,2026-05-21T19:11:59+05:30,GitHub,noreply@github.com,2026-05-21T15:41:59+02:00,feat(table): reject AddDataFiles on v3 when first_row_id is missing (#1000) (#1101),"Closes #1000
+When users call `AddDataFiles` (or `ReplaceDataFilesWithDataFiles` /
+`ReplaceFiles`) with externally-written parquet files on a v3 table,
+reject the operation if `first_row_id` is not set. This mirrors
+pyiceberg's behavior — the library cannot fabricate row IDs
+retroactively, so callers must supply them explicitly via
+`DataFileBuilder.FirstRowID()`.
+## Changes
+
+- Added validation in `validateDataFilesToAdd` to require `first_row_id`
+on format version >= 3
+  - Error message directs users to `DataFileBuilder.FirstRowID()`
+  - v2 tables are unaffected",9792958839c4d90551e114382dcff3c7f0f428c9,1101,false,,2,50,0,table,47,7,54,base; important area: table; strategic: v3; has PR number; LanceDB similarity 0.24,Core: Avro: Row Lineage Column (ROW_ID) is not populated correctly in case the Data File doesn't have them,- feat(table): reject AddDataFiles on v3 when first_row_id is missing (#1000) (#1101) (Thanks Tanmay Rauth!)
 apache/iceberg-go,e308fedba4bbeeec8c142afa9c77e27698639ecf,e308fed,Krutika Dhananjay,dhananjaykrutika@gmail.com,2026-05-14T02:19:56+05:30,GitHub,noreply@github.com,2026-05-13T22:49:56+02:00,Skip DELETED tombstones in DeleteOrphanFiles' referenced set (#1076),"DeleteOrphanFiles builds ""referenced files"" set by walking each live
 snapshot's manifests, fetching every entry with discardDeleted=false,
 and unconditionally marking entry as referenced. This treats
@@ -456,19 +469,6 @@ initial-default and write-default values alongside field definitions.
 
 Related: #957
 Depends On: #1073",77c0f63a030e318012e339f7472463a63d5173fb,1067,false,,2,195,6,cmd,48,6,54,base; feature/api verb; important area: cli; medium churn; downrank narrow CLI change; has PR number; LanceDB similarity 0.21,Core: Make sequence number conflicts retryable when there are concurrent commits,- feat(cli): add --show-defaults flag to schema command (#1067) (Thanks Tanmay Rauth!)
-apache/iceberg-go,1401cb6be0656b36771ac7d5d13e87cb224db006,1401cb6,Tanmay Rauth,t_rauth@apple.com,2026-05-21T19:11:59+05:30,GitHub,noreply@github.com,2026-05-21T15:41:59+02:00,feat(table): reject AddDataFiles on v3 when first_row_id is missing (#1000) (#1101),"Closes #1000
-When users call `AddDataFiles` (or `ReplaceDataFilesWithDataFiles` /
-`ReplaceFiles`) with externally-written parquet files on a v3 table,
-reject the operation if `first_row_id` is not set. This mirrors
-pyiceberg's behavior — the library cannot fabricate row IDs
-retroactively, so callers must supply them explicitly via
-`DataFileBuilder.FirstRowID()`.
-## Changes
-
-- Added validation in `validateDataFilesToAdd` to require `first_row_id`
-on format version >= 3
-  - Error message directs users to `DataFileBuilder.FirstRowID()`
-  - v2 tables are unaffected",9792958839c4d90551e114382dcff3c7f0f428c9,1101,false,,2,50,0,table,47,6,53,base; important area: table; strategic: v3; has PR number; LanceDB similarity 0.21,Upgrade to Spark 3.5.8,- feat(table): reject AddDataFiles on v3 when first_row_id is missing (#1000) (#1101) (Thanks Tanmay Rauth!)
 apache/iceberg-go,9792958839c4d90551e114382dcff3c7f0f428c9,9792958,Minh Vu,vuhoangminh97@gmail.com,2026-05-21T10:09:07+02:00,GitHub,noreply@github.com,2026-05-21T10:09:07+02:00,fix(table): tighten strict negative metrics checks (#1106),"## Summary
 
 - use `containsNullsOnly` / `containsNansOnly` for strict `NotEqual` and
