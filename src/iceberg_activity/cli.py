@@ -97,7 +97,7 @@ def build_parser() -> argparse.ArgumentParser:
     summarize.add_argument(
         "--top",
         type=int,
-        default=10,
+        default=20,
         help="Number of top commits to include in markdown",
     )
     summarize.add_argument(

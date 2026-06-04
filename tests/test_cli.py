@@ -82,3 +82,11 @@ def test_resolve_summary_range_rejects_empty_half_open_window() -> None:
 def test_parse_iso_date_rejects_invalid_date() -> None:
     with pytest.raises(Exception, match="expected YYYY-MM-DD"):
         cli.parse_iso_date("06/03/2026")
+
+
+def test_summarize_defaults_to_twenty_review_candidates() -> None:
+    parser = cli.build_parser()
+
+    args = parser.parse_args(["summarize", "--since", "2026-05-13", "--until", "2026-06-03"])
+
+    assert args.top == 20
