@@ -31,4 +31,9 @@ TARGET_REPOSITORIES: tuple[RepoConfig, ...] = (
         remote_url="https://github.com/apache/iceberg-python.git",
         summary_heading="Python",
     ),
+    RepoConfig(
+        full_name="apache/iceberg-rust",
+        remote_url="https://github.com/apache/iceberg-rust.git",
+        summary_heading="Rust",
+    ),
 )

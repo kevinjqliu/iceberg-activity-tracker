@@ -1,0 +1,1476 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-rust,4e8cf7f2b10206fca59cbc87b710f66d0f23fb21,4e8cf7f,Xander,zander181@googlemail.com,2026-04-16T20:00:13+01:00,GitHub,noreply@github.com,2026-04-17T03:00:13+08:00,feat(encryption) [2/N] Support encryption: Add streaming encryption/decryption (#2286),,a2f067d0225d66ab88b8a18ec25b8a0953e35082,2286,false,,5,1553,0,.typos.toml; crates,74,8,82,base; feature/api verb; strategic: encryption; medium file count; large churn; multi-area change; has PR number; LanceDB similarity 0.26,Add idempotency adapter and E2E coverage,- feat(encryption) [2/N] Support encryption: Add streaming encryption/decryption (#2286) (Thanks Xander!)
+apache/iceberg-rust,fda82a249461f8ecf09b6328f6db7272e238844a,fda82a2,R. Conner Howell,5731503+rchowell@users.noreply.github.com,2026-04-17T16:59:33-07:00,GitHub,noreply@github.com,2026-04-17T16:59:33-07:00,refactor(storage): remove the configured_scheme parameter from storage impls (#2338),"## Which issue does this PR close?
+
+- Closes #2245 
+- Related #2231
+
+## What changes are included in this PR?
+
+- Remove configured_scheme field from OpenDalStorage::{S3,Azdls}
+- Make S3 storage use the scheme in the file paths, allowing for custom
+S3-compatible schemes like minio://
+- Use `HashMap<Scheme, Arc<OpenDalStorage>>` so aliases share a storage
+instance
+- Added new unit tests and removed some now-obsolete scheme-mismatch
+tests
+
+## Break Change
+
+We are removing a struct field from public types, so this would need to
+be release in 0.10.0
+
+```rust
+// Before
+OpenDalStorageFactory::S3 {
+    configured_scheme: ""s3a"".to_string(),
+    customized_credential_load: None,
+}
+OpenDalStorageFactory::Azdls {
+    configured_scheme: AzureStorageScheme::Abfss,
+}
+
+// After
+OpenDalStorageFactory::S3 { customized_credential_load: None }
+OpenDalStorageFactory::Azdls
+```
+
+## Are these changes tested?
+
+Beyond the unit tests, I ran these integration tests.
+
+```sh
+docker compose -f dev/docker-compose.yaml up -d --wait
+
+# requires unset on any AWS_ env vars
+cargo test -p iceberg-integration-tests
+cargo test -p iceberg-catalog-hms --test hms_catalog_test
+cargo test -p iceberg-catalog-loader
+cargo test -p iceberg-storage-opendal --features opendal-s3 --test file_io_s3_test
+```",4e8cf7f2b10206fca59cbc87b710f66d0f23fb21,2338,false,,14,116,163,crates,60,5,65,"base; strategic: catalog, opendal, storage; medium file count; medium churn; release/security/notice signal; has PR number; LanceDB similarity 0.16",Core: Remove deprecation from ViewProperties.WRITE_METADATA_LOCATION,- refactor(storage): remove the configured_scheme parameter from storage impls (#2338) (Thanks R. Conner Howell!)
+apache/iceberg-rust,2890a6190eec612d231f34465133e8f1053f0f95,2890a61,Daniel Carl Jones,danny@danielcarl.info,2026-04-15T22:10:42+01:00,GitHub,noreply@github.com,2026-04-15T14:10:42-07:00,tests(s3tables): add s3tables end-to-end test to verify table creation/loading plus reading/writing (#2315),"## Which issue does this PR close?
+
+- Extends #2313 with a test.
+
+In particular, I've written a test that verifies creating a table and
+writing to it, and then loading that table from the catalog and reading
+from it using the default storage backend.
+
+## What changes are included in this PR?
+
+This adds a test that currently fails and will be passing once #2313 is
+merged.
+
+## Are these changes tested?
+
+This change is only a new test.
+
+Signed-off-by: Daniel Carl Jones <djonesoa@amazon.com>",d118aa84b863f463a1a7dda7fea5af7ee16c5cf6,2315,false,,3,115,0,Cargo.lock; crates,50,3,53,"base; feature/api verb; strategic: catalog, storage; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit","API, Core: Add FileIO to Scan API",- tests(s3tables): add s3tables end-to-end test to verify table creation/loading plus reading/writing (#2315) (Thanks Daniel Carl Jones!)
+apache/iceberg-rust,5ea6f4cfed6477a1b423a7513de02a4ff686a2fa,5ea6f4c,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-04-15T21:30:40-04:00,GitHub,noreply@github.com,2026-04-16T09:30:40+08:00,fix: build_fallback_field_id_map produces incorrect column indices for schemas with nested types (#2307),"## Which issue does this PR close?
+
+- Closes #2306.
+- Downstream issue:
+https://github.com/apache/datafusion-comet/issues/3860
+
+## What changes are included in this PR?                  
+
+`build_fallback_field_id_map` iterated over Parquet leaf columns instead
+of top-level fields when building the field ID to column index mapping
+for migrated files (no embedded field IDs). When nested types (struct,
+list, map) precede a primitive column, they expand into multiple leaves,
+causing the mapping to diverge from
+`add_fallback_field_ids_to_arrow_schema` which correctly assigns ordinal
+IDs to top-level Arrow fields. This made predicates on columns after
+nested types resolve to a leaf inside the group, crashing with ""Leaf
+column `id` in predicates isn't a root column in Parquet schema"".
+
+The fix iterates `root_schema().get_fields()` directly, assigning
+ordinal IDs only to top-level fields. For non-primitive fields
+(struct/list/map), it uses `get_column_root_idx` to advance past their
+leaf columns. This mirrors iceberg-java's
+`ParquetSchemaUtil.addFallbackIds()`, which iterates
+`fileSchema.getFields()` assigning ordinal IDs to top-level fields.
+
+Also renames ""Leave column"" to ""Leaf column"" in error messages.
+
+## Are these changes tested?
+
+- An integration test
+(`test_predicate_on_migrated_file_with_nested_types`) writes a Parquet
+file without field IDs containing struct, list, and map columns before
+an `id` column, then reads with a predicate on `id`. This reproduces the
+exact crash before the fix. Test data is constructed with `serde_arrow`
+for readability.
+
+- [Apache DataFusion Comet](https://github.com/apache/datafusion-comet)
+used the repro test in
+
+[apache/datafusion-comet#3860](https://github.com/apache/datafusion-comet/issues/3860)
+and it passes with this change:
+https://github.com/apache/datafusion-comet/pull/3872
+
+---------
+
+Co-authored-by: blackmwk <liurenjie1024@outlook.com>",2890a6190eec612d231f34465133e8f1053f0f95,2307,false,blackmwk,3,277,8,Cargo.lock; crates,44,6,50,base; fix; medium churn; multi-area change; co-authored; correctness signal; has PR number; LanceDB similarity 0.20,"API, Core, Orc: Implement project() for partition statistics scan API",- fix: build_fallback_field_id_map produces incorrect column indices for schemas with nested types (#2307) (Thanks Matt Butrovich and blackmwk!)
+apache/iceberg-rust,d6692fc5d1e2e3cea8aaea3d2cb62cfd0f6eec98,d6692fc,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-04-15T18:00:47+08:00,GitHub,noreply@github.com,2026-04-15T18:00:47+08:00,fix(storage/s3): default to virtual-host-style addressing (#2330),"## Which issue does this PR close?
+ N/A
+
+## What changes are included in this PR?
+The Java Iceberg SDK defaults [`s3.path-style-access` to
+`false`](https://github.com/apache/iceberg/blob/main/aws/src/main/java/org/apache/iceberg/aws/s3/S3FileIOProperties.java#L238-L240)
+i.e. virtual-host-style addressing is the spec default. opendal's
+`S3Config::default()`, which the opendal storage backend inherits from,
+uses path-style. As a result, any user building an iceberg-rust `FileIO`
+against AWS S3 or an S3-compatible service has to explicitly set
+`s3.path-style-access=false` to get the same behavior they would get
+from Java out of the box — and several S3-compatible endpoints only
+accept virtual-host-style URLs and fail outright with
+`SecondLevelDomainForbidden` (or equivalent) under the current default.
+
+## Are these changes tested?
+  Yes:
+  - `cargo test -p iceberg --lib io::storage::config::s3::tests`
+  - `cargo test -p iceberg-storage-opendal --lib s3::tests",b06b5734b87f64062c33bf65f73062356ba87d91,2330,false,,7,82,9,crates,44,6,50,"base; fix; strategic: opendal, storage; medium file count; has PR number; LanceDB similarity 0.20",Fix Internal to Generic conversion of TIMESTAMP_NANO,- fix(storage/s3): default to virtual-host-style addressing (#2330) (Thanks Jiajia Li!)
+apache/iceberg-rust,a2f067d0225d66ab88b8a18ec25b8a0953e35082,a2f067d,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-04-15T22:13:56-04:00,GitHub,noreply@github.com,2026-04-16T10:13:56+08:00,fix: incorrect Parquet INT96 timestamp values from ArrowReader (#2301),"## Which issue does this PR close?
+
+- Closes #2299.
+## What changes are included in this PR?
+- Add `coerce_int96_timestamps()` to patch the Arrow schema before
+reading, using arrow-rs's schema hint mechanism
+(`ArrowReaderOptions::with_schema`) to read
+INT96 columns at the resolution specified by the Iceberg table schema
+- `timestamp`/`timestamptz` → microsecond,
+`timestamp_ns`/`timestamptz_ns` → nanosecond, per the [Iceberg
+spec](https://iceberg.apache.org/spec/#primitive-types)
+- Falls back to microsecond when no field ID is available (matching
+Iceberg Java's `TimestampInt96Reader` behavior)
+- Applied after all three schema resolution branches (with field IDs,
+name mapping, positional fallback) so the fix covers both native and
+migrated tables
+- Handles INT96 inside nested types (structs, lists, maps) via
+`ArrowSchemaVisitor` traversal
+- Visitor and tests live in a standalone `arrow/int96.rs` module to keep
+`reader.rs` manageable
+- Made `visit_schema` in `arrow/schema.rs` `pub(crate)` so the coercion
+visitor can reuse the existing traversal
+
+## Are these changes tested?
+
+- `test_read_int96_timestamps_with_field_ids` — files with embedded
+field IDs (branch 1)
+- `test_read_int96_timestamps_without_field_ids` — migrated files
+without field IDs (branches 2/3)
+- `test_read_int96_timestamps_in_struct` — INT96 inside a struct field
+- `test_read_int96_timestamps_in_list` — INT96 inside a list field
+(3-level Parquet LIST encoding)
+- `test_read_int96_timestamps_in_map` — INT96 as map values
+- All tests use dates outside the i64 nanosecond range (~1677-2262) to
+confirm the overflow is avoided
+- [Apache DataFusion Comet](https://github.com/apache/datafusion-comet)
+used the repro test in
+
+[apache/datafusion-comet#3856](https://github.com/apache/datafusion-comet/issues/3856)
+and it passes with this change:
+https://github.com/apache/datafusion-comet/pull/3857",5ea6f4cfed6477a1b423a7513de02a4ff686a2fa,2301,false,,4,1158,1,crates,40,6,46,base; fix; large churn; correctness signal; has PR number; LanceDB similarity 0.19,BigQuery: Eliminate redundant table load by using ETag for conflict detection,- fix: incorrect Parquet INT96 timestamp values from ArrowReader (#2301) (Thanks Matt Butrovich!)
+apache/iceberg-rust,b06b5734b87f64062c33bf65f73062356ba87d91,b06b573,R. Conner Howell,5731503+rchowell@users.noreply.github.com,2026-04-15T02:54:16-07:00,GitHub,noreply@github.com,2026-04-15T17:54:16+08:00,fix(s3tables): use 's3' as the default scheme (#2313),"## Which issue does this PR close?
+
+- Closes #2312 
+
+## What changes are included in this PR?
+
+Changes the s3tables default scheme to ""s3://""
+
+## Are these changes tested?
+
+With this change, I can read files resolved through an s3table catalog
+now.",8e884efa41a2a416d212a7aae0e8946967d5dc4e,2313,false,,1,1,1,crates,40,6,46,base; fix; strategic: catalog; has PR number; LanceDB similarity 0.20,Fix Internal to Generic conversion of TIMESTAMP_NANO,- fix(s3tables): use 's3' as the default scheme (#2313) (Thanks R. Conner Howell!)
+apache/iceberg-rust,c1538de36dd53e491299b62ad89286f2db496bc7,c1538de,jeff-sqds,jeff@sqds.io,2026-04-19T23:48:37-04:00,GitHub,noreply@github.com,2026-04-20T11:48:37+08:00,support fixedbinary(n) (#2348),"## Which issue does this PR close?
+
+- Closes #2347 .
+
+## What changes are included in this PR?
+
+This change performs datum conversion for FixedSizedBinaryArray types
+from fixed binary primitive types. It closely follows the previously
+added support for Uuid types.
+
+## Are these changes tested?
+
+Yes",02496d3f20d2796437272234ee42fbb406c6efdd,2348,false,,1,17,0,crates,37,5,42,base; feature/api verb; has PR number; LanceDB similarity 0.15,https://github.com/apache/iceberg/milestone/59,- support fixedbinary(n) (#2348) (Thanks jeff-sqds!)
+apache/iceberg-rust,3fe7be196cae9e119747de3bc3fcae5818e2e9b0,3fe7be1,blackmwk,liurenjie1024@outlook.com,2026-04-16T01:30:19+08:00,GitHub,noreply@github.com,2026-04-15T10:30:19-07:00,Fix RUSTSEC-2026-0097 (#2331),"## Which issue does this PR close?
+
+
+- Closes #2327 #2328 #2329
+
+## What changes are included in this PR?
+
+Upgrade rnd version, use recommended api.
+
+## Are these changes tested?
+
+ut.",d6692fc5d1e2e3cea8aaea3d2cb62cfd0f6eec98,2331,false,,6,41,37,.cargo; Cargo.lock; Cargo.toml; crates,29,8,37,base; fix; medium file count; multi-area change; has PR number; LanceDB similarity 0.25,AWS: Add scheduled refresh for the S3FileIO held storage credentials,- Fix RUSTSEC-2026-0097 (#2331) (Thanks blackmwk!)
+apache/iceberg-rust,5334dcb5ba670377c974b49c87c8c273f4c7181d,5334dcb,Shawn Chang,yxchang@amazon.com,2026-04-15T11:43:46-07:00,GitHub,noreply@github.com,2026-04-15T11:43:46-07:00,chore: update comment tag to match the exact version to fix zizmor (#2333),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Closes #.
+
+## What changes are included in this PR?
+- update codeql version from 4.35.1 to 4.35.2
+- update comment tag
+ 
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",3fe7be196cae9e119747de3bc3fcae5818e2e9b0,2333,false,,1,2,2,.github,20,7,27,base; fix; has PR number; LanceDB similarity 0.23,"Core, Spark: Moving Spark to use the new FormatModel API",- chore: update comment tag to match the exact version to fix zizmor (#2333) (Thanks Shawn Chang!)
+apache/iceberg-rust,59c8f4b7a9a6e31dd5033b3c0a37e8d483f4809b,59c8f4b,blackmwk,liurenjie1024@outlook.com,2026-04-13T16:29:51+08:00,GitHub,noreply@github.com,2026-04-13T16:29:51+08:00,Fix zizmor workflow (#2324),"## Which issue does this PR close?
+
+- Closes #2323 .
+
+## What changes are included in this PR?
+
+
+## Are these changes tested?
+
+ci",,2324,false,,0,0,0,,20,6,26,base; fix; has PR number; LanceDB similarity 0.19,Fix Internal to Generic conversion of TIMESTAMP_NANO,- Fix zizmor workflow (#2324) (Thanks blackmwk!)
+apache/iceberg-rust,e285c7957fc6860a654f7da10c92c6d93ac90531,e285c79,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-04-15T12:08:48-07:00,GitHub,noreply@github.com,2026-04-15T12:08:48-07:00,ci: fix zizmor workflow (#2334),,5334dcb5ba670377c974b49c87c8c273f4c7181d,2334,false,,1,1,2,.github,20,5,25,base; fix; has PR number; LanceDB similarity 0.17,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- ci: fix zizmor workflow (#2334) (Thanks Kevin Liu!)
+apache/iceberg-rust,99ffd68b85399e753b1d78f3923fbe049de09ac3,99ffd68,blackmwk,liurenjie1024@outlook.com,2026-04-14T23:27:48+08:00,GitHub,noreply@github.com,2026-04-14T08:27:48-07:00,Fix ci workflow failure (#2325),"## Which issue does this PR close?
+
+
+- Closes #.
+
+## What changes are included in this PR?
+
+Our current ci failed due to an audit issue, see:
+https://github.com/apache/iceberg-rust/pull/2321 . This pr fix the ci
+failure.
+
+## Are these changes tested?
+
+CI.",d472bf8e06a7fa39e8aec98ff6cdc209631188b4,2325,false,,1,3,0,.github,20,5,25,base; fix; has PR number; LanceDB similarity 0.18,Spark 4.1: Fix async microbatch plan bugs,- Fix ci workflow failure (#2325) (Thanks blackmwk!)
+apache/iceberg-rust,1b6400956da02d6b564db527edf5d7ea8feca0d3,1b64009,Xander,zander181@googlemail.com,2026-04-21T02:08:37+01:00,GitHub,noreply@github.com,2026-04-21T09:08:37+08:00,chore: bump datafusion to 53.1.0 (#2350),"## Which issue does this PR close?
+Keep up with latest release from datafusion:
+https://github.com/apache/datafusion/issues/21079
+
+- Closes #.
+
+## What changes are included in this PR?
+chore: bump datafusion to 53.1.0
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",c1538de36dd53e491299b62ad89286f2db496bc7,2350,false,,2,65,65,Cargo.lock; Cargo.toml,-43,3,-40,base; multi-area change; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- chore: bump datafusion to 53.1.0 (#2350) (Thanks Xander!)
+apache/iceberg-rust,ad44fc3b99f941ecb6d6d7e5a40647077068361e,ad44fc3,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-21T15:33:41+08:00,GitHub,noreply@github.com,2026-04-21T15:33:41+08:00,chore(deps): Bump rustls-webpki from 0.103.10 to 0.103.12 in /bindings/python (#2352),"Bumps [rustls-webpki](https://github.com/rustls/webpki) from 0.103.10 to
+0.103.12.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/rustls/webpki/releases"">rustls-webpki's
+releases</a>.</em></p>
+<blockquote>
+<h2>0.103.12</h2>
+<p>This release fixes two bugs in name constraint enforcement:</p>
+<ul>
+<li><strong>GHSA-965h-392x-2mh5</strong>: name constraints for URI names
+were ignored and therefore accepted. URI name constraints are now
+rejected unconditionally. Note this library does not provide an API for
+asserting URI names, and URI name constraints are otherwise not
+implemented.</li>
+<li><strong>GHSA-xgp8-3hg3-c2mh</strong>: permitted subtree name
+constraints for DNS names were accepted for certificates asserting a
+wildcard name. This was incorrect because, given a name constraint of
+<code>accept.example.com</code>, <code>*.example.com</code> could
+feasibly allow a name of <code>reject.example.com</code> which is
+outside the constraint. This is very similar to <a
+href=""https://go.dev/issue/76442"">CVE-2025-61727</a>.</li>
+</ul>
+<p>Since name constraints are restrictions on otherwise properly-issued
+certificates, these bugs are reachable only after signature verification
+and require misissuance to exploit.</p>
+<h2>What's Changed</h2>
+<ul>
+<li>Prepare 0.103.12 by <a
+href=""https://github.com/djc""><code>@​djc</code></a> in <a
+href=""https://redirect.github.com/rustls/webpki/pull/470"">rustls/webpki#470</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/rustls/webpki/compare/v/0.103.11...v/0.103.12"">https://github.com/rustls/webpki/compare/v/0.103.11...v/0.103.12</a></p>
+<h2>0.103.11</h2>
+<p>In response to <a
+href=""https://redirect.github.com/rustls/webpki/issues/464"">#464</a>,
+we've slightly relaxed requirements for
+<code>anchor_from_trust_cert()</code> to ignore unknown extensions even
+if they're marked as critical. This only affects parsing a
+<code>TrustAnchor</code> from DER, for which most extensions are ignored
+anyway.</p>
+<h2>What's Changed</h2>
+<ul>
+<li>Backport parsing trust anchors with unknown critical extensions to
+0.103 by <a href=""https://github.com/djc""><code>@​djc</code></a> in <a
+href=""https://redirect.github.com/rustls/webpki/pull/466"">rustls/webpki#466</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/rustls/webpki/commit/27131d476e2b68a537e629d6d012bef8dad6efd3""><code>27131d4</code></a>
+Bump version to 0.103.12</li>
+<li><a
+href=""https://github.com/rustls/webpki/commit/6ecb8769cde2246e761e058709421c14a7dee6b1""><code>6ecb876</code></a>
+Clean up stuttery enum variant names</li>
+<li><a
+href=""https://github.com/rustls/webpki/commit/318b3e6e03ca2bc21600ca6bb0d0c6439b9e6aeb""><code>318b3e6</code></a>
+Ignore wildcard labels when matching name constraints</li>
+<li><a
+href=""https://github.com/rustls/webpki/commit/12196229a327d3d670798688254bd3ea24aba24b""><code>1219622</code></a>
+Rewrite constraint matching to avoid permissive catch-all branch</li>
+<li><a
+href=""https://github.com/rustls/webpki/commit/57bc62ce538c2d0d31d44b3eb8c58e6a0a764b47""><code>57bc62c</code></a>
+Bump version to 0.103.11</li>
+<li><a
+href=""https://github.com/rustls/webpki/commit/d0fa01ee0a76b7585c13ec43de5854955146ffef""><code>d0fa01e</code></a>
+Allow parsing trust anchors with unknown criticial extensions</li>
+<li>See full diff in <a
+href=""https://github.com/rustls/webpki/compare/v/0.103.10...v/0.103.12"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=rustls-webpki&package-manager=cargo&previous-version=0.103.10&new-version=0.103.12)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+You can disable automated security fix PRs for this repo from the
+[Security Alerts
+page](https://github.com/apache/iceberg-rust/network/alerts).
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",1b6400956da02d6b564db527edf5d7ea8feca0d3,2352,false,dependabot[bot],1,74,74,bindings,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,"Core, Hive: Detect if a view already exists when registering a table",- chore(deps): Bump rustls-webpki from 0.103.10 to 0.103.12 in /bindings/python (#2352) (Thanks dependabot[bot]!)
+apache/iceberg-rust,02496d3f20d2796437272234ee42fbb406c6efdd,02496d3,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-20T10:52:34+08:00,GitHub,noreply@github.com,2026-04-20T10:52:34+08:00,chore(deps): Bump actions/upload-artifact from 7.0.0 to 7.0.1 (#2345),"Bumps
+[actions/upload-artifact](https://github.com/actions/upload-artifact)
+from 7.0.0 to 7.0.1.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/upload-artifact/releases"">actions/upload-artifact's
+releases</a>.</em></p>
+<blockquote>
+<h2>v7.0.1</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Update the readme with direct upload details by <a
+href=""https://github.com/danwkennedy""><code>@​danwkennedy</code></a> in
+<a
+href=""https://redirect.github.com/actions/upload-artifact/pull/795"">actions/upload-artifact#795</a></li>
+<li>Readme: bump all the example versions to v7 by <a
+href=""https://github.com/danwkennedy""><code>@​danwkennedy</code></a> in
+<a
+href=""https://redirect.github.com/actions/upload-artifact/pull/796"">actions/upload-artifact#796</a></li>
+<li>Include changes in typespec/ts-http-runtime 0.3.5 by <a
+href=""https://github.com/yacaovsnc""><code>@​yacaovsnc</code></a> in <a
+href=""https://redirect.github.com/actions/upload-artifact/pull/797"">actions/upload-artifact#797</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/upload-artifact/compare/v7...v7.0.1"">https://github.com/actions/upload-artifact/compare/v7...v7.0.1</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/actions/upload-artifact/commit/043fb46d1a93c77aae656e7c1c64a875d1fc6a0a""><code>043fb46</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/actions/upload-artifact/issues/797"">#797</a>
+from actions/yacaovsnc/update-dependency</li>
+<li><a
+href=""https://github.com/actions/upload-artifact/commit/634250c1388765ea7ed0f053e636f1f399000b94""><code>634250c</code></a>
+Include changes in typespec/ts-http-runtime 0.3.5</li>
+<li><a
+href=""https://github.com/actions/upload-artifact/commit/e454baaac2be505c9450e11b8f3215c6fc023ce8""><code>e454baa</code></a>
+Readme: bump all the example versions to v7 (<a
+href=""https://redirect.github.com/actions/upload-artifact/issues/796"">#796</a>)</li>
+<li><a
+href=""https://github.com/actions/upload-artifact/commit/74fad66b98a6d799dc004d3353ccd0e6f6b2530e""><code>74fad66</code></a>
+Update the readme with direct upload details (<a
+href=""https://redirect.github.com/actions/upload-artifact/issues/795"">#795</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/actions/upload-artifact/compare/bbbca2ddaa5d8feaa63e36b76fdaad77386f024f...043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=actions/upload-artifact&package-manager=github_actions&previous-version=7.0.0&new-version=7.0.1)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",1c7eb65068b46863bc83edc827844e519f746401,2345,false,dependabot[bot],2,4,4,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,"Core, Hive: Detect if a view already exists when registering a table",- chore(deps): Bump actions/upload-artifact from 7.0.0 to 7.0.1 (#2345) (Thanks dependabot[bot]!)
+apache/iceberg-rust,1c7eb65068b46863bc83edc827844e519f746401,1c7eb65,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-20T10:52:02+08:00,GitHub,noreply@github.com,2026-04-20T10:52:02+08:00,chore(deps): Bump PyO3/maturin-action from 1.50.1 to 1.51.0 (#2346),"Bumps [PyO3/maturin-action](https://github.com/pyo3/maturin-action) from
+1.50.1 to 1.51.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/pyo3/maturin-action/releases"">PyO3/maturin-action's
+releases</a>.</em></p>
+<blockquote>
+<h2>v1.51.0</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Initial Android build support by <a
+href=""https://github.com/messense""><code>@​messense</code></a> in <a
+href=""https://redirect.github.com/PyO3/maturin-action/pull/426"">PyO3/maturin-action#426</a></li>
+<li>Support native riscv64 builds on manylinux 2_39 by <a
+href=""https://github.com/weiji14""><code>@​weiji14</code></a> in <a
+href=""https://redirect.github.com/PyO3/maturin-action/pull/429"">PyO3/maturin-action#429</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a href=""https://github.com/weiji14""><code>@​weiji14</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/PyO3/maturin-action/pull/429"">PyO3/maturin-action#429</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/PyO3/maturin-action/compare/v1.50.1...v1.51.0"">https://github.com/PyO3/maturin-action/compare/v1.50.1...v1.51.0</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/PyO3/maturin-action/commit/e83996d129638aa358a18fbd1dfb82f0b0fb5d3b""><code>e83996d</code></a>
+Bump version to 1.51.0</li>
+<li><a
+href=""https://github.com/PyO3/maturin-action/commit/36eb3d01a9199f87fbd6ddf7038b03a03daea226""><code>36eb3d0</code></a>
+Update versions-manifest.json (<a
+href=""https://redirect.github.com/pyo3/maturin-action/issues/435"">#435</a>)</li>
+<li><a
+href=""https://github.com/PyO3/maturin-action/commit/bd90123931ca0ba261b88b3893dd9609ed72eda3""><code>bd90123</code></a>
+Update versions-manifest.json (<a
+href=""https://redirect.github.com/pyo3/maturin-action/issues/434"">#434</a>)</li>
+<li><a
+href=""https://github.com/PyO3/maturin-action/commit/ef46725b6d4e993a8fb2fe367bf1f1e3a643e4d5""><code>ef46725</code></a>
+Bump brace-expansion (<a
+href=""https://redirect.github.com/pyo3/maturin-action/issues/433"">#433</a>)</li>
+<li><a
+href=""https://github.com/PyO3/maturin-action/commit/72c5fe112fe88001c8c5e1a7c89766b7d55f7405""><code>72c5fe1</code></a>
+Bump actions/setup-node from 6.2.0 to 6.3.0 (<a
+href=""https://redirect.github.com/pyo3/maturin-action/issues/432"">#432</a>)</li>
+<li><a
+href=""https://github.com/PyO3/maturin-action/commit/94507410305a8e2ef07fd58e260bddc52cac4eac""><code>9450741</code></a>
+Bump docker/setup-qemu-action from 3.7.0 to 4.0.0 (<a
+href=""https://redirect.github.com/pyo3/maturin-action/issues/430"">#430</a>)</li>
+<li><a
+href=""https://github.com/PyO3/maturin-action/commit/d8dc7d43e879b97c55e21052a6dc5377dd7438f7""><code>d8dc7d4</code></a>
+Bump zizmorcore/zizmor-action from 0.5.0 to 0.5.2 (<a
+href=""https://redirect.github.com/pyo3/maturin-action/issues/431"">#431</a>)</li>
+<li><a
+href=""https://github.com/PyO3/maturin-action/commit/0bca1d2400d75ecf79351a0e7bad20426228ea10""><code>0bca1d2</code></a>
+Bump picomatch from 4.0.3 to 4.0.4 (<a
+href=""https://redirect.github.com/pyo3/maturin-action/issues/428"">#428</a>)</li>
+<li><a
+href=""https://github.com/PyO3/maturin-action/commit/3f475a463fd27ce2440c13988f39fd1312dc9381""><code>3f475a4</code></a>
+Support native riscv64 builds on manylinux 2_39 (<a
+href=""https://redirect.github.com/pyo3/maturin-action/issues/429"">#429</a>)</li>
+<li><a
+href=""https://github.com/PyO3/maturin-action/commit/5f46978ce3318baa8b414bc7da24a147233222ee""><code>5f46978</code></a>
+Bump flatted from 3.3.3 to 3.4.2 (<a
+href=""https://redirect.github.com/pyo3/maturin-action/issues/427"">#427</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/pyo3/maturin-action/compare/04ac600d27cdf7a9a280dadf7147097c42b757ad...e83996d129638aa358a18fbd1dfb82f0b0fb5d3b"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=PyO3/maturin-action&package-manager=github_actions&previous-version=1.50.1&new-version=1.51.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",fda82a249461f8ecf09b6328f6db7272e238844a,2346,false,dependabot[bot],3,5,5,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,"Core, Hive: Detect if a view already exists when registering a table",- chore(deps): Bump PyO3/maturin-action from 1.50.1 to 1.51.0 (#2346) (Thanks dependabot[bot]!)
+apache/iceberg-rust,8e884efa41a2a416d212a7aae0e8946967d5dc4e,8e884ef,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-15T17:01:21+08:00,GitHub,noreply@github.com,2026-04-15T17:01:21+08:00,chore(deps): Bump minijinja from 2.18.0 to 2.19.0 (#2322),"Bumps [minijinja](https://github.com/mitsuhiko/minijinja) from 2.18.0 to
+2.19.0.
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/mitsuhiko/minijinja/blob/main/CHANGELOG.md"">minijinja's
+changelog</a>.</em></p>
+<blockquote>
+<h2>2.19.0</h2>
+<ul>
+<li>Fixed strict undefined behavior for comparison operators (such as
+<code>==</code>), string concatenation (<code>~</code>), and undefined
+needles in the <code>in</code> operator to better match Jinja2. <a
+href=""https://redirect.github.com/mitsuhiko/minijinja/issues/886"">#886</a>
+<a
+href=""https://redirect.github.com/mitsuhiko/minijinja/issues/888"">#888</a></li>
+<li>Fixed the <code>default</code> filter in strict undefined mode so an
+explicitly passed undefined fallback argument errors instead of being
+treated like a missing argument. <a
+href=""https://redirect.github.com/mitsuhiko/minijinja/issues/887"">#887</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/mitsuhiko/minijinja/commit/f15dc1e703ec58bc9cb50353322afb7890e3e016""><code>f15dc1e</code></a>
+chore(release): 2.19.0</li>
+<li><a
+href=""https://github.com/mitsuhiko/minijinja/commit/e04d2764b27824aaa1befe8b3d666c810661418a""><code>e04d276</code></a>
+fix(undefined): align strict undefined behavior with Jinja2</li>
+<li>See full diff in <a
+href=""https://github.com/mitsuhiko/minijinja/compare/minijinja-go/v2.18.0...minijinja-go/v2.19.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",575ebcde2f487a20b6bce2e37b5988121f048413,2322,false,dependabot[bot],1,2,2,Cargo.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,Core: Fix row ID assignment for EXISTING entry during a manifest merge,- chore(deps): Bump minijinja from 2.18.0 to 2.19.0 (#2322) (Thanks dependabot[bot]!)
+apache/iceberg-rust,575ebcde2f487a20b6bce2e37b5988121f048413,575ebcd,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-15T16:45:12+08:00,GitHub,noreply@github.com,2026-04-15T16:45:12+08:00,chore(deps): Bump tokio from 1.50.0 to 1.51.0 (#2321),"Bumps [tokio](https://github.com/tokio-rs/tokio) from 1.50.0 to 1.51.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/tokio-rs/tokio/releases"">tokio's
+releases</a>.</em></p>
+<blockquote>
+<h2>Tokio v1.51.0</h2>
+<h1>1.51.0 (April 3rd, 2026)</h1>
+<h3>Added</h3>
+<ul>
+<li>net: implement <code>get_peer_cred</code> on Hurd (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7989"">#7989</a>)</li>
+<li>runtime: add <code>tokio::runtime::worker_index()</code> (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7921"">#7921</a>)</li>
+<li>runtime: add runtime name (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7924"">#7924</a>)</li>
+<li>runtime: stabilize <code>LocalRuntime</code> (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7557"">#7557</a>)</li>
+<li>wasm: add wasm32-wasip2 networking support (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7933"">#7933</a>)</li>
+</ul>
+<h3>Changed</h3>
+<ul>
+<li>runtime: steal tasks from the LIFO slot (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7431"">#7431</a>)</li>
+</ul>
+<h3>Fixed</h3>
+<ul>
+<li>docs: do not show &quot;Available on non-loom only.&quot; doc label
+(<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7977"">#7977</a>)</li>
+<li>macros: improve overall macro hygiene (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7997"">#7997</a>)</li>
+<li>sync: fix <code>notify_waiters</code> priority in
+<code>Notify</code> (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7996"">#7996</a>)</li>
+<li>sync: fix panic in <code>Chan::recv_many</code> when called with
+non-empty vector on closed channel (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7991"">#7991</a>)</li>
+</ul>
+<p><a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7431"">#7431</a>:
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/pull/7431"">tokio-rs/tokio#7431</a>
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7557"">#7557</a>:
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/pull/7557"">tokio-rs/tokio#7557</a>
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7921"">#7921</a>:
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/pull/7921"">tokio-rs/tokio#7921</a>
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7924"">#7924</a>:
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/pull/7924"">tokio-rs/tokio#7924</a>
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7933"">#7933</a>:
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/pull/7933"">tokio-rs/tokio#7933</a>
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7977"">#7977</a>:
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/pull/7977"">tokio-rs/tokio#7977</a>
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7989"">#7989</a>:
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/pull/7989"">tokio-rs/tokio#7989</a>
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7991"">#7991</a>:
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/pull/7991"">tokio-rs/tokio#7991</a>
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7996"">#7996</a>:
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/pull/7996"">tokio-rs/tokio#7996</a>
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7997"">#7997</a>:
+<a
+href=""https://redirect.github.com/tokio-rs/tokio/pull/7997"">tokio-rs/tokio#7997</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/tokio-rs/tokio/commit/0af06b7bab12c58161b1d0ae79bdf4452305d42f""><code>0af06b7</code></a>
+chore: prepare Tokio v1.51.0 (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/8005"">#8005</a>)</li>
+<li><a
+href=""https://github.com/tokio-rs/tokio/commit/01a7f1dfabc93293743701074752ff0d8e787595""><code>01a7f1d</code></a>
+chore: prepare tokio-macros v2.7.0 (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/8004"">#8004</a>)</li>
+<li><a
+href=""https://github.com/tokio-rs/tokio/commit/eeb55c733ba9a83c51d08b1629dca6a5ec0f4b2b""><code>eeb55c7</code></a>
+runtime: steal tasks from the LIFO slot (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7431"">#7431</a>)</li>
+<li><a
+href=""https://github.com/tokio-rs/tokio/commit/1fc450aefba4b05cdff9b7825ca5e39cccb3780e""><code>1fc450a</code></a>
+runtime: stabilize <code>LocalRuntime</code> (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7557"">#7557</a>)</li>
+<li><a
+href=""https://github.com/tokio-rs/tokio/commit/324218f9bbdc26e4bb527d036613826824f3078b""><code>324218f</code></a>
+Merge tag 'tokio-1.47.4' (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/8003"">#8003</a>)</li>
+<li><a
+href=""https://github.com/tokio-rs/tokio/commit/aa65d0d0b8ea6eec80985b9d231390f137493071""><code>aa65d0d</code></a>
+chore: prepare Tokio v1.47.4 (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/8002"">#8002</a>)</li>
+<li><a
+href=""https://github.com/tokio-rs/tokio/commit/bf18ed452d6aae438e84ae008a01a74776abdc19""><code>bf18ed4</code></a>
+sync: fix panic in <code>Chan::recv_many</code> when called with
+non-empty vector on clo...</li>
+<li><a
+href=""https://github.com/tokio-rs/tokio/commit/43134f1e5784993eb4fb3863933d74ac9e28f598""><code>43134f1</code></a>
+wasm: add wasm32-wasip2 networking support (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7933"">#7933</a>)</li>
+<li><a
+href=""https://github.com/tokio-rs/tokio/commit/b4c3246d330379430937bdbb5e1b0c37282ae23e""><code>b4c3246</code></a>
+macros: improve overall macro hygiene (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7997"">#7997</a>)</li>
+<li><a
+href=""https://github.com/tokio-rs/tokio/commit/7947fa4bd79d7345aa7e6b189fc1fbb6983a4351""><code>7947fa4</code></a>
+rt: add runtime name (<a
+href=""https://redirect.github.com/tokio-rs/tokio/issues/7924"">#7924</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/tokio-rs/tokio/compare/tokio-1.50.0...tokio-1.51.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",99ffd68b85399e753b1d78f3923fbe049de09ac3,2321,false,dependabot[bot],1,18,17,Cargo.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Core: Fix row ID assignment for EXISTING entry during a manifest merge,- chore(deps): Bump tokio from 1.50.0 to 1.51.0 (#2321) (Thanks dependabot[bot]!)
+apache/iceberg-rust,d118aa84b863f463a1a7dda7fea5af7ee16c5cf6,d118aa8,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-15T14:08:22-07:00,GitHub,noreply@github.com,2026-04-15T14:08:22-07:00,chore(deps): Bump astral-sh/setup-uv from 7.3.1 to 8.0.0 (#2314),"Bumps [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv) from
+7.3.1 to 8.0.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/astral-sh/setup-uv/releases"">astral-sh/setup-uv's
+releases</a>.</em></p>
+<blockquote>
+<h2>v8.0.0 🌈 Immutable releases and secure tags</h2>
+<h1>This is the first immutable release of <code>setup-uv</code> 🥳</h1>
+<p>All future releases are also immutable, if you want to know more
+about what this means checkout <a
+href=""https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases"">the
+docs</a>.</p>
+<p>This release also has two breaking changes</p>
+<h2>New format for <code>manifest-file</code></h2>
+<p>The previously deprecated way of defining a custom version manifest
+to control which <code>uv</code> versions are available and where to
+download them from got removed. The functionality is still there but you
+have to use the <a
+href=""https://github.com/astral-sh/setup-uv/blob/main/docs/customization.md#format"">new
+format</a>.</p>
+<h2>No more major and minor tags</h2>
+<p>To increase <strong>security</strong> even more we will <strong>stop
+publishing minor tags</strong>. You won't be able to use
+<code>@v8</code> or <code>@v8.0</code> any longer. We do this because
+pinning to major releases opens up users to supply chain attacks like
+what happened to <a
+href=""https://unit42.paloaltonetworks.com/github-actions-supply-chain-attack/"">tj-actions</a>.</p>
+<blockquote>
+<p>[!TIP]
+Use the immutable tag as a version
+<code>astral-sh/setup-uv@v8.0.0</code>
+Or even better the githash
+<code>astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57</code></p>
+</blockquote>
+<h2>🚨 Breaking changes</h2>
+<ul>
+<li>Remove update-major-minor-tags workflow <a
+href=""https://github.com/eifinger""><code>@​eifinger</code></a> (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/826"">#826</a>)</li>
+<li>Remove deprecrated custom manifest <a
+href=""https://github.com/eifinger""><code>@​eifinger</code></a> (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/813"">#813</a>)</li>
+</ul>
+<h2>🧰 Maintenance</h2>
+<ul>
+<li>Shortcircuit latest version from manifest <a
+href=""https://github.com/eifinger""><code>@​eifinger</code></a> (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/828"">#828</a>)</li>
+<li>Simplify inputs.ts <a
+href=""https://github.com/eifinger""><code>@​eifinger</code></a> (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/827"">#827</a>)</li>
+<li>Bump release-drafter to v7.1.1 <a
+href=""https://github.com/eifinger""><code>@​eifinger</code></a> (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/825"">#825</a>)</li>
+<li>Refactor inputs <a
+href=""https://github.com/eifinger""><code>@​eifinger</code></a> (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/823"">#823</a>)</li>
+<li>Replace inline compile args with tsconfig <a
+href=""https://github.com/eifinger""><code>@​eifinger</code></a> (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/824"">#824</a>)</li>
+<li>chore: update known checksums for 0.11.2 @<a
+href=""https://github.com/apps/github-actions"">github-actions[bot]</a>
+(<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/821"">#821</a>)</li>
+<li>chore: update known checksums for 0.11.1 @<a
+href=""https://github.com/apps/github-actions"">github-actions[bot]</a>
+(<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/817"">#817</a>)</li>
+<li>chore: update known checksums for 0.11.0 @<a
+href=""https://github.com/apps/github-actions"">github-actions[bot]</a>
+(<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/815"">#815</a>)</li>
+<li>Fix latest-version workflow check <a
+href=""https://github.com/eifinger""><code>@​eifinger</code></a> (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/812"">#812</a>)</li>
+<li>chore: update known checksums for 0.10.11/0.10.12 @<a
+href=""https://github.com/apps/github-actions"">github-actions[bot]</a>
+(<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/811"">#811</a>)</li>
+</ul>
+<h2>v7.6.0 🌈 Fetch uv from Astral's mirror by default</h2>
+<h2>Changes</h2>
+<p>We now default to download uv from <code>releases.astral.sh</code>.
+This means by default we don't hit the GitHub API at all and shouldn't
+see any rate limits and timeouts any more.</p>
+<h2>🚀 Enhancements</h2>
+<ul>
+<li>Fetch uv from Astral's mirror by default <a
+href=""https://github.com/zsol""><code>@​zsol</code></a> (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/809"">#809</a>)</li>
+</ul>
+<h2>🧰 Maintenance</h2>
+<ul>
+<li>Switch to ESM for source and test, use CommonJS for dist <a
+href=""https://github.com/eifinger""><code>@​eifinger</code></a> (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/806"">#806</a>)</li>
+<li>chore: update known checksums for 0.10.10 @<a
+href=""https://github.com/apps/github-actions"">github-actions[bot]</a>
+(<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/804"">#804</a>)</li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/cec208311dfd045dd5311c1add060b2062131d57""><code>cec2083</code></a>
+Shortcircuit latest version from manifest (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/828"">#828</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/4dd8ab45206a76f8c1dfe399fa88df10a7264f27""><code>4dd8ab4</code></a>
+Simplify inputs.ts (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/827"">#827</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/7fdbe7cf0c8ef50cfd0878eed7b5180abc6b53c7""><code>7fdbe7c</code></a>
+Remove update-major-minor-tags workflow (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/826"">#826</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/485abd05e5c74a247f0a309e333d2433ab9a353a""><code>485abd0</code></a>
+Bump release-drafter to v7.1.1 (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/825"">#825</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/f82eb19c06057c455674b2602e0139fd906f1428""><code>f82eb19</code></a>
+Refactor inputs (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/823"">#823</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/868d1f74d9d862d7b40219546bfe35299c6dd452""><code>868d1f7</code></a>
+Replace inline compile args with tsconfig (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/824"">#824</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/447e6d02b15d65b3247cce2d6019f11957285d11""><code>447e6d0</code></a>
+chore: update known checksums for 0.11.2 (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/821"">#821</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/5c62c5926145985eec91f09e2e0a75f40daed929""><code>5c62c59</code></a>
+chore: update known checksums for 0.11.1 (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/817"">#817</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/e1a7373adb857afd2a70b971e8ebdacc64ed27d0""><code>e1a7373</code></a>
+chore: update known checksums for 0.11.0 (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/815"">#815</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/89709315bb3bd4bf0f4b1db4b710e99009087ab5""><code>8970931</code></a>
+Remove deprecrated custom manifest (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/813"">#813</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/astral-sh/setup-uv/compare/5a095e7a2014a4212f075830d4f7277575a9d098...cec208311dfd045dd5311c1add060b2062131d57"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=astral-sh/setup-uv&package-manager=github_actions&previous-version=7.3.1&new-version=8.0.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: Shawn Chang <yxchang@amazon.com>",e285c7957fc6860a654f7da10c92c6d93ac90531,2314,false,dependabot[bot]; Shawn Chang,1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,Core: Fix row ID assignment for EXISTING entry during a manifest merge,- chore(deps): Bump astral-sh/setup-uv from 7.3.1 to 8.0.0 (#2314) (Thanks dependabot[bot] and Shawn Chang!)
+apache/iceberg-rust,d472bf8e06a7fa39e8aec98ff6cdc209631188b4,d472bf8,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-13T17:53:34+08:00,GitHub,noreply@github.com,2026-04-13T17:53:34+08:00,chore(deps): Bump aws-sdk-s3tables from 1.53.0 to 1.54.0 (#2320),"Bumps [aws-sdk-s3tables](https://github.com/awslabs/aws-sdk-rust) from
+1.53.0 to 1.54.0.
+<details>
+<summary>Commits</summary>
+<ul>
+<li>See full diff in <a
+href=""https://github.com/awslabs/aws-sdk-rust/commits"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=aws-sdk-s3tables&package-manager=cargo&previous-version=1.53.0&new-version=1.54.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: blackmwk <liurenjie1024@outlook.com>",37d19b895c6f767e13697222630cd7a48ecec896,2320,false,dependabot[bot]; blackmwk,1,17,17,Cargo.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,"docs: udf spec, add newline to properly render lists",- chore(deps): Bump aws-sdk-s3tables from 1.53.0 to 1.54.0 (#2320) (Thanks dependabot[bot] and blackmwk!)
+apache/iceberg-rust,37d19b895c6f767e13697222630cd7a48ecec896,37d19b8,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-13T17:26:54+08:00,GitHub,noreply@github.com,2026-04-13T17:26:54+08:00,chore(deps): Bump taiki-e/install-action from 2.70.0 to 2.73.0 (#2319),"Bumps
+[taiki-e/install-action](https://github.com/taiki-e/install-action) from
+2.70.0 to 2.73.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/taiki-e/install-action/releases"">taiki-e/install-action's
+releases</a>.</em></p>
+<blockquote>
+<h2>2.73.0</h2>
+<ul>
+<li>
+<p>Introduce <a
+href=""https://blog.yossarian.net/2025/11/21/We-should-all-be-using-dependency-cooldowns"">dependency
+cooldown</a> when installing with
+<code>taiki-e/install-action@&lt;tool_name&gt;</code>, <code>tool:
+&lt;tool_name&gt;@latest</code>, or <code>tool:
+&lt;tool_name&gt;@&lt;omitted_version&gt;</code> to mitigate the risk of
+supply chain attacks by default. (<a
+href=""https://redirect.github.com/taiki-e/install-action/pull/1666"">#1666</a>)</p>
+<p>This action without this cooldown already takes a few hours to a few
+days for new releases to be reflected (as with other common package
+managers that verify checksums or signatures), so this should not affect
+most users.</p>
+<p>See the <a
+href=""https://github.com/taiki-e/install-action#security"">&quot;Security&quot;
+section in readme</a> for more details.</p>
+</li>
+<li>
+<p>Improve robustness for network failure.</p>
+</li>
+<li>
+<p>Documentation improvements.</p>
+</li>
+</ul>
+<h2>2.72.0</h2>
+<ul>
+<li>
+<p>Support <code>cargo-xwin</code>. (<a
+href=""https://redirect.github.com/taiki-e/install-action/pull/1659"">#1659</a>,
+thanks <a
+href=""https://github.com/daxpedda""><code>@​daxpedda</code></a>)</p>
+</li>
+<li>
+<p>Support trailing comma in <code>tool</code> input option.</p>
+</li>
+<li>
+<p>Update <code>tombi@latest</code> to 0.9.14.</p>
+</li>
+</ul>
+<h2>2.71.3</h2>
+<ul>
+<li>
+<p>Update <code>wasm-tools@latest</code> to 1.246.2.</p>
+</li>
+<li>
+<p>Update <code>mise@latest</code> to 2026.4.3.</p>
+</li>
+</ul>
+<h2>2.71.2</h2>
+<ul>
+<li>
+<p>Implement workaround for <a
+href=""https://redirect.github.com/actions/partner-runner-images/issues/169"">windows-11-arm
+runner bug</a> which sometimes causes installation failure. (<a
+href=""https://redirect.github.com/taiki-e/install-action/pull/1657"">#1657</a>)</p>
+<p>This addresses an issue that was attempted to be worked around in
+2.71.0 but was insufficient.</p>
+</li>
+<li>
+<p>Update <code>mise@latest</code> to 2026.4.1.</p>
+</li>
+<li>
+<p>Update <code>uv@latest</code> to 0.11.3.</p>
+</li>
+</ul>
+<h2>2.71.1</h2>
+<ul>
+<li>
+<p>Fix a regression that caused an execution policy violation on
+self-hosted Windows runner due to use of non-default
+<code>powershell</code> shell, introduced in 2.71.0.</p>
+</li>
+<li>
+<p>Update <code>dprint@latest</code> to 0.53.2.</p>
+</li>
+</ul>
+<h2>2.71.0</h2>
+<ul>
+<li>
+<p>Support <code>wasm-tools</code>. (<a
+href=""https://redirect.github.com/taiki-e/install-action/pull/1642"">#1642</a>,
+thanks <a
+href=""https://github.com/crepererum""><code>@​crepererum</code></a>)</p>
+</li>
+<li>
+<p>Support <code>covgate</code>. (<a
+href=""https://redirect.github.com/taiki-e/install-action/pull/1613"">#1613</a>,
+thanks <a
+href=""https://github.com/jesse-black""><code>@​jesse-black</code></a>)</p>
+</li>
+<li>
+<p>Implement potential workaround for <a
+href=""https://redirect.github.com/actions/partner-runner-images/issues/169"">windows-11-arm
+runner bug</a> which sometimes causes issue that the action successfully
+completes but the tool is not installed. (<a
+href=""https://redirect.github.com/taiki-e/install-action/pull/1647"">#1647</a>)</p>
+</li>
+<li>
+<p>Update <code>typos@latest</code> to 1.45.0.</p>
+</li>
+<li>
+<p>Update <code>mise@latest</code> to 2026.4.0.</p>
+</li>
+<li>
+<p>Update <code>cargo-careful@latest</code> to 0.4.10.</p>
+</li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/taiki-e/install-action/blob/main/CHANGELOG.md"">taiki-e/install-action's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Changelog</h1>
+<p>All notable changes to this project will be documented in this
+file.</p>
+<p>This project adheres to <a href=""https://semver.org"">Semantic
+Versioning</a>.</p>
+<!-- raw HTML omitted -->
+<h2>[Unreleased]</h2>
+<ul>
+<li>
+<p>Update <code>vacuum@latest</code> to 0.25.6.</p>
+</li>
+<li>
+<p>Update <code>gungraun-runner@latest</code> to 0.18.1.</p>
+</li>
+</ul>
+<h2>[2.75.7] - 2026-04-11</h2>
+<ul>
+<li>
+<p>Update <code>covgate@latest</code> to 0.1.4.</p>
+</li>
+<li>
+<p>Update <code>wasm-bindgen@latest</code> to 0.2.118.</p>
+</li>
+</ul>
+<h2>[2.75.6] - 2026-04-11</h2>
+<ul>
+<li>
+<p>Update <code>mise@latest</code> to 2026.4.8.</p>
+</li>
+<li>
+<p>Update <code>cargo-deny@latest</code> to 0.19.1.</p>
+</li>
+</ul>
+<h2>[2.75.5] - 2026-04-10</h2>
+<ul>
+<li>
+<p>Update <code>biome@latest</code> to 2.4.11.</p>
+</li>
+<li>
+<p>Update <code>wasmtime@latest</code> to 43.0.1.</p>
+</li>
+<li>
+<p>Update <code>uv@latest</code> to 0.11.6.</p>
+</li>
+<li>
+<p>Update <code>mise@latest</code> to 2026.4.7.</p>
+</li>
+<li>
+<p>Update <code>gungraun-runner@latest</code> to 0.18.0.</p>
+</li>
+</ul>
+<h2>[2.75.4] - 2026-04-10</h2>
+<ul>
+<li>
+<p>Enhance security when cargo-binstall fallback is enabled. (<a
+href=""https://github.com/taiki-e/install-action/commit/08a38582e35739e1fda5e4cd298e348536a1ddaa"">08a38582</a>,
+<a
+href=""https://github.com/taiki-e/install-action/commit/ba626b4d71edcae17f6ca956b7b81e925b2d24ef"">ba626b4d</a>)</p>
+</li>
+<li>
+<p>Update <code>martin@latest</code> to 1.5.0.</p>
+</li>
+<li>
+<p>Update <code>uv@latest</code> to 0.11.5.</p>
+</li>
+<li>
+<p>Update <code>syft@latest</code> to 1.42.4.</p>
+</li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/0abfcd587b70a713fdaa7fb502c885e2112acb15""><code>0abfcd5</code></a>
+Release 2.75.7</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/cf81fe383b77d63972a04bb1e84d163e13d3a584""><code>cf81fe3</code></a>
+Update <code>covgate@latest</code> to 0.1.4</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/e8aec859b7eb3ba8572ade244032d91139e4b75f""><code>e8aec85</code></a>
+Update <code>wasm-bindgen@latest</code> to 0.2.118</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/d053c7f943c3a577e98f342e9e28edf09931644c""><code>d053c7f</code></a>
+Release 2.75.6</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/9019f2ebb5fcc4be56ccca93d779a8a14f83bb42""><code>9019f2e</code></a>
+Update <code>mise@latest</code> to 2026.4.8</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/1b07fb74591cf228b32613bd9ca519dc027ae914""><code>1b07fb7</code></a>
+Update <code>cargo-deny@latest</code> to 0.19.1</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/be1e8a863739de1370a81e1c5ad4babbab50c914""><code>be1e8a8</code></a>
+Update vacuum manifest</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/1cc7501bf80d38541e25e6a90f1f1c10054297c9""><code>1cc7501</code></a>
+Update gungraun-runner manifest</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/44afe623bee1f92436bd2e2d30d56626792cd0f0""><code>44afe62</code></a>
+Update covgate manifest</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/7a4939c09608b2a1986b484eca1d16fd0db8ebef""><code>7a4939c</code></a>
+Release 2.75.5</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/taiki-e/install-action/compare/0fde6d128a3d980ceac30be8c8b8739abd963b81...0abfcd587b70a713fdaa7fb502c885e2112acb15"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=taiki-e/install-action&package-manager=github_actions&previous-version=2.70.0&new-version=2.73.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: blackmwk <liurenjie1024@outlook.com>",c6c0ce7a1033c221f43eec74ca53a8b36f1bb627,2319,false,dependabot[bot]; blackmwk,1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.27; capped LanceDB boost for routine/low-signal commit,"Core, Hive: Detect if a view already exists when registering a table",- chore(deps): Bump taiki-e/install-action from 2.70.0 to 2.73.0 (#2319) (Thanks dependabot[bot] and blackmwk!)
+apache/iceberg-rust,c6c0ce7a1033c221f43eec74ca53a8b36f1bb627,c6c0ce7,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-13T16:59:43+08:00,GitHub,noreply@github.com,2026-04-13T16:59:43+08:00,chore(deps): Bump crate-ci/typos from 1.44.0 to 1.45.0 (#2318),"Bumps [crate-ci/typos](https://github.com/crate-ci/typos) from 1.44.0 to
+1.45.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/crate-ci/typos/releases"">crate-ci/typos's
+releases</a>.</em></p>
+<blockquote>
+<h2>v1.45.0</h2>
+<h2>[1.45.0] - 2026-04-01</h2>
+<h3>Features</h3>
+<ul>
+<li>Updated the dictionary with the <a
+href=""https://redirect.github.com/crate-ci/typos/issues/1509"">March
+2026</a> changes</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/crate-ci/typos/blob/master/CHANGELOG.md"">crate-ci/typos's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Change Log</h1>
+<p>All notable changes to this project will be documented in this
+file.</p>
+<p>The format is based on <a href=""https://keepachangelog.com/"">Keep a
+Changelog</a>
+and this project adheres to <a href=""https://semver.org/"">Semantic
+Versioning</a>.</p>
+<!-- raw HTML omitted -->
+<h2>[Unreleased] - ReleaseDate</h2>
+<h2>[1.45.0] - 2026-04-01</h2>
+<h3>Features</h3>
+<ul>
+<li>Updated the dictionary with the <a
+href=""https://redirect.github.com/crate-ci/typos/issues/1509"">March
+2026</a> changes</li>
+</ul>
+<h2>[1.44.0] - 2026-02-27</h2>
+<h3>Features</h3>
+<ul>
+<li>Updated the dictionary with the <a
+href=""https://redirect.github.com/crate-ci/typos/issues/1488"">February
+2026</a> changes</li>
+</ul>
+<h2>[1.43.5] - 2026-02-16</h2>
+<h3>Fixes</h3>
+<ul>
+<li><em>(pypi)</em> Hopefully fix the sdist build</li>
+</ul>
+<h2>[1.43.4] - 2026-02-09</h2>
+<h3>Fixes</h3>
+<ul>
+<li>Don't correct <code>pincher</code></li>
+</ul>
+<h2>[1.43.3] - 2026-02-06</h2>
+<h3>Fixes</h3>
+<ul>
+<li><em>(action)</em> Adjust how typos are reported to github</li>
+</ul>
+<h2>[1.43.2] - 2026-02-05</h2>
+<h3>Fixes</h3>
+<ul>
+<li>Don't correct <code>certifi</code> in Python</li>
+</ul>
+<h2>[1.43.1] - 2026-02-03</h2>
+<h3>Fixes</h3>
+<ul>
+<li>Don't correct <code>consts</code></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/02ea592e44b3a53c302f697cddca7641cd051c3d""><code>02ea592</code></a>
+chore: Release</li>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/b859c0df7f391deba73030f79b957e62b4d81dc6""><code>b859c0d</code></a>
+chore: Release</li>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/6fd32cee0c74337fd419788965d8f1c96d6f87a5""><code>6fd32ce</code></a>
+docs: Update changelog</li>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/7626d89232db5fc0c23e290107cf420047e297e9""><code>7626d89</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/crate-ci/typos/issues/1530"">#1530</a>
+from crate-ci/renovate/j178-prek-action-2.x</li>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/2c9510cd3b9756411e186a1ff1d0ee9a0bb61895""><code>2c9510c</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/crate-ci/typos/issues/1532"">#1532</a>
+from epage/march</li>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/265b88f6490711bebac4bb109149f1f06c2255e9""><code>265b88f</code></a>
+feat(dict): March updates</li>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/5baf2ce236258ea037d71f364aa7a13eb1d2cf70""><code>5baf2ce</code></a>
+chore(deps): Update compatible (<a
+href=""https://redirect.github.com/crate-ci/typos/issues/1529"">#1529</a>)</li>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/0442cb7c40aa99aa5a9ec99ac4c3f0c654260f34""><code>0442cb7</code></a>
+chore(deps): Update j178/prek-action action to v2</li>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/8f11c0dc0f31c780c45b3dd5b72ff4b48a350b75""><code>8f11c0d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/crate-ci/typos/issues/1524"">#1524</a>
+from epage/update</li>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/ecdbfab467d6037f796c649e7616aee4a6a16c5a""><code>ecdbfab</code></a>
+chore: Update dependencies</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/crate-ci/typos/compare/631208b7aac2daa8b707f55e7331f9112b0e062d...02ea592e44b3a53c302f697cddca7641cd051c3d"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=crate-ci/typos&package-manager=github_actions&previous-version=1.44.0&new-version=1.45.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: blackmwk <liurenjie1024@outlook.com>",59c8f4b7a9a6e31dd5033b3c0a37e8d483f4809b,2318,false,dependabot[bot]; blackmwk,1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.16; capped LanceDB boost for routine/low-signal commit,Core: Fix row ID assignment for EXISTING entry during a manifest merge,- chore(deps): Bump crate-ci/typos from 1.44.0 to 1.45.0 (#2318) (Thanks dependabot[bot] and blackmwk!)

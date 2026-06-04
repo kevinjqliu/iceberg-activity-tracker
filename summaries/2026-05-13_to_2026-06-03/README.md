@@ -1,7 +1,7 @@
 # Iceberg Community Sync Summary
 
 - Period: `2026-05-13` to before `2026-06-03`
-- Review candidates: `177`
+- Review candidates: `235`
 
 ## apache/iceberg
 
@@ -27,8 +27,8 @@ _Top 20 of 119 scored commits._
 - Flink: Fix ALTER TABLE to add column to specific position (#16419) (Thanks Stepan Stepanishchev!)
 - Core, Orc: Remove deprecated partition stats read functionality (#14998) (Thanks gaborkaszab!)
 - Flink: Allow setting slot sharing group for fine-grained resource management in DynamicSink (#16065) (Thanks Han You!)
+- Spark: Trim row-level test parameter rows from 6 to 3 (#16549) (Thanks Steven Zhen Wu and Claude Opus 4.7 (1M context)!)
 - Core, Flink: Add UUID to DataTestBase SUPPORTED_PRIMITIVES (#16364) (Thanks Joy Haldar!)
-- Build: Bump github/codeql-action from 4.35.1 to 4.35.4 (#16375) (Thanks dependabot[bot]!)
 
 ## apache/iceberg-python
 
@@ -50,9 +50,36 @@ _Top 20 of 58 scored commits._
 - docs: add Iceberg security model (#3425) (Thanks Sung Yun!)
 - fix(fsspec): handle zero-byte files in `__len__` (#3353) (Thanks Minh Vu!)
 - perf(add_files): stream manifest entries for duplicate-files check (#3287) (Thanks Ben Lai!)
-- Build: Bump idna from 3.11 to 3.15 (#3386) (Thanks dependabot[bot]!)
 - Add papermill-based tests for PyIceberg examples (#3330) (Thanks Federico!)
 - REST: Rename rest-scan-planning-enabled to scan-planning-mode (#3376) (Thanks Yuya Ebihara!)
 - Fix precision loss in large integral string conversions (#3405) (Thanks Minh Vu!)
 - fix: avoid `TSaslClientTransport` reuse to eliminate server-side SASL noise (#3357) (Thanks barking-code!)
 - feat(view): View object API (#3338) (Thanks Gabriel Igliozzi!)
+- Fix typo (#3424) (Thanks Yuya Ebihara!)
+
+## apache/iceberg-rust
+
+### Rust
+
+_Top 20 of 58 scored commits._
+
+- feat!(runtime): Support custom Runtime in Catalog (#2308) (Thanks Shawn Chang and blackmwk!)
+- feat(ci): add cargo-public-api checks for public API stability (#2525) (Thanks Xander!)
+- Add some scripts to help release (#2522) (Thanks blackmwk!)
+- Infra: add bindings/python into root workspace (#2506) (Thanks Kevin Liu!)
+- feat(encryption) [5/N] Support encryption: Encryption Manager (#2383) (Thanks Xander!)
+- docs: add Iceberg security model (#2524) (Thanks Sung Yun!)
+- fix(transaction): preserve delete-only manifests in FastAppend (#2545) (Thanks Liang-Chi Hsieh!)
+- feat(encryption) [6/N] support `ArrowReaderOptions` in `get_metadata` (#2402) (Thanks Xander!)
+- feat: HuggingFace Hub storage backend and CDC table properties (#2375) (Thanks Krisztián Szűcs!)
+- chore: Add a lock check to CI (#2484) (Thanks Xander!)
+- Fix pyiceberg-core dev dependency resolution (#2442) (Thanks Kevin Liu!)
+- fix(puffin): add missing magic number validation for puffins (#2416) (Thanks dentiny!)
+- fix(spec): support JSON binary literals (#2476) (Thanks Minh Vu!)
+- docs: add pyiceberg-core release validation (#2502) (Thanks Asish Kumar!)
+- Add Hugging Face storage option to storage/opendal/README (#2487) (Thanks Quentin Lhoest!)
+- Use cargo publish to publish crates (#2489) (Thanks blackmwk!)
+- ci: add check_standalone job to verify each crate compiles independently (#2389) (Thanks Kevin Liu and Copilot!)
+- Add Spice.ai to Users (#2516) (Thanks Luke Kim!)
+- chore: add `uv` to dependabot for /bindings/python (#2444) (Thanks Kevin Liu!)
+- fix(spec): don't panic on overwrite-truncate when previous totals exceed i32::MAX or are non-numeric (#2511) (Thanks Sreeram Garlapati and Aman Rawat!)

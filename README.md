@@ -8,8 +8,8 @@ Start here:
 
 Each period page is built as a shared meeting summary page with separate
 repository sections. Today it includes `apache/iceberg` and
-`apache/iceberg-python`; future Iceberg repositories can be added as additional
-sections on the same page.
+`apache/iceberg-python`, and `apache/iceberg-rust`; future Iceberg repositories
+can be added as additional sections on the same page.
 
 ## Layout
 
@@ -68,7 +68,8 @@ make backtest BACKTEST_ARGS="--start-date 2026-05-13 --end-date 2026-06-03"
 ## Pipeline Notes
 
 The tracked repositories are configured in `src/iceberg_activity/config.py`.
-Current targets are `apache/iceberg` and `apache/iceberg-python`.
+Current targets are `apache/iceberg`, `apache/iceberg-python`, and
+`apache/iceberg-rust`.
 
 The collector fetches configured repositories over read-only HTTPS, stores bare
 git caches under `.cache/repos/`, and writes one CSV per repository under

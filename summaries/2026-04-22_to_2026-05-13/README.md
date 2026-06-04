@@ -1,7 +1,7 @@
 # Iceberg Community Sync Summary
 
 - Period: `2026-04-22` to before `2026-05-13`
-- Review candidates: `182`
+- Review candidates: `219`
 
 ## apache/iceberg
 
@@ -19,6 +19,7 @@ _Top 20 of 131 scored commits._
 - Core: Fix row ID assignment for EXISTING entry during a manifest merge (#16263) (Thanks Amogh Jahagirdar, ChengJi, and Russell Spitzer!)
 - Flink: Add Nanosecond Precision Support for Flink-Iceberg Integration (#15475) (Thanks Talat UYARER!)
 - Core: Add partition to TrackedFile (#16253) (Thanks Eduard Tudenhoefner!)
+- Core: Fix JdbcCatalog & InMemoryCatalog to prevent dropping parent namespaces with children (#16061) (Thanks sagib-sqream!)
 - Flink: Fix JdbcLockFactory to allow ClientPoolImpl connection retry (#16049) (Thanks Anupam Yadav!)
 - Flink: Backport add Nanosecond Precision Support for Flink-Iceberg Integration to Flink 1.20 (#16240) (Thanks pvary!)
 - Spark: Add unknown type support to Spark 3.4 and 3.5 (#16066) (Thanks Kurtis Wright!)
@@ -28,7 +29,6 @@ _Top 20 of 131 scored commits._
 - Spark, Hive: Fix snapshot procedure for tables with Variant columns (#15964) (Thanks Neelesh Salian!)
 - ORC: Add _row_id and _last_updated_sequence_number raeder in Orc to support lineage (#15776) (Thanks GuoYu!)
 - Flink:Backport RewriteDataFile support dynamic filter (#16132) (Thanks GuoYu!)
-- Spark: Support TimestampNTZ in SparkZOrderUDF (#15778) (Thanks milleniax and abdullin.marsel9!)
 
 ## apache/iceberg-python
 
@@ -51,8 +51,35 @@ _Top 20 of 51 scored commits._
 - CI: Use specific patch versions in workflow action comments (#3331) (Thanks Kevin Liu!)
 - Remove unused code (#3326) (Thanks Yuya Ebihara!)
 - fix(tests): isolate state in `test_write_optional_list` (#3334) (Thanks Paul Mathew!)
-- Bump daft dependency to >=0.7.10 (fix Python 3.14 compatibility) (#3323) (Thanks Kevin Liu!)
 - perf: build partition filter with balanced tree to avoid RecursionError (#3264) (Thanks Yingjian Wu!)
 - fix: SaslServer busy-loop causes process hang after test suite (#3305) (Thanks Kevin Liu!)
 - Initial work for file format writer API (#3119) (Thanks Neelesh Salian!)
+- Bump daft dependency to >=0.7.10 (fix Python 3.14 compatibility) (#3323) (Thanks Kevin Liu!)
 - Build: Bump fastavro from 1.12.1 to 1.12.2 (#3310) (Thanks dependabot[bot]!)
+
+## apache/iceberg-rust
+
+### Rust
+
+_Top 20 of 37 scored commits._
+
+- feat(reader): Add read_with_metrics() for scan I/O metrics (#2349) (Thanks Matt Butrovich, Claude Opus 4.6 (1M context), and blackmwk!)
+- feat(encryption) [3/N] Support encryption: KMS (#2339) (Thanks Xander!)
+- feat(encryption) [4/N] Support encryption: StandardKeyMetadata (#2340) (Thanks Xander and Claude Opus 4.6 (1M context)!)
+- feat(schema): Add `update_schema` action to enable table schema updates (#2120) (Thanks Victor Ghita and Claude Sonnet 4.6!)
+- fix(catalog/memory): relax strict ms inequality in test_update_table (#2395) (Thanks Kurtis Wright!)
+- fix(sqllogictest): add missing tokio `rt-multi-thread` feature (#2386) (Thanks Charles-Antoine Leger!)
+- fix: allow missing sequence-number in v2 snapshots for v1-upgraded tables (#2127) (Thanks Jem Bishop!)
+- feat(datatypes): add optional and required constructors for MapType (#2405) (Thanks Liang Gong!)
+- fix: NaN pushdown correctly pushes down NaNs correctness issue  (#2351) (Thanks Xander!)
+- chore: Improve release process (#2381) (Thanks Shawn Chang!)
+- Split arrow reader into smaller modules (#2358) (Thanks blackmwk and Claude Opus 4.7 (1M context)!)
+- docs: bump version for python binding (#2377) (Thanks Kevin Liu!)
+- Fix RUSTSEC-2026-0122 (#2437) (Thanks blackmwk!)
+- fix(transaction): fix previous snapshot summary fetching (#2391) (Thanks dentiny!)
+- CI: Use specific patch versions in workflow action comments (#2412) (Thanks Kevin Liu!)
+- feat(datafusion): show pushed-down limit in IcebergTableScan EXPLAIN output (#2360) (Thanks Charles-Antoine Leger!)
+- fix(tests): remove unnecessary `.to_string()` calls for metadata_location (#2407) (Thanks Liang Gong!)
+- docs: Correct docs for Int128 and UInt128 being big-endian not little-endian (#2397) (Thanks Xander!)
+- docs(arrow): clarify ScanMetrics::bytes_read includes delete files (#2379) (Thanks Matt Butrovich!)
+- ci(python): verify wheel abi3 compatibility with --no-build (#2388) (Thanks Kevin Liu!)

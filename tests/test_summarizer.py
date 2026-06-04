@@ -59,6 +59,60 @@ def test_score_commit_boosts_features_and_downranks_routine_work() -> None:
     assert "release/security/notice signal" in bot_reasons
 
 
+def test_score_commit_downranks_dependency_bumps_below_rust_summary_signals() -> None:
+    dependency_bump = commit_row(
+        repository="apache/iceberg-rust",
+        subject="chore(deps): Bump reqwest from 0.12.28 to 0.13.3 (#2554)",
+        body="Dependabot update for GHSA-mf9v-mfxr-j63j in a networking crate.",
+        author_name="dependabot[bot]",
+        co_authors="dependabot[bot]",
+        files_changed="3",
+        insertions="200",
+        pr_number="2554",
+    )
+    publishing_fix = commit_row(
+        repository="apache/iceberg-rust",
+        subject="Use cargo publish to publish crates (#2489)",
+        body="Switch to cargo publish --workspace to fix missing crates during release.",
+        author_name="blackmwk",
+        files_changed="17",
+        insertions="23",
+        deletions="17",
+        top_level_paths=".github; Cargo.toml; crates",
+        pr_number="2489",
+    )
+    correctness_fix = commit_row(
+        repository="apache/iceberg-rust",
+        subject="fix(transaction): preserve delete-only manifests in FastAppend (#2545)",
+        body="Fix FastAppend dropping delete-only manifests and causing deleted files to reappear.",
+        author_name="Liang-Chi Hsieh",
+        insertions="206",
+        deletions="3",
+        top_level_paths="crates",
+        pr_number="2545",
+    )
+    storage_update = commit_row(
+        repository="apache/iceberg-rust",
+        subject="Add Hugging Face storage option to storage/opendal/README (#2487)",
+        author_name="Quentin Lhoest",
+        top_level_paths="crates",
+        pr_number="2487",
+    )
+
+    dependency_score, dependency_reasons = score_commit(dependency_bump)
+    publishing_score, publishing_reasons = score_commit(publishing_fix)
+    correctness_score, correctness_reasons = score_commit(correctness_fix)
+    storage_score, storage_reasons = score_commit(storage_update)
+
+    assert "downrank dependency bump" in dependency_reasons
+    assert "publishing/release signal" in publishing_reasons
+    assert "correctness signal" in correctness_reasons
+    assert "strategic: opendal, storage" in storage_reasons
+    assert publishing_score > dependency_score
+    assert correctness_score > dependency_score
+    assert storage_score > dependency_score
+
+
 def test_summary_bullet_formats_thanks() -> None:
     row = commit_row(
         subject="Spark: Add feature (#123)",
@@ -235,6 +289,11 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
         remote_url="https://example.test/iceberg-python.git",
         summary_heading="Python",
     )
+    rust_repo = RepoConfig(
+        full_name="apache/iceberg-rust",
+        remote_url="https://example.test/iceberg-rust.git",
+        summary_heading="Rust",
+    )
     write_rows(
         input_dir / java_repo.csv_name,
         [
@@ -265,6 +324,21 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
             ),
         ],
     )
+    write_rows(
+        input_dir / rust_repo.csv_name,
+        [
+            commit_row(
+                commit_sha="rust1",
+                short_sha="rust1",
+                subject="REST: Add catalog auth support (#303)",
+                committer_date="2026-05-22T12:00:00+00:00",
+                repository="apache/iceberg-rust",
+                author_name="Rust Dev",
+                top_level_paths="crates",
+                pr_number="303",
+            ),
+        ],
+    )
 
     result = summarize_period(
         since=date(2026, 5, 13),
@@ -272,20 +346,23 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
         input_dir=input_dir,
         output_dir=output_dir,
         top=20,
-        repositories=(java_repo, python_repo),
+        repositories=(java_repo, python_repo, rust_repo),
     )
 
-    assert result.candidate_count == 2
-    assert result.selected_count == 2
+    assert result.candidate_count == 3
+    assert result.selected_count == 3
     assert result.scored_csv_paths == (
         output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_scored.csv",
         output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_python_scored.csv",
+        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_rust_scored.csv",
     )
     markdown = result.markdown_path.read_text(encoding="utf-8")
     assert "## apache/iceberg\n\n### Java" in markdown
     assert "- Core: Add REST feature (#101) (Thanks Java Dev!)" in markdown
     assert "## apache/iceberg-python\n\n### Python" in markdown
     assert "- Catalog: Add namespace support (#202) (Thanks Python Dev!)" in markdown
+    assert "## apache/iceberg-rust\n\n### Rust" in markdown
+    assert "- REST: Add catalog auth support (#303) (Thanks Rust Dev!)" in markdown
 
 
 def commit_row(**overrides: str) -> dict[str, str]:

@@ -41,14 +41,25 @@ STRATEGIC_TERMS = {
     "partition statistics",
     "manifest",
     "catalog",
+    "opendal",
+    "storage",
 }
 FEATURE_RE = re.compile(r"\b(add|support|implement|introduce|enable|allow|expose|promote)\b", re.I)
 FIX_RE = re.compile(r"\b(fix|avoid|prevent|correct|resolve)\b", re.I)
+DEPENDENCY_BUMP_RE = re.compile(
+    r"(^\s*(chore|build)\(deps?\)|\bbump\b.*\b(from|to|updates?)\b|\bupdate deps\b)",
+    re.I,
+)
 ROUTINE_RE = re.compile(
     r"\b(build|dependency|dependencies|deps|maven|gradle|bump|upgrade|format|formatting)\b",
     re.I,
 )
 IMPORTANT_INFRA_RE = re.compile(r"\b(cve|security|release|license|notice|blocking|block)\b", re.I)
+PUBLISHING_RE = re.compile(r"\b(cargo publish|publish crates?|missing crates?)\b", re.I)
+CORRECTNESS_RE = re.compile(
+    r"\b(correctness|data loss|corrupt|incorrect|preserve|dropping|reappear|delete-only)\b",
+    re.I,
+)
 LOW_SIGNAL_RE = re.compile(r"\b(docs?|javadoc|readme|tests?|benchmark|benchmarks?)\b", re.I)
 
 
@@ -122,6 +133,7 @@ def score_commit(row: dict[str, str]) -> tuple[int, str]:
     lowered = text.lower()
     reasons: list[str] = ["base"]
     score = 10
+    is_dependency_bump = is_dependency_bump_subject(subject)
 
     if FEATURE_RE.search(subject):
         score += 25
@@ -137,7 +149,7 @@ def score_commit(row: dict[str, str]) -> tuple[int, str]:
         reasons.append(f"important area: {', '.join(important_area_hits)}")
 
     strategic_hits = sorted(term for term in STRATEGIC_TERMS if term in lowered)
-    if strategic_hits:
+    if strategic_hits and not is_dependency_bump:
         score += 20
         reasons.append(f"strategic: {', '.join(strategic_hits)}")
 
@@ -163,16 +175,28 @@ def score_commit(row: dict[str, str]) -> tuple[int, str]:
     if row.get("co_authors"):
         score += 3
         reasons.append("co-authored")
-    if IMPORTANT_INFRA_RE.search(text):
+    if IMPORTANT_INFRA_RE.search(text) and not is_dependency_bump:
         score += 20
         reasons.append("release/security/notice signal")
+    if PUBLISHING_RE.search(text):
+        score += 20
+        reasons.append("publishing/release signal")
+    if CORRECTNESS_RE.search(text) and not is_dependency_bump:
+        score += 12
+        reasons.append("correctness signal")
 
     author = row.get("author_name", "").lower()
     is_bot = "bot" in author or "dependabot" in author
-    has_important_infra = bool(IMPORTANT_INFRA_RE.search(text))
+    has_important_infra = bool(
+        (IMPORTANT_INFRA_RE.search(text) and not is_dependency_bump)
+        or PUBLISHING_RE.search(text)
+    )
     if is_bot and not has_important_infra:
         score -= 25
         reasons.append("downrank bot")
+    if is_dependency_bump:
+        score -= 45
+        reasons.append("downrank dependency bump")
     if LOW_SIGNAL_RE.search(subject):
         score -= 12
         reasons.append("downrank docs/tests/benchmarks")
@@ -465,6 +489,12 @@ def summarize_month(
 def is_low_signal_for_semantic_boost(row: dict[str, str]) -> bool:
     subject = row.get("subject", "")
     text = f"{subject}\n{row.get('body', '')}"
+    if is_dependency_bump_subject(subject):
+        return True
     if IMPORTANT_INFRA_RE.search(text):
         return False
     return bool(LOW_SIGNAL_RE.search(subject) or ROUTINE_RE.search(subject))
+
+
+def is_dependency_bump_subject(subject: str) -> bool:
+    return bool(DEPENDENCY_BUMP_RE.search(subject))
