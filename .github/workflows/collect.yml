@@ -1,105 +1,42 @@
-name: Iceberg activity
+name: Collect commit activity
 
 on:
   schedule:
     # Daily commit collection, roughly 6am Pacific during daylight saving time.
     - cron: "17 13 * * *"
-    # Weekly summary candidate, gated below to every 3 weeks starting 2026-06-24.
-    - cron: "47 13 * * 3"
   workflow_dispatch:
-    inputs:
-      meeting_date:
-        description: "Meeting date to summarize, as YYYY-MM-DD. Defaults to today's Pacific date."
-        required: false
-        type: string
 
 permissions:
   contents: write
 
 concurrency:
-  group: iceberg-activity
+  group: collect-commit-activity
   cancel-in-progress: false
 
 env:
   UV_CACHE_DIR: .cache/uv
-  COLLECT_CRON: "17 13 * * *"
-  SUMMARY_CRON: "47 13 * * 3"
 
 jobs:
-  activity:
+  collect:
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out tracker
         uses: actions/checkout@v4
 
-      - name: Resolve run mode
-        id: mode
-        shell: bash
-        run: |
-          event_name="${{ github.event_name }}"
-          event_schedule="${{ github.event.schedule }}"
-          meeting_date="${{ github.event.inputs.meeting_date }}"
-          if [ -z "$meeting_date" ]; then
-            meeting_date="$(TZ=America/Los_Angeles date +%F)"
-          fi
-
-          resolved="$(
-            python3 - "$event_name" "$event_schedule" "$meeting_date" "$COLLECT_CRON" "$SUMMARY_CRON" <<'PY'
-          from datetime import date, timedelta
-          import sys
-
-          event_name = sys.argv[1]
-          event_schedule = sys.argv[2]
-          meeting_date = date.fromisoformat(sys.argv[3])
-          collect_cron = sys.argv[4]
-          summary_cron = sys.argv[5]
-          anchor_date = date(2026, 6, 24)
-
-          days_since_anchor = (meeting_date - anchor_date).days
-          is_three_week_meeting = days_since_anchor >= 0 and days_since_anchor % 21 == 0
-          run_collect = event_name == "workflow_dispatch" or event_schedule == collect_cron
-          run_summary = event_name == "workflow_dispatch" or (
-              event_schedule == summary_cron and is_three_week_meeting
-          )
-          since_date = meeting_date - timedelta(days=21)
-
-          print(f"run_collect={str(run_collect).lower()}")
-          print(f"run_summary={str(run_summary).lower()}")
-          print(f"meeting_date={meeting_date}")
-          print(f"summary_dir={since_date}_to_{meeting_date}")
-          PY
-          )"
-          eval "$resolved"
-          {
-            echo "run_collect=$run_collect"
-            echo "run_summary=$run_summary"
-            echo "meeting_date=$meeting_date"
-            echo "summary_dir=$summary_dir"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Skip off-cycle summary schedule
-        if: steps.mode.outputs.run_collect != 'true' && steps.mode.outputs.run_summary != 'true'
-        run: |
-          echo "Skipping off-cycle summary schedule"
-
       - name: Install uv
-        if: steps.mode.outputs.run_collect == 'true' || steps.mode.outputs.run_summary == 'true'
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
 
       - name: Install Python
-        if: steps.mode.outputs.run_collect == 'true' || steps.mode.outputs.run_summary == 'true'
         run: uv python install 3.12
 
       - name: Collect Apache Iceberg activity
-        if: steps.mode.outputs.run_collect == 'true'
         run: make collect
 
       - name: Commit and push commit data
-        if: steps.mode.outputs.run_collect == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -112,36 +49,9 @@ jobs:
             git push
           fi
 
-      - name: Summarize meeting highlights
-        if: steps.mode.outputs.run_summary == 'true'
-        run: make summarize MEETING_DATE="${{ steps.mode.outputs.meeting_date }}"
-
-      - name: Commit and push summaries
-        if: steps.mode.outputs.run_summary == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A summaries
-          if git diff --cached --quiet; then
-            echo "No summary changes to commit"
-          else
-            git commit -m "Update Iceberg summaries [auto]"
-            git pull --rebase
-            git push
-          fi
-
       - name: Upload CSV artifact
-        if: steps.mode.outputs.run_collect == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: iceberg-commit-activity
           path: data/commits/*.csv
-          if-no-files-found: error
-
-      - name: Upload summary artifact
-        if: steps.mode.outputs.run_summary == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: iceberg-java-highlights-${{ steps.mode.outputs.meeting_date }}
-          path: summaries/${{ steps.mode.outputs.summary_dir }}/*
           if-no-files-found: error
