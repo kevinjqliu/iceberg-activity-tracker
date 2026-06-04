@@ -34,7 +34,7 @@ _Top 20 themes from 119 scored commits._
 
 ### Python
 
-_Top 20 themes from 58 scored commits._
+_Top 17 themes from 58 scored commits._
 
 - REST pagination: add pagination and page-size support for namespaces, tables, and views (#3347, #3348, #3349, #3377) (Thanks Yuya Ebihara and Kevin Liu!)
 - Support `pa.RecordBatchReader` in Table.`{append,overwrite}` (#3335) (Thanks Paul Mathew!)
@@ -53,15 +53,12 @@ _Top 20 themes from 58 scored commits._
 - REST: Rename rest-scan-planning-enabled to scan-planning-mode (#3376) (Thanks Yuya Ebihara!)
 - Fix precision loss in large integral string conversions (#3405) (Thanks Minh Vu!)
 - Make `View.sql_for` case-insensitive and return None for unknown dialect (#3407) (Thanks Yuya Ebihara!)
-- docs: fix New York longitude sign in partial overwrite example (#3403) (Thanks Minh Vu!)
-- Test: Replace rest-scan-planning-enabled with scan-planning-mode (#3391) (Thanks Yuya Ebihara!)
-- Build: Update actions/upload-artifact to v7.0.1 (#3401) (Thanks Yuya Ebihara!)
 
 ## apache/iceberg-rust
 
 ### Rust
 
-_Top 20 themes from 58 scored commits._
+_Top 19 themes from 58 scored commits._
 
 - fix(puffin): add missing magic number validation for puffins (#2416) (Thanks dentiny!)
 - feat!(runtime): Support custom Runtime in Catalog (#2308) (Thanks Shawn Chang and blackmwk!)
@@ -74,15 +71,14 @@ _Top 20 themes from 58 scored commits._
 - fix(spec): don't panic on overwrite-truncate when previous totals exceed i32::MAX or are non-numeric (#2511) (Thanks Sreeram Garlapati and Aman Rawat!)
 - chore(spec): remove stale #[allow(dead_code)] from snapshot_summary (#2514) (Thanks Sreeram Garlapati!)
 - Fix pyiceberg-core dev dependency resolution (#2442) (Thanks Kevin Liu!)
-- feat(ci): add cargo-public-api checks for public API stability (#2525) (Thanks Xander!)
 - Use cargo publish to publish crates (#2489) (Thanks blackmwk!)
-- Add some scripts to help release (#2522) (Thanks blackmwk!)
 - chore(ci): omit blanket/auto-trait/auto-derived impls from public API (#2542) (Thanks Xander!)
 - Add Hugging Face storage option to storage/opendal/README (#2487) (Thanks Quentin Lhoest!)
-- docs: add pyiceberg-core release validation (#2502) (Thanks Asish Kumar!)
-- chore: add `uv` to dependabot for /bindings/python (#2444) (Thanks Kevin Liu!)
 - feat(iceberg): log warning when available_parallelism falls back to default (#2520) (Thanks Xin Huang!)
-- chore: Add a lock check to CI (#2484) (Thanks Xander!)
+- Ignore RUSTSEC-2024-0014 (#2531) (Thanks blackmwk!)
+- feat(partition): adjust transform boundary for timestamp types (#2422) (Thanks dentiny!)
+- feat(arrow): pass `&FieldRef` instead of `&Field` in `ArrowSchemaVisitor` to achieve cheap clone (#2471) (Thanks Liang Gong!)
+- Add Spice.ai to Users (#2516) (Thanks Luke Kim!)
 
 ## apache/iceberg-go
 
@@ -115,7 +111,7 @@ _Top 20 themes from 54 scored commits._
 
 ### C++
 
-_Top 20 themes from 27 scored commits._
+_Top 16 themes from 27 scored commits._
 
 - feat(io): add bulk delete API to FileIO. (#659) (Thanks slfan1989!)
 - feat: Add v3 timestamp nanosecond primitive types (#653) (Thanks Junwang Zhao!)
@@ -124,16 +120,12 @@ _Top 20 themes from 27 scored commits._
 - feat(data): add MOR file scan task reader (#657) (Thanks Gang Wu!)
 - feat: add IncrementalFileCleanup strategy and dispatch in ExpireSnapshots::Finalize (#648) (Thanks Xinli Shang, shangxinli, and Claude Opus 4.6!)
 - docs: add Iceberg security model (#688) (Thanks Sung Yun!)
-- build(hive): add ICEBERG_BUILD_HIVE option and skeleton (#689) (Thanks liuxiaoyu!)
 - fix: evaluate ManifestGroup file filters (#664) (Thanks Minh Vu!)
 - fix(parquet): fix parquet writer metrics conversion (#681) (Thanks Gang Wu!)
 - fix: preserve snapshot ID width in UseRef (#661) (Thanks Minh Vu!)
 - feat: metrics for parquet writer (#651) (Thanks wzhuo!)
 - refactor: move temporal utilities out of transform util (#675) (Thanks Junwang Zhao!)
-- fix(ci): fix macOS ci to use provided fmt (#670) (Thanks slfan1989!)
 - fix(parquet): check compression codec availability (#656) (Thanks Gang Wu!)
 - fix: disallow zoned and non-zoned literal comparisons (#676) (Thanks Junwang Zhao!)
 - feat(data): coalesce position deletes into range inserts (#645) (Thanks Sebastian Baunsgaard!)
 - fix: correct StrictMetricsEvaluator::CanContainNulls/CanContainNaNs when field missing from stats map (#686) (Thanks Yingfan Guo!)
-- fix(meson): add missing install headers for meson (#684) (Thanks Gang Wu!)
-- ci: update pre-commit workflow permissions to write (#683) (Thanks Guotao Yu!)

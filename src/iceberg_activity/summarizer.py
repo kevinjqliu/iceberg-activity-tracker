@@ -129,6 +129,14 @@ SYNC_LOW_SIGNAL_RE = re.compile(
     re.I,
 )
 CLI_ONLY_RE = re.compile(r"\b(cli|cmd)\b", re.I)
+CI_ONLY_RE = re.compile(
+    r"^\s*(ci|infra|build)(\([^)]+\))?:\s*"
+    r".*\b(zizmor|workflow|workflows|actions?|codeql|pre-commit|permissions?|"
+    r"comment tag|patch versions?|lock|fixture)\b",
+    re.I,
+)
+DOCS_ONLY_RE = re.compile(r"^\s*docs?(\([^)]+\))?:", re.I)
+TEST_ONLY_RE = re.compile(r"^\s*(test|tests)(\([^)]+\))?:", re.I)
 
 
 @dataclass(frozen=True)
@@ -464,6 +472,7 @@ def build_theme_rows(scored_rows: list[dict[str, str]]) -> list[dict[str, str]]:
                     "subjects": row.get("subject", ""),
                     "summary_bullet": summary_bullet(row),
                     "newest_committer_date": row.get("committer_date", ""),
+                    "_render": str(not is_render_suppressed(row)).lower(),
                 }
             )
             continue
@@ -495,6 +504,7 @@ def build_theme_rows(scored_rows: list[dict[str, str]]) -> list[dict[str, str]]:
                     f"(Thanks {join_grouped_contributors(contributors)}!)"
                 ),
                 "newest_committer_date": newest_committer_date,
+                "_render": str(any(not is_render_suppressed(row) for row in rows)).lower(),
             }
         )
 
@@ -510,6 +520,14 @@ def sort_key(row: dict[str, str]) -> tuple[int, str, int, str]:
         pr_number,
         row.get("commit_sha", ""),
     )
+
+
+def select_theme_rows(theme_rows: list[dict[str, str]], top: int) -> list[dict[str, str]]:
+    return [
+        row
+        for row in theme_rows
+        if row.get("_render", "true") == "true"
+    ][:top]
 
 
 def read_commit_rows(input_path: Path) -> list[dict[str, str]]:
@@ -574,15 +592,20 @@ def write_markdown(
         "",
     ]
     for repo, rows, candidate_count in sections:
+        renderable_count = sum(1 for row in rows if row.get("_render", "true") == "true")
         lines.extend(
             [
                 f"## {repo.full_name}",
                 "",
                 f"### {repo.summary_heading}",
                 "",
-                f"_Top {len(rows)} themes from {candidate_count} scored commits._",
+                f"_Top {renderable_count} themes from {candidate_count} scored commits._",
                 "",
-                *[row["summary_bullet"] for row in rows],
+                *[
+                    row["summary_bullet"]
+                    for row in rows
+                    if row.get("_render", "true") == "true"
+                ],
                 "",
             ]
         )
@@ -650,6 +673,7 @@ def write_single_repo_markdown(
     candidate_count: int,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    renderable_rows = [row for row in rows if row.get("_render", "true") == "true"]
     lines = [
         "# Iceberg Community Sync Summary",
         "",
@@ -660,9 +684,9 @@ def write_single_repo_markdown(
         "",
         f"### {repo.summary_heading}",
         "",
-        f"_Top {len(rows)} themes from {candidate_count} scored commits._",
+        f"_Top {len(renderable_rows)} themes from {candidate_count} scored commits._",
         "",
-        *[row["summary_bullet"] for row in rows],
+        *[row["summary_bullet"] for row in renderable_rows],
         "",
     ]
     output_path.write_text("\n".join(lines), encoding="utf-8")
@@ -713,7 +737,7 @@ def summarize_period(
         rows = rows_for_period(input_path, since=since, until=until)
         scored_rows = score_rows(rows, notes_path=notes_path, lancedb_dir=lancedb_dir)
         theme_rows = build_theme_rows(scored_rows)
-        selected_rows = theme_rows[:top]
+        selected_rows = select_theme_rows(theme_rows, top)
         scored_csv_path = review_data_dir / f"{repo.cache_name}_scored.csv"
         theme_csv_path = review_data_dir / f"{repo.cache_name}_themes.csv"
         write_scored_csv(scored_rows, scored_csv_path)
@@ -738,7 +762,7 @@ def summarize_period(
             rows = rows_for_period(repo_input_path, since=since, until=until)
             scored_rows = score_rows(rows, notes_path=notes_path, lancedb_dir=repo_lancedb_dir)
             theme_rows = build_theme_rows(scored_rows)
-            selected_rows = theme_rows[:top]
+            selected_rows = select_theme_rows(theme_rows, top)
             scored_csv_path = review_data_dir / f"{repo.cache_name}_scored.csv"
             theme_csv_path = review_data_dir / f"{repo.cache_name}_themes.csv"
             write_scored_csv(scored_rows, scored_csv_path)
@@ -794,6 +818,50 @@ def is_low_signal_for_semantic_boost(row: dict[str, str]) -> bool:
     if IMPORTANT_INFRA_RE.search(text):
         return False
     return bool(LOW_SIGNAL_RE.search(subject) or ROUTINE_RE.search(subject))
+
+
+def is_render_suppressed(row: dict[str, str]) -> bool:
+    subject = row.get("subject", "")
+    text = f"{subject}\n{row.get('body', '')}"
+    subject_has_important_infra = bool(IMPORTANT_INFRA_RE.search(subject))
+    if PUBLISHING_RE.search(text):
+        return False
+
+    author = row.get("author_name", "").lower()
+    top_paths = set(split_values(row.get("top_level_paths", "").lower()))
+    if is_dependency_bump_subject(subject):
+        return not subject_has_important_infra
+    if "dependabot" in author:
+        return not subject_has_important_infra
+    if subject_has_important_infra:
+        return False
+    if CI_ONLY_RE.search(subject):
+        return True
+    if DOCS_ONLY_RE.search(subject):
+        return True
+    if TEST_ONLY_RE.search(subject):
+        return True
+    if top_paths and top_paths <= {".github"}:
+        return True
+    if top_paths and top_paths <= {"docs"}:
+        return True
+    if re.search(
+        r"\b("
+        r"test expectations|flaky test|trim .*test|test fixtures|"
+        r"cross-client .*tests?|typo|release notes?|issue template|"
+        r"release scripts?|scripts? .*release|help release|cargo-public-api|"
+        r"lock check|check_standalone|toml fmt|install headers|meson|"
+        r"draft prs?|zizmor|workflow|actions/upload-artifact|gitignore"
+        r")\b",
+        subject,
+        re.I,
+    ):
+        return True
+    if re.search(r"^\s*(build|chore|infra)(\([^)]+\))?:", subject, re.I) and ROUTINE_RE.search(
+        subject
+    ):
+        return True
+    return False
 
 
 def is_dependency_bump_subject(subject: str) -> bool:

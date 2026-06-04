@@ -12,8 +12,10 @@ from iceberg_activity.summarizer import (
     THEME_FIELDS,
     build_theme_rows,
     contributor_names,
+    is_render_suppressed,
     parse_month,
     score_commit,
+    select_theme_rows,
     summarize_month,
     summarize_period,
     summary_bullet,
@@ -346,6 +348,8 @@ def test_build_theme_rows_groups_python_rest_pagination() -> None:
         "tables, and views (#3347, #3348, #3349, #3377) "
         "(Thanks Yuya Ebihara and Kevin Liu!)"
     )
+    assert pagination_theme["_render"] == "true"
+    assert next(row for row in themes if row["theme_key"] == "commit:3386")["_render"] == "false"
 
 
 def test_build_theme_rows_preserves_single_commit_fallback() -> None:
@@ -373,6 +377,7 @@ def test_build_theme_rows_preserves_single_commit_fallback() -> None:
             "subjects": "Spark: Add feature (#123)",
             "summary_bullet": "- Spark: Add feature (#123) (Thanks Alice, Bob, and Carol!)",
             "newest_committer_date": "2026-06-01T12:00:00+00:00",
+            "_render": "true",
         }
     ]
 
@@ -394,6 +399,60 @@ def test_build_theme_rows_preserves_single_rule_match_as_commit() -> None:
     assert themes[0]["summary_bullet"] == (
         "- feat(cli): add maintenance command wiring and stubs (#1073) (Thanks Go Dev!)"
     )
+
+
+def test_select_theme_rows_hides_routine_items_without_removing_review_data() -> None:
+    rows = [
+        scored_commit_row(
+            commit_sha="feature",
+            subject="Core: Add V4 manifest support (#15049)",
+            author_name="Anoop Johnson",
+            top_level_paths="core",
+            pr_number="15049",
+            score="80",
+        ),
+        scored_commit_row(
+            commit_sha="docs",
+            subject="Docs: Fix typo in README (#16000)",
+            author_name="Doc Writer",
+            top_level_paths="docs",
+            pr_number="16000",
+            score="70",
+        ),
+        scored_commit_row(
+            commit_sha="deps",
+            subject="Build: Bump boto3 from 1.40.61 to 1.42.84 (#3226)",
+            author_name="dependabot[bot]",
+            top_level_paths="pyproject.toml; uv.lock",
+            pr_number="3226",
+            score="60",
+        ),
+        scored_commit_row(
+            commit_sha="security-docs",
+            subject="docs: add Iceberg security model (#3425)",
+            author_name="Sung Yun",
+            top_level_paths="docs",
+            pr_number="3425",
+            score="50",
+        ),
+    ]
+
+    themes = build_theme_rows(rows)
+    selected = select_theme_rows(themes, top=20)
+
+    assert {row["theme_key"] for row in themes} == {
+        "commit:feature",
+        "commit:docs",
+        "commit:deps",
+        "commit:security-docs",
+    }
+    assert {row["theme_key"] for row in selected} == {
+        "commit:feature",
+        "commit:security-docs",
+    }
+    assert is_render_suppressed(rows[1])
+    assert is_render_suppressed(rows[2])
+    assert not is_render_suppressed(rows[3])
 
 
 def test_contributor_names_splits_compound_author_names() -> None:
@@ -541,7 +600,7 @@ def test_summarize_period_uses_meeting_window_output_dir(tmp_path: Path) -> None
     )
 
     assert result.candidate_count == 2
-    assert result.selected_count == 2
+    assert result.selected_count == 1
     assert result.scored_csv_path == (
         output_dir / "2026-05-13_to_2026-06-03" / "review-data" / "apache_iceberg_scored.csv"
     )
@@ -559,6 +618,9 @@ def test_summarize_period_uses_meeting_window_output_dir(tmp_path: Path) -> None
     with result.scored_csv_path.open(newline="", encoding="utf-8") as csv_file:
         commit_shas = {row["commit_sha"] for row in csv.DictReader(csv_file)}
     assert commit_shas == {"1", "3"}
+    markdown = result.markdown_path.read_text(encoding="utf-8")
+    assert "- Spark: Implement row lineage support (#16100) (Thanks Spark Dev!)" in markdown
+    assert "Docs: Fix typo" not in markdown
 
 
 def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:

@@ -34,7 +34,7 @@ _Top 20 themes from 131 scored commits._
 
 ### Python
 
-_Top 20 themes from 51 scored commits._
+_Top 16 themes from 51 scored commits._
 
 - Catalog views: add and expand view support (#3224, #3288) (Thanks Yuya Ebihara and spr0els!)
 - Add support for 'overwrite' option in register_table (#3290) (Thanks Yuya Ebihara!)
@@ -47,21 +47,17 @@ _Top 20 themes from 51 scored commits._
 - fix:update config during table refresh (#3327) (Thanks Yingjian Wu!)
 - Fix deepcopy for `And`, `Or`, and `Not` expressions (#3295) (Thanks Rob Reeves!)
 - Reading upper/lower bounds values with type promotions (#3293) (Thanks Alex Stephen!)
-- CI: Use specific patch versions in workflow action comments (#3331) (Thanks Kevin Liu!)
 - Remove unused code (#3326) (Thanks Yuya Ebihara!)
 - fix(tests): isolate state in `test_write_optional_list` (#3334) (Thanks Paul Mathew!)
 - perf: build partition filter with balanced tree to avoid RecursionError (#3264) (Thanks Yingjian Wu!)
 - fix: SaslServer busy-loop causes process hang after test suite (#3305) (Thanks Kevin Liu!)
 - Initial work for file format writer API (#3119) (Thanks Neelesh Salian!)
-- Bump daft dependency to >=0.7.10 (fix Python 3.14 compatibility) (#3323) (Thanks Kevin Liu!)
-- Build: Bump fastavro from 1.12.1 to 1.12.2 (#3310) (Thanks dependabot[bot]!)
-- Build: Bump rich from 14.3.3 to 15.0.0 (#3283) (Thanks dependabot[bot]!)
 
 ## apache/iceberg-rust
 
 ### Rust
 
-_Top 20 themes from 37 scored commits._
+_Top 14 themes from 37 scored commits._
 
 - feat(reader): Add read_with_metrics() for scan I/O metrics (#2349) (Thanks Matt Butrovich, Claude Opus 4.6 (1M context), and blackmwk!)
 - Encryption: add key management and encrypted IO support (#2339, #2340) (Thanks Xander and Claude Opus 4.6 (1M context)!)
@@ -71,18 +67,12 @@ _Top 20 themes from 37 scored commits._
 - fix: allow missing sequence-number in v2 snapshots for v1-upgraded tables (#2127) (Thanks Jem Bishop!)
 - feat(datatypes): add optional and required constructors for MapType (#2405) (Thanks Liang Gong!)
 - fix: NaN pushdown correctly pushes down NaNs correctness issue  (#2351) (Thanks Xander!)
-- ci(python): verify wheel abi3 compatibility with --no-build (#2388) (Thanks Kevin Liu!)
 - Split arrow reader into smaller modules (#2358) (Thanks blackmwk and Claude Opus 4.7 (1M context)!)
 - Fix RUSTSEC-2026-0122 (#2437) (Thanks blackmwk!)
 - fix(transaction): fix previous snapshot summary fetching (#2391) (Thanks dentiny!)
-- CI: Use specific patch versions in workflow action comments (#2412) (Thanks Kevin Liu!)
 - feat(datafusion): show pushed-down limit in IcebergTableScan EXPLAIN output (#2360) (Thanks Charles-Antoine Leger!)
 - chore: Improve release process (#2381) (Thanks Shawn Chang!)
 - fix(tests): remove unnecessary `.to_string()` calls for metadata_location (#2407) (Thanks Liang Gong!)
-- docs: Correct docs for Int128 and UInt128 being big-endian not little-endian (#2397) (Thanks Xander!)
-- docs(arrow): clarify ScanMetrics::bytes_read includes delete files (#2379) (Thanks Matt Butrovich!)
-- docs: bump version for python binding (#2377) (Thanks Kevin Liu!)
-- chore(deps): bump opendal to 0.56, migrate to reqsign-core 3.0 (#2401) (Thanks Krisztián Szűcs!)
 
 ## apache/iceberg-go
 
@@ -94,8 +84,6 @@ _Top 20 themes from 65 scored commits._
 - feat(io): add BulkRemovableIO interface(#914) (#916) (Thanks Tanmay Rauth!)
 - Deletion vectors: add read, write, and validation support (#866, #1041) (Thanks Andrei Tserakhau and Shreyas Mishra!)
 - feat(catalog): add version-hint management for Hadoop catalog (Thanks Tanmay Rauth!)
-- test(table): add v3 OCC row lineage regression tests (#998) (#1043) (Thanks Tanmay Rauth!)
-- test(table): add round-trip test for v3 metadata with partition-statistics (#1012) (#1019) (Thanks Tanmay Rauth!)
 - feat(cli): add maintenance command wiring and stubs (#1073) (Thanks Tanmay Rauth!)
 - fix(manifest): allow ManifestListWriter to reference lower-version manifests (#1030) (Thanks Ashley Jeffs!)
 - feat(io): add ListableIO interface to replace reflect-based directory walking (#913) (#917) (Thanks Tanmay Rauth!)
@@ -110,29 +98,21 @@ _Top 20 themes from 65 scored commits._
 - fix(io): resolve S3 PermanentRedirect for S3 Table Buckets (#974) (#975) (Thanks Tanmay Rauth!)
 - feat(manifest): omit data_file.distinct_counts on v3 manifests (#1039) (Thanks Masa!)
 - feat(catalog): hadoop table and namespace CRUD operations (#969) (Thanks Tanmay Rauth!)
+- feat(catalog): hadoop cli integration (#1034) (Thanks Tanmay Rauth!)
+- fix(occ): RowDelta uses partition-scoped conflict check instead of AlwaysTrue (#983) (Thanks Masa!)
 
 ## apache/iceberg-cpp
 
 ### C++
 
-_Top 19 themes from 19 scored commits._
+_Top 9 themes from 19 scored commits._
 
 - feat(io): add streaming FileIO support (#641) (Thanks Gang Wu!)
 - feat: add iceberg_data library alongside iceberg (#631) (Thanks Junwang Zhao!)
 - feat(data): add delete filter support (#650) (Thanks Gang Wu!)
 - feat: add ReachableFileCleanup to expire snapshots (#592) (Thanks Xinli Shang!)
-- fix: typo in RoaringPositionBitmap deletion vector note (#632) (Thanks Junwang Zhao!)
 - feat: retry failed transaction commit (#626) (Thanks SkylerLin!)
 - fix: concurrent Lazy::Get should get correct result (#634) (Thanks Zehua Zou!)
 - fix: repair shared package linkage and export scan builder symbols (#635) (Thanks Junwang Zhao!)
 - refactor(util): make retry policy explicit and deterministic (#633) (Thanks Gang Wu!)
 - fix(cmake): use consistent generator expressions to link libraries (#639) (Thanks Junwang Zhao!)
-- CI: Use specific patch versions in workflow action comments (#644) (Thanks Kevin Liu!)
-- ci: split S3/MinIO into a Linux and macOS-only workflow (#642) (Thanks Junwang Zhao!)
-- fix(ci): restore auth for docs gh-pages deploy (#625) (Thanks Gang Wu and Kevin Liu!)
-- ci: use ilammy/msvc-dev-cmd for Windows MSVC environment (#643) (Thanks Junwang Zhao!)
-- chore: bump arrow-cpp to 24.0.0 (#623) (Thanks Gang Wu!)
-- chore(deps): bump github/codeql-action from 4.35.2 to 4.35.3 (#647) (Thanks dependabot[bot]!)
-- chore(deps): bump mozilla-actions/sccache-action from 0.0.9 to 0.0.10 (#636) (Thanks dependabot[bot]!)
-- chore(deps): bump zizmorcore/zizmor-action from 0.5.2 to 0.5.3 (#630) (Thanks dependabot[bot]!)
-- chore(deps): bump github/codeql-action from 4.35.1 to 4.35.2 (#629) (Thanks dependabot[bot]!)
