@@ -198,7 +198,7 @@ def join_names(names: list[str]) -> str:
 
 
 def summary_bullet(row: dict[str, str]) -> str:
-    return f"■\t{row['subject']} <Thanks {join_names(contributor_names(row))}!>"
+    return f"- {row['subject']} (Thanks {join_names(contributor_names(row))}!)"
 
 
 def sort_key(row: dict[str, str]) -> tuple[int, str, int, str]:
@@ -226,7 +226,7 @@ def write_scored_csv(rows: list[dict[str, str]], output_path: Path) -> None:
 
 def write_markdown(rows: list[dict[str, str]], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    lines = ["○\tJava", *[row["summary_bullet"] for row in rows], ""]
+    lines = ["## Java", "", *[row["summary_bullet"] for row in rows], ""]
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
 

@@ -63,7 +63,7 @@ def test_summary_bullet_formats_thanks() -> None:
         co_authors="Bob; Carol",
     )
 
-    assert summary_bullet(row) == "■\tSpark: Add feature (#123) <Thanks Alice, Bob, and Carol!>"
+    assert summary_bullet(row) == "- Spark: Add feature (#123) (Thanks Alice, Bob, and Carol!)"
 
 
 def test_contributor_names_splits_compound_author_names() -> None:
@@ -140,8 +140,9 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
 
     markdown = result.markdown_path.read_text(encoding="utf-8")
     assert markdown == (
-        "○\tJava\n"
-        "■\tCore: Add V4 location relativization utilities (#16174) <Thanks Anoop Johnson!>\n"
+        "## Java\n"
+        "\n"
+        "- Core: Add V4 location relativization utilities (#16174) (Thanks Anoop Johnson!)\n"
     )
 
 
