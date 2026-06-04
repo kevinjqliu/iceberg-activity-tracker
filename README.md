@@ -77,10 +77,10 @@ Summarization builds a local LanceDB index from
 `data/notes/iceberg_community_sync_notes.md` and uses past Java highlight bullets
 as part of the ranking.
 
-The GitHub Actions workflow runs once per day and can also be triggered
-manually. Daily runs collect commit data. Summary generation runs only on the
-21-day Wednesday cadence anchored at 2026-06-03, while manual runs generate a
-summary for the supplied `meeting_date` input or today's UTC date.
+The GitHub Actions workflow runs on the three-week Wednesday meeting cadence
+anchored at 2026-06-24, starting around 6am Pacific with up to 20 minutes of
+jitter. Manual runs generate a summary for the supplied `meeting_date` input or
+today's Pacific date.
 
 Generated commit CSVs are committed under `data/commits/`; generated summary
 pages are committed under `summaries/`.
