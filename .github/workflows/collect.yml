@@ -62,13 +62,15 @@ jobs:
           PY
           )"
           eval "$resolved"
-          echo "meeting_date=$meeting_date" >> "$GITHUB_OUTPUT"
-          echo "should_run=$should_run" >> "$GITHUB_OUTPUT"
-          echo "summary_dir=${since_date}_to_${meeting_date}" >> "$GITHUB_OUTPUT"
+          {
+            echo "meeting_date=$meeting_date"
+            echo "should_run=$should_run"
+            echo "summary_dir=${since_date}_to_${meeting_date}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Skip off-cycle schedule
         if: steps.summary.outputs.should_run != 'true'
-        run: echo "Skipping: not a 6am PT three-week meeting date."
+        run: echo "Skipping off-cycle schedule"
 
       - name: Apply schedule jitter
         if: steps.summary.outputs.should_run == 'true' && github.event_name == 'schedule'
