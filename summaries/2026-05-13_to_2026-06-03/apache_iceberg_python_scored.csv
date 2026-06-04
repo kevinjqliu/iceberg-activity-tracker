@@ -194,7 +194,23 @@ separate `write_parquet` API)
 
 ---------
 
-Co-authored-by: Paul Mathew <paul.mathew@aircall.io>",43d1f1fc18ce66d5e1bc0c9ede04dddb9a6cfe2d,3335,false,Paul Mathew,7,498,30,mkdocs; pyiceberg; tests,93,6,99,base; feature/api verb; strategic: catalog; medium file count; medium churn; multi-area change; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.19,"CI: Make CVE scan blocking on PRs, informational on main","- Support `pa.RecordBatchReader` in Table.`{append,overwrite}` (#3335) (Thanks Paul Mathew!)"
+Co-authored-by: Paul Mathew <paul.mathew@aircall.io>",43d1f1fc18ce66d5e1bc0c9ede04dddb9a6cfe2d,3335,false,Paul Mathew,7,498,30,mkdocs; pyiceberg; tests,105,6,111,"base; feature/api verb; strategic: catalog, round-trip; summary signal: round-trip; medium file count; medium churn; multi-area change; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.19","CI: Make CVE scan blocking on PRs, informational on main","- Support `pa.RecordBatchReader` in Table.`{append,overwrite}` (#3335) (Thanks Paul Mathew!)"
+apache/iceberg-python,b31b7625748c42f8c35a117f8ef9612c25533bbf,b31b762,Minh Vu,vuhoangminh97@gmail.com,2026-05-19T16:15:46+02:00,GitHub,noreply@github.com,2026-05-19T07:15:46-07:00,fix(table): avoid committing update builders after exceptions (#3354),"## Summary
+
+Avoid committing update builders when the body of a `with` block raises.
+
+`UpdateTableMetadata.__exit__` currently commits unconditionally, so
+user code like `with table.update_schema() as update:` can still mutate
+table metadata even when an exception is raised before the block
+finishes. This change makes update builders mirror
+`Transaction.__exit__` and only commit on a clean exit.
+
+## Testing
+
+- `.venv\\Scripts\\python -m pytest
+""tests/catalog/test_catalog_behaviors.py::test_update_schema_with_statement_does_not_commit_on_exception[memory]""
+""tests/catalog/test_catalog_behaviors.py::test_update_schema_with_statement_does_not_commit_on_exception[sql]""
+-q`",739373fcdf68d01ab7ab6d577199cdc2058eb74e,3354,false,,2,25,3,pyiceberg; tests,80,10,90,base; fix; important area: table; strategic: catalog; multi-area change; release/security/notice signal; has PR number; LanceDB similarity 0.35,Kafka Connect: fix table UUID check,- fix(table): avoid committing update builders after exceptions (#3354) (Thanks Minh Vu!)
 apache/iceberg-python,2be1827bf9a9a8e82f0cb4e8cb6a2ae535bafd7f,2be1827,Yuya Ebihara,ebyhry@gmail.com,2026-05-24T08:38:08+09:00,GitHub,noreply@github.com,2026-05-23T16:38:08-07:00,REST: Add pagination support for list_tables (#3348),"<!--
 Thanks for opening a pull request!
 -->
@@ -324,71 +340,6 @@ first page)
 
 <!-- In the case of user-facing changes, please add the changelog label.
 -->",95c45d44094cce592452dee9b81492673f1fe548,3349,false,,2,106,6,pyiceberg; tests,77,9,86,base; feature/api verb; important area: rest; strategic: catalog; multi-area change; has PR number; LanceDB similarity 0.31,"Core, REST: Add support for overwrite in RegisterTableRequest",- REST: Add pagination support for `list_views` (#3349) (Thanks Yuya Ebihara!)
-apache/iceberg-python,e4869850b5632b29bc65cd2d549bfda9fb22d27c,e486985,Yuya Ebihara,ebyhry@gmail.com,2026-05-25T01:37:58+09:00,GitHub,noreply@github.com,2026-05-24T09:37:58-07:00,REST: Allow Identifier type in `drop_view` method (#3408),"# Rationale for this change
-
-Fix the warning message in the IDE. 
-
-The base class and other classes use the `str | Identifier` style in the
-`drop_view` method.
-I also confirmed that other methods in the REST catalog class use `str |
-Identifier` for identifiers.
-
-## Are these changes tested?
-
-N/A
-
-## Are there any user-facing changes?
-
-No
-
-<!-- In the case of user-facing changes, please add the changelog label.
--->",8055a60af5d32ec4d2e1d02cd020a78273785558,3408,false,,1,1,1,pyiceberg,72,9,81,base; feature/api verb; important area: rest; strategic: catalog; has PR number; LanceDB similarity 0.30,Add TCK tests for Schema Evolution in BaseFormatModelTests,- REST: Allow Identifier type in `drop_view` method (#3408) (Thanks Yuya Ebihara!)
-apache/iceberg-python,b31b7625748c42f8c35a117f8ef9612c25533bbf,b31b762,Minh Vu,vuhoangminh97@gmail.com,2026-05-19T16:15:46+02:00,GitHub,noreply@github.com,2026-05-19T07:15:46-07:00,fix(table): avoid committing update builders after exceptions (#3354),"## Summary
-
-Avoid committing update builders when the body of a `with` block raises.
-
-`UpdateTableMetadata.__exit__` currently commits unconditionally, so
-user code like `with table.update_schema() as update:` can still mutate
-table metadata even when an exception is raised before the block
-finishes. This change makes update builders mirror
-`Transaction.__exit__` and only commit on a clean exit.
-
-## Testing
-
-- `.venv\\Scripts\\python -m pytest
-""tests/catalog/test_catalog_behaviors.py::test_update_schema_with_statement_does_not_commit_on_exception[memory]""
-""tests/catalog/test_catalog_behaviors.py::test_update_schema_with_statement_does_not_commit_on_exception[sql]""
--q`",739373fcdf68d01ab7ab6d577199cdc2058eb74e,3354,false,,2,25,3,pyiceberg; tests,65,10,75,base; fix; strategic: catalog; multi-area change; release/security/notice signal; has PR number; LanceDB similarity 0.35,Kafka Connect: fix table UUID check,- fix(table): avoid committing update builders after exceptions (#3354) (Thanks Minh Vu!)
-apache/iceberg-python,0bdff48005c0969d1bc320c7fdfa5c96f49bb4ae,0bdff48,vishnu prakash,nvishnuprakash02@gmail.com,2026-05-16T01:59:43+05:30,GitHub,noreply@github.com,2026-05-15T22:29:43+02:00,Add `@typing.override` to catalog and FileIO implementations (#3360),"Adds `@override` from `typing_extensions` to all concrete
-implementations of `Catalog`, `MetastoreCatalog`, `FileIO`, `InputFile`,
-and `OutputFile` so overridden base-class methods are explicit and can
-be verified by static type checkers.
-
-Uses `from typing_extensions import override` (same pattern already used
-for `Self` in `typedef.py`) instead of `from typing import override`
-which requires Python 3.12+ and would break the supported 3.10/3.11
-versions.
-
-Closes #1310
-
-# Rationale for this change
-
-`@typing.override` (PEP 698) makes it explicit which methods
-intentionally override a parent class method, helping static type
-checkers catch mistakes early. The previous attempt (#1312) and the
-currently open PR (#3359) both use `from typing import override` which
-only exists in Python 3.12+. This PR uses `typing_extensions` to support
-all versions from 3.10+.
-
-## Are these changes tested?
-
-No new tests are needed — `@override` is a static analysis marker with
-zero runtime effect. `make lint` and `make test` (3625 passed) both pass
-cleanly.
-
-## Are there any user-facing changes?
-
-No.",a99320bf8bfe8c81415dc6ff2148d4f5a23067e5,3360,false,,10,173,0,pyiceberg,61,8,69,base; feature/api verb; strategic: catalog; medium file count; has PR number; LanceDB similarity 0.27,Flink: Support UUID type in Avro and Parquet readers and writers,- Add `@typing.override` to catalog and FileIO implementations (#3360) (Thanks vishnu prakash!)
 apache/iceberg-python,55887b46ca70a1e03419873348f2f55d8491ada5,55887b4,Chris Qiu,churchqq030@hotmail.com,2026-05-25T01:14:47+08:00,GitHub,noreply@github.com,2026-05-24T10:14:47-07:00,feat(cli): deprecate version command in favor of --version flag (#3206),"Closes #3160
 
 <!--
@@ -444,7 +395,56 @@ Yes:
 
 ---------
 
-Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",e4869850b5632b29bc65cd2d549bfda9fb22d27c,3206,false,Kevin Liu,2,26,2,pyiceberg; tests,60,6,66,base; strategic: catalog; multi-area change; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.19,Core: Fix useSnapshotSchema logic and projection in RESTTableScan,- feat(cli): deprecate version command in favor of --version flag (#3206) (Thanks Chris Qiu and Kevin Liu!)
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",e4869850b5632b29bc65cd2d549bfda9fb22d27c,3206,false,Kevin Liu,2,26,2,pyiceberg; tests,75,6,81,base; important area: cli; strategic: catalog; multi-area change; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.19,Core: Fix useSnapshotSchema logic and projection in RESTTableScan,- feat(cli): deprecate version command in favor of --version flag (#3206) (Thanks Chris Qiu and Kevin Liu!)
+apache/iceberg-python,e4869850b5632b29bc65cd2d549bfda9fb22d27c,e486985,Yuya Ebihara,ebyhry@gmail.com,2026-05-25T01:37:58+09:00,GitHub,noreply@github.com,2026-05-24T09:37:58-07:00,REST: Allow Identifier type in `drop_view` method (#3408),"# Rationale for this change
+
+Fix the warning message in the IDE. 
+
+The base class and other classes use the `str | Identifier` style in the
+`drop_view` method.
+I also confirmed that other methods in the REST catalog class use `str |
+Identifier` for identifiers.
+
+## Are these changes tested?
+
+N/A
+
+## Are there any user-facing changes?
+
+No
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",8055a60af5d32ec4d2e1d02cd020a78273785558,3408,false,,1,1,1,pyiceberg,72,9,81,base; feature/api verb; important area: rest; strategic: catalog; has PR number; LanceDB similarity 0.30,Add TCK tests for Schema Evolution in BaseFormatModelTests,- REST: Allow Identifier type in `drop_view` method (#3408) (Thanks Yuya Ebihara!)
+apache/iceberg-python,0bdff48005c0969d1bc320c7fdfa5c96f49bb4ae,0bdff48,vishnu prakash,nvishnuprakash02@gmail.com,2026-05-16T01:59:43+05:30,GitHub,noreply@github.com,2026-05-15T22:29:43+02:00,Add `@typing.override` to catalog and FileIO implementations (#3360),"Adds `@override` from `typing_extensions` to all concrete
+implementations of `Catalog`, `MetastoreCatalog`, `FileIO`, `InputFile`,
+and `OutputFile` so overridden base-class methods are explicit and can
+be verified by static type checkers.
+
+Uses `from typing_extensions import override` (same pattern already used
+for `Self` in `typedef.py`) instead of `from typing import override`
+which requires Python 3.12+ and would break the supported 3.10/3.11
+versions.
+
+Closes #1310
+
+# Rationale for this change
+
+`@typing.override` (PEP 698) makes it explicit which methods
+intentionally override a parent class method, helping static type
+checkers catch mistakes early. The previous attempt (#1312) and the
+currently open PR (#3359) both use `from typing import override` which
+only exists in Python 3.12+. This PR uses `typing_extensions` to support
+all versions from 3.10+.
+
+## Are these changes tested?
+
+No new tests are needed — `@override` is a static analysis marker with
+zero runtime effect. `make lint` and `make test` (3625 passed) both pass
+cleanly.
+
+## Are there any user-facing changes?
+
+No.",a99320bf8bfe8c81415dc6ff2148d4f5a23067e5,3360,false,,10,173,0,pyiceberg,61,8,69,base; feature/api verb; strategic: catalog; medium file count; has PR number; LanceDB similarity 0.27,Flink: Support UUID type in Avro and Parquet readers and writers,- Add `@typing.override` to catalog and FileIO implementations (#3360) (Thanks vishnu prakash!)
 apache/iceberg-python,720708a00f8a259d2f2ad86c1c55d5b88ad6c373,720708a,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-05-25T15:57:38-04:00,GitHub,noreply@github.com,2026-05-25T21:57:38+02:00,Fix walrus truthiness on metrics bounds and identity-partition projection (#3412),"Inspired by the walrus issue in #3353
 
 ## Summary
@@ -528,6 +528,53 @@ variants
 ## Verification
 
 - `python -m pytest tests/io/test_fsspec.py -k zero_length_of_file -q`",4b3ccbb7a43530717dad1cf6e5768a25d44d621b,3353,false,,2,22,8,pyiceberg; tests,45,8,53,base; fix; strategic: variant; multi-area change; has PR number; LanceDB similarity 0.27,"API, Core, Orc: Implement project() for partition statistics scan API",- fix(fsspec): handle zero-byte files in `__len__` (#3353) (Thanks Minh Vu!)
+apache/iceberg-python,43d1f1fc18ce66d5e1bc0c9ede04dddb9a6cfe2d,43d1f1f,barking-code,62703911+barking-code@users.noreply.github.com,2026-05-18T22:52:02+09:00,GitHub,noreply@github.com,2026-05-18T15:52:02+02:00,fix: avoid `TSaslClientTransport` reuse to eliminate server-side SASL noise (#3357),"Related: #1744, #1747, #1941
+
+# Rationale for this change
+
+#1747 / #1941 caught the `TSaslClientTransport` reopen failure on the
+client side, but the doomed `open()` attempt still completes a TCP
+handshake before aborting, which leaves a `TTransportException` event in
+the HMS server log per `_HiveClient` re-entry. In production this
+produces a steady stream of server-side error events matched by HMS
+alert filters.
+
+`TSaslClientTransport` is single-use by design: its `SASLClient` is
+disposed on `close()` and there is no API to reset it. Reusing the same
+transport across context-manager entries was the original misuse. This
+PR keeps the existing `_HiveClient.__init__` setup intact — the
+transport is still created in `__init__` so `_HiveClient` can be used
+without a context manager (per @kevinjqliu's note in #1747) — and
+reinitializes the transport before `open()` whenever the client has been
+used before:
+
+```python
+def __enter__(self) -> Client:
+    if self._was_opened:
+        self._transport = self._init_thrift_transport()
+    self._transport.open()
+    self._was_opened = True
+    return self._client()
+```
+
+The `try/except` retry from #1747 / #1941 is removed because the failure
+mode it covered (reopening a disposed SASL session) cannot occur on a
+fresh transport.
+
+The public behaviour of `_HiveClient` (`with hive_client as c:` returns
+a working `Client`, `__exit__` closes it) is unchanged.
+
+# Are these changes tested?
+
+- New unit test `test_kerberized_client_uses_fresh_transport_on_reuse`
+asserts that the transport instance differs between two consecutive
+context-manager entries
+- Existing `test_create_hive_client_with_kerberos_using_context_manager`
+continues to pass
+
+# Are there any user-facing changes?
+
+No.",7f8a9f2924a234268ea8a5bd1159970bf5d8b1d6,3357,false,,2,38,13,pyiceberg; tests,45,6,51,base; fix; strategic: occ; multi-area change; has PR number; LanceDB similarity 0.21,"Core, Spark 4.1: Fix distributed planning for CoW operations",- fix: avoid `TSaslClientTransport` reuse to eliminate server-side SASL noise (#3357) (Thanks barking-code!)
 apache/iceberg-python,d3393910065a282e96f9b471d0a9b1047ef28b7a,d339391,Ben Lai,laichunpongben@gmail.com,2026-05-19T22:31:13+08:00,GitHub,noreply@github.com,2026-05-19T07:31:13-07:00,perf(add_files): stream manifest entries for duplicate-files check (#3287),"Fixes #3286.
 
 ## The hot path today
@@ -694,6 +741,48 @@ this PR. Preserved exactly to keep this change behavior-preserving.
 
 - Issue: #3286
 - Related: #2132 (closed as docs), #2133 (parallelization)",b31b7625748c42f8c35a117f8ef9612c25533bbf,3287,false,,2,155,5,pyiceberg; tests,37,8,45,"base; strategic: catalog, manifest; multi-area change; has PR number; LanceDB similarity 0.28","API, Core, Orc: Implement project() for partition statistics scan API",- perf(add_files): stream manifest entries for duplicate-files check (#3287) (Thanks Ben Lai!)
+apache/iceberg-python,b7ca7be605043b26e2078da357ad4f94e22e771a,b7ca7be,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-05-25T16:01:52-04:00,GitHub,noreply@github.com,2026-05-25T22:01:52+02:00,Reject empty `source-ids` in `PartitionField` / `SortField` (#3411),"Inspired by the walrus issue in #3353
+
+## Problem
+
+`PartitionField` and `SortField` accept the v3 `source-ids` list (added
+in [#1554](https://github.com/apache/iceberg-python/pull/1554)) and map
+it to the legacy singular `source-id`. Both validators try to reject an
+empty list:
+
+```python
+if ""source-id"" not in data and (source_ids := data[""source-ids""]):
+    if isinstance(source_ids, list):
+        if len(source_ids) == 0:
+            raise ValueError(""Empty source-ids is not allowed"")
+        ...
+        data[""source-id""] = source_ids[0]
+```
+
+The walrus uses truthiness, and `[]` is falsy — so the `len(source_ids)
+== 0` branch is unreachable. Passing `{""source-ids"": []}` silently skips
+the mapping, and Pydantic then reports a generic ""field required"" error
+instead of the intended message. A missing `source-ids` key also raises
+`KeyError` instead of being handled cleanly.
+
+## Fix
+
+Replace the walrus with an explicit key check in both validators:
+
+```python
+if ""source-id"" not in data and ""source-ids"" in data:
+    source_ids = data[""source-ids""]
+    ...
+```
+
+This makes the empty-list validation reachable and avoids the
+`KeyError`.
+
+## Tests
+
+Added regression tests that deserialize `{""source-ids"": []}` and assert
+`ValueError(""Empty source-ids is not allowed"")` is raised, for both
+`PartitionField` and `SortField`.",720708a00f8a259d2f2ad86c1c55d5b88ad6c373,3411,false,,4,16,2,pyiceberg; tests,37,7,44,base; strategic: v3; multi-area change; has PR number; LanceDB similarity 0.25,API: Implement properties method in EncryptingFileIO,- Reject empty `source-ids` in `PartitionField` / `SortField` (#3411) (Thanks Kevin Liu!)
 apache/iceberg-python,95c45d44094cce592452dee9b81492673f1fe548,95c45d4,Federico,62903636+federicsp@users.noreply.github.com,2026-05-15T10:13:54+02:00,GitHub,noreply@github.com,2026-05-15T10:13:54+02:00,Add papermill-based tests for PyIceberg examples (#3330),"Closes #3328
 
 # Rationale for this change
@@ -767,53 +856,6 @@ the existing truncation behavior
 tests/test_conversions.py`
 
 Closes #3404.",b7ca7be605043b26e2078da357ad4f94e22e771a,3405,false,,4,50,7,pyiceberg; tests,25,8,33,base; fix; multi-area change; has PR number; LanceDB similarity 0.26,API: Implement properties method in EncryptingFileIO,- Fix precision loss in large integral string conversions (#3405) (Thanks Minh Vu!)
-apache/iceberg-python,43d1f1fc18ce66d5e1bc0c9ede04dddb9a6cfe2d,43d1f1f,barking-code,62703911+barking-code@users.noreply.github.com,2026-05-18T22:52:02+09:00,GitHub,noreply@github.com,2026-05-18T15:52:02+02:00,fix: avoid `TSaslClientTransport` reuse to eliminate server-side SASL noise (#3357),"Related: #1744, #1747, #1941
-
-# Rationale for this change
-
-#1747 / #1941 caught the `TSaslClientTransport` reopen failure on the
-client side, but the doomed `open()` attempt still completes a TCP
-handshake before aborting, which leaves a `TTransportException` event in
-the HMS server log per `_HiveClient` re-entry. In production this
-produces a steady stream of server-side error events matched by HMS
-alert filters.
-
-`TSaslClientTransport` is single-use by design: its `SASLClient` is
-disposed on `close()` and there is no API to reset it. Reusing the same
-transport across context-manager entries was the original misuse. This
-PR keeps the existing `_HiveClient.__init__` setup intact — the
-transport is still created in `__init__` so `_HiveClient` can be used
-without a context manager (per @kevinjqliu's note in #1747) — and
-reinitializes the transport before `open()` whenever the client has been
-used before:
-
-```python
-def __enter__(self) -> Client:
-    if self._was_opened:
-        self._transport = self._init_thrift_transport()
-    self._transport.open()
-    self._was_opened = True
-    return self._client()
-```
-
-The `try/except` retry from #1747 / #1941 is removed because the failure
-mode it covered (reopening a disposed SASL session) cannot occur on a
-fresh transport.
-
-The public behaviour of `_HiveClient` (`with hive_client as c:` returns
-a working `Client`, `__exit__` closes it) is unchanged.
-
-# Are these changes tested?
-
-- New unit test `test_kerberized_client_uses_fresh_transport_on_reuse`
-asserts that the transport instance differs between two consecutive
-context-manager entries
-- Existing `test_create_hive_client_with_kerberos_using_context_manager`
-continues to pass
-
-# Are there any user-facing changes?
-
-No.",7f8a9f2924a234268ea8a5bd1159970bf5d8b1d6,3357,false,,2,38,13,pyiceberg; tests,25,6,31,base; fix; multi-area change; has PR number; LanceDB similarity 0.21,"Core, Spark 4.1: Fix distributed planning for CoW operations",- fix: avoid `TSaslClientTransport` reuse to eliminate server-side SASL noise (#3357) (Thanks barking-code!)
 apache/iceberg-python,1d31eff86154540129f40fe9146c8f27d5e54d41,1d31eff,Gabriel Igliozzi,gaboiglio@gmail.com,2026-05-24T00:14:50+02:00,GitHub,noreply@github.com,2026-05-23T15:14:50-07:00,feat(view): View object API (#3338),"<!--
 Thanks for opening a pull request!
 -->
@@ -872,48 +914,6 @@ No
 
 <!-- In the case of user-facing changes, please add the changelog label.
 -->",0bdff48005c0969d1bc320c7fdfa5c96f49bb4ae,3378,false,,1,1,1,tests,20,6,26,base; fix; has PR number; LanceDB similarity 0.22,Add TCK tests for Schema Evolution in BaseFormatModelTests,- Fix typo in `test_add_files` (#3378) (Thanks Yuya Ebihara!)
-apache/iceberg-python,b7ca7be605043b26e2078da357ad4f94e22e771a,b7ca7be,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-05-25T16:01:52-04:00,GitHub,noreply@github.com,2026-05-25T22:01:52+02:00,Reject empty `source-ids` in `PartitionField` / `SortField` (#3411),"Inspired by the walrus issue in #3353
-
-## Problem
-
-`PartitionField` and `SortField` accept the v3 `source-ids` list (added
-in [#1554](https://github.com/apache/iceberg-python/pull/1554)) and map
-it to the legacy singular `source-id`. Both validators try to reject an
-empty list:
-
-```python
-if ""source-id"" not in data and (source_ids := data[""source-ids""]):
-    if isinstance(source_ids, list):
-        if len(source_ids) == 0:
-            raise ValueError(""Empty source-ids is not allowed"")
-        ...
-        data[""source-id""] = source_ids[0]
-```
-
-The walrus uses truthiness, and `[]` is falsy — so the `len(source_ids)
-== 0` branch is unreachable. Passing `{""source-ids"": []}` silently skips
-the mapping, and Pydantic then reports a generic ""field required"" error
-instead of the intended message. A missing `source-ids` key also raises
-`KeyError` instead of being handled cleanly.
-
-## Fix
-
-Replace the walrus with an explicit key check in both validators:
-
-```python
-if ""source-id"" not in data and ""source-ids"" in data:
-    source_ids = data[""source-ids""]
-    ...
-```
-
-This makes the empty-list validation reachable and avoids the
-`KeyError`.
-
-## Tests
-
-Added regression tests that deserialize `{""source-ids"": []}` and assert
-`ValueError(""Empty source-ids is not allowed"")` is raised, for both
-`PartitionField` and `SortField`.",720708a00f8a259d2f2ad86c1c55d5b88ad6c373,3411,false,,4,16,2,pyiceberg; tests,17,7,24,base; multi-area change; has PR number; LanceDB similarity 0.25,API: Implement properties method in EncryptingFileIO,- Reject empty `source-ids` in `PartitionField` / `SortField` (#3411) (Thanks Kevin Liu!)
 apache/iceberg-python,1adff267a44038c8ae98ebbbc538cd521312c20c,1adff26,Yuya Ebihara,ebyhry@gmail.com,2026-05-24T11:58:13+09:00,GitHub,noreply@github.com,2026-05-23T19:58:13-07:00,Make `View.sql_for` case-insensitive and return None for unknown dialect (#3407),"# Rationale for this change
 
 Iceberg Java compares the dialect in a case-insensitive manner, and

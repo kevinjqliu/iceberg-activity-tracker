@@ -26,6 +26,12 @@ IMPORTANT_AREAS = {
     "core",
     "spark",
     "flink",
+    "table",
+    "manifest",
+    "io",
+    "cli",
+    "cmd",
+    "puffin",
     "rest",
     "rest spec",
     "openapi",
@@ -43,9 +49,23 @@ STRATEGIC_TERMS = {
     "catalog",
     "opendal",
     "storage",
+    "v3",
+    "deletion vector",
+    "rewritefiles",
+    "rewritedatafiles",
+    "compaction",
+    "conflict validation",
+    "commit-conflict",
+    "occ",
+    "clustered",
+    "maintenance",
+    "copy-on-write",
+    "golden round-trip",
+    "round-trip",
+    "puffin",
 }
 FEATURE_RE = re.compile(r"\b(add|support|implement|introduce|enable|allow|expose|promote)\b", re.I)
-FIX_RE = re.compile(r"\b(fix|avoid|prevent|correct|resolve)\b", re.I)
+FIX_RE = re.compile(r"\b(fix|avoid|prevent|correct|resolve|retry)\b", re.I)
 DEPENDENCY_BUMP_RE = re.compile(
     r"(^\s*(chore|build)\(deps?\)|\bbump\b.*\b(from|to|updates?)\b|\bupdate deps\b)",
     re.I,
@@ -58,6 +78,16 @@ IMPORTANT_INFRA_RE = re.compile(r"\b(cve|security|release|license|notice|blockin
 PUBLISHING_RE = re.compile(r"\b(cargo publish|publish crates?|missing crates?)\b", re.I)
 CORRECTNESS_RE = re.compile(
     r"\b(correctness|data loss|corrupt|incorrect|preserve|dropping|reappear|delete-only)\b",
+    re.I,
+)
+VALIDATION_TEST_RE = re.compile(r"\b(golden round-trip|round-trip|regression)\b", re.I)
+DELETION_VECTOR_RE = re.compile(r"\bdeletion[- ]vector\b", re.I)
+SUMMARY_SIGNAL_RE = re.compile(
+    r"\b("
+    r"deletion[- ]vector|rewritedatafiles|rewritefiles|compaction|"
+    r"conflict validation|commit-conflict|occ|clustered|maintenance|"
+    r"copy-on-write|golden round-trip|round-trip"
+    r")\b",
     re.I,
 )
 LOW_SIGNAL_RE = re.compile(r"\b(docs?|javadoc|readme|tests?|benchmark|benchmarks?)\b", re.I)
@@ -123,7 +153,15 @@ def prefix_parts(subject: str) -> set[str]:
     if ":" not in subject:
         return set()
     prefix = subject.split(":", 1)[0]
-    return {part.strip().lower() for part in re.split(r"[,/]", prefix) if part.strip()}
+    parts = {part.strip().lower() for part in re.split(r"[,/]", prefix) if part.strip()}
+    scope_match = re.search(r"\(([^)]+)\)", prefix)
+    if scope_match:
+        parts.update(
+            part.strip().lower()
+            for part in re.split(r"[,/]", scope_match.group(1))
+            if part.strip()
+        )
+    return parts
 
 
 def score_commit(row: dict[str, str]) -> tuple[int, str]:
@@ -152,6 +190,15 @@ def score_commit(row: dict[str, str]) -> tuple[int, str]:
     if strategic_hits and not is_dependency_bump:
         score += 20
         reasons.append(f"strategic: {', '.join(strategic_hits)}")
+    summary_signal_hits = sorted(
+        {match.group(1).lower() for match in SUMMARY_SIGNAL_RE.finditer(text)}
+    )
+    if summary_signal_hits and not is_dependency_bump:
+        score += 12
+        reasons.append(f"summary signal: {', '.join(summary_signal_hits)}")
+    if DELETION_VECTOR_RE.search(text) and not is_dependency_bump:
+        score += 20
+        reasons.append("deletion vector signal")
 
     files_changed = int_field(row, "files_changed")
     churn = int_field(row, "insertions") + int_field(row, "deletions")
@@ -197,7 +244,11 @@ def score_commit(row: dict[str, str]) -> tuple[int, str]:
     if is_dependency_bump:
         score -= 45
         reasons.append("downrank dependency bump")
-    if LOW_SIGNAL_RE.search(subject):
+    is_validation_test = bool(VALIDATION_TEST_RE.search(subject))
+    if is_validation_test:
+        score += 12
+        reasons.append("validation/regression test signal")
+    if LOW_SIGNAL_RE.search(subject) and not is_validation_test:
         score -= 12
         reasons.append("downrank docs/tests/benchmarks")
     if ROUTINE_RE.search(subject) and not has_important_infra:

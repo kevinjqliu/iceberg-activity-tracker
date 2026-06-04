@@ -103,45 +103,6 @@ Yes
 ---------
 
 Co-authored-by: Claude Opus 4.6 (1M context) <noreply@anthropic.com>",0d97497bb9dd46a6e3c3304e7c3855384b0119f2,2340,false,Claude Opus 4.6 (1M context),2,288,0,crates,64,5,69,"base; feature/api verb; strategic: encryption, manifest; medium churn; co-authored; has PR number; LanceDB similarity 0.18",OpenAPI: Etag for CommitTableResponse <Christian>,- feat(encryption) [4/N] Support encryption: StandardKeyMetadata (#2340) (Thanks Xander and Claude Opus 4.6 (1M context)!)
-apache/iceberg-rust,034ae548d867d37b8f106d2c05dcea04879be73e,034ae54,Victor Ghita,ghitavictorfilip@gmail.com,2026-05-12T11:19:36+03:00,GitHub,noreply@github.com,2026-05-12T16:19:36+08:00,feat(schema): Add `update_schema` action to enable table schema updates (#2120),"## Which issue does this PR close?
-
-<!--
-We generally require a GitHub issue to be filed for all bug fixes and
-enhancements and this helps us generate change logs for our releases.
-You can link an issue to this PR using the GitHub syntax. For example
-`Closes #123` indicates that this PR will close issue #123.
--->
-
-- Closes #2119.
-
-## What changes are included in this PR?
-
-<!--
-Provide a summary of the modifications in this PR. List the main changes
-such as new features, bug fixes, refactoring, or any other updates.
--->
-This PR creates an `UpdateSchema` which implements the
-`TransactionAction` allowing users of the crate to add new fields to or
-delete fields from an iceberg table by updating the table schema. It
-also checks that the added fields are either optional or have a default
-value to avoid data corruption downstream.
-
-## Are these changes tested?
-
-<!--
-Specify what test covers (unit test, integration test, etc.).
-
-If tests are not included in your PR, please explain why (for example,
-are they covered by existing tests)?
--->
-- [X] Unit tests for `UpdateSchema`.
-- [X] Adds one integration tests which tests that we can add data,
-update the table and can still read the data, ensuring backwards
-compatiblity and one integration test for deleting a schema.
-
----------
-
-Co-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>",716394d04ff6f41d94180171b47e75f5468723e0,2120,false,Claude Sonnet 4.6,4,1441,0,crates,48,7,55,base; feature/api verb; large churn; co-authored; has PR number; LanceDB similarity 0.25,OpenAPI: Add CatalogObjectIdentifier schema,- feat(schema): Add `update_schema` action to enable table schema updates (#2120) (Thanks Victor Ghita and Claude Sonnet 4.6!)
 apache/iceberg-rust,122217da68b153cbe9fce7c8536188af647cc90c,122217d,Kurtis Wright,Kurtiscwright@users.noreply.github.com,2026-05-07T14:52:52-07:00,GitHub,noreply@github.com,2026-05-07T14:52:52-07:00,fix(catalog/memory): relax strict ms inequality in test_update_table (#2395),"While running make unit-test for verifying the RC the update_table test
 in /src/memory/catalog.rs was failing because it checks for the table
 and updated_table to have different updated timestamps down to the ms,
@@ -183,7 +144,46 @@ are they covered by existing tests)?
 
 ---------
 
-Co-authored-by: Kurtis Wright <kurwrigh@amazon.com>",5eb342ff1618171c52db0f1727372bf1f9589e27,2395,false,Kurtis Wright,1,0,1,crates,43,9,52,base; fix; strategic: catalog; co-authored; has PR number; LanceDB similarity 0.31,OpenAPI: Promote the S3 signing endpoint to the main spec,- fix(catalog/memory): relax strict ms inequality in test_update_table (#2395) (Thanks Kurtis Wright!)
+Co-authored-by: Kurtis Wright <kurwrigh@amazon.com>",5eb342ff1618171c52db0f1727372bf1f9589e27,2395,false,Kurtis Wright,1,0,1,crates,58,9,67,base; fix; important area: catalog; strategic: catalog; co-authored; has PR number; LanceDB similarity 0.31,OpenAPI: Promote the S3 signing endpoint to the main spec,- fix(catalog/memory): relax strict ms inequality in test_update_table (#2395) (Thanks Kurtis Wright!)
+apache/iceberg-rust,034ae548d867d37b8f106d2c05dcea04879be73e,034ae54,Victor Ghita,ghitavictorfilip@gmail.com,2026-05-12T11:19:36+03:00,GitHub,noreply@github.com,2026-05-12T16:19:36+08:00,feat(schema): Add `update_schema` action to enable table schema updates (#2120),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Closes #2119.
+
+## What changes are included in this PR?
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+This PR creates an `UpdateSchema` which implements the
+`TransactionAction` allowing users of the crate to add new fields to or
+delete fields from an iceberg table by updating the table schema. It
+also checks that the added fields are either optional or have a default
+value to avoid data corruption downstream.
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->
+- [X] Unit tests for `UpdateSchema`.
+- [X] Adds one integration tests which tests that we can add data,
+update the table and can still read the data, ensuring backwards
+compatiblity and one integration test for deleting a schema.
+
+---------
+
+Co-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>",716394d04ff6f41d94180171b47e75f5468723e0,2120,false,Claude Sonnet 4.6,4,1441,0,crates,48,7,55,base; feature/api verb; large churn; co-authored; has PR number; LanceDB similarity 0.25,OpenAPI: Add CatalogObjectIdentifier schema,- feat(schema): Add `update_schema` action to enable table schema updates (#2120) (Thanks Victor Ghita and Claude Sonnet 4.6!)
 apache/iceberg-rust,3048bd3401ba36096dfdddd650558ef4770e4d97,3048bd3,Charles-Antoine Leger,charlesantoine.leger@datadoghq.com,2026-05-04T18:45:56+02:00,GitHub,noreply@github.com,2026-05-04T09:45:56-07:00,fix(sqllogictest): add missing tokio `rt-multi-thread` feature (#2386),"## Which issue does this PR close?
 
 <!--

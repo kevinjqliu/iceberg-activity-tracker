@@ -1,13 +1,13 @@
 # Iceberg Community Sync Summary
 
 - Period: `2026-04-01` to before `2026-04-22`
-- Review candidates: `119`
+- Review candidates: `176`
 
 ## apache/iceberg
 
 ### Java
 
-_Top 20 of 72 scored commits._
+_Top 20 of 71 scored commits._
 
 - Core: Add fromId to EntryStatus and ManifestEntry.Status (#15983) (Thanks Anoop Johnson!)
 - Core: Introduce default values in RESTCatalogProperties (#15873) (Thanks gaborkaszab!)
@@ -83,3 +83,30 @@ _Top 20 of 23 scored commits._
 - chore(deps): Bump minijinja from 2.18.0 to 2.19.0 (#2322) (Thanks dependabot[bot]!)
 - chore(deps): Bump tokio from 1.50.0 to 1.51.0 (#2321) (Thanks dependabot[bot]!)
 - chore(deps): Bump astral-sh/setup-uv from 7.3.1 to 8.0.0 (#2314) (Thanks dependabot[bot] and Shawn Chang!)
+
+## apache/iceberg-go
+
+### Go
+
+_Top 20 of 58 scored commits._
+
+- feat(table): Add support for row lineage in v3 (#735) (Thanks Dao Thanh Tung!)
+- feat(table): add bin-pack compaction strategy (#850) (Thanks Andrei Tserakhau!)
+- feat(table): add RewriteDataFiles for compaction execution (#892) (Thanks Andrei Tserakhau!)
+- feat(table): support delete file removal in overwrite commits (#851) (Thanks Andrei Tserakhau!)
+- feat(cli): add compact analyze and compact run commands (#903) (Thanks Andrei Tserakhau!)
+- perf(table): Add optional skip duplicate check on AddDataFiles (#901) (Thanks Abhi Rathod!)
+- feat(table): classify deletion vectors in scan planning (#855) (Thanks Andrei Tserakhau!)
+- feat(table): retry doCommit on commit-conflict errors (#830) (#912) (Thanks Andrei Tserakhau!)
+- feat(compaction): add Analyze for dry-run compaction planning (#893) (Thanks Andrei Tserakhau!)
+- feat(catalog): add `WithOAuthTLSConfig` for separate OAuth server TLS (#895) (Thanks Lovro Mažgon!)
+- fix(table): populate WriteTask.SortOrderID in data file writers (#875) (Thanks Ali Asghar!)
+- fix(table): prune StatisticsList and PartitionStatsList in RemoveSnapshots (#873) (Thanks Ali Asghar!)
+- fix: decode pre-1.4 Java Iceberg legacy manifest list field names (#889) (#890) (Thanks Tanmay Rauth!)
+- feat(table)!: multi-arg transforms in partition and sort fields (#824) (Thanks Andrei Tserakhau!)
+- feat(#492): implement SetStatistics, RemoveStatistics, AddEncryptionKey, RemoveEncryptionKey updates (#902) (Thanks Tanmay Rauth and Matt Topol!)
+- bench(table): read-perf degradation under equality delete pressure (#852) (Thanks Andrei Tserakhau!)
+- fix(table): warn on row count mismatch in Overwrite (#894) (Thanks Andrei Tserakhau!)
+- feat(table): add snapshot ancestry utility (#911) (Thanks Andrei Tserakhau!)
+- fix(table): fast-append must inherit all parent manifests unconditionally (#869) (Thanks cassio-paesleme!)
+- fix(table): delete statistics files in ExpireSnapshots PostCommit #837 (#882) (Thanks Tanmay Rauth!)

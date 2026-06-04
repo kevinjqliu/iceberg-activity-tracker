@@ -1,4 +1,19 @@
 repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-rust,3d8ab5e03fa8d269600a00eac7e5d01deaf1a3a6,3d8ab5e,dentiny,dentinyhao@gmail.com,2026-05-15T16:34:18-07:00,GitHub,noreply@github.com,2026-05-15T16:34:18-07:00,fix(puffin): add missing magic number validation for puffins (#2416),"## What changes are included in this PR?
+
+We have two functions to read puffin metadata: `read` and
+`read_with_prefetch`. In theory these two functions should be similarly
+the same apart from IO-related logic, but `read_with_prefetch` seems to
+miss magic number validation:
+https://github.com/apache/iceberg-rust/blob/4f21e503afc5363c10fafac917f0febe136c464e/crates/iceberg/src/puffin/metadata.rs#L284
+
+In terms of implementation, I thought about extracting validation+footer
+parse into a separate function, but the code is very simple here, don't
+think it necessary.
+
+## Are these changes tested?
+
+Yes, the newly added regression test fails for the current codebase",6ea742cbb59213137d6a772e26edcedc7ded29d2,2416,false,,1,38,1,crates,80,8,88,base; feature/api verb; fix; important area: puffin; strategic: puffin; has PR number; LanceDB similarity 0.26,Docs: Add informational properties section for table comment,- fix(puffin): add missing magic number validation for puffins (#2416) (Thanks dentiny!)
 apache/iceberg-rust,b9b6c7e01a884d73f357aeba12c54f82dd1a24f7,b9b6c7e,Shawn Chang,schang@apache.org,2026-05-16T02:25:19-07:00,GitHub,noreply@github.com,2026-05-16T17:25:19+08:00,feat!(runtime): Support custom Runtime in Catalog (#2308),"## Which issue does this PR close?
 
 <!--
@@ -259,6 +274,29 @@ EncryptedInputFile::new(input, metadata).read().await?
 Yes — 11 manager tests covering KEK creation/rotation/caching,
 wrap/unwrap roundtrips, AAD tampering and missing-timestamp rejection,
 plus a full encrypt-then-read roundtrip via `EncryptedInputFile`.",16cc969ae3df13fe0fa840cf27862c35ea87ae91,2383,false,,6,904,298,crates,69,5,74,"base; feature/api verb; strategic: encryption, manifest; medium file count; large churn; has PR number; LanceDB similarity 0.18",Add idempotency adapter and E2E coverage,- feat(encryption) [5/N] Support encryption: Encryption Manager (#2383) (Thanks Xander!)
+apache/iceberg-rust,5b8e78c9c7a71d8569715c4a97ce9f87bf3fb550,5b8e78c,Minh Vu,vuhoangminh97@gmail.com,2026-05-21T11:13:13+02:00,GitHub,noreply@github.com,2026-05-21T17:13:13+08:00,fix(spec): support JSON binary literals (#2476),"### Summary
+
+- implement JSON hex parsing for `binary` and `fixed` literals
+- serialize binary-like literals as two-character-per-byte lowercase hex
+- validate `fixed[N]` JSON values have exactly `N` decoded bytes
+- add coverage for valid hex, uppercase input, invalid hex, and
+fixed-size mismatches
+
+### Why
+
+The previous JSON literal parser used `todo!()` for `binary` and
+`fixed`, so valid JSON values could panic. Serialization also emitted
+bytes without zero padding, which could collapse byte boundaries for
+values containing `0x00` through `0x0f`.
+
+Fixes #2475.
+
+### Tests
+
+- `cargo fmt --check`
+- `cargo test -p iceberg json`
+- `cargo test -p iceberg spec::values`
+- `cargo test -p iceberg`",2d5444b050bbdc1808786c6502fdabc35e49587c,2476,false,,2,140,9,crates,60,7,67,base; feature/api verb; fix; important area: spec; has PR number; LanceDB similarity 0.24,Kafka Connect: fix table UUID check,- fix(spec): support JSON binary literals (#2476) (Thanks Minh Vu!)
 apache/iceberg-rust,9673e14943cbb3cc087135e4dbdf17180e300c2c,9673e14,Sung Yun,107272191+sungwy@users.noreply.github.com,2026-05-28T15:54:26-04:00,GitHub,noreply@github.com,2026-05-28T15:54:26-04:00,docs: add Iceberg security model (#2524),"Similar to: https://github.com/apache/iceberg/pull/16538
 
 This PR publishes a security model for Iceberg and adds a detailed
@@ -350,6 +388,95 @@ Specify what test covers (unit test, integration test, etc.).
 If tests are not included in your PR, please explain why (for example,
 are they covered by existing tests)?
 -->",9c70b9795e8112f59682d87b71bd86fc69787108,2402,false,,2,11,5,crates,57,5,62,base; feature/api verb; strategic: encryption; has PR number; LanceDB similarity 0.18,"Core, Spark 4.1: Fix distributed planning for CoW operations",- feat(encryption) [6/N] support `ArrowReaderOptions` in `get_metadata` (#2402) (Thanks Xander!)
+apache/iceberg-rust,496f061b4f4737857cfd9d262df785a1ef75f17d,496f061,Sreeram Garlapati,SreeramGarlapati@users.noreply.github.com,2026-05-28T01:39:56-07:00,GitHub,noreply@github.com,2026-05-28T16:39:56+08:00,fix(spec): don't panic on overwrite-truncate when previous totals exceed i32::MAX or are non-numeric (#2511),"## Which issue does this PR close?
+
+- Closes #2510.
+
+## What changes are included in this PR?
+
+`update_snapshot_summaries` on the overwrite-with-truncate path was
+doing `truncate_table_summary(...).map_err(...).unwrap()`. The
+`unwrap()` turned a recoverable parse error into a process panic, and
+there are two ways to trip it from normal API usage.
+
+The first is a sneaky one: `get_prop` parsed the previous snapshot's
+totals as `i32`, even though every other counter path in the same file
+already uses `u64`. So once a table accumulated more than ~2.15B data
+files / records / bytes (i.e. crossed `i32::MAX`), the next
+overwrite-with-truncate would parse-fail, hit the unwrap, and crash the
+writer. Quietly tableable too — nothing in the public API hints that
+`i32` is the secret ceiling.
+
+The second is corruption / cross-implementation interop: any non-numeric
+value in a previous `total-*` property (a foreign implementation, a
+manual edit, a half-corrupt metadata file) produces a parse error and
+the same panic.
+
+The fix is small. Widen `get_prop` to `u64` so it matches the rest of
+the file and lifts the artificial ceiling. Replace the `.unwrap()` with
+`?`, keeping the existing `\""Failed to truncate table summary.\""`
+wrapper as caller context so the error chain still tells you what was
+being attempted when the inner parse blew up. `get_prop`'s error message
+now includes the offending property name and value, which is what you
+actually need when triaging a malformed metadata file.
+
+Scope-wise this only touches the overwrite-truncate path.
+`update_totals` has a structurally similar `unwrap()` antipattern that
+is a separate (lower-severity) issue and not included here.
+
+## Are these changes tested?
+
+Yes — two unit tests in `snapshot_summary.rs`, both red-state proven
+against the unfixed code:
+
+The first asserts that a previous summary with `total-data-files =
+i32::MAX + 1` (and `total-records` similarly) survives the truncation
+and lands in `deleted-data-files` / `deleted-records` intact. Against
+the unfixed code this panics at `snapshot_summary.rs:356:18` with
+`\""number too large to fit in target type\""` — that's the i32-ceiling
+bug demonstrated directly.
+
+The second feeds `\""not_a_number\""` as a previous total and asserts the
+function returns an `Err` whose message carries the `\""truncate table
+summary\""` wrapper. Against the unfixed code this panics at the same
+site with `\""invalid digit found in string\""` — the malformed-input bug.
+
+I ran each test against the unfixed code, observed the panic, applied
+the fix, and watched them go green. Existing
+`test_truncate_table_summary` and
+`test_update_snapshot_summaries_append` continue to pass, and `cargo fmt
+--check` / `cargo clippy --all-features --tests -- -D warnings` are
+clean.
+
+Co-authored-by: Aman Rawat <rawataaryan09@gmail.com>",f7b4122f85cf8db3cbde261b91f8d5002d3cb9bb,2511,false,Aman Rawat,1,84,9,crates,50,8,58,base; fix; important area: spec; co-authored; correctness signal; has PR number; LanceDB similarity 0.26,Flink: Dynamic Sink: Fix serialization issues with schemas larger than 2^16 bytes <Maximilian Michels>,- fix(spec): don't panic on overwrite-truncate when previous totals exceed i32::MAX or are non-numeric (#2511) (Thanks Sreeram Garlapati and Aman Rawat!)
+apache/iceberg-rust,f7b4122f85cf8db3cbde261b91f8d5002d3cb9bb,f7b4122,Sreeram Garlapati,SreeramGarlapati@users.noreply.github.com,2026-05-27T19:13:50-07:00,GitHub,noreply@github.com,2026-05-28T10:13:50+08:00,chore(spec): remove stale #[allow(dead_code)] from snapshot_summary (#2514),"## Which issue does this PR close?
+
+Follow-up to review feedback on #2511
+([thread](https://github.com/apache/iceberg-rust/pull/2511#discussion_r3303563092)).
+
+## What changes are included in this PR?
+
+Removes all four `#[allow(dead_code)]` attributes in
+`crates/iceberg/src/spec/snapshot_summary.rs`. They were added in #1085
+when the module was first introduced, before any caller existed. The
+chain is now production-live:
+
+- `update_snapshot_summaries` is called from `transaction/snapshot.rs`
+- `truncate_table_summary` is called from `update_snapshot_summaries`
+- `get_prop` is called 6 times from `truncate_table_summary`
+- `update_totals` is called 6 times from `update_snapshot_summaries`
+
+None of these need the suppression any more — the dead_code lint is
+silent without them.
+
+Kept out of #2511 to keep that PR's scope focused on the
+overwrite-truncate panic fix.
+
+## Are these changes tested?
+
+`cargo check -p iceberg` and `cargo clippy -p iceberg --all-features
+--tests -- -D warnings` both stay clean after the removals — i.e. no
+dead_code warning re-emerges.",e27c844ebc9f3c9c53f40b214508d9228f05b9ef,2514,false,,1,0,4,crates,52,6,58,base; feature/api verb; important area: spec; has PR number; LanceDB similarity 0.21,Fix Internal to Generic conversion of TIMESTAMP_NANO,- chore(spec): remove stale #[allow(dead_code)] from snapshot_summary (#2514) (Thanks Sreeram Garlapati!)
 apache/iceberg-rust,2d5444b050bbdc1808786c6502fdabc35e49587c,2d5444b,Krisztián Szűcs,szucs.krisztian@gmail.com,2026-05-21T10:02:11+02:00,GitHub,noreply@github.com,2026-05-21T16:02:11+08:00,feat: HuggingFace Hub storage backend and CDC table properties (#2375),"## Which issue does this PR close?
 
 - Closes #.
@@ -485,44 +612,6 @@ Specify what test covers (unit test, integration test, etc.).
 If tests are not included in your PR, please explain why (for example,
 are they covered by existing tests)?
 -->",83b4595e2b5f522974d24d51c8ecbd09a093fa92,2442,false,,3,913,372,bindings,48,6,54,base; fix; large churn; release/security/notice signal; has PR number; LanceDB similarity 0.19,Core: Track & close FileIO used for remote scan planning,- Fix pyiceberg-core dev dependency resolution (#2442) (Thanks Kevin Liu!)
-apache/iceberg-rust,3d8ab5e03fa8d269600a00eac7e5d01deaf1a3a6,3d8ab5e,dentiny,dentinyhao@gmail.com,2026-05-15T16:34:18-07:00,GitHub,noreply@github.com,2026-05-15T16:34:18-07:00,fix(puffin): add missing magic number validation for puffins (#2416),"## What changes are included in this PR?
-
-We have two functions to read puffin metadata: `read` and
-`read_with_prefetch`. In theory these two functions should be similarly
-the same apart from IO-related logic, but `read_with_prefetch` seems to
-miss magic number validation:
-https://github.com/apache/iceberg-rust/blob/4f21e503afc5363c10fafac917f0febe136c464e/crates/iceberg/src/puffin/metadata.rs#L284
-
-In terms of implementation, I thought about extracting validation+footer
-parse into a separate function, but the code is very simple here, don't
-think it necessary.
-
-## Are these changes tested?
-
-Yes, the newly added regression test fails for the current codebase",6ea742cbb59213137d6a772e26edcedc7ded29d2,2416,false,,1,38,1,crates,45,8,53,base; feature/api verb; fix; has PR number; LanceDB similarity 0.26,Docs: Add informational properties section for table comment,- fix(puffin): add missing magic number validation for puffins (#2416) (Thanks dentiny!)
-apache/iceberg-rust,5b8e78c9c7a71d8569715c4a97ce9f87bf3fb550,5b8e78c,Minh Vu,vuhoangminh97@gmail.com,2026-05-21T11:13:13+02:00,GitHub,noreply@github.com,2026-05-21T17:13:13+08:00,fix(spec): support JSON binary literals (#2476),"### Summary
-
-- implement JSON hex parsing for `binary` and `fixed` literals
-- serialize binary-like literals as two-character-per-byte lowercase hex
-- validate `fixed[N]` JSON values have exactly `N` decoded bytes
-- add coverage for valid hex, uppercase input, invalid hex, and
-fixed-size mismatches
-
-### Why
-
-The previous JSON literal parser used `todo!()` for `binary` and
-`fixed`, so valid JSON values could panic. Serialization also emitted
-bytes without zero padding, which could collapse byte boundaries for
-values containing `0x00` through `0x0f`.
-
-Fixes #2475.
-
-### Tests
-
-- `cargo fmt --check`
-- `cargo test -p iceberg json`
-- `cargo test -p iceberg spec::values`
-- `cargo test -p iceberg`",2d5444b050bbdc1808786c6502fdabc35e49587c,2476,false,,2,140,9,crates,45,7,52,base; feature/api verb; fix; has PR number; LanceDB similarity 0.24,Kafka Connect: fix table UUID check,- fix(spec): support JSON binary literals (#2476) (Thanks Minh Vu!)
 apache/iceberg-rust,728d9a1ac4479f73adfc0a7f272d714b94f04c53,728d9a1,Asish Kumar,87874775+officialasishkumar@users.noreply.github.com,2026-05-25T17:24:02+05:30,GitHub,noreply@github.com,2026-05-25T19:54:02+08:00,docs: add pyiceberg-core release validation (#2502),"## Which issue does this PR close?
 
 - Closes #2387.
@@ -614,95 +703,6 @@ Specify what test covers (unit test, integration test, etc.).
 If tests are not included in your PR, please explain why (for example,
 are they covered by existing tests)?
 -->",d4f28c082aa70445a5b3fffba299c0eadbb76853,2444,false,,1,9,0,.github,37,7,44,base; feature/api verb; has PR number; LanceDB similarity 0.22,Add TCK tests for Schema Evolution in BaseFormatModelTests,- chore: add `uv` to dependabot for /bindings/python (#2444) (Thanks Kevin Liu!)
-apache/iceberg-rust,496f061b4f4737857cfd9d262df785a1ef75f17d,496f061,Sreeram Garlapati,SreeramGarlapati@users.noreply.github.com,2026-05-28T01:39:56-07:00,GitHub,noreply@github.com,2026-05-28T16:39:56+08:00,fix(spec): don't panic on overwrite-truncate when previous totals exceed i32::MAX or are non-numeric (#2511),"## Which issue does this PR close?
-
-- Closes #2510.
-
-## What changes are included in this PR?
-
-`update_snapshot_summaries` on the overwrite-with-truncate path was
-doing `truncate_table_summary(...).map_err(...).unwrap()`. The
-`unwrap()` turned a recoverable parse error into a process panic, and
-there are two ways to trip it from normal API usage.
-
-The first is a sneaky one: `get_prop` parsed the previous snapshot's
-totals as `i32`, even though every other counter path in the same file
-already uses `u64`. So once a table accumulated more than ~2.15B data
-files / records / bytes (i.e. crossed `i32::MAX`), the next
-overwrite-with-truncate would parse-fail, hit the unwrap, and crash the
-writer. Quietly tableable too — nothing in the public API hints that
-`i32` is the secret ceiling.
-
-The second is corruption / cross-implementation interop: any non-numeric
-value in a previous `total-*` property (a foreign implementation, a
-manual edit, a half-corrupt metadata file) produces a parse error and
-the same panic.
-
-The fix is small. Widen `get_prop` to `u64` so it matches the rest of
-the file and lifts the artificial ceiling. Replace the `.unwrap()` with
-`?`, keeping the existing `\""Failed to truncate table summary.\""`
-wrapper as caller context so the error chain still tells you what was
-being attempted when the inner parse blew up. `get_prop`'s error message
-now includes the offending property name and value, which is what you
-actually need when triaging a malformed metadata file.
-
-Scope-wise this only touches the overwrite-truncate path.
-`update_totals` has a structurally similar `unwrap()` antipattern that
-is a separate (lower-severity) issue and not included here.
-
-## Are these changes tested?
-
-Yes — two unit tests in `snapshot_summary.rs`, both red-state proven
-against the unfixed code:
-
-The first asserts that a previous summary with `total-data-files =
-i32::MAX + 1` (and `total-records` similarly) survives the truncation
-and lands in `deleted-data-files` / `deleted-records` intact. Against
-the unfixed code this panics at `snapshot_summary.rs:356:18` with
-`\""number too large to fit in target type\""` — that's the i32-ceiling
-bug demonstrated directly.
-
-The second feeds `\""not_a_number\""` as a previous total and asserts the
-function returns an `Err` whose message carries the `\""truncate table
-summary\""` wrapper. Against the unfixed code this panics at the same
-site with `\""invalid digit found in string\""` — the malformed-input bug.
-
-I ran each test against the unfixed code, observed the panic, applied
-the fix, and watched them go green. Existing
-`test_truncate_table_summary` and
-`test_update_snapshot_summaries_append` continue to pass, and `cargo fmt
---check` / `cargo clippy --all-features --tests -- -D warnings` are
-clean.
-
-Co-authored-by: Aman Rawat <rawataaryan09@gmail.com>",f7b4122f85cf8db3cbde261b91f8d5002d3cb9bb,2511,false,Aman Rawat,1,84,9,crates,35,8,43,base; fix; co-authored; correctness signal; has PR number; LanceDB similarity 0.26,Flink: Dynamic Sink: Fix serialization issues with schemas larger than 2^16 bytes <Maximilian Michels>,- fix(spec): don't panic on overwrite-truncate when previous totals exceed i32::MAX or are non-numeric (#2511) (Thanks Sreeram Garlapati and Aman Rawat!)
-apache/iceberg-rust,f7b4122f85cf8db3cbde261b91f8d5002d3cb9bb,f7b4122,Sreeram Garlapati,SreeramGarlapati@users.noreply.github.com,2026-05-27T19:13:50-07:00,GitHub,noreply@github.com,2026-05-28T10:13:50+08:00,chore(spec): remove stale #[allow(dead_code)] from snapshot_summary (#2514),"## Which issue does this PR close?
-
-Follow-up to review feedback on #2511
-([thread](https://github.com/apache/iceberg-rust/pull/2511#discussion_r3303563092)).
-
-## What changes are included in this PR?
-
-Removes all four `#[allow(dead_code)]` attributes in
-`crates/iceberg/src/spec/snapshot_summary.rs`. They were added in #1085
-when the module was first introduced, before any caller existed. The
-chain is now production-live:
-
-- `update_snapshot_summaries` is called from `transaction/snapshot.rs`
-- `truncate_table_summary` is called from `update_snapshot_summaries`
-- `get_prop` is called 6 times from `truncate_table_summary`
-- `update_totals` is called 6 times from `update_snapshot_summaries`
-
-None of these need the suppression any more — the dead_code lint is
-silent without them.
-
-Kept out of #2511 to keep that PR's scope focused on the
-overwrite-truncate panic fix.
-
-## Are these changes tested?
-
-`cargo check -p iceberg` and `cargo clippy -p iceberg --all-features
---tests -- -D warnings` both stay clean after the removals — i.e. no
-dead_code warning re-emerges.",e27c844ebc9f3c9c53f40b214508d9228f05b9ef,2514,false,,1,0,4,crates,37,6,43,base; feature/api verb; has PR number; LanceDB similarity 0.21,Fix Internal to Generic conversion of TIMESTAMP_NANO,- chore(spec): remove stale #[allow(dead_code)] from snapshot_summary (#2514) (Thanks Sreeram Garlapati!)
 apache/iceberg-rust,eef9b4248014a93fecd978cf27ff40e79a64a502,eef9b42,Xander,zander181@googlemail.com,2026-06-01T12:39:48+01:00,GitHub,noreply@github.com,2026-06-01T19:39:48+08:00,chore(ci): omit blanket/auto-trait/auto-derived impls from public API (#2542),"https://github.com/apache/iceberg-rust/pull/2525 introduced public-api
 files but after writing
 https://github.com/apache/iceberg-rust/pull/2541/changes I realised this

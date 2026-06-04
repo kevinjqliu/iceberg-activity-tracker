@@ -1,0 +1,3212 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-go,f026751eee9710275b6e25590a3388d1e816fcc4,f026751,Tanmay Rauth,t_rauth@apple.com,2026-05-01T13:16:23-07:00,GitHub,noreply@github.com,2026-05-01T22:16:23+02:00,feat(catalog): add version-hint management for Hadoop catalog,"[Version-hint
+management](https://github.com/apache/iceberg-go/issues/798#issuecomment-4320784323)
+Implement readVersionHint (reads the integer from version-hint.text,
+returns 0 on any error), writeVersionHint (writes to a temp file then
+renames, best-effort with errors logged but not returned), and
+findVersion with the full three-tier fallback: read hint and validate
+the file exists, scan forward from the hinted version until no file is
+found, and if there's no hint at all, list the metadata directory to
+find the max version then scan forward. Tests cover round-trip
+read/write, missing hint, corrupt hint, stale hint (v3 exists but hint
+says 2), scan-forward behavior, directory listing fallback, and the
+no-metadata-files case.
+
+
+Relates to #798",5f3462960491261397a1f01b82ee5b1f7ba2b378,,false,,2,264,0,catalog,98,7,105,"base; feature/api verb; important area: catalog; strategic: catalog, round-trip, v3; summary signal: round-trip; medium churn; correctness signal; LanceDB similarity 0.23",Flink: Add the possibility to use Coordinator Lock when using Flink SQL,- feat(catalog): add version-hint management for Hadoop catalog (Thanks Tanmay Rauth!)
+apache/iceberg-go,41f5c54c2841780f2a9ddd62702b2ee8326daf77,41f5c54,Tanmay Rauth,t_rauth@apple.com,2026-04-23T09:47:03-07:00,GitHub,noreply@github.com,2026-04-23T12:47:03-04:00,feat(io): add BulkRemovableIO interface(#914) (#916),"Why: Orphan cleanup and snapshot expiration delete files one at a time
+with Remove(). On cloud object stores (S3, GCS, Azure), this means one
+HTTP round-trip per file — extremely slow when cleaning up thousands of
+orphans.
+                                                            
+This PR adds a BulkRemovableIO interface with DeleteFiles(ctx, paths)
+for batch deletion. blobFileIO implements it. Orphan cleanup and
+snapshot expiration try bulk delete first when available, falling back
+to per-file deletion on failure or when a custom delete function is set.
+Missing files are treated as successful deletions. Tests cover bulk
+path, fallback path, partial failure, and edge cases.
+
+Fixes #914",fe9bcf47c5adf98c1e4d0009a489b0c6e5b25073,916,false,,6,232,10,io; table,97,8,105,base; feature/api verb; important area: io; strategic: round-trip; summary signal: round-trip; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.26,Core: populate manifest created/replaced/kept count when commit a snapshot,- feat(io): add BulkRemovableIO interface(#914) (#916) (Thanks Tanmay Rauth!)
+apache/iceberg-go,be4cf4cfed619e4940829935b305977210b58b12,be4cf4c,Tobias Pütz,tobias@minio.io,2026-05-12T11:58:53+02:00,GitHub,noreply@github.com,2026-05-12T11:58:53+02:00,feat(table): add RewriteFiles snapshot-op builder (#1033),"Decompose the atomic rewrite-snapshot of `Transaction.RewriteDataFiles`
+which assumes in-process compaction to enable out-of-process distributed
+compaction, by exposing a builder similar to what iceberg-java has with
+`Table.newRewrite()`.
+
+Mirrors iceberg-java's RewriteFiles (Table.newRewrite()), sitting beside
+RowDelta. Suppresses the overwrite producer's default validator and
+queues a rewrite-specific conflict validator internally, so
+RewriteDataFiles and external callers (distributed compaction
+coordinators) commit the same shape through one indivisible operation.
+
+Transaction.NewRewrite(snapshotProps) returns *RewriteFiles with
+DeleteFile / AddDataFile / Apply / Commit. ExecuteCompactionGroup is the
+worker-side read+write step, returning a plain-data
+CompactionGroupResult.
+
+RewriteDataFiles drives the builder internally. Partial-progress mode
+now commits per group inside the loop, fixing a latent bug where a
+mid-loop failure left staged groups uncovered by the rewrite validator.
+
+Tag rewrite snapshots OpReplace instead of OpOverwrite (matching
+iceberg-java's BaseRewriteFiles.operation()) — gated on
+cfg.rewriteSemantics so generic ReplaceFiles callers, where row content
+can change, keep OpOverwrite. This also addresses #841 and should
+address the comments made in #867 since only the unexported
+`cfg.rewriteSemantics` makes OpOverwrite -> OpReplace and
+`RewriteFiles.Commit()` is the only caller of `withRewriteSemantics()`.
+
+Black-box coverage: equivalence with RewriteDataFiles, safe pos-delete
+expunge, concurrent eq-delete rejection under refresh-and-replay.
+
+---------
+
+Signed-off-by: Tobias Pütz <tobias@minio.io>",092822e5cb1d1dc3135a0f492876bbc2fb60f15a,1033,false,,6,1320,100,table,96,7,103,"base; feature/api verb; important area: table; strategic: compaction, rewritedatafiles, rewritefiles; summary signal: compaction, rewritedatafiles, rewritefiles; medium file count; large churn; has PR number; LanceDB similarity 0.23",Core: Add properties to InMemoryFileIO,- feat(table): add RewriteFiles snapshot-op builder (#1033) (Thanks Tobias Pütz!)
+apache/iceberg-go,c38e16bcf93042c3e18253dda927ed7fe81ef401,c38e16b,Tanmay Rauth,t_rauth@apple.com,2026-05-09T01:13:50-07:00,GitHub,noreply@github.com,2026-05-09T10:13:50+02:00,test(table): add v3 OCC row lineage regression tests (#998) (#1043),"After investigating the codebase, I found that the write-side row
+lineage is already fully implemented on main:
+- Manifest-list writer assigns first_row_id to data manifests
+(manifest.go:1508)
+- OCC retry re-derives first_row_id from fresh metadata
+(snapshot_producers.go:1029)
+- validateAndUpdateRowLineage advances next-row-id at commit time
+(metadata.go:507)
+  - Scanner synthesizes _row_id at read time (arrow_scanner.go:425)    
+  
+All I added was two tests that prove the existing code works correctly
+under the specific scenarios:
+  1. Fast-append + OCC retry → first_row_id rebases correctly
+2. Merge-append + OCC retry → merged manifests get correct first_row_id
+from list writer
+  
+
+
+Closes: #998",774c8addea96522897e161216ebd456c96165406,1043,false,,1,249,0,table,100,3,103,"base; feature/api verb; important area: table; strategic: manifest, occ, row lineage, v3; summary signal: occ; medium churn; validation/regression test signal; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit",Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- test(table): add v3 OCC row lineage regression tests (#998) (#1043) (Thanks Tanmay Rauth!)
+apache/iceberg-go,261edba7b4afe680473995cb6db12e85a69048c7,261edba,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-12T18:35:09+02:00,GitHub,noreply@github.com,2026-05-12T09:35:09-07:00,test(puffin): golden round-trip a deletion-vector-v1 blob (#1041),"Pins the puffin envelope shape around a deletion-vector-v1 blob without
+depending on the in-flight roaring decoder (#866). The fixture is two
+files:
+
+- puffin/testdata/deletion-vector-v1-payload.bin — a Java-produced
+64-bit roaring DV payload lifted directly from apache/iceberg test
+resources (small-alternating-values-position-index.bin, 50 bytes; bitmap
+encodes positions 1, 3, 5, 7, 9).
+
+- puffin/testdata/deletion-vector-v1.puffin — the same payload wrapped
+by puffin.Writer with the spec-canonical metadata (snapshot-id=-1,
+sequence-number=-1, deletion-vector-v1 blob type, referenced-data-file
+and cardinality properties).
+
+The test asserts both layers. Reader side: blob count, type,
+spec-mandated invariants, properties, and that ReadBlob round-trips the
+inner payload byte-for-byte equal to the standalone Java fixture. Writer
+side: regenerates the envelope in-memory and asserts byte equality
+against the on-disk fixture. Without the writer-side check the test was
+reader-only round-trip and writer drift would silently calcify into the
+next regeneration.
+
+Honest framing: this is a Go-writer wire-format pin with a Java-
+equivalent inner payload, not a strong Java cross-impl pin. The basic
+envelope shape is cross-checked by TestWriterBitIdenticalWithJava, but
+that test does not exercise empty Fields arrays or multi-key blob
+Properties — both of which this fixture relies on — and JSON key
+ordering of blob Properties is encoder-defined.
+
+A regen test gated on REGEN_FIXTURES=1 reproduces the .puffin from the
+inner payload and self-validates by reading the blob back before
+overwriting the on-disk file.
+
+Closes #1008.",2a37a19e4be40f471d9eeba2ceeeb25e0077e051,1041,false,,5,324,1,puffin,99,3,102,"base; important area: puffin; strategic: golden round-trip, puffin, round-trip, variant; summary signal: deletion-vector, golden round-trip, round-trip; deletion vector signal; medium file count; medium churn; validation/regression test signal; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit",REST Spec: Add unregister table endpoint,- test(puffin): golden round-trip a deletion-vector-v1 blob (#1041) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,082d3378243c54eab9dcdb6d99cb361927cf27de,082d337,Tanmay Rauth,t_rauth@apple.com,2026-05-06T09:37:23-07:00,GitHub,noreply@github.com,2026-05-06T12:37:23-04:00,test(table): add round-trip test for v3 metadata with partition-statistics (#1012) (#1019),"Adds a Java-produced v3 metadata.json fixture with partition-statistics
+entries and a round-trip test that parses, re-serializes, and asserts no
+fields are silently dropped.
+
+Closes: #1012",32e6273077e803bae56d2a489ec9f1b515e9f926,1019,false,,2,187,0,table,96,3,99,"base; feature/api verb; important area: table; strategic: round-trip, v3; summary signal: round-trip; validation/regression test signal; has PR number; LanceDB similarity 0.41; capped LanceDB boost for routine/low-signal commit",Core: Add test for freshness-aware table loading with lazy snapshot loading,- test(table): add round-trip test for v3 metadata with partition-statistics (#1012) (#1019) (Thanks Tanmay Rauth!)
+apache/iceberg-go,092822e5cb1d1dc3135a0f492876bbc2fb60f15a,092822e,Tanmay Rauth,t_rauth@apple.com,2026-05-12T00:42:16-07:00,GitHub,noreply@github.com,2026-05-12T09:42:16+02:00,feat(cli): add maintenance command wiring and stubs (#1073),"Register all maintenance subcommands (snapshots, refs, partition-stats,
+branch/tag create, expire-snapshots, clean-orphan-files, upgrade,
+rollback, schema --show-defaults) with stub implementations.
+
+Adds shared utilities: parseDuration, confirmAction, formatDurationMs.
+Each command stub file will be replaced by its implementation PR.",d21df2da13dce1519a9038d7f7c8a8fd148a0ebf,1073,false,,10,573,15,cmd,92,6,98,base; feature/api verb; important area: cli; strategic: maintenance; summary signal: maintenance; medium file count; medium churn; has PR number; LanceDB similarity 0.21,Core: Freshness-aware table loading in REST catalog,- feat(cli): add maintenance command wiring and stubs (#1073) (Thanks Tanmay Rauth!)
+apache/iceberg-go,bb94be70ecc5991cc173286ef4f011c1061ba801,bb94be7,Andrei Tserakhau,laskoviymishka@gmail.com,2026-04-22T17:12:43+02:00,GitHub,noreply@github.com,2026-04-22T11:12:43-04:00,feat(table): add conflict validation framework (#928),"Adds the foundational types, errors, and validator functions that a
+producer uses to detect conflicting concurrent commits before re-issuing
+its updates. Framework part of #830.
+
+No producer is wired to use these yet, that step lands with next slice;
+this change is library plumbing only and has no behavior impact on
+existing paths.
+
+- IsolationLevel type with SERIALIZABLE and SNAPSHOT constants, plus
+write.delete.isolation-level / write.update.isolation-level property
+keys (matching Java's TableProperties names).
+- Four conflict sentinels that wrap table.ErrCommitFailed so the
+existing retry loop in doCommit continues to treat them as retryable
+conflicts.
+- ConflictContext walks AncestorsBetween (from the snapshot ancestry
+utility) to enumerate concurrent snapshots on the committer's branch and
+returns ErrCommitDiverged if the base snapshot is no longer on the
+branch.
+- Four validators matching Java's BaseRowDelta / BaseOverwriteFiles /
+BaseRewriteFiles:
+* ValidateDataFilesExist — pos-delete referenced files still reachable
+from current head.
+* ValidateAddedDataFilesMatchingFilter — no concurrent data-file add in
+the committer's filter region (manifest-level partition-summary pruning
+via the existing evaluators). * ValidateNoConflictingDataFiles —
+isolation-level-gated variant of the above for RowDelta eq-delete
+commits. * ValidateNoNewDeletesForRewrittenFiles — no concurrent
+position deletes targeting files a rewrite is replacing.
+- Per-spec filter projection cache so a walk across snapshots written
+under different partition spec ids reuses its projection work.
+
+Tests cover the framework's logic (isolation-level parsing, error
+wrapping, ConflictContext edge cases, validator short-circuit paths).
+
+End-to-end conflict detection under real concurrent-snapshot conditions
+lives with the producer-wiring follow up PR.",9cc7e2fdd135dc08171e006b434dc1a118735701,928,false,,4,749,4,table,88,8,96,"base; feature/api verb; important area: table; strategic: conflict validation, manifest, rewritefiles, variant; summary signal: conflict validation; medium churn; has PR number; LanceDB similarity 0.27","Core, Spark: Adds a Table Property for Relying on Identifier Fields",- feat(table): add conflict validation framework (#928) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,ead528220b89a11b21a05432e78f41b51e6fd5ac,ead5282,Andrei Tserakhau,laskoviymishka@gmail.com,2026-04-30T17:59:04+02:00,GitHub,noreply@github.com,2026-04-30T11:59:04-04:00,feat(table): drop dangling equality deletes during RewriteDataFiles (#947),"Closes #946.
+
+Sustained CDC workloads (Postgres → Iceberg replication, ~one snapshot
+per few seconds with one eq-delete per UPDATE/DELETE) accumulate
+equality-delete files in every snapshot's manifests forever. After
+compaction, every preexisting eq-delete is provably dead — no surviving
+applicable data file has seq < eq-delete.seq — but the old
+RewriteDataFiles only removed position deletes, leaving eq-deletes in
+place. Manifest fanout grew linearly with the CDC duration.
+
+This change adds three pieces:
+
+1. table/compaction.DecideDeadEqualityDeletes — a pure predicate that
+exactly matches the v2 reader (table/scanner.go
+matchEqualityDeletesToData): E applies to D iff E.seq > D.seq AND
+(either side has empty partition OR partition tuples match). SpecID is
+intentionally NOT in the predicate — using it would silently drop
+eq-deletes the reader still applies under partition-spec evolution.
+
+2. table/compaction.CollectDeadEqualityDeletes — walks the snapshot's
+manifests via the existing public Snapshot.Manifests + FetchEntries
+APIs, builds a SurvivorSurvey, and returns the dead set. Two-pass
+design: skip the data-manifest walk if there are no eq-delete
+candidates.
+
+3. table.RewriteDataFilesOptions.ExtraDeleteFilesToRemove — a new field
+on the options struct that the executor passes through to ReplaceFiles.
+The caller (cmd/iceberg/compact.go or any library user) computes dead
+eq-deletes via CollectDeadEqualityDeletes against the same snapshot and
+threads them in. The executor itself is policy-free.
+
+The CLI gains a --preserve-dead-equality-deletes flag (default off,
+i.e., cleanup is on by default — recommended for sustained CDC).
+
+The RewriteDataFiles signature collapses (partialProgress,
+snapshotProps, opts...) into a single RewriteDataFilesOptions struct.
+RewriteResult splits RemovedDeleteFiles into RemovedPositionDeleteFiles
++ RemovedEqualityDeleteFiles for observability.
+
+Tests:
+- table/compaction/eq_delete_decision_test.go pins the predicate against
+the scanner's rule across mixed-partition / cross-spec / boundary cases.
+- table/compaction/cdc_stress_test.go runs 80 CDC cycles (81 data files
++ 80 eq-deletes pre-compaction → 1 data file + 0 eq-deletes post).
+Skipped under -short.
+- table/rewrite_data_files_test.go covers full-rewrite drops,
+partial-rewrite preserves, partial-progress preserves (per-group cleanup
+is a follow-up), and the CLI opt-out path.",76a2cdc3d13d19c6eec70b453f845326ed9aae5d,947,false,,9,1449,129,cmd; table,88,5,93,"base; important area: table; strategic: compaction, manifest, rewritedatafiles; summary signal: compaction, rewritedatafiles; medium file count; large churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.17",Core: Unlink table metadata's last-updated timestamp from snapshot timestamp,- feat(table): drop dangling equality deletes during RewriteDataFiles (#947) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,dfc5851d936707925d7ca0d9b33cccad5da93bb4,dfc5851,Ashley Jeffs,ash@jeffail.uk,2026-05-06T20:34:54+01:00,GitHub,noreply@github.com,2026-05-06T15:34:54-04:00,fix(manifest): allow ManifestListWriter to reference lower-version manifests (#1030),"## Problem
+
+`ManifestListWriter.AddManifests` requires every input manifest file's
+version to match the writer's version exactly, which contradicts the
+Iceberg spec: a v2 manifest list must be able to reference v1 manifest
+files so that v1 tables can be upgraded without rewriting historical
+manifests. Java's
+[`ManifestListWriter`](https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/ManifestListWriter.java)
+handles this; `iceberg-go` does not.
+
+The practical symptom for downstream users is that any commit to a table
+whose metadata has been upgraded from v1 to v2 — whether via
+`Transaction.UpgradeFormatVersion` or out-of-band by another engine —
+fails with `invalid argument: ManifestListWriter only supports version 2
+manifest files`. The v1 manifest files written before the upgrade are
+never rewritten and continue to surface via
+`snapshotProducer.existingManifests()` on every subsequent commit, so
+the failure is permanent.
+
+## Fix
+
+`manifest.go:1410-1414`: replace the `file.Version() != m.version`
+exact-match gate with `file.Version() > m.version`. Newer-than-writer
+inputs are still rejected — the v2 entry schema has no place for v3
+fields such as `first_row_id`, and accepting them would silently drop
+data. Lower-than-writer inputs are accepted because the in-memory
+`manifestFile` produced from a v1 input (via `manifestFileV1.toFile()`
+or `NewManifestFile(1, ...)`) already carries the spec's inheritance
+values — `Content = data` and `SeqNumber = MinSeqNumber = 0` — so it can
+be encoded directly against the v2/v3 entry schema. The existing
+`first_row_id` assignment for data manifests with `FirstRowIDValue ==
+nil` covers v1 inputs in v3 lists without further changes.
+
+## Testing
+
+- `TestV2ManifestListAcceptsV1Manifests` — round-trips a v1 manifest
+through a v2 manifest list and asserts that the decoded entry has
+`content = data` and `sequence_number = min_sequence_number = 0` per
+spec inheritance.
+- `TestV3ManifestListAcceptsV1AndV2Manifests` — writes a v1 data
+manifest and a v2 delete manifest into a v3 list; asserts inheritance
+for the v1 entry, asserts that `first_row_id` is assigned to the v1 data
+manifest and is left unset on the v2 delete manifest (data-only
+assignment per the existing v3 writer rules).
+- `TestV2ManifestListRejectsV3Manifests` — confirms the downgrade
+direction is still blocked.
+- `TestWriteManifestListClosesWriterOnError` — existing test updated to
+drive its `AddManifests` failure path through a v3-in-v2 input (still
+rejected) instead of v1-in-v2.
+
+Confirmed failing on `main` before the fix and passing after. `go test
+./...` passes.
+
+Fixes #1029",1f000b3883b4018e1fcc856c3a6895e857d6450f,1030,false,,2,92,4,manifest.go; manifest_test.go,85,6,91,"base; feature/api verb; fix; important area: manifest; strategic: manifest, round-trip, v3; multi-area change; has PR number; LanceDB similarity 0.21",Core: Fix metadata table scans with useRef by preserving metadata schema,- fix(manifest): allow ManifestListWriter to reference lower-version manifests (#1030) (Thanks Ashley Jeffs!)
+apache/iceberg-go,eb37c1aa2ba577f4d5074e42daa0b1166c5118bd,eb37c1a,Tanmay Rauth,t_rauth@apple.com,2026-04-22T09:16:57-07:00,GitHub,noreply@github.com,2026-04-22T12:16:57-04:00,feat(io): add ListableIO interface to replace reflect-based directory walking (#913) (#917),"Why: Orphan cleanup's walkDirectory used reflect to reach into blob
+storage internals (extracting the Bucket field by name). This is fragile
+— it breaks if the struct changes, bypasses Go's type system, and panics
+on unexpected IO types.
+This PR introduces a ListableIO interface with a WalkDir method so
+directory walking works through a proper type assertion. Both LocalFS
+and blobFileIO implement it. Orphan cleanup prefers ListableIO when
+available, falling back to the original reflect-based implementation for
+IO types that don't implement it yet. Includes Azure URI userinfo
+preservation and tests for local, cloud, and Azure paths.
+
+Fixes: #913",bb94be70ecc5991cc173286ef4f011c1061ba801,917,false,,7,328,23,io; table,85,6,91,base; feature/api verb; important area: io; strategic: storage; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.20,Flink: Backport Add the possibility to use Coordinator Lock when using Flink SQL to 2.0 and 1.20,- feat(io): add ListableIO interface to replace reflect-based directory walking (#913) (#917) (Thanks Tanmay Rauth!)
+apache/iceberg-go,4bf2ece3cd0c6855546256ead0f16a7115da9a13,4bf2ece,Masa,80936176+mzzz-zzm@users.noreply.github.com,2026-05-08T04:42:51+10:00,GitHub,noreply@github.com,2026-05-07T20:42:51+02:00,fix(occ): manifest list rebuild (#982),"fix(occ): rebuild manifest list on OCC retry to inherit concurrent
+writes
+
+Fixes #976
+## Problem
+
+When `doCommit` retries after an OCC conflict, it re-uses the stale
+snapshot that was built before the first attempt. That snapshot's
+manifest list was written against the original parent and does not
+include any data files committed by concurrent writers in the meantime.
+
+On catalogs that perform server-side snapshot validation (e.g. AWS S3
+Tables), this causes **silent data loss**: the retried commit succeeds
+(HTTP 200) but the stale manifest list effectively drops the concurrent
+writer's files from the table history.
+
+## Fix
+
+Each `snapshotProducer` now records which manifests it wrote itself
+(`ownManifests` — those not inherited from the original parent). A
+`rebuildManifestList` closure is attached to the `addSnapshotUpdate` and
+called by `doCommit` on every retry. The closure:
+
+1. Loads the fresh branch head's manifest list (concurrent manifests).
+2. Concatenates `ownManifests` with the fresh inherited manifests.
+3. Writes a new manifest list file with a retry-attempt suffix so each
+attempt gets a unique path.
+4. Adjusts `sequence-number` relative to the fresh parent.
+
+After a successful commit, `doCommit` deletes the manifest list files
+produced by superseded retry attempts (orphan cleanup).
+
+## Files changed
+
+- `table/snapshot_producers.go`: `computeOwnManifests`, `rebuildFn`
+closure
+- `table/updates.go`: `ownManifests` / `rebuildManifestList` fields on
+`addSnapshotUpdate`, propagated through `Apply`
+- `table/table.go`: `rebuildSnapshotUpdates` helper, orphan cleanup
+after commit
+- `table/rebuild_manifest_test.go`: unit tests for
+`rebuildSnapshotUpdates`
+
+---------
+
+Signed-off-by: mzzz-zzm <80936176+mzzz-zzm@users.noreply.github.com>
+Signed-off-by: masa hoashi <mhoashi@ea.com>
+Co-authored-by: masa hoashi <mhoashi@ea.com>",9d8ec298d32914007917df0c1599b1c059174f82,982,false,masa hoashi,10,1965,18,table,79,8,87,"base; fix; strategic: catalog, manifest, occ; summary signal: occ; medium file count; large churn; co-authored; correctness signal; has PR number; LanceDB similarity 0.27",Core: Add partition to TrackedFile,- fix(occ): manifest list rebuild (#982) (Thanks Masa and masa hoashi!)
+apache/iceberg-go,fe9bcf47c5adf98c1e4d0009a489b0c6e5b25073,fe9bcf4,Matt Topol,zotthewizard@gmail.com,2026-04-23T12:46:01-04:00,GitHub,noreply@github.com,2026-04-23T12:46:01-04:00,"feat(config,cmd/iceberg): support more rest options in config (#933)","When testing and playing around with AWS S3 Tables, I discovered that we
+need a way to specify more of the REST options (and likely more for
+other catalogs in the future) to be able to leverage and connect to s3
+tables using the `iceberg` binary that is created here.
+
+This PR creates an initial pattern (modeled somewhat on how pyiceberg
+manages it's config) that introduces a subsection in the catalog yaml
+definition for adding more options. I also add a test case here that
+matches what you'd have to do for the `cmd/iceberg` mainprog to be able
+to access s3 tables using the yaml config.
+
+More options for rest and other catalogs can be added in follow-up PRs
+now that this establishes a pattern to follow.",c576fd1726f29845f4810c6d877c34cfc8a870d0,933,false,,3,54,6,cmd; config,77,7,84,base; feature/api verb; important area: cmd; strategic: catalog; multi-area change; has PR number; LanceDB similarity 0.23,Flink: Backport Add the possibility to use Coordinator Lock when using Flink SQL to 2.0 and 1.20,"- feat(config,cmd/iceberg): support more rest options in config (#933) (Thanks Matt Topol!)"
+apache/iceberg-go,4950803db409505bf310fd144d78f22c5b716057,4950803,Tanmay Rauth,t_rauth@apple.com,2026-05-12T13:41:11-07:00,GitHub,noreply@github.com,2026-05-12T22:41:11+02:00,feat(cli): add partition-stats command (#1065),"Add `iceberg partition-stats TABLE_ID` to list partition statistics
+files with snapshot ID, path, and size. Supports --snapshot-id filter
+and --all flag.
+
+Related: #957
+Depends On: #1073",40b81252526c658740541d87f78531c7a9f8c70b,1065,false,,2,253,6,cmd,76,7,83,base; feature/api verb; important area: cli; strategic: partition statistics; medium churn; has PR number; LanceDB similarity 0.22,"API, Core: Add FileIO to Scan API",- feat(cli): add partition-stats command (#1065) (Thanks Tanmay Rauth!)
+apache/iceberg-go,a38f57ff5171ff10ebc354992d8d49c253893ccf,a38f57f,Masa,80936176+mzzz-zzm@users.noreply.github.com,2026-05-13T02:21:21+10:00,GitHub,noreply@github.com,2026-05-12T09:21:21-07:00,fix(manifest): restore data_file.distinct_counts on v1/v2 Avro schemas (#1044),"v1 and v2 manifest writers silently dropped data_file.distinct_counts
+(field id 111) because it was missing from the data_file_v1 and
+data_file_v2 record declarations in internal/avro_schemas.go. The
+hamba/avro encoder writes only declared fields, so the Go-side *[]colMap
+pointer was discarded on encode for every version.
+
+The Iceberg v1 and v2 specs list distinct_counts as a writable optional
+field (map<123: int, 124: long>); the v3 spec deprecates it (see
+apache/iceberg#12182 and #1001/#1039). This commit:
+
+- Adds the distinct_counts field to data_file_v1 and data_file_v2 with
+the canonical map element ids (key=123, value=124), inserted after
+nan_value_counts to match the spec's field ordering.
+- Leaves data_file_v3 unchanged. The defensive guard added in #1039
+(v3writerImpl.prepareEntry) becomes load-bearing once this lands: it
+ensures v3 manifests still omit the field even though the encoder is now
+capable of serializing it via the v1/v2 schema pathway.
+
+Tests:
+- TestWriteManifestV2KeepsDistinctCounts - v2 round-trip preserves the
+supplied distinct counts.
+- TestWriteManifestV1KeepsDistinctCounts - v1 round-trip preserves them
+too.
+
+Both tests fail on origin/main (encoder drops the field, returns nil)
+and pass after the schema additions, exercising the change directly.
+
+Fixes #1038
+Related: #1001, #1039
+
+Signed-off-by: mzzz-zzm <80936176+mzzz-zzm@users.noreply.github.com>",712b264ca241c223950cfe7dfe37fbc4aaaf761d,1044,false,,2,67,0,internal; manifest_test.go,72,10,82,"base; fix; important area: manifest; strategic: manifest, round-trip, v3; summary signal: round-trip; multi-area change; has PR number; LanceDB similarity 0.33",Flink: Support UUID type in Avro and Parquet readers and writers,- fix(manifest): restore data_file.distinct_counts on v1/v2 Avro schemas (#1044) (Thanks Masa!)
+apache/iceberg-go,774c8addea96522897e161216ebd456c96165406,774c8ad,Shreyas Mishra,55346934+Shreyas220@users.noreply.github.com,2026-05-09T01:30:31+05:30,GitHub,noreply@github.com,2026-05-08T16:00:31-04:00,feat: Deletion vector reader (#866),Signed-off-by: Shreyas220 <shreyas.ny@gmail.com>,69fc3cdc5b745971b7f77a9039a91bee83ddfb85,866,false,,16,944,4,go.mod; go.sum; manifest.go; table,77,5,82,base; strategic: deletion vector; summary signal: deletion vector; deletion vector signal; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.15,Core: Reduce manifest logging noise on drop table,- feat: Deletion vector reader (#866) (Thanks Shreyas Mishra!)
+apache/iceberg-go,440647e26420dffac3f8d89155cee23c6094805b,440647e,Tanmay Rauth,t_rauth@apple.com,2026-05-05T13:20:45-07:00,GitHub,noreply@github.com,2026-05-05T22:20:45+02:00,feat(catalog): add hadoop namespace operations (#963),"[3: Namespace
+operations](https://github.com/apache/iceberg-go/issues/798#issuecomment-4320784323)
+Implement all six namespace interface methods. CreateNamespace uses
+os.MkdirAll and errors if the directory already exists or if non-empty
+properties are passed. DropNamespace checks that there are no tables or
+child namespaces before calling os.Remove. CheckNamespaceExists uses
+os.Stat. ListNamespaces reads directory entries and filters out table
+dirs via isTableDir. LoadNamespaceProperties returns a synthetic
+{""location"": path} (not persisted). UpdateNamespaceProperties returns an
+unsupported error. Tests cover create, create duplicate, create nested
+(a.b.c), create with properties (error), drop, drop non-existent, drop
+non-empty with tables and child namespaces, list empty and mixed
+entries, check exists, load properties, and update properties error.
+
+Relates to #798",9bf24ecf26137d71ccaca9e860983712b1abb72a,963,false,,2,516,16,catalog,76,6,82,base; feature/api verb; important area: catalog; strategic: catalog; medium churn; has PR number; LanceDB similarity 0.21,Core: Do not cleanup when CREATE transactions fail with 503,- feat(catalog): add hadoop namespace operations (#963) (Thanks Tanmay Rauth!)
+apache/iceberg-go,70f1c33fb64d626e30a4217a42810531f6d58c4a,70f1c33,Tanmay Rauth,t_rauth@apple.com,2026-04-30T09:05:11-07:00,GitHub,noreply@github.com,2026-04-30T12:05:11-04:00,feat(catalog): add Hadoop catalog scaffold with path helpers (#953),"[1: Scaffold + path helpers
+
+](https://github.com/apache/iceberg-go/issues/798#issuecomment-4320784323)
+Add the Hadoop type constant and create the catalog/hadoop package with
+struct, constructor, init() registration, path helpers, version regex,
+isTableDir, and stubbed interface methods.
+
+Relates to #798",ead528220b89a11b21a05432e78f41b51e6fd5ac,953,false,,3,415,0,catalog,76,6,82,base; feature/api verb; important area: catalog; strategic: catalog; medium churn; has PR number; LanceDB similarity 0.19,"API, Core: Add overwrite-aware table registration",- feat(catalog): add Hadoop catalog scaffold with path helpers (#953) (Thanks Tanmay Rauth!)
+apache/iceberg-go,ae110072a3a079e908f63f0659f0cb5584940a35,ae11007,Tobias Pütz,tobias@minio.io,2026-04-30T20:55:13+02:00,GitHub,noreply@github.com,2026-04-30T20:55:13+02:00,feat(table): clustered partitioned write path (#948),"Keeps at most one partition writer open at a time, mirroring
+iceberg-java's ClusteredWriter. Revisiting a closed partition returns an
+error.
+
+Wired into RewriteDataFiles since each compaction group is
+single-partition, drops the fanout writer's per-worker in-flight batches
+and redundant compute.Take copies.
+
+Also exposes WithMaxWriteWorkers to tune fanout concurrency for the
+unclustered path.
+
+Sorts partitionMapNode.collectPartitions by first-row index so
+within-batch processing follows input row order. Required by the
+clustered writer; the fanout writer is unaffected.
+
+Fixes a pre-existing leak in partitionedFanoutWriter.processRecord where
+compute.Take sub-records were retained by Add but never released
+locally.",d9714931dc2aef95049c6244bbc37ba979ac773c,948,false,,8,1041,62,table,71,5,76,"base; important area: table; strategic: clustered, compaction, rewritedatafiles; summary signal: clustered, compaction, rewritedatafiles; medium file count; large churn; has PR number; LanceDB similarity 0.18","Core, Hive: Detect if a view already exists when registering a table",- feat(table): clustered partitioned write path (#948) (Thanks Tobias Pütz!)
+apache/iceberg-go,c62af3c624bcf7afd9f75123fbc6ce60362f8da8,c62af3c,Tanmay Rauth,t_rauth@apple.com,2026-05-07T12:26:32-07:00,GitHub,noreply@github.com,2026-05-07T15:26:32-04:00,feat(table): support zstd metadata compression codec (#1020),"Adds MetadataCompressionCodecZstd alongside gzip/none and wires it
+through both read (decompress .metadata.json.zstd) and write
+(write.metadata.compression-codec=zstd) paths. Uses
+klauspost/compress/zstd already present as a transitive dependency.
+
+Closes #1005",4bf2ece3cd0c6855546256ead0f16a7115da9a13,1020,false,,9,255,18,catalog; go.mod; table,65,8,73,base; feature/api verb; important area: table; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.28,REST Spec: clarify uniqueness of ETags for table metadata responses,- feat(table): support zstd metadata compression codec (#1020) (Thanks Tanmay Rauth!)
+apache/iceberg-go,6fdbf69efb2bb4433f0b0f5931a7ae2a8f0a08b9,6fdbf69,Andrei Tserakhau,laskoviymishka@gmail.com,2026-04-27T18:23:17+02:00,GitHub,noreply@github.com,2026-04-27T12:23:17-04:00,feat(table): wire conflict validators into producers (#934),"Part of #830: fourth of five PRs. 
+
+The conflict-validation framework from the previous slice is now
+reachable: every producer runs a validate() pre-flight before
+cat.CommitTable.
+
+Per producer:
+  - fastAppendFiles / mergeAppendFiles: no-op (appends are safe).
+- overwriteFiles: rejects concurrent adds into the committer's filter
+region under SERIALIZABLE. Isolation key is op-gated — OpDelete reads
+write.delete.isolation-level, everything else reads
+write.update.isolation-level (matches Java).
+- RowDelta: pos-deletes check that referenced data files are still
+reachable; eq-deletes reject concurrent appends under SERIALIZABLE
+(conservative AlwaysTrue filter — opt out with
+write.delete.isolation-level=snapshot).
+- RewriteDataFiles: rejects concurrent pos-deletes targeting a rewritten
+file, and conservatively rejects any concurrent eq-delete during a
+rewrite.
+
+doCommit runs the registered validators once on the first attempt.
+ErrCommitDiverged is terminal (does not wrap ErrCommitFailed), so the
+retry loop leaves it alone. On the first attempt base == current, so the
+concurrent-snapshot walk is empty and validators short-circuit — full
+behavioral coverage lights up once the next PR adds refresh-and-replay
+between retries.
+
+User-visible: ReplaceDataFiles (string-path) now enforces the
+serializable-reject default on concurrent appends. Set
+write.update.isolation-level=snapshot to opt out.
+
+Still to come:
+- Next PR: refresh-and-replay in the retry loop; flip
+CommitNumRetriesDefault 0 → 4; wrap ErrCommitFailed in Glue/SQL/Hive so
+retry fires outside REST.
+- Separate follow-up, WIP: restructure table/ into sub-packages on
+transaction boundaries.",0e7b58671fff7980f24ec1963cb60d53ba624a0c,934,false,,8,735,19,table,67,6,73,base; important area: table; strategic: rewritedatafiles; summary signal: rewritedatafiles; medium file count; medium churn; has PR number; LanceDB similarity 0.21,"CI: Make CVE scan blocking on PRs, informational on main",- feat(table): wire conflict validators into producers (#934) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,b4ca5150b6b43c60f35566ee4cc2677354c7b583,b4ca515,Artem Alperin,75543763+hdnpth@users.noreply.github.com,2026-05-06T21:32:47+02:00,GitHub,noreply@github.com,2026-05-06T15:32:47-04:00,feat(manifest): Add tests for Entries and migrate snapshotProducer (#1031),Related to https://github.com/apache/iceberg-go/pull/985,082d3378243c54eab9dcdb6d99cb361927cf27de,1031,false,,3,183,34,manifest.go; manifest_test.go; table,69,3,72,base; feature/api verb; important area: manifest; strategic: manifest; medium churn; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Docs: Add informational properties section for table comment,- feat(manifest): Add tests for Entries and migrate snapshotProducer (#1031) (Thanks Artem Alperin!)
+apache/iceberg-go,32e6273077e803bae56d2a489ec9f1b515e9f926,32e6273,Alessandro Nori,alessandro.nori@datadoghq.com,2026-05-06T18:28:58+02:00,GitHub,noreply@github.com,2026-05-06T12:28:58-04:00,feat(io): add native in-memory FS (#1025),"## Summary
+
+- Adds `MemFS`: an in-memory `IO` implementation with no external
+dependencies
+- `MemFS` implements `WriteFileIO` and `ListableIO`
+- Moves mem tests from `io/gocloud` to `io/` and removes the
+now-unnecessary gocloud import from `table/snapshot_producers_test.go`
+
+Part of #696.",ac1ead73460291da098f06af1279d43a2ed4c7e5,1025,false,,5,222,22,io; table; },65,6,71,base; feature/api verb; important area: io; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.21,Control merge schema evolution via table property in Spark 4.1,- feat(io): add native in-memory FS (#1025) (Thanks Alessandro Nori!)
+apache/iceberg-go,f6cd9c411f7ad92372c24d0eea49dfb66a29a7f6,f6cd9c4,Tanmay Rauth,t_rauth@apple.com,2026-05-04T08:58:13-07:00,GitHub,noreply@github.com,2026-05-04T17:58:13+02:00,fix(io): resolve S3 PermanentRedirect for S3 Table Buckets (#974) (#975),"Two issues caused 301 PermanentRedirect errors when writing data files
+to S3 Table Buckets:
+
+1. The SigV4 signing region configured on the REST catalog was not
+propagated to the S3 I/O layer. When s3.region is absent from vended
+credentials, the S3 client falls back to the SDK default region, which
+may differ from the bucket's actual region. Fix: toProps() now sets
+client.region from the SigV4 signing region as a fallback.
+
+2. The S3 client defaulted to path-style addressing, which is deprecated
+by AWS. Virtual-hosted style is now the default for standard AWS S3,
+with path-style reserved for custom endpoints.
+
+Fixes #974",2b104941c92d13adf23c5772bcd159218145a60d,975,false,,5,181,9,catalog; io,64,6,70,"base; fix; important area: io; strategic: catalog, v4; medium file count; multi-area change; has PR number; LanceDB similarity 0.21","API, Core: Scan API for partition stats <gaborkaszab>",- fix(io): resolve S3 PermanentRedirect for S3 Table Buckets (#974) (#975) (Thanks Tanmay Rauth!)
+apache/iceberg-go,775d8aa56e5f509ecd6a0be148787ec6230139bc,775d8aa,Masa,80936176+mzzz-zzm@users.noreply.github.com,2026-05-09T18:18:38+10:00,GitHub,noreply@github.com,2026-05-09T10:18:38+02:00,feat(manifest): omit data_file.distinct_counts on v3 manifests (#1039),"Fixes #1001.
+
+## Summary
+
+Add a defensive guard in `v3writerImpl.prepareEntry` that clears the
+Avro-facing `dataFile.DistinctCounts` pointer on entries we own, so v3
+manifests cannot emit `data_file.distinct_counts` (deprecated by the v3
+spec; Java parity:
+[apache/iceberg#12182](https://github.com/apache/iceberg/pull/12182)).
+
+## Scope decision
+
+Per the discussion on #1001 (reviewer approved option **(c)
+Defensive-only**), this PR ships the minimal v3 gate and defers the v2
+schema gap to a separate issue.
+
+**Why minimal**: while implementing this, I found that
+`data_file.distinct_counts` is **already** absent from the on-disk Avro
+for every manifest version on `main` — the per-version record schemas in
+[`internal/avro_schemas.go`](https://github.com/apache/iceberg-go/blob/main/internal/avro_schemas.go)
+(`data_file_v1` L238, `data_file_v2` L276, `data_file_v3` L360) do not
+declare a `distinct_counts` field, so the `hamba/avro` encoder drops the
+Go-side pointer at encode time on every version. The intended v3 outcome
+is therefore already in effect, but the v2 path is **non-compliant** (v2
+spec still requires the field). Tracked separately as #1038.
+
+The guard added here is **forward-compatibility insurance**: when #1038
+is fixed by adding `distinct_counts` back to `data_file_v2`, the v3 path
+will stay compliant with no further code changes.
+
+The `dataFile` struct, `DistinctValueCounts()` getter, and
+`DataFileBuilder.DistinctValueCounts` setter are intentionally preserved
+— the change is writer-side only.
+
+## Test
+
+`TestWriteManifestV3OmitsDistinctCounts` writes a v3 manifest with
+non-empty distinct counts supplied via
+`DataFileBuilder.DistinctValueCounts`, round-trips it through
+`ReadManifest`, and asserts the read side observes no distinct counts.
+
+A v2 ""keeps distinct counts"" test was deliberately **not** added to this
+PR: against today's broken behavior it would either lie (assert `Empty`
+is correct) or fail CI (assert `{1:42}`). The v2 round-trip test belongs
+in the same commit that fixes the v2 schema (see #1038), where it can
+flip from failing to passing alongside the schema change.
+
+## Verification
+
+- `make test` — all packages green.
+- `make lint` — clean.
+- DCO sign-off present.
+
+## Related
+
+- Fixes #1001
+- Discovered side-issue: #1038 (v2 schema gap)
+- Java precedent:
+[apache/iceberg#12182](https://github.com/apache/iceberg/pull/12182)
+- Parent v3 tracker: #589
+
+Signed-off-by: mzzz-zzm <80936176+mzzz-zzm@users.noreply.github.com>",c38e16bcf93042c3e18253dda927ed7fe81ef401,1039,false,,2,57,0,manifest.go; manifest_test.go,64,4,68,"base; important area: manifest; strategic: manifest, round-trip, v3; summary signal: round-trip; multi-area change; has PR number; LanceDB similarity 0.14",JDBC: JDBC Catalog should handle Postgres exception for duplicate keys,- feat(manifest): omit data_file.distinct_counts on v3 manifests (#1039) (Thanks Masa!)
+apache/iceberg-go,69fc3cdc5b745971b7f77a9039a91bee83ddfb85,69fc3cd,Tanmay Rauth,t_rauth@apple.com,2026-05-08T12:13:00-07:00,GitHub,noreply@github.com,2026-05-08T15:13:00-04:00,feat(catalog): hadoop table and namespace CRUD operations (#969),"[4: CreateTable + LoadTable +
+CheckTableExists](https://github.com/apache/iceberg-go/issues/798#issuecomment-4320784323)
+Implement the three core table operations. CreateTable validates the
+namespace exists, rejects custom locations, builds metadata via
+table.NewMetadata, writes v1.metadata.json through a
+temp-file-plus-rename pattern, and does a best-effort version-hint
+write. LoadTable calls findVersion to get the current version, builds
+the metadata path, and delegates to table.NewFromLocation.
+CheckTableExists delegates to isTableDir. Tests cover create-and-load
+round-trip, create with partition spec / sort order / properties, reject
+custom location, create in non-existent namespace, create duplicate,
+load non-existent, load with stale hint, and check exists true/false.
+
+Depends on #968 #963
+Relates to #798",c62af3c624bcf7afd9f75123fbc6ce60362f8da8,969,false,,3,137,56,catalog,59,8,67,"base; important area: catalog; strategic: catalog, round-trip; summary signal: round-trip; has PR number; LanceDB similarity 0.28",OpenAPI: Promote the S3 signing endpoint to the main spec,- feat(catalog): hadoop table and namespace CRUD operations (#969) (Thanks Tanmay Rauth!)
+apache/iceberg-go,9d8ec298d32914007917df0c1599b1c059174f82,9d8ec29,Tanmay Rauth,t_rauth@apple.com,2026-05-07T11:17:39-07:00,GitHub,noreply@github.com,2026-05-07T14:17:39-04:00,feat(catalog): hadoop cli integration (#1034),"[7: CLI
+integration](https://github.com/apache/iceberg-go/issues/798#issuecomment-4320784323)
+Added a case catalog.Hadoop: branch to the catalog switch in
+cmd/iceberg/main.go, wire the cfg.Warehouse property, and add the blank
+import for catalog/hadoop.",eecb4d28411d96d2a8ca03f595fac7451ed04e8b,1034,false,,5,682,19,README.md; catalog; cmd; table,60,7,67,base; important area: catalog; strategic: catalog; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.23,Core: Freshness-aware table loading in REST catalog,- feat(catalog): hadoop cli integration (#1034) (Thanks Tanmay Rauth!)
+apache/iceberg-go,158255c00913a0adea8f7c30fabfb0b76141b02b,158255c,Masa,80936176+mzzz-zzm@users.noreply.github.com,2026-05-07T01:05:46+10:00,GitHub,noreply@github.com,2026-05-06T17:05:46+02:00,fix(occ): RowDelta uses partition-scoped conflict check instead of AlwaysTrue (#983),"Fixes #978
+## Problem
+
+`RowDelta.validate` passes `iceberg.AlwaysTrue{}` to
+`validateNoConflictingDataFiles` whenever equality-delete files are
+present. This means any concurrent append to **any** partition is
+treated as a conflict, even when it lands in a completely different
+partition from the equality-deletes. Under serializable isolation this
+causes spurious `ErrConflictingDataFiles` errors for workloads that
+write to multiple independent partitions concurrently.
+
+## Fix
+
+`RowDelta` now collects the partition tuples of all equality-delete
+files it adds (`eqDeletePartitions`). A new validator,
+`validateNoConflictingDataFilesInPartitions`, checks concurrent data
+files only in those specific partition tuples:
+
+- If the partition set is empty (no eq-deletes), the check is skipped.
+- If any eq-delete is unpartitioned (empty tuple), it falls back to the
+conservative `AlwaysTrue` check, preserving existing safety.
+- Otherwise, only concurrent files in a matching partition are flagged.
+
+## Files changed
+
+- `table/row_delta.go`: collect `eqDeletePartitions` instead of
+`hasEqDeletes`
+- `table/conflict_validation.go`:
+`validateNoConflictingDataFilesInPartitions` + `partitionTupleKey`
+- `table/partition_conflict_test.go`: unit tests for both new functions",85387f825a79146496ffcfdb28536186c939c584,983,false,,4,927,19,manifest.go; table,61,6,67,base; fix; strategic: occ; summary signal: occ; medium churn; multi-area change; has PR number; LanceDB similarity 0.19,Kafka Connect: fix table UUID check,- fix(occ): RowDelta uses partition-scoped conflict check instead of AlwaysTrue (#983) (Thanks Masa!)
+apache/iceberg-go,6493d05ba043b2a1e81ac81f1eb88901c25821f8,6493d05,Tanmay Rauth,t_rauth@apple.com,2026-04-30T14:54:29-07:00,GitHub,noreply@github.com,2026-04-30T23:54:29+02:00,test(table): add regression test for UpdateSchema id counter seeding (#942) (#951),"Added TestAddColumnAfterDropHighestID which exercises the add-then-drop
+path: adds a column (bumping last-column-id to 12), drops it (lowering
+HighestFieldID back to 11), then verifies a new column gets id 13.
+Reverting #936 causes the test to fail with id reuse.
+
+Fixes: #942",f5d4ca38fb9e35012352da21174e912194a6ddd5,951,false,,1,101,0,table,64,3,67,base; feature/api verb; important area: table; validation/regression test signal; has PR number; LanceDB similarity 0.29; capped LanceDB boost for routine/low-signal commit,Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,- test(table): add regression test for UpdateSchema id counter seeding (#942) (#951) (Thanks Tanmay Rauth!)
+apache/iceberg-go,0c4b5b7171d6882934ff0f0c8061484c175536c3,0c4b5b7,Hectar,84522781+hectar-glitches@users.noreply.github.com,2026-05-07T16:49:01+09:00,GitHub,noreply@github.com,2026-05-07T09:49:01+02:00,feat(table): skip validator registration for no-op producers (#1022),"## Summary
+
+This PR gates validator registration on a new `needsValidation() bool`
+method on the `producerImpl` interface:
+
+- `fastAppendFiles` returns `false`: appends are commutative and need no
+conflict checks
+- `mergeAppendFiles` inherits `false` via embedding
+- `overwriteFiles` returns `true`: real conflict validation required
+- `snapshotProducer.commit()` skips registration when
+`needsValidation()` is false
+
+The no-op `validate()` methods are kept as belt-and-suspenders.
+
+Behavior is locked with two unit tests asserting that fast-append and
+merge-append commits leave `txn.validators` empty.
+
+Parent: #830
+
+---------
+
+Signed-off-by: hectar-glitches <hectar@uni.minerva.edu>",dfc5851d936707925d7ca0d9b33cccad5da93bb4,1022,false,,4,56,9,table,59,6,65,base; important area: table; strategic: conflict validation; summary signal: conflict validation; has PR number; LanceDB similarity 0.21,"Core, Spark 4.1: Fix distributed planning for CoW operations",- feat(table): skip validator registration for no-op producers (#1022) (Thanks Hectar!)
+apache/iceberg-go,85387f825a79146496ffcfdb28536186c939c584,85387f8,Artem Alperin,75543763+hdnpth@users.noreply.github.com,2026-05-06T16:00:33+02:00,GitHub,noreply@github.com,2026-05-06T16:00:33+02:00,feat(manifest)!: Replace FetchEntries with iterator approach (#985),"`FetchEntries` materializes every manifest entry into a
+`[]ManifestEntry` before returning, so a caller pays the full
+per-manifest entry slice even when it only needs to filter, count, or
+break out on first match. On tables with thousands of entries per
+manifest this shows up as avoidable memory pressure.",440647e26420dffac3f8d89155cee23c6094805b,985,false,,17,201,128,catalog; cmd; manifest.go; manifest_test.go; table,60,5,65,base; important area: manifest; strategic: manifest; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.18,Core: v4 table metadata location should be optional,- feat(manifest)!: Replace FetchEntries with iterator approach (#985) (Thanks Artem Alperin!)
+apache/iceberg-go,b3b16429bc09817f22fc8bbd9f2461c98e9fec28,b3b1642,Tanmay Rauth,t_rauth@apple.com,2026-05-06T08:58:59-07:00,GitHub,noreply@github.com,2026-05-06T11:58:59-04:00,feat(table): add SetPartitionStatisticsUpdate and RemovePartitionStatisticsUpdate (#1018),"Adds SetPartitionStatisticsUpdate and RemovePartitionStatisticsUpdate in
+table/updates.go with MetadataBuilder methods and UnmarshalJSON wiring.
+Mirrors the existing SetStatisticsUpdate / RemoveStatisticsUpdate from
+#902.
+
+Closes #1009",6c6baf67ccd965e1001b6ac0f14c7b1845fe5d32,1018,false,,3,191,16,table,56,9,65,base; feature/api verb; important area: table; medium churn; has PR number; LanceDB similarity 0.30,Flink: Support UUID type in Avro and Parquet readers and writers,- feat(table): add SetPartitionStatisticsUpdate and RemovePartitionStatisticsUpdate (#1018) (Thanks Tanmay Rauth!)
+apache/iceberg-go,5675b8cfeed542802ca6142ab36fec2abba0603c,5675b8c,Tanmay Rauth,t_rauth@apple.com,2026-05-07T09:17:27-07:00,GitHub,noreply@github.com,2026-05-07T12:17:27-04:00,feat(catalog): hadoop list drop rename operations (#970),"5: ListTables + DropTable + RenameTable
+
+Implement the remaining table catalog methods. ListTables verifies the
+namespace exists then scans the namespace directory for table subdirs
+using isTableDir. DropTable verifies the table exists then calls
+os.RemoveAll on the table directory. RenameTable returns an unsupported
+error. Tests cover list empty namespace, list with tables, list
+non-existent namespace, drop existing table and verify directory is
+removed, drop non-existent table, and rename returns error.
+
+Depends on #968 #963 
+Relates to #798",0c4b5b7171d6882934ff0f0c8061484c175536c3,970,false,,6,513,35,Makefile; README.md; catalog; internal,60,4,64,base; important area: catalog; strategic: catalog; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.12,Add Flink Quickstart docker image,- feat(catalog): hadoop list drop rename operations (#970) (Thanks Tanmay Rauth!)
+apache/iceberg-go,c576fd1726f29845f4810c6d877c34cfc8a870d0,c576fd1,Ashley Jeffs,ash@jeffail.uk,2026-04-23T17:45:23+01:00,GitHub,noreply@github.com,2026-04-23T12:45:23-04:00,fix(table): seed UpdateSchema id counter from metadata LastColumnID (#936),"## Problem
+
+`NewUpdateSchema` seeds its fresh-id counter from
+`txn.meta.CurrentSchema().HighestFieldID()`. The Iceberg spec reserves
+`last-column-id` on table metadata as the monotonic counter for this
+purpose; Java's
+[`SchemaUpdate`](https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/SchemaUpdate.java)
+seeds from `metadata.lastColumnId()`.
+
+When the current schema's highest id is lower than the lifetime max —
+after a previous evolution added columns that were later dropped, or
+after a schema swap — `AddColumn` allocates ids already referenced by
+fields in historical schemas. Catalogs that index the full schema
+history (e.g. AWS Glue's `schemasToGlueColumns`) then reject the commit
+with a duplicate field id error.
+
+## Fix
+
+Seed `lastColumnID` from `txn.meta.LastColumnID()` in `NewUpdateSchema`.
+Adds a public `LastColumnID()` getter on `*MetadataBuilder` — the
+`Metadata` interface already exposes this value, but `txn.meta` is the
+builder.
+
+`MetadataBuilder.AddSchema` already keeps `last-column-id` monotonic via
+`max(b.lastColumnId, schema.HighestFieldID())`, so no other allocator
+sites need changes.
+
+## Testing
+
+Adds `TestAddColumnMonotonicFieldIDs`: constructs metadata whose
+`last-column-id` exceeds the current schema's `HighestFieldID()` (by
+adding a higher-id schema while leaving the original as current) and
+asserts that `AddColumn` allocates above `last-column-id`. Confirmed
+failing on `main` before the fix and passing after.
+
+`go test ./...` passes.
+
+Fixes #935
+
+Signed-off-by: Ashley Jeffs <ash@jeffail.uk>",f8df330465c722387f2a2b0032332700ea68a32d,936,false,,3,60,3,table,55,8,63,base; fix; important area: table; strategic: catalog; has PR number; LanceDB similarity 0.28,Kafka Connect: fix table UUID check,- fix(table): seed UpdateSchema id counter from metadata LastColumnID (#936) (Thanks Ashley Jeffs!)
+apache/iceberg-go,d21df2da13dce1519a9038d7f7c8a8fd148a0ebf,d21df2d,Tanmay Rauth,t_rauth@apple.com,2026-05-11T13:01:41-07:00,GitHub,noreply@github.com,2026-05-11T22:01:41+02:00,feat(cli): add info command for single-screen table summary (#1064),"Add `iceberg info TABLE_ID` showing UUID, format version, location,
+schema, partition spec, sort order, snapshot/ref counts, properties.
+
+
+Related: #957",055eee547baf6fc6e00d66a61479b22b471b92ca,1064,false,,4,387,0,cmd,56,5,61,base; feature/api verb; important area: cli; medium churn; has PR number; LanceDB similarity 0.18,Docs: Add informational properties section for table comment,- feat(cli): add info command for single-screen table summary (#1064) (Thanks Tanmay Rauth!)
+apache/iceberg-go,b2446c45d7d003efd13c5417c89eb060223af48c,b2446c4,Tanmay Rauth,t_rauth@apple.com,2026-04-29T09:34:37-07:00,GitHub,noreply@github.com,2026-04-29T12:34:37-04:00,fix(table): remove double Release() on struct array in ToRequestedSchema (#956),"The defer on line 1085 already handles releasing st. The explicit
+st.Release() before building the output record caused a double-free on
+the Struct wrapper.
+
+Fixes #955",6fdbf69efb2bb4433f0b0f5931a7ae2a8f0a08b9,956,false,,1,0,1,table,55,6,61,base; fix; important area: table; release/security/notice signal; has PR number; LanceDB similarity 0.21,OpenAPI: Promote the S3 signing endpoint to the main spec,- fix(table): remove double Release() on struct array in ToRequestedSchema (#956) (Thanks Tanmay Rauth!)
+apache/iceberg-go,a1d883edd53dabb076ec4cfa44f706f8f204d7b9,a1d883e,Tanmay Rauth,t_rauth@apple.com,2026-04-23T09:47:46-07:00,GitHub,noreply@github.com,2026-04-23T12:47:46-04:00,feat(cli): add --schema-from-file flag to infer table schema from parquet files (#927),"Added a new --schema-from-file flag to `iceberg create table` that
+infers the table schema from a local data file. Currently supports
+Parquet (.parquet, .parq), with the dispatch designed to support
+additional formats (e.g. Avro, ORC) in the future.
+When a Parquet file contains Iceberg field IDs, they are preserved.
+Files without field IDs are assigned fresh sequential IDs. The flag is
+mutually exclusive with --schema, and the inferred schema is printed
+before table creation for user verification.",41f5c54c2841780f2a9ddd62702b2ee8326daf77,927,false,,1,83,5,cmd,52,7,59,base; feature/api verb; important area: cli; has PR number; LanceDB similarity 0.25,Bump to Parquet 1.17.0,- feat(cli): add --schema-from-file flag to infer table schema from parquet files (#927) (Thanks Tanmay Rauth!)
+apache/iceberg-go,2a37a19e4be40f471d9eeba2ceeeb25e0077e051,2a37a19,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-12T18:33:39+02:00,GitHub,noreply@github.com,2026-05-12T09:33:39-07:00,feat(table/dv): plumb cardinality validation through ReadDV (#1056),"Closes #1049. ReadDV used to pass -1 to DeserializeDV unconditionally,
+skipping the spec-mandated cardinality check entirely. The puffin blob
+property ""cardinality"" — what the writer attaches — is now read out of
+the BlobMetadata that matches the manifest entry's (offset, size) and
+fed into DeserializeDV, so a truncated bitmap whose CRC still validates
+over the bytes that are present gets caught.
+
+Property missing → skip validation for backward-compat with writers that
+omit it (CRC still applies).
+
+Property present but unparseable → hard error; silently falling back
+would mask writer bugs.",4ac44083c2cbb05aa2780b0df1ac86738a7f30ac,1056,false,,2,206,7,table,51,7,58,"base; important area: table; strategic: manifest, puffin; medium churn; has PR number; LanceDB similarity 0.22",OpenAPI: Add SetPartitionStatisticsUpdate/RemovePartitionStatisticsUpdate to TableUpdate,- feat(table/dv): plumb cardinality validation through ReadDV (#1056) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,76a2cdc3d13d19c6eec70b453f845326ed9aae5d,76a2cdc,Andrei Tserakhau,laskoviymishka@gmail.com,2026-04-30T17:57:44+02:00,GitHub,noreply@github.com,2026-04-30T11:57:44-04:00,feat(table): refresh-and-replay between commit retries (#945),"Closes #830 (concurrent-writer conflict detection) — fifth and final PR
+in the sequence. The retry loop in Table.doCommit now actually does
+something useful for contended commits.
+
+Before this change, doCommit's retry loop re-issued the same updates and
+requirements between attempts. After a peer advanced the branch with a
+non-conflicting commit, AssertRefSnapshotID deterministically failed on
+every retry and the budget was wasted. The default num-retries was set
+to 0 in #912 precisely to avoid this slow-fail.
+
+What changes:
+
+- On ErrCommitFailed mid-loop, reload the catalog's current metadata via
+cat.LoadTable.
+- Build a fresh conflictContext with (base = writer's view, current =
+freshly loaded). Validators now run against real concurrent-snapshot
+state — the framework wired in #934 finally fires.
+- Rewrite AssertRefSnapshotID requirements to point at the new branch
+head before re-submitting. Mirrors Java's SnapshotProducer between-retry
+behavior.
+- The pre-flight pass moved inside the loop so attempt 0 still gets a
+no-op validation (base == current → empty concurrent list) without a
+separate code path.
+
+Behavior matrix after this PR (with num-retries > 0):
+
+- Peer advance with no semantic conflict: validators pass on refresh,
+requirements rewritten, retry succeeds. Was: spin to exhaustion.
+- Peer advance with semantic conflict (e.g. same partition overwrite):
+validators reject on refresh, retry exits terminally. Was: spin to
+exhaustion.
+- Diverged base (branch deleted): newConflictContext returns
+ErrCommitDiverged, terminal exit. Same as before.
+
+Also tightens flakyCatalog's LoadTable to return a real Table backed by
+its current metadata, so refresh paths in retry tests no longer
+dereference nil.
+
+E2E tests cover the headline success path (peer advance, retry succeeds
+with rewritten assertion), the terminal-on-conflict path (validator
+rejects on refresh), and the rewriteRefSnapshot- Requirements helper
+directly.",a9c52d7e0fafbd4f6cac78862262f0b4a0e2f07f,945,false,,4,339,42,table,51,7,58,base; important area: table; strategic: catalog; medium churn; has PR number; LanceDB similarity 0.22,Add TCK tests for Schema Evolution in BaseFormatModelTests,- feat(table): refresh-and-replay between commit retries (#945) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,e3dceccd5c55cac1c91b9aec7586c395e9c930b9,e3dcecc,Varun Venkatesh,118274086+varun0630@users.noreply.github.com,2026-04-29T13:36:33-07:00,GitHub,noreply@github.com,2026-04-29T16:36:33-04:00,fix: data races in exprEvaluator.Eval and manifestEvalVisitor.Eval (#954),"## Problem
+
+Two evaluator types share a receiver across concurrent goroutine calls,
+causing data races detected by `-race`.
+
+**Race 1 — `exprEvaluator.Eval`** (`visitors.go`)
+
+`table.Scan.collectManifestEntries` fans out manifest opens via
+`errgroup` (`scanner.go`), and each goroutine calls the bound
+`*exprEvaluator.Eval` method value returned by `ExpressionEvaluator`.
+`Eval` writes the per-call `StructLike` to the receiver's shared `st`
+field (`e.st = st`). Because the `*exprEvaluator` is shared across the
+goroutine pool, parallel `Eval` calls race on `e.st`.
+
+**Race 2 — `manifestEvalVisitor.Eval`** (`table/evaluators.go`)
+
+`newManifestEvaluator` returns a closure that captures a shared
+`*manifestEvalVisitor`. When multiple goroutines call that closure
+concurrently (e.g. the `errgroup` in `classifyFilesForFilteredDeletions`
+and parallel manifest scans in `collectManifestEntries`), they race on
+the `partitionFields` write in `Eval` vs. the reads inside
+`VisitLess`/`VisitGreater`.
+
+## Fix
+
+Both fixes mirror the approach used in #445 (closes #443) for
+`inclusiveMetricsEval`: instead of mutating the shared receiver, `Eval`
+builds a per-call stack-local copy of the visitor and passes `&ev` to
+`VisitExpr`. The captured receiver is read-only after construction; all
+per-call mutable state lives in the local copy.
+
+```go
+// exprEvaluator
+func (e *exprEvaluator) Eval(st StructLike) (bool, error) {
+    ev := exprEvaluator{bound: e.bound, st: st}
+    return VisitExpr(ev.bound, &ev)
+}
+
+// manifestEvalVisitor
+func (m *manifestEvalVisitor) Eval(manifest iceberg.ManifestFile) (bool, error) {
+    parts := manifest.Partitions()
+    if len(parts) == 0 {
+        return rowsMightMatch, nil
+    }
+    ev := manifestEvalVisitor{partitionFields: parts, partitionFilter: m.partitionFilter}
+    return VisitExpr(ev.partitionFilter, &ev)
+}
+```
+
+No API changes.
+
+## Testing
+
+- Adds `TestManifestEvalVisitorEvalRace` in
+`table/evaluator_race_test.go`: 256 goroutines share one cached
+evaluator closure and call it concurrently. Confirmed to trip `-race`
+before the fix and pass after.
+- Existing `TestKeyDefaultMapRaceCondition` (the only prior race test)
+still passes.
+- Full `go test -race ./table/ ./...` passes (pre-existing races in
+miniohq-specific tests are unrelated).
+
+## Related
+
+- Sibling precedent: #445 (closes #443) — same pattern for
+`inclusiveMetricsEval`.
+
+---------
+
+Co-authored-by: Varun Venkatesh <varunvenkatesh@Varuns-MacBook-Pro.local>",af2ddd4adf060124c88e6e2314e441fe3dcaf92f,954,false,Varun Venkatesh,3,106,6,table; visitors.go,48,10,58,base; fix; strategic: manifest; multi-area change; co-authored; has PR number; LanceDB similarity 0.34,Core: Fix data loss in partial variant shredding,- fix: data races in exprEvaluator.Eval and manifestEvalVisitor.Eval (#954) (Thanks Varun Venkatesh!)
+apache/iceberg-go,055eee547baf6fc6e00d66a61479b22b471b92ca,055eee5,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-10T20:12:54+02:00,GitHub,noreply@github.com,2026-05-10T20:12:54+02:00,feat(table): warn when writing Parquet position-deletes on v3 (#1040),"Closes #1007.
+
+V3 prefers deletion vectors over Parquet position-delete files
+(apache/iceberg#12048). Java logs a warning when the legacy path is
+used; iceberg-go silently writes the deprecated path. This emits a
+single slog.Warn at the entry of positionDeleteRecordsToDataFiles when
+the table is v3+, naming the table location so users can identify which
+table is on the deprecated path.
+
+Once the DV writer (#997) lands and flips the default on v3, this
+becomes a backstop for users who explicitly opt back into Parquet
+position-deletes via write.delete.format=position.
+
+The warning fires at writer entry, before partition fanout, so a
+partitioned write logs once total — not once per partition. The
+partitioned regression test yields two batches (one per partition path)
+because positionDeletePartitionedFanoutWriter.processBatch reads only
+the first row's file_path and routes the entire batch to one partition,
+so a single batch with two rows would not actually exercise the fanout.
+Verified by temporarily moving the warn into processBatch and confirming
+the test fails with count==2.",89f36c164c3e1cd65c7b3857b16464d779b0d522,1040,false,,2,202,0,table,51,6,57,"base; important area: table; strategic: deletion vector, v3; medium churn; has PR number; LanceDB similarity 0.18","Core, Spark: Adds a Table Property for Relying on Identifier Fields",- feat(table): warn when writing Parquet position-deletes on v3 (#1040) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,a9c52d7e0fafbd4f6cac78862262f0b4a0e2f07f,a9c52d7,Andrei Tserakhau,laskoviymishka@gmail.com,2026-04-30T17:54:49+02:00,GitHub,noreply@github.com,2026-04-30T11:54:49-04:00,feat(catalog): wrap concurrent-write conflicts with ErrCommitFailed (#944),"Part of #830 (concurrent-writer conflict detection). Today only the REST
+catalog wraps its 409 response with table.ErrCommitFailed, so the retry
+loop in Table.doCommit only fires on REST. Glue, SQL, and Hive return
+their native conflict errors raw, leaving users on those catalogs unable
+to opt into commit retries via commit.retry.num-retries.
+
+Per catalog:
+- Glue: catch *types.ConcurrentModificationException from the AWS SDK
+(Glue's VersionId optimistic-locking signal) and wrap.
+- SQL: the conditional UPDATE returns 0 rows affected when
+metadata_location moved underneath us — wrap that path.
+- Hive: lock-acquire failure is the primary concurrent-writer signal
+under Hive's lock-based concurrency model — wrap.
+
+No behavior change with the default `commit.retry.num-retries=0` (set in
+#912) — the retry loop remains opt-in. Once users set `num-retries > 0`,
+retries now engage on all four catalogs uniformly.
+
+Per-catalog unit tests are skipped: each conflict path requires real
+concurrency (SQL's `n==0` race) or live infrastructure (Glue SDK error
+injection, Hive lock contention) to exercise. CI integration tests cover
+the real race paths.
+
+Still to come for #830 closure:
+- refresh-and-replay in the retry loop so retries are not just no-op
+spin
+  - flip CommitNumRetriesDefault 0 → 4 once retry actually helps",e3dceccd5c55cac1c91b9aec7586c395e9c930b9,944,false,,4,39,2,catalog,47,10,57,base; important area: catalog; strategic: catalog; has PR number; LanceDB similarity 0.32,"CI: Make CVE scan blocking on PRs, informational on main",- feat(catalog): wrap concurrent-write conflicts with ErrCommitFailed (#944) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,f925806aa7ba290f2536ad776c5e9d9a936639fc,f925806,Tanmay Rauth,t_rauth@apple.com,2026-04-30T09:27:51-07:00,GitHub,noreply@github.com,2026-04-30T12:27:51-04:00,fix(table): include expected vs found snapshot id in AssertRefSnapshotID errors (#940) (#952),"Format ref name, expected snapshot id, and found snapshot id into all
+three error paths so operators can see what changed during commit
+conflicts. Also fixes incorrect pointer formatting with %d.
+
+Fixes #940",70f1c33fb64d626e30a4217a42810531f6d58c4a,952,false,,2,51,3,table,47,8,55,base; fix; important area: table; correctness signal; has PR number; LanceDB similarity 0.27,Core: Add properties to InMemoryFileIO,- fix(table): include expected vs found snapshot id in AssertRefSnapshotID errors (#940) (#952) (Thanks Tanmay Rauth!)
+apache/iceberg-go,330fcdf6c371ce2e3d469badf8ef2e8861fdcfca,330fcdf,Tanmay Rauth,t_rauth@apple.com,2026-05-05T02:04:03-07:00,GitHub,noreply@github.com,2026-05-05T11:04:03+02:00,feat(test): add Spark integration test infrastructure for Hadoop catalog (#968),"Set up Docker and Spark infrastructure for Hadoop catalog
+cross-compatibility testing with Java's HadoopCatalog.
+
+- Add hadoop_validation.py: SparkSession configured with
+spark.sql.catalog.hadoop_test (type=hadoop,
+warehouse=/home/iceberg/hadoop-warehouse)
+- Add shared volume mount in docker-compose.yml:
+/tmp/iceberg-hadoop-warehouse (host) <-> /home/iceberg/hadoop-warehouse
+(Spark)
+- Copy hadoop_validation.py into Spark container via Dockerfile
+- Add make integration-hadoop target
+
+
+Depends on: #963 
+Relates to #798",bb1b1489c13d20ddc15bf325ae991520475443c8,968,false,,4,90,7,Makefile; internal,50,3,53,base; feature/api verb; strategic: catalog; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,"Spark: Backport: Add Spark app name to env context for Spark v3.4, 3.5, 4.0 <Varun Lakhyani>",- feat(test): add Spark integration test infrastructure for Hadoop catalog (#968) (Thanks Tanmay Rauth!)
+apache/iceberg-go,9bf24ecf26137d71ccaca9e860983712b1abb72a,9bf24ec,Tanmay Rauth,t_rauth@apple.com,2026-05-05T08:29:37-07:00,GitHub,noreply@github.com,2026-05-05T11:29:37-04:00,refactor(cli): migrate from docopt-go to go-arg (#965) (#980),"Replace flat Config struct and boolean dispatch with typed subcommand
+structs. Each command owns its flags, subcommand help is auto-generated,
+and adding new commands is self-contained.
+
+Closes: #965",330fcdf6c371ce2e3d469badf8ef2e8861fdcfca,980,false,,5,742,368,cmd; go.mod; go.sum,44,6,50,base; important area: cli; medium file count; large churn; multi-area change; has PR number; LanceDB similarity 0.21,Add idempotency adapter and E2E coverage,- refactor(cli): migrate from docopt-go to go-arg (#965) (#980) (Thanks Tanmay Rauth!)
+apache/iceberg-go,5f3462960491261397a1f01b82ee5b1f7ba2b378,5f34629,Tanmay Rauth,t_rauth@apple.com,2026-05-01T09:58:20-07:00,GitHub,noreply@github.com,2026-05-01T12:58:20-04:00,fix(schema): data race in MarshalJSON on shared *Schema (#967),"Used a stack-local copy instead of mutating the receiver's
+IdentifierFieldIDs, preventing concurrent goroutines from racing during
+manifest writing.
+
+Fixes #966",6493d05ba043b2a1e81ac81f1eb88901c25821f8,967,false,,1,7,3,schema.go,40,6,46,base; fix; strategic: manifest; has PR number; LanceDB similarity 0.20,Flink: Fix equalityFieldColumns always null in IcebergSink <GuoYu>,- fix(schema): data race in MarshalJSON on shared *Schema (#967) (Thanks Tanmay Rauth!)
+apache/iceberg-go,f8df330465c722387f2a2b0032332700ea68a32d,f8df330,Tanmay Rauth,t_rauth@apple.com,2026-04-22T13:14:51-07:00,GitHub,noreply@github.com,2026-04-22T16:14:51-04:00,fix: use floored division in HourTransform for pre-epoch timestamps (#924) (#926),"HourTransform used truncated division (rounds toward zero) which
+produced incorrect hour buckets for pre-epoch timestamps. Switch to
+floored division to match Java's Math.floorDiv behavior.",eb37c1aa2ba577f4d5074e42daa0b1166c5118bd,926,false,,3,257,6,transforms.go; transforms_test.go; types.go,41,5,46,base; fix; medium churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.18,Spark: Add Spark app name to env context <Stas Pak>,- fix: use floored division in HourTransform for pre-epoch timestamps (#924) (#926) (Thanks Tanmay Rauth!)
+apache/iceberg-go,bb1b1489c13d20ddc15bf325ae991520475443c8,bb1b148,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-04T18:10:27+02:00,GitHub,noreply@github.com,2026-05-04T12:10:27-04:00,fix(table): treat empty-base conflict context as fully concurrent (#979),"newConflictContext returned an empty concurrent list when the writer's
+base had no snapshot on the branch, silently bypassing RowDelta
+SERIALIZABLE validation. Walk the branch head's ancestry instead and
+treat truncation as ErrCommitDiverged.
+
+Fixes #977
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",f6cd9c411f7ad92372c24d0eea49dfb66a29a7f6,979,false,,4,144,15,table,35,9,44,base; fix; important area: table; has PR number; LanceDB similarity 0.31,"API, Core: Add overwrite-aware table registration",- fix(table): treat empty-base conflict context as fully concurrent (#979) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,d9714931dc2aef95049c6244bbc37ba979ac773c,d971493,Tanmay Rauth,t_rauth@apple.com,2026-04-30T10:49:42-07:00,GitHub,noreply@github.com,2026-04-30T13:49:42-04:00,fix(table): use Abort() on error path to prevent panic in stream() (#962),"When stream() exits on an error path after opening a file writer but
+before writing any rows, Close() tries to finalize the Parquet footer
+which panics in the Arrow library. Add Abort() to FileWriter that closes
+only the file handle without finalizing, and use it in the deferred
+cleanup. Also remove dead default branch in closeAndWait().
+
+Fixes #961",f925806aa7ba290f2536ad776c5e9d9a936639fc,962,false,,4,81,11,table,35,9,44,base; fix; important area: table; has PR number; LanceDB similarity 0.31,Core: Add properties to InMemoryFileIO,- fix(table): use Abort() on error path to prevent panic in stream() (#962) (Thanks Tanmay Rauth!)
+apache/iceberg-go,2b104941c92d13adf23c5772bcd159218145a60d,2b10494,David D Zhao,143900483+happydave1@users.noreply.github.com,2026-05-04T02:41:09-04:00,GitHub,noreply@github.com,2026-05-04T08:41:09+02:00,fix(rest): making non 200 rest errors more informative (#972),"fixes #971
+
+---------
+
+Signed-off-by: happydave1 <dzhao2004@gmail.com>",f026751eee9710275b6e25590a3388d1e816fcc4,972,false,,2,93,4,catalog,35,6,41,base; fix; important area: rest; has PR number; LanceDB similarity 0.21,Core: Implement register view for REST catalog,- fix(rest): making non 200 rest errors more informative (#972) (Thanks David D Zhao!)
+apache/iceberg-go,40b81252526c658740541d87f78531c7a9f8c70b,40b8125,Tanmay Rauth,t_rauth@apple.com,2026-05-12T13:38:39-07:00,GitHub,noreply@github.com,2026-05-12T22:38:39+02:00,feat(table): port remaining v3 metadata-upgrade validation rules (#1070),"Add missing validation rules to SetFormatVersion that mirror Java's
+TableMetadata upgrade checks:
+
+- Initialize lastSequenceNumber to 0 when upgrading from v1 to v2+
+- Initialize nextRowID to 0 when upgrading to v3
+- Assign UUID if not already set when upgrading to v2+
+- Validate lastColumnId is not less than the highest field ID in schemas
+
+Validation runs before state mutation to prevent leaving the builder in
+a half-upgraded state on failure.
+
+Closes #1013",261edba7b4afe680473995cb6db12e85a69048c7,1070,false,,2,187,0,table,32,3,35,base; important area: table; strategic: v3; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Core: Add partition to TrackedFile,- feat(table): port remaining v3 metadata-upgrade validation rules (#1070) (Thanks Tanmay Rauth!)
+apache/iceberg-go,f5d4ca38fb9e35012352da21174e912194a6ddd5,f5d4ca3,David D Zhao,143900483+happydave1@users.noreply.github.com,2026-04-30T16:12:13-04:00,GitHub,noreply@github.com,2026-04-30T22:12:13+02:00,feat(io): Better error message for unregistered IO scheme (#960),"fixes #959
+
+---------
+
+Signed-off-by: happydave1 <dzhao2004@gmail.com>",ae110072a3a079e908f63f0659f0cb5584940a35,960,false,,1,19,0,io,27,6,33,base; important area: io; has PR number; LanceDB similarity 0.21,Control merge schema evolution via table property in Spark 4.1,- feat(io): Better error message for unregistered IO scheme (#960) (Thanks David D Zhao!)
+apache/iceberg-go,6c6baf67ccd965e1001b6ac0f14c7b1845fe5d32,6c6baf6,Alessandro Nori,alessandro.nori@datadoghq.com,2026-05-06T17:51:41+02:00,GitHub,noreply@github.com,2026-05-06T11:51:41-04:00,fix(ci): correct labeler action version tag (#1026),"## Summary
+
+The hash `634933edcd8ababfe52f92936142cc22ac488b1b` resolves to tag
+`v6.0.1`, but the version comment said `# v6`. This caused zizmor's
+`ref-version-mismatch` audit to fail in CI.
+
+Updates the comment to match the actual tag the hash points to.",158255c00913a0adea8f7c30fabfb0b76141b02b,1026,false,,1,1,1,.github,20,9,29,base; fix; has PR number; LanceDB similarity 0.29,AWS: Merge catalog properties with properties prefixed with client.credentials-provider. <Thomas Powell>,- fix(ci): correct labeler action version tag (#1026) (Thanks Alessandro Nori!)
+apache/iceberg-go,89f36c164c3e1cd65c7b3857b16464d779b0d522,89f36c1,Ankit Sharma,67190631+Hashcode-Ankit@users.noreply.github.com,2026-05-10T23:15:03+05:30,GitHub,noreply@github.com,2026-05-10T19:45:03+02:00,feat: added override of http client as well as readme on utils.WithAw… (#981),"This pr intends to solve issue:
+(https://github.com/apache/iceberg-go/issues/958)
+
+-> overriding of the HTTP client when no configuration is provided
+-> as well as adding a comment on the glue NewCatalog function",775d8aa56e5f509ecd6a0be148787ec6230139bc,981,false,,2,26,0,catalog; io,25,3,28,base; strategic: catalog; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Spark 3.4 | 3.5: Enable remote scan planning <Prashant Singh>,- feat: added override of http client as well as readme on utils.WithAw… (#981) (Thanks Ankit Sharma!)
+apache/iceberg-go,ac1ead73460291da098f06af1279d43a2ed4c7e5,ac1ead7,Tanmay Rauth,t_rauth@apple.com,2026-05-06T09:11:37-07:00,GitHub,noreply@github.com,2026-05-06T18:11:37+02:00,feat(schema): reject complex type defaults #1011  (#1017),"Validates that initial-default / write-default on struct, list, and map
+fields match the expected JSON shape (object for struct/map, array for
+list). Walks the full schema tree including nested fields within
+list/map elements. Mirrors the existing unknownTypeValidator pattern.
+
+
+Closes #1011",b3b16429bc09817f22fc8bbd9f2461c98e9fec28,1017,false,,2,265,0,table,16,7,23,base; medium churn; has PR number; LanceDB similarity 0.23,"API, Core, Orc: Implement project() for partition statistics scan API",- feat(schema): reject complex type defaults #1011  (#1017) (Thanks Tanmay Rauth!)
+apache/iceberg-go,1f000b3883b4018e1fcc856c3a6895e857d6450f,1f000b3,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-05-06T15:34:35-04:00,GitHub,noreply@github.com,2026-05-06T15:34:35-04:00,CI: Use specific patch versions in workflow action comments (#1032),"Similar to https://github.com/apache/iceberg/pull/16229
+
+The workflow files use SHA-pinned actions (immutable), but the
+human-readable comments referenced only major versions (e.g., `# v6`, `#
+v5`).
+**When maintainers move these mutable tags to a new commit, zizmor fails
+in CI because the SHA no longer matches the stated tag.**",b4ca5150b6b43c60f35566ee4cc2677354c7b583,1032,false,,3,3,3,.github,12,7,19,base; has PR number; LanceDB similarity 0.23,https://github.com/apache/iceberg/milestone/59,- CI: Use specific patch versions in workflow action comments (#1032) (Thanks Kevin Liu!)
+apache/iceberg-go,eecb4d28411d96d2a8ca03f595fac7451ed04e8b,eecb4d2,TT,70463940+Herrtian@users.noreply.github.com,2026-05-07T19:17:44+02:00,GitHub,noreply@github.com,2026-05-07T13:17:44-04:00,feat(arrow): map unknown type to null (#1035),"Closes #1003.
+
+Maps Iceberg unknown fields to plain Arrow null fields, and maps Arrow
+null fields back to Iceberg unknown.
+
+Checked with `go test ./table -run TestArrow`.",5675b8cfeed542802ca6142ab36fec2abba0603c,1035,false,,2,4,3,table,12,4,16,base; has PR number; LanceDB similarity 0.13,Core: Add properties to InMemoryFileIO,- feat(arrow): map unknown type to null (#1035) (Thanks TT!)
+apache/iceberg-go,af2ddd4adf060124c88e6e2314e441fe3dcaf92f,af2ddd4,Ben Bellick,36523439+benbellick@users.noreply.github.com,2026-04-29T15:00:22-05:00,GitHub,noreply@github.com,2026-04-29T16:00:22-04:00,build(deps): bump arrow-go to v18.6.0 and substrait-go to v8.1.0 (#949),"This PR bumps arrow-go from v18.5.2 to v18.6.0, which includes a bump of
+substrait-go from v7.6.0 to v8.1.0.
+
+The arrow bump shifts parquet output size, so a few golden file-size
+assertions in `table/table_test.go` were updated to match.",b2446c45d7d003efd13c5417c89eb060223af48c,949,false,,6,53,69,go.mod; go.sum; table,-39,3,-36,base; medium file count; multi-area change; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.32; capped LanceDB boost for routine/low-signal commit,Core: Add properties to InMemoryFileIO,- build(deps): bump arrow-go to v18.6.0 and substrait-go to v8.1.0 (#949) (Thanks Ben Bellick!)
+apache/iceberg-go,d64fd545fadbbd535f7681789e1ee74d1d4de443,d64fd54,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-12T14:41:24-07:00,GitHub,noreply@github.com,2026-05-12T14:41:24-07:00,build(deps): bump github.com/apache/thrift from 0.22.0 to 0.23.0 (#1036),"Bumps [github.com/apache/thrift](https://github.com/apache/thrift) from
+0.22.0 to 0.23.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/apache/thrift/releases"">github.com/apache/thrift's
+releases</a>.</em></p>
+<blockquote>
+<h2>Version 0.23.0</h2>
+<p>Please head over to the official release download source:
+<a
+href=""http://thrift.apache.org/download"">http://thrift.apache.org/download</a></p>
+<p>The assets listed below are added by Github based on the release tag
+and they will therefore not match the checkums published on the Thrift
+project website.</p>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/apache/thrift/blob/master/CHANGES.md"">github.com/apache/thrift's
+changelog</a>.</em></p>
+<blockquote>
+<h2>0.23.0</h2>
+<h3>Build Process</h3>
+<ul>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5877"">THRIFT-5877</a>
+- Add cpp cross tests</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5866"">THRIFT-5866</a>
+- Dockerfile to support Ubuntu 24.04 LTS (Noble Numbat)</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5909"">THRIFT-5909</a>
+- add Ruby in GitHub workflow</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5649"">THRIFT-5649</a>
+- add go in GitHub workflow / action</li>
+</ul>
+<h3>C glib</h3>
+<ul>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5931"">THRIFT-5931</a>
+- thrift_ssl_socket_get_ssl_error() can underflow its remaining-buffer
+counter and write past the stack buffer</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5871"">THRIFT-5871</a>
+- Improve MAX_MESSAGE_SIZE check and friends</li>
+</ul>
+<h3>C++</h3>
+<ul>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5911"">THRIFT-5911</a>
+- Inconsistent UUID compilation for aliased types</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5912"">THRIFT-5912</a>
+- Assertion failed: <code>delta &gt; 0</code>, file
+ThreadManagerTests.h, line 162</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5880"">THRIFT-5880</a>
+- C++ TSocket on an IPv6-only system fails if you use a hostname of
+127.0.0.1</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-3268"">THRIFT-3268</a>
+- warning: token pasting of ',' and <code>__VA_ARGS__</code> is a GNU
+extension</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5887"">THRIFT-5887</a>
+- build/cmake/ should be prepended (not appended) to
+CMAKE_MODULE_PATH</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5878"">THRIFT-5878</a>
+- Add UUID support for THeaderProtocol and TProtocolTap</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5898"">THRIFT-5898</a>
+- Unable to build Thrift as a shared library on Windows</li>
+</ul>
+<h3>Contributed</h3>
+<ul>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5920"">THRIFT-5920</a>
+- Remove threadsafe warnings in thrift-maven-plugin</li>
+</ul>
+<h3>Delphi</h3>
+<ul>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5939"">THRIFT-5939</a>
+- Replace GUID generation with stable UUID algorithm</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5876"">THRIFT-5876</a>
+- Add Delphi WinHTTP client TLS1.3 support</li>
+</ul>
+<h3>Go</h3>
+<ul>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5896"">THRIFT-5896</a>
+- Race condition in TServerSocket.Addr() method</li>
+</ul>
+<h3>Java</h3>
+<ul>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5925"">THRIFT-5925</a>
+- UUID implementation in JAVA is not according to the Thrift
+Specification</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5869"">THRIFT-5869</a>
+- Close the transport after TServerEventHandler deleteContext</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5863"">THRIFT-5863</a>
+- Make TServerTransport able to customize the max message size</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5774"">THRIFT-5774</a>
+- Add remote client's IP address to ServerContext in
+TServerEventHandler</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-4280"">THRIFT-4280</a>
+- Add async nonblocking ssl support in java client</li>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5879"">THRIFT-5879</a>
+- java and kotlin cross tests fail in the GitHub action</li>
+</ul>
+<h3>netstd</h3>
+<ul>
+<li><a
+href=""https://issues.apache.org/jira/browse/THRIFT-5902"">THRIFT-5902</a>
+- Add net10 support</li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/apache/thrift/commit/e4b684f5ff4f9c3a42cd7ec0a667c3d9bd7f6ac1""><code>e4b684f</code></a>
+Updated CHANGES.md</li>
+<li><a
+href=""https://github.com/apache/thrift/commit/c4cbe43fd12ab5d043af5dd08d1f59e2ba07b2e4""><code>c4cbe43</code></a>
+Address vulnerabilities in Rack</li>
+<li><a
+href=""https://github.com/apache/thrift/commit/68ac8e935ef440c3e22d0e1a30e7211b9bf1d441""><code>68ac8e9</code></a>
+Enable TLS hostname verification in TNonblockingSSLSocket</li>
+<li><a
+href=""https://github.com/apache/thrift/commit/5e4f01d737e4d3845d07dde6da43981feee0cb9a""><code>5e4f01d</code></a>
+Harden Node.js WebSocket server handling</li>
+<li><a
+href=""https://github.com/apache/thrift/commit/e242889231df48f8791372598052862c28f5be83""><code>e242889</code></a>
+Add input validation to Swift protocol layer</li>
+<li><a
+href=""https://github.com/apache/thrift/commit/4af8c7c8768cb687b182c1839a39d4beb4f35a5d""><code>4af8c7c</code></a>
+Add recursion depth limit to Node.js protocol skip()</li>
+<li><a
+href=""https://github.com/apache/thrift/commit/a30c552bd0808b7e19f35ad30212ba7a9aee8c66""><code>a30c552</code></a>
+Enable TLS hostname verification in TSSLTransportFactory</li>
+<li><a
+href=""https://github.com/apache/thrift/commit/0f8ec9c1014ed21acc324aaa421017fb164e9608""><code>0f8ec9c</code></a>
+Fix parent class resolution in c_glib generated dispatch_call</li>
+<li><a
+href=""https://github.com/apache/thrift/commit/276ec883910cd936b4f9413bf607c808a7423185""><code>276ec88</code></a>
+THRIFT-5929: Fix build failure on PHP 8.5 due to removed
+zend_exception_get_d...</li>
+<li><a
+href=""https://github.com/apache/thrift/commit/17f2c13ec2b27503dd0de2720401b96787632364""><code>17f2c13</code></a>
+Added missing 0.23.0 JIRA tickets to CHANGES.md</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/apache/thrift/compare/v0.22.0...v0.23.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",4950803db409505bf310fd144d78f22c5b716057,1036,false,dependabot[bot],2,3,1,go.mod; go.sum,-65,3,-62,base; multi-area change; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,"Core, Hive: Detect if a view already exists when registering a table",- build(deps): bump github.com/apache/thrift from 0.22.0 to 0.23.0 (#1036) (Thanks dependabot[bot]!)
+apache/iceberg-go,712b264ca241c223950cfe7dfe37fbc4aaaf761d,712b264,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-12T09:19:59-07:00,GitHub,noreply@github.com,2026-05-12T09:19:59-07:00,build(deps): bump github.com/in-toto/in-toto-golang from 0.10.0 to 0.11.0 (#1042),"Bumps
+[github.com/in-toto/in-toto-golang](https://github.com/in-toto/in-toto-golang)
+from 0.10.0 to 0.11.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/in-toto/in-toto-golang/releases"">github.com/in-toto/in-toto-golang's
+releases</a>.</em></p>
+<blockquote>
+<h2>v0.11.0</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>chore(deps): bump the all group with 2 updates by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a>[bot]
+in <a
+href=""https://redirect.github.com/in-toto/in-toto-golang/pull/453"">in-toto/in-toto-golang#453</a></li>
+<li>chore(deps): bump the all group across 1 directory with 2 updates by
+<a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a>[bot]
+in <a
+href=""https://redirect.github.com/in-toto/in-toto-golang/pull/452"">in-toto/in-toto-golang#452</a></li>
+<li>chore(deps): bump google.golang.org/grpc from 1.79.1 to 1.79.3 by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a>[bot]
+in <a
+href=""https://redirect.github.com/in-toto/in-toto-golang/pull/457"">in-toto/in-toto-golang#457</a></li>
+<li>chore(deps): bump github.com/go-jose/go-jose/v4 from 4.1.3 to 4.1.4
+by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a>[bot]
+in <a
+href=""https://redirect.github.com/in-toto/in-toto-golang/pull/459"">in-toto/in-toto-golang#459</a></li>
+<li>match: Replace ^ with ! for negation in character classes by <a
+href=""https://github.com/adityasaky""><code>@​adityasaky</code></a> in <a
+href=""https://redirect.github.com/in-toto/in-toto-golang/pull/462"">in-toto/in-toto-golang#462</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/in-toto/in-toto-golang/compare/v0.10.0...v0.11.0"">https://github.com/in-toto/in-toto-golang/compare/v0.10.0...v0.11.0</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/in-toto/in-toto-golang/commit/36d782ffb2ca3adbffcdce1fd971c23319dd4469""><code>36d782f</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/in-toto/in-toto-golang/issues/462"">#462</a>
+from in-toto/fix-negation-character</li>
+<li><a
+href=""https://github.com/in-toto/in-toto-golang/commit/4a09e3bbc44bc687577b6532e57e8a4abfa5ddf4""><code>4a09e3b</code></a>
+match: Replace ^ with ! for negation in character classes</li>
+<li><a
+href=""https://github.com/in-toto/in-toto-golang/commit/c3302e8bc36e46119f7ae17c07eb879ff3507caa""><code>c3302e8</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/in-toto/in-toto-golang/issues/459"">#459</a>
+from in-toto/dependabot/go_modules/github.com/go-jose...</li>
+<li><a
+href=""https://github.com/in-toto/in-toto-golang/commit/016e87efbb55c6dd8772ce227002eeb1b6e3f593""><code>016e87e</code></a>
+chore(deps): bump github.com/go-jose/go-jose/v4 from 4.1.3 to 4.1.4</li>
+<li><a
+href=""https://github.com/in-toto/in-toto-golang/commit/5b9df76e685eaa0a950ea9ba3f4a5561e87e13ad""><code>5b9df76</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/in-toto/in-toto-golang/issues/457"">#457</a>
+from in-toto/dependabot/go_modules/google.golang.org/...</li>
+<li><a
+href=""https://github.com/in-toto/in-toto-golang/commit/595b3fe0a13f481eb0ef898ccaff5e345e492a2f""><code>595b3fe</code></a>
+chore(deps): bump google.golang.org/grpc from 1.79.1 to 1.79.3</li>
+<li><a
+href=""https://github.com/in-toto/in-toto-golang/commit/e396d248c9cf19f9e144f4e90c476af88742bf35""><code>e396d24</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/in-toto/in-toto-golang/issues/452"">#452</a>
+from in-toto/dependabot/github_actions/all-502588e1ca</li>
+<li><a
+href=""https://github.com/in-toto/in-toto-golang/commit/142b779059713332fe5c7856e98f1c564c6d6a09""><code>142b779</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/in-toto/in-toto-golang/issues/453"">#453</a>
+from in-toto/dependabot/go_modules/all-d8ef5820aa</li>
+<li><a
+href=""https://github.com/in-toto/in-toto-golang/commit/f741bcc43330554606b813fa0f8fe0c284fcdaea""><code>f741bcc</code></a>
+chore(deps): bump the all group with 2 updates</li>
+<li><a
+href=""https://github.com/in-toto/in-toto-golang/commit/c374dc9808137651fe8754eed363ec816cd59d2a""><code>c374dc9</code></a>
+chore(deps): bump the all group across 1 directory with 2 updates</li>
+<li>See full diff in <a
+href=""https://github.com/in-toto/in-toto-golang/compare/v0.10.0...v0.11.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=github.com/in-toto/in-toto-golang&package-manager=go_modules&previous-version=0.10.0&new-version=0.11.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+You can disable automated security fix PRs for this repo from the
+[Security Alerts
+page](https://github.com/apache/iceberg-go/network/alerts).
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a0919f1105115164606e00d0896aa4e5dfd292fb,1042,false,dependabot[bot],2,3,3,go.mod; go.sum,-65,3,-62,base; multi-area change; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,Flink: Fix equalityFieldColumns always null in IcebergSink <GuoYu>,- build(deps): bump github.com/in-toto/in-toto-golang from 0.10.0 to 0.11.0 (#1042) (Thanks dependabot[bot]!)
+apache/iceberg-go,a0919f1105115164606e00d0896aa4e5dfd292fb,a0919f1,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-12T09:19:21-07:00,GitHub,noreply@github.com,2026-05-12T09:19:21-07:00,build(deps): bump the gomod_updates group across 1 directory with 10 updates (#1047),"Bumps the gomod_updates group with 8 updates in the / directory:
+
+| Package | From | To |
+| --- | --- | --- |
+|
+[github.com/RoaringBitmap/roaring/v2](https://github.com/RoaringBitmap/roaring)
+| `2.16.0` | `2.18.0` |
+| [github.com/aws/aws-sdk-go-v2](https://github.com/aws/aws-sdk-go-v2) |
+`1.41.6` | `1.41.7` |
+|
+[github.com/aws/aws-sdk-go-v2/config](https://github.com/aws/aws-sdk-go-v2)
+| `1.32.16` | `1.32.17` |
+|
+[github.com/aws/aws-sdk-go-v2/service/glue](https://github.com/aws/aws-sdk-go-v2)
+| `1.139.3` | `1.140.1` |
+|
+[github.com/aws/aws-sdk-go-v2/service/s3](https://github.com/aws/aws-sdk-go-v2)
+| `1.99.1` | `1.100.1` |
+| [github.com/klauspost/compress](https://github.com/klauspost/compress)
+| `1.18.5` | `1.18.6` |
+| [github.com/twmb/avro](https://github.com/twmb/avro) | `1.7.0` |
+`1.7.2` |
+|
+[google.golang.org/api](https://github.com/googleapis/google-api-go-client)
+| `0.276.0` | `0.277.0` |
+
+
+Updates `github.com/RoaringBitmap/roaring/v2` from 2.16.0 to 2.18.0
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/RoaringBitmap/roaring/releases"">github.com/RoaringBitmap/roaring/v2's
+releases</a>.</em></p>
+<blockquote>
+<h2>Version 2.18.0</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>fix: Ranges() infinite loop on bitmap containers by <a
+href=""https://github.com/ValentaTomas""><code>@​ValentaTomas</code></a>
+in <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/pull/524"">RoaringBitmap/roaring#524</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/RoaringBitmap/roaring/compare/v2.17.0...v2.18.0"">https://github.com/RoaringBitmap/roaring/compare/v2.17.0...v2.18.0</a></p>
+<h2>Version 2.17.0</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Add Ranges iterator by <a
+href=""https://github.com/ValentaTomas""><code>@​ValentaTomas</code></a>
+in <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/pull/522"">RoaringBitmap/roaring#522</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/RoaringBitmap/roaring/compare/v2.16.2...v2.17.0"">https://github.com/RoaringBitmap/roaring/compare/v2.16.2...v2.17.0</a></p>
+<h2>Version 2.16.2</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Fix flaky TestRangeBig by <a
+href=""https://github.com/ValentaTomas""><code>@​ValentaTomas</code></a>
+in <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/pull/523"">RoaringBitmap/roaring#523</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/RoaringBitmap/roaring/compare/v2.16.1...v2.16.2"">https://github.com/RoaringBitmap/roaring/compare/v2.16.1...v2.16.2</a></p>
+<h2>Version 2.16.1</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>fix: CardinalityInRange off-by-one for gaps between runs within a
+container by <a
+href=""https://github.com/ValentaTomas""><code>@​ValentaTomas</code></a>
+in <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/pull/521"">RoaringBitmap/roaring#521</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a
+href=""https://github.com/ValentaTomas""><code>@​ValentaTomas</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/pull/521"">RoaringBitmap/roaring#521</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/RoaringBitmap/roaring/compare/v2.16.0...v2.16.1"">https://github.com/RoaringBitmap/roaring/compare/v2.16.0...v2.16.1</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/6d3d113bca4606cb11e7458914c2bb595e5ac0e9""><code>6d3d113</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/issues/524"">#524</a>
+from e2b-dev/efficient-range-iteration</li>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/60ea6a74480294e5ec9e5b727b26090bcbc9ae2c""><code>60ea6a7</code></a>
+fix: Ranges() infinite loop on bitmap containers and hs|offset
+overflow</li>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/6d1c0c87f75c1afb10abfdad24ee0e2d7ec43098""><code>6d1c0c8</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/issues/522"">#522</a>
+from e2b-dev/efficient-range-iteration</li>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/286ea05c357ecfa6482e2b19afe3d82a14cc5922""><code>286ea05</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/issues/523"">#523</a>
+from e2b-dev/fix-flaky-test-range-big</li>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/0a441f7c417c6bc04daff4b4e37a4fdf66a59371""><code>0a441f7</code></a>
+Retrigger CI</li>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/f389ce7dbcfd9a0792fa0e9e29ec28be8ab43d63""><code>f389ce7</code></a>
+Fix flaky TestRangeBig</li>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/4184f91e2faef0fe6e35968538a677c6ceb75130""><code>4184f91</code></a>
+Add Ranges iterator</li>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/23df12f1d941d1bdec02ba1e5679baf2974fe8b2""><code>23df12f</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/issues/521"">#521</a>
+from e2b-dev/fix-cardinality-in-range-gap</li>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/00ee8aef09f9c799e2eff16c5f053a8c6bcd2234""><code>00ee8ae</code></a>
+fix: off-by-one in runContainer16.getCardinalityInRange for
+intra-container gaps</li>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/fcd24ee64651636f6f0304bd875c38410830d3b7""><code>fcd24ee</code></a>
+test: add failing test for CardinalityInRange gap within run
+container</li>
+<li>See full diff in <a
+href=""https://github.com/RoaringBitmap/roaring/compare/v2.16.0...v2.18.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2` from 1.41.6 to 1.41.7
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2223642aeafb3b46ae924667ee47d31a1cf5a9d5""><code>2223642</code></a>
+Release 2026-04-29</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/04c7e460121eafa42577be08289bd0da0de091b2""><code>04c7e46</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/5f5692571a7afce76e1573da3fbf2180a2c297cc""><code>5f56925</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/aac6d2b8fefd47203d3b4bd5f229ca275272ec62""><code>aac6d2b</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/bdaead7d2074e479fc56da77491fe65737413664""><code>bdaead7</code></a>
+upgrade to smithy-go v1.25.1 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3399"">#3399</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/008e12cf64f41c37faeb705f6ce4b77471756f9f""><code>008e12c</code></a>
+Release 2026-04-27</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/ef109d91f0b772aaebc472633edf13ec0fd907ce""><code>ef109d9</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/6411e6379e509956413b866481ee2362a7cdfc68""><code>6411e63</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/e5bf970956db306bf7b5b1bdd8ca71e8cca766b5""><code>e5bf970</code></a>
+Release 2026-04-24</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/bdbb88c9400c80ed2487f7b498a54c6206b5c62a""><code>bdbb88c</code></a>
+Regenerated Clients</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/v1.41.6...v1.41.7"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/config` from 1.32.16 to 1.32.17
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2223642aeafb3b46ae924667ee47d31a1cf5a9d5""><code>2223642</code></a>
+Release 2026-04-29</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/04c7e460121eafa42577be08289bd0da0de091b2""><code>04c7e46</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/5f5692571a7afce76e1573da3fbf2180a2c297cc""><code>5f56925</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/aac6d2b8fefd47203d3b4bd5f229ca275272ec62""><code>aac6d2b</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/bdaead7d2074e479fc56da77491fe65737413664""><code>bdaead7</code></a>
+upgrade to smithy-go v1.25.1 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3399"">#3399</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/008e12cf64f41c37faeb705f6ce4b77471756f9f""><code>008e12c</code></a>
+Release 2026-04-27</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/ef109d91f0b772aaebc472633edf13ec0fd907ce""><code>ef109d9</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/6411e6379e509956413b866481ee2362a7cdfc68""><code>6411e63</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/e5bf970956db306bf7b5b1bdd8ca71e8cca766b5""><code>e5bf970</code></a>
+Release 2026-04-24</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/bdbb88c9400c80ed2487f7b498a54c6206b5c62a""><code>bdbb88c</code></a>
+Regenerated Clients</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/config/v1.32.16...config/v1.32.17"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/credentials` from 1.19.15 to
+1.19.16
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2223642aeafb3b46ae924667ee47d31a1cf5a9d5""><code>2223642</code></a>
+Release 2026-04-29</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/04c7e460121eafa42577be08289bd0da0de091b2""><code>04c7e46</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/5f5692571a7afce76e1573da3fbf2180a2c297cc""><code>5f56925</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/aac6d2b8fefd47203d3b4bd5f229ca275272ec62""><code>aac6d2b</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/bdaead7d2074e479fc56da77491fe65737413664""><code>bdaead7</code></a>
+upgrade to smithy-go v1.25.1 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3399"">#3399</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/008e12cf64f41c37faeb705f6ce4b77471756f9f""><code>008e12c</code></a>
+Release 2026-04-27</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/ef109d91f0b772aaebc472633edf13ec0fd907ce""><code>ef109d9</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/6411e6379e509956413b866481ee2362a7cdfc68""><code>6411e63</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/e5bf970956db306bf7b5b1bdd8ca71e8cca766b5""><code>e5bf970</code></a>
+Release 2026-04-24</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/bdbb88c9400c80ed2487f7b498a54c6206b5c62a""><code>bdbb88c</code></a>
+Regenerated Clients</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/credentials/v1.19.15...credentials/v1.19.16"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/service/glue` from 1.139.3 to
+1.140.1
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/0d643a8f0a8ad09075f41a60acba6a208cb36c58""><code>0d643a8</code></a>
+Release 2023-12-07</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/e38b534ccea2707475381f985bc9236970bab554""><code>e38b534</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/f394daf705a925e626f6a5c52aa433ff5504c7f1""><code>f394daf</code></a>
+Update SDK's smithy-go dependency to v1.19.0</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/4fb654cee93178383ad85934adc3e16cb906baf7""><code>4fb654c</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/8594ca09ef8095c3287128f364527b1fea3bc49c""><code>8594ca0</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/e33a34c60f1001aa0a85cb9eb682d1b3153bed43""><code>e33a34c</code></a>
+fix codegen ci (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/2418"">#2418</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/57a201c7bb214737f78cf871fbeafaa929bf1d8d""><code>57a201c</code></a>
+regenerate partitions (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/2415"">#2415</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/be06f0299409272364d03e76196939db023ef807""><code>be06f02</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/2344"">#2344</a>
+from aws/feat-request-compression-2</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/70bf4107034085068fb6847667657fbb78367be4""><code>70bf410</code></a>
+Change config loading logic</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/8c02c46d4857cbf2c1eb607484e3b94458fe50eb""><code>8c02c46</code></a>
+Release 2023-12-06</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/service/glue/v1.139.3...service/ec2/v1.140.1"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/service/s3` from 1.99.1 to 1.100.1
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2223642aeafb3b46ae924667ee47d31a1cf5a9d5""><code>2223642</code></a>
+Release 2026-04-29</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/04c7e460121eafa42577be08289bd0da0de091b2""><code>04c7e46</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/5f5692571a7afce76e1573da3fbf2180a2c297cc""><code>5f56925</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/aac6d2b8fefd47203d3b4bd5f229ca275272ec62""><code>aac6d2b</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/bdaead7d2074e479fc56da77491fe65737413664""><code>bdaead7</code></a>
+upgrade to smithy-go v1.25.1 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3399"">#3399</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/008e12cf64f41c37faeb705f6ce4b77471756f9f""><code>008e12c</code></a>
+Release 2026-04-27</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/ef109d91f0b772aaebc472633edf13ec0fd907ce""><code>ef109d9</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/6411e6379e509956413b866481ee2362a7cdfc68""><code>6411e63</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/e5bf970956db306bf7b5b1bdd8ca71e8cca766b5""><code>e5bf970</code></a>
+Release 2026-04-24</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/bdbb88c9400c80ed2487f7b498a54c6206b5c62a""><code>bdbb88c</code></a>
+Regenerated Clients</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/service/s3/v1.99.1...service/s3/v1.100.1"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/smithy-go` from 1.25.0 to 1.25.1
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/aws/smithy-go/blob/main/CHANGELOG.md"">github.com/aws/smithy-go's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Release (2026-04-23)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.25.1
+<ul>
+<li><strong>Bug Fix</strong>: Fixed a memory leak in the LRU cache
+implementation used by some AWS services.</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-04-15)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.25.0
+<ul>
+<li><strong>Feature</strong>: Add support for endpointBdd trait</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-04-02)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.24.3
+<ul>
+<li><strong>Bug Fix</strong>: Add additional sigv4 configuration.</li>
+</ul>
+</li>
+<li><code>github.com/aws/smithy-go/aws-http-auth</code>: <a
+href=""https://github.com/aws/smithy-go/blob/main/aws-http-auth/CHANGELOG.md#v113-2026-04-02"">v1.1.3</a>
+<ul>
+<li><strong>Bug Fix</strong>: Add additional sigv4 configuration.</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-02-27)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Bump minimum go version to
+1.24.</li>
+</ul>
+<h1>Release (2026-02-20)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.24.1
+<ul>
+<li><strong>Feature</strong>: Add new middleware functions to get event
+stream output from middleware</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2025-12-01)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.24.0</li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/e094f45e716e33a1b950cf8bbe804790bf87f965""><code>e094f45</code></a>
+Release 2026-04-23</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/214d45be3be5188c4d2fd9cf744c21f8b3dfbabc""><code>214d45b</code></a>
+changelog</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/3477da0b4dbf31de58ac375fe5abe5d268280824""><code>3477da0</code></a>
+fix lrucache memory leak on existing item put (<a
+href=""https://redirect.github.com/aws/smithy-go/issues/652"">#652</a>)</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/0d0b4d00f2430e62a790203b89fd76dceb4ae213""><code>0d0b4d0</code></a>
+Bump Smithy version to 1.69.0 (<a
+href=""https://redirect.github.com/aws/smithy-go/issues/650"">#650</a>)</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/be5e5ef0d73560eac9d71df7995b0eaffb9a8d71""><code>be5e5ef</code></a>
+check <a href=""https://github.com/enum""><code>@​enum</code></a> on
+strings for cbor (<a
+href=""https://redirect.github.com/aws/smithy-go/issues/649"">#649</a>)</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/5beb80e9da6bcad40dc304f062c27d8269abd67d""><code>5beb80e</code></a>
+Ensure javadoc uses utf-8 (<a
+href=""https://redirect.github.com/aws/smithy-go/issues/648"">#648</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/aws/smithy-go/compare/v1.25.0...v1.25.1"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/klauspost/compress` from 1.18.5 to 1.18.6
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/klauspost/compress/releases"">github.com/klauspost/compress's
+releases</a>.</em></p>
+<blockquote>
+<h2>v1.18.6</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>s2: Fix amd64 stack frame corruption by <a
+href=""https://github.com/klauspost""><code>@​klauspost</code></a> in <a
+href=""https://redirect.github.com/klauspost/compress/pull/1145"">klauspost/compress#1145</a></li>
+<li>gzhttp: Canonicalize ETag header by <a
+href=""https://github.com/justinmayhew""><code>@​justinmayhew</code></a>
+in <a
+href=""https://redirect.github.com/klauspost/compress/pull/1139"">klauspost/compress#1139</a></li>
+<li>perf: pool hash tables in Go encode paths to reduce allocations by
+<a href=""https://github.com/huynhanx03""><code>@​huynhanx03</code></a> in
+<a
+href=""https://redirect.github.com/klauspost/compress/pull/1143"">klauspost/compress#1143</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a
+href=""https://github.com/justinmayhew""><code>@​justinmayhew</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/klauspost/compress/pull/1139"">klauspost/compress#1139</a></li>
+<li><a
+href=""https://github.com/huynhanx03""><code>@​huynhanx03</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/klauspost/compress/pull/1143"">klauspost/compress#1143</a></li>
+<li><a href=""https://github.com/thaJeztah""><code>@​thaJeztah</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/klauspost/compress/pull/1144"">klauspost/compress#1144</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/klauspost/compress/compare/v1.18.5...v1.18.6"">https://github.com/klauspost/compress/compare/v1.18.5...v1.18.6</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/klauspost/compress/commit/ac2f5e87a3089bd58c974ca53cef71c7aa8bf877""><code>ac2f5e8</code></a>
+docs: use unix line-endings for markdown files (<a
+href=""https://redirect.github.com/klauspost/compress/issues/1144"">#1144</a>)</li>
+<li><a
+href=""https://github.com/klauspost/compress/commit/620d7b5cfbf89fbfdf69884f8a561a2981c25b11""><code>620d7b5</code></a>
+s2: Fix amd64 stack frame corruption (<a
+href=""https://redirect.github.com/klauspost/compress/issues/1145"">#1145</a>)</li>
+<li><a
+href=""https://github.com/klauspost/compress/commit/1b63f2fece784da6334068c671e3f94366bf9d68""><code>1b63f2f</code></a>
+build(deps): bump the github-actions group with 2 updates (<a
+href=""https://redirect.github.com/klauspost/compress/issues/1141"">#1141</a>)</li>
+<li><a
+href=""https://github.com/klauspost/compress/commit/3d86b893733380c370eba876f5beaaf63aeeea94""><code>3d86b89</code></a>
+s2: pool hash tables in Go encode paths to reduce allocations (<a
+href=""https://redirect.github.com/klauspost/compress/issues/1143"">#1143</a>)</li>
+<li><a
+href=""https://github.com/klauspost/compress/commit/15967def6890f5494829394274686436976c4936""><code>15967de</code></a>
+gzhttp: Canonicalize ETag header (<a
+href=""https://redirect.github.com/klauspost/compress/issues/1139"">#1139</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/klauspost/compress/compare/v1.18.5...v1.18.6"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/twmb/avro` from 1.7.0 to 1.7.2
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/twmb/avro/commit/be720b177cb00e0348d813d5e9a83975d2637cc1""><code>be720b1</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/twmb/avro/issues/37"">#37</a> from
+twmb/fix-nil-interface-fast-paths</li>
+<li><a
+href=""https://github.com/twmb/avro/commit/fd58334b1d9ea2cc774c999e3dd0f26f8e7dad05""><code>fd58334</code></a>
+review: tighten setIface to reject non-interface v</li>
+<li><a
+href=""https://github.com/twmb/avro/commit/774f7d55c71b81897ffee2c933ef4c6159de1fce""><code>774f7d5</code></a>
+review: round of fixes (scanner-advance comment, UUID split,
+errIndirectDeep ...</li>
+<li><a
+href=""https://github.com/twmb/avro/commit/5441c1307455158f284de77d0578b3a54483a877""><code>5441c13</code></a>
+review: propagate errTooDeep through JSON union trial loops</li>
+<li><a
+href=""https://github.com/twmb/avro/commit/d03c6e3e0e36641be6189b4bbcdc3964377366e0""><code>d03c6e3</code></a>
+review: fail-fast assignability check in decodeRecordAny</li>
+<li><a
+href=""https://github.com/twmb/avro/commit/fd6d01820ecea0ad368f8f00c58e41f120c06dc5""><code>fd6d018</code></a>
+review: pin stale-key semantics of map reuse in *any decode</li>
+<li><a
+href=""https://github.com/twmb/avro/commit/4cc4943c7d6ffdbc62ad133efd43056783c3262b""><code>4cc4943</code></a>
+review feedback: clarify TaggedUnions doc, drop errIndirectDeep, harden
+concu...</li>
+<li><a
+href=""https://github.com/twmb/avro/commit/8f118bf35261d93a245306fee803df23f7d79b23""><code>8f118bf</code></a>
+test: fuzz pathologically deep + cyclic inputs</li>
+<li><a
+href=""https://github.com/twmb/avro/commit/21006cab1991f088c4c5400a8d9d961e163a59ed""><code>21006ca</code></a>
+all: cap remaining pointer/interface unwrap loops at
+maxIndirectDepth</li>
+<li><a
+href=""https://github.com/twmb/avro/commit/a302d51da177ada2487a5143781612788b4ac47e""><code>a302d51</code></a>
+all: comprehensive recursion depth audit, decoder + bypass paths</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/twmb/avro/compare/v1.7.0...v1.7.2"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `google.golang.org/api` from 0.276.0 to 0.277.0
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/googleapis/google-api-go-client/releases"">google.golang.org/api's
+releases</a>.</em></p>
+<blockquote>
+<h2>v0.277.0</h2>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.276.0...v0.277.0"">0.277.0</a>
+(2026-04-29)</h2>
+<h3>Features</h3>
+<ul>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3567"">#3567</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/39582952e4eac1b744499f8a8063a4a5f1ce7d6b"">3958295</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3571"">#3571</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/ca9851efc573231ca1ed9c6fea4bc77d6052d0bb"">ca9851e</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3574"">#3574</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/8efb1afa0e5d9cc454f721124bba3881f3935e3c"">8efb1af</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3575"">#3575</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/de49bb519cab881f74e5b9ba11e263a2b9a4ad2e"">de49bb5</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3577"">#3577</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/ce68c87d9dc6c144b6df578df725470b30cf83d6"">ce68c87</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3578"">#3578</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/8be033e24e0c6ddb08a3df72c0a8997d21623a22"">8be033e</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3579"">#3579</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/bc6990e20803f2ff2fd1b77995f6e9180ab2302b"">bc6990e</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3580"">#3580</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/2de1a5aff3f3b6e53dff00da297c5d249ac8d791"">2de1a5a</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3581"">#3581</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/0c219d90e90899c93215558f3ea309c9732bf7ea"">0c219d9</a>)</li>
+</ul>
+<h3>Bug Fixes</h3>
+<ul>
+<li><strong>idtoken:</strong> Avoid double impersonation in
+tokenSourceFromBytes (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3576"">#3576</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/75172cf5cb7bfc260c22e481323355306f684a09"">75172cf</a>),
+refs <a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/2301"">#2301</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/googleapis/google-api-go-client/blob/main/CHANGES.md"">google.golang.org/api's
+changelog</a>.</em></p>
+<blockquote>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.276.0...v0.277.0"">0.277.0</a>
+(2026-04-29)</h2>
+<h3>Features</h3>
+<ul>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3567"">#3567</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/39582952e4eac1b744499f8a8063a4a5f1ce7d6b"">3958295</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3571"">#3571</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/ca9851efc573231ca1ed9c6fea4bc77d6052d0bb"">ca9851e</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3574"">#3574</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/8efb1afa0e5d9cc454f721124bba3881f3935e3c"">8efb1af</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3575"">#3575</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/de49bb519cab881f74e5b9ba11e263a2b9a4ad2e"">de49bb5</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3577"">#3577</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/ce68c87d9dc6c144b6df578df725470b30cf83d6"">ce68c87</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3578"">#3578</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/8be033e24e0c6ddb08a3df72c0a8997d21623a22"">8be033e</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3579"">#3579</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/bc6990e20803f2ff2fd1b77995f6e9180ab2302b"">bc6990e</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3580"">#3580</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/2de1a5aff3f3b6e53dff00da297c5d249ac8d791"">2de1a5a</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3581"">#3581</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/0c219d90e90899c93215558f3ea309c9732bf7ea"">0c219d9</a>)</li>
+</ul>
+<h3>Bug Fixes</h3>
+<ul>
+<li><strong>idtoken:</strong> Avoid double impersonation in
+tokenSourceFromBytes (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3576"">#3576</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/75172cf5cb7bfc260c22e481323355306f684a09"">75172cf</a>),
+refs <a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/2301"">#2301</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/dd598a60e19f836bb7ad709311b21d303bbab6c8""><code>dd598a6</code></a>
+chore(main): release 0.277.0 (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3568"">#3568</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/b208a86db380e5e517451daa4e5f63fae1f723be""><code>b208a86</code></a>
+chore(all): update all (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3573"">#3573</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/0c219d90e90899c93215558f3ea309c9732bf7ea""><code>0c219d9</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3581"">#3581</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/75172cf5cb7bfc260c22e481323355306f684a09""><code>75172cf</code></a>
+fix(idtoken): avoid double impersonation in tokenSourceFromBytes (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3576"">#3576</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/2de1a5aff3f3b6e53dff00da297c5d249ac8d791""><code>2de1a5a</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3580"">#3580</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/60b078419409e11bc414c7ccbaf4d32ddfe2a5b0""><code>60b0784</code></a>
+chore(deps): bump github.com/go-git/go-git/v5 from 5.17.1 to 5.18.0 in
+/inter...</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/bc6990e20803f2ff2fd1b77995f6e9180ab2302b""><code>bc6990e</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3579"">#3579</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/8be033e24e0c6ddb08a3df72c0a8997d21623a22""><code>8be033e</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3578"">#3578</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/ce68c87d9dc6c144b6df578df725470b30cf83d6""><code>ce68c87</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3577"">#3577</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/de49bb519cab881f74e5b9ba11e263a2b9a4ad2e""><code>de49bb5</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3575"">#3575</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.276.0...v0.277.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore <dependency name> major version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's major version (unless you unignore this specific
+dependency's major version or upgrade to it yourself)
+- `@dependabot ignore <dependency name> minor version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's minor version (unless you unignore this specific
+dependency's minor version or upgrade to it yourself)
+- `@dependabot ignore <dependency name>` will close this group update PR
+and stop Dependabot creating any more for the specific dependency
+(unless you unignore this specific dependency or upgrade to it yourself)
+- `@dependabot unignore <dependency name>` will remove all of the ignore
+conditions of the specified dependency
+- `@dependabot unignore <dependency name> <ignore condition>` will
+remove the ignore condition of the specified dependency and ignore
+conditions
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",be4cf4cfed619e4940829935b305977210b58b12,1047,false,dependabot[bot],2,90,90,go.mod; go.sum,-65,3,-62,base; multi-area change; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,Flink: Add the possibility to use Coordinator Lock when using Flink SQL,- build(deps): bump the gomod_updates group across 1 directory with 10 updates (#1047) (Thanks dependabot[bot]!)
+apache/iceberg-go,a95d093f0e4e2d41e3bfbdd454ff3bef829af845,a95d093,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-27T12:01:00-04:00,GitHub,noreply@github.com,2026-04-27T12:01:00-04:00,build(deps): bump the gomod_updates group with 7 updates (#939),"Bumps the gomod_updates group with 7 updates:
+
+| Package | From | To |
+| --- | --- | --- |
+| [github.com/aws/aws-sdk-go-v2](https://github.com/aws/aws-sdk-go-v2) |
+`1.41.5` | `1.41.6` |
+|
+[github.com/aws/aws-sdk-go-v2/config](https://github.com/aws/aws-sdk-go-v2)
+| `1.32.14` | `1.32.16` |
+|
+[github.com/aws/aws-sdk-go-v2/credentials](https://github.com/aws/aws-sdk-go-v2)
+| `1.19.14` | `1.19.15` |
+|
+[github.com/aws/aws-sdk-go-v2/service/glue](https://github.com/aws/aws-sdk-go-v2)
+| `1.139.1` | `1.139.3` |
+|
+[github.com/aws/aws-sdk-go-v2/service/s3](https://github.com/aws/aws-sdk-go-v2)
+| `1.99.0` | `1.99.1` |
+| [github.com/aws/smithy-go](https://github.com/aws/smithy-go) |
+`1.24.3` | `1.25.0` |
+|
+[google.golang.org/api](https://github.com/googleapis/google-api-go-client)
+| `0.275.0` | `0.276.0` |
+
+Updates `github.com/aws/aws-sdk-go-v2` from 1.41.5 to 1.41.6
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/9bc9c51d733fd437a60a8710531477ca0347dcc4""><code>9bc9c51</code></a>
+Release 2026-04-17</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2b41455a8d88032b9b76b0bafbe23de0a61a6f29""><code>2b41455</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2327a1b15b5f16414e715325bc9579082fde0767""><code>2327a1b</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/9225797aa8ce8661d61f4628973aface4e01c922""><code>9225797</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7b6f675adb365c7b069aaf2a8e81c4b8f8a5d08e""><code>7b6f675</code></a>
+Bump smithy-go to 1.25 (again) (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3390"">#3390</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/c8b6a97220901cccfd8a06f6f25aef65a967384c""><code>c8b6a97</code></a>
+Release 2026-04-16</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/4a05c2ba948715d305aff4519154abe2c4799246""><code>4a05c2b</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/6cd4cc9201382be2638c8b4951b5d92de73c1161""><code>6cd4cc9</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/3153bed494fb9e426640b30c7b91be0510b20362""><code>3153bed</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/fe3cef6cc115a2915f5410c739dc73d51553d709""><code>fe3cef6</code></a>
+Make AccountIDEndpointRouting aware of bdd endpoints (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3387"">#3387</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/v1.41.5...v1.41.6"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/config` from 1.32.14 to 1.32.16
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/9bc9c51d733fd437a60a8710531477ca0347dcc4""><code>9bc9c51</code></a>
+Release 2026-04-17</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2b41455a8d88032b9b76b0bafbe23de0a61a6f29""><code>2b41455</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2327a1b15b5f16414e715325bc9579082fde0767""><code>2327a1b</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/9225797aa8ce8661d61f4628973aface4e01c922""><code>9225797</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7b6f675adb365c7b069aaf2a8e81c4b8f8a5d08e""><code>7b6f675</code></a>
+Bump smithy-go to 1.25 (again) (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3390"">#3390</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/c8b6a97220901cccfd8a06f6f25aef65a967384c""><code>c8b6a97</code></a>
+Release 2026-04-16</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/4a05c2ba948715d305aff4519154abe2c4799246""><code>4a05c2b</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/6cd4cc9201382be2638c8b4951b5d92de73c1161""><code>6cd4cc9</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/3153bed494fb9e426640b30c7b91be0510b20362""><code>3153bed</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/fe3cef6cc115a2915f5410c739dc73d51553d709""><code>fe3cef6</code></a>
+Make AccountIDEndpointRouting aware of bdd endpoints (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3387"">#3387</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/config/v1.32.14...config/v1.32.16"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/credentials` from 1.19.14 to
+1.19.15
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/9bc9c51d733fd437a60a8710531477ca0347dcc4""><code>9bc9c51</code></a>
+Release 2026-04-17</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2b41455a8d88032b9b76b0bafbe23de0a61a6f29""><code>2b41455</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2327a1b15b5f16414e715325bc9579082fde0767""><code>2327a1b</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/9225797aa8ce8661d61f4628973aface4e01c922""><code>9225797</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7b6f675adb365c7b069aaf2a8e81c4b8f8a5d08e""><code>7b6f675</code></a>
+Bump smithy-go to 1.25 (again) (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3390"">#3390</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/c8b6a97220901cccfd8a06f6f25aef65a967384c""><code>c8b6a97</code></a>
+Release 2026-04-16</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/4a05c2ba948715d305aff4519154abe2c4799246""><code>4a05c2b</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/6cd4cc9201382be2638c8b4951b5d92de73c1161""><code>6cd4cc9</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/3153bed494fb9e426640b30c7b91be0510b20362""><code>3153bed</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/fe3cef6cc115a2915f5410c739dc73d51553d709""><code>fe3cef6</code></a>
+Make AccountIDEndpointRouting aware of bdd endpoints (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3387"">#3387</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/credentials/v1.19.14...credentials/v1.19.15"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/service/glue` from 1.139.1 to
+1.139.3
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/9bc9c51d733fd437a60a8710531477ca0347dcc4""><code>9bc9c51</code></a>
+Release 2026-04-17</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2b41455a8d88032b9b76b0bafbe23de0a61a6f29""><code>2b41455</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2327a1b15b5f16414e715325bc9579082fde0767""><code>2327a1b</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/9225797aa8ce8661d61f4628973aface4e01c922""><code>9225797</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7b6f675adb365c7b069aaf2a8e81c4b8f8a5d08e""><code>7b6f675</code></a>
+Bump smithy-go to 1.25 (again) (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3390"">#3390</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/c8b6a97220901cccfd8a06f6f25aef65a967384c""><code>c8b6a97</code></a>
+Release 2026-04-16</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/4a05c2ba948715d305aff4519154abe2c4799246""><code>4a05c2b</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/6cd4cc9201382be2638c8b4951b5d92de73c1161""><code>6cd4cc9</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/3153bed494fb9e426640b30c7b91be0510b20362""><code>3153bed</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/fe3cef6cc115a2915f5410c739dc73d51553d709""><code>fe3cef6</code></a>
+Make AccountIDEndpointRouting aware of bdd endpoints (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3387"">#3387</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/service/glue/v1.139.1...service/glue/v1.139.3"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/service/s3` from 1.99.0 to 1.99.1
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/9bc9c51d733fd437a60a8710531477ca0347dcc4""><code>9bc9c51</code></a>
+Release 2026-04-17</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2b41455a8d88032b9b76b0bafbe23de0a61a6f29""><code>2b41455</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2327a1b15b5f16414e715325bc9579082fde0767""><code>2327a1b</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/9225797aa8ce8661d61f4628973aface4e01c922""><code>9225797</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7b6f675adb365c7b069aaf2a8e81c4b8f8a5d08e""><code>7b6f675</code></a>
+Bump smithy-go to 1.25 (again) (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3390"">#3390</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/c8b6a97220901cccfd8a06f6f25aef65a967384c""><code>c8b6a97</code></a>
+Release 2026-04-16</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/4a05c2ba948715d305aff4519154abe2c4799246""><code>4a05c2b</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/6cd4cc9201382be2638c8b4951b5d92de73c1161""><code>6cd4cc9</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/3153bed494fb9e426640b30c7b91be0510b20362""><code>3153bed</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/fe3cef6cc115a2915f5410c739dc73d51553d709""><code>fe3cef6</code></a>
+Make AccountIDEndpointRouting aware of bdd endpoints (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3387"">#3387</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/service/s3/v1.99.0...service/s3/v1.99.1"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/smithy-go` from 1.24.3 to 1.25.0
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/aws/smithy-go/releases"">github.com/aws/smithy-go's
+releases</a>.</em></p>
+<blockquote>
+<h2>v1.25.0</h2>
+<h1>Release (2026-04-15)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.25.0
+<ul>
+<li><strong>Feature</strong>: Add support for endpointBdd trait</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/aws/smithy-go/blob/main/CHANGELOG.md"">github.com/aws/smithy-go's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Release (2026-04-23)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.25.1
+<ul>
+<li><strong>Bug Fix</strong>: Fixed a memory leak in the LRU cache
+implementation used by some AWS services.</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-04-15)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.25.0
+<ul>
+<li><strong>Feature</strong>: Add support for endpointBdd trait</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-04-02)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.24.3
+<ul>
+<li><strong>Bug Fix</strong>: Add additional sigv4 configuration.</li>
+</ul>
+</li>
+<li><code>github.com/aws/smithy-go/aws-http-auth</code>: <a
+href=""https://github.com/aws/smithy-go/blob/main/aws-http-auth/CHANGELOG.md#v113-2026-04-02"">v1.1.3</a>
+<ul>
+<li><strong>Bug Fix</strong>: Add additional sigv4 configuration.</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-02-27)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Bump minimum go version to
+1.24.</li>
+</ul>
+<h1>Release (2026-02-20)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.24.1
+<ul>
+<li><strong>Feature</strong>: Add new middleware functions to get event
+stream output from middleware</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2025-12-01)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.24.0</li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/73bb8a7d6e222332d46eec7209ba3cd0ba520239""><code>73bb8a7</code></a>
+Release 2026-04-15</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/f056c6fb0b43ba9bfeca6c29c8c1e1046437e45e""><code>f056c6f</code></a>
+Changelog</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/ee36afc3d70050ba990c8de8d65043ac11d1f9f4""><code>ee36afc</code></a>
+Implement BDD generator for <a
+href=""https://github.com/endpointBdd""><code>@​endpointBdd</code></a>
+Smithy trait (<a
+href=""https://redirect.github.com/aws/smithy-go/issues/647"">#647</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/aws/smithy-go/compare/v1.24.3...v1.25.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `google.golang.org/api` from 0.275.0 to 0.276.0
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/googleapis/google-api-go-client/releases"">google.golang.org/api's
+releases</a>.</em></p>
+<blockquote>
+<h2>v0.276.0</h2>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.275.0...v0.276.0"">0.276.0</a>
+(2026-04-14)</h2>
+<h3>Features</h3>
+<ul>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3561"">#3561</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/dd3f1bb7976124341e045b9f519d059a3f636ea1"">dd3f1bb</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3565"">#3565</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/7c11b5a39bde8b58642e8e95f067cf6b1592d46c"">7c11b5a</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3566"">#3566</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/54188cf11d69c99be6b485eb6b92898c233422bd"">54188cf</a>)</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/googleapis/google-api-go-client/blob/main/CHANGES.md"">google.golang.org/api's
+changelog</a>.</em></p>
+<blockquote>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.275.0...v0.276.0"">0.276.0</a>
+(2026-04-14)</h2>
+<h3>Features</h3>
+<ul>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3561"">#3561</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/dd3f1bb7976124341e045b9f519d059a3f636ea1"">dd3f1bb</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3565"">#3565</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/7c11b5a39bde8b58642e8e95f067cf6b1592d46c"">7c11b5a</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3566"">#3566</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/54188cf11d69c99be6b485eb6b92898c233422bd"">54188cf</a>)</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/006c411fe2e60e3d756f9f3c844942d06b3a8489""><code>006c411</code></a>
+chore(main): release 0.276.0 (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3562"">#3562</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/54188cf11d69c99be6b485eb6b92898c233422bd""><code>54188cf</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3566"">#3566</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/7c11b5a39bde8b58642e8e95f067cf6b1592d46c""><code>7c11b5a</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3565"">#3565</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/245032203a6ea0cd32115da349b7c0fe254d2e04""><code>2450322</code></a>
+chore: embargo discoveryengine:v1 from generation (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3564"">#3564</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/0c9c60fb07ea9f814d866b675350777012fb56ba""><code>0c9c60f</code></a>
+chore: embargo discoveryengine:v1alpha from generation (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3563"">#3563</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/dd3f1bb7976124341e045b9f519d059a3f636ea1""><code>dd3f1bb</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3561"">#3561</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.275.0...v0.276.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore <dependency name> major version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's major version (unless you unignore this specific
+dependency's major version or upgrade to it yourself)
+- `@dependabot ignore <dependency name> minor version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's minor version (unless you unignore this specific
+dependency's minor version or upgrade to it yourself)
+- `@dependabot ignore <dependency name>` will close this group update PR
+and stop Dependabot creating any more for the specific dependency
+(unless you unignore this specific dependency or upgrade to it yourself)
+- `@dependabot unignore <dependency name>` will remove all of the ignore
+conditions of the specified dependency
+- `@dependabot unignore <dependency name> <ignore condition>` will
+remove the ignore condition of the specified dependency and ignore
+conditions
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7179c11d1cb324b04fce2edcd0b00800e64fd670,939,false,dependabot[bot],2,61,64,go.mod; go.sum,-65,3,-62,base; multi-area change; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,Flink: Backport Add the possibility to use Coordinator Lock when using Flink SQL to 2.0 and 1.20,- build(deps): bump the gomod_updates group with 7 updates (#939) (Thanks dependabot[bot]!)
+apache/iceberg-go,4ac44083c2cbb05aa2780b0df1ac86738a7f30ac,4ac4408,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-12T09:24:20-07:00,GitHub,noreply@github.com,2026-05-12T09:24:20-07:00,build(deps): bump github/codeql-action from 4.35.2 to 4.35.3 (#1046),"Bumps [github/codeql-action](https://github.com/github/codeql-action)
+from 4.35.2 to 4.35.3.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.35.3</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.19.3 and earlier. These versions of
+CodeQL were discontinued on 9 April 2026 alongside GitHub Enterprise
+Server 3.15, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3837"">#3837</a></li>
+<li>Configurations for private registries that use Cloudsmith or GCP
+OIDC are now accepted. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3850"">#3850</a></li>
+<li>Best-effort connection tests for private registries now use
+<code>GET</code> requests instead of <code>HEAD</code> for better
+compatibility with various registry implementations. For NuGet feeds,
+the test is now always performed against the service index. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3853"">#3853</a></li>
+<li>Fixed a bug where two diagnostics produced within the same
+millisecond could overwrite each other on disk, causing one of them to
+be lost. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3852"">#3852</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.3"">2.25.3</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3865"">#3865</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<p>No user facing changes.</p>
+<h2>4.35.4 - 07 May 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.4"">2.25.4</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3881"">#3881</a></li>
+</ul>
+<h2>4.35.3 - 01 May 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.19.3 and earlier. These versions of
+CodeQL were discontinued on 9 April 2026 alongside GitHub Enterprise
+Server 3.15, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3837"">#3837</a></li>
+<li>Configurations for private registries that use Cloudsmith or GCP
+OIDC are now accepted. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3850"">#3850</a></li>
+<li>Best-effort connection tests for private registries now use
+<code>GET</code> requests instead of <code>HEAD</code> for better
+compatibility with various registry implementations. For NuGet feeds,
+the test is now always performed against the service index. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3853"">#3853</a></li>
+<li>Fixed a bug where two diagnostics produced within the same
+millisecond could overwrite each other on disk, causing one of them to
+be lost. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3852"">#3852</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.3"">2.25.3</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3865"">#3865</a></li>
+</ul>
+<h2>4.35.2 - 15 Apr 2026</h2>
+<ul>
+<li>The undocumented TRAP cache cleanup feature that could be enabled
+using the <code>CODEQL_ACTION_CLEANUP_TRAP_CACHES</code> environment
+variable is deprecated and will be removed in May 2026. If you are
+affected by this, we recommend disabling TRAP caching by passing the
+<code>trap-caching: false</code> input to the <code>init</code> Action.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3795"">#3795</a></li>
+<li>The Git version 2.36.0 requirement for improved incremental analysis
+now only applies to repositories that contain submodules. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3789"">#3789</a></li>
+<li>Python analysis on GHES no longer extracts the standard library,
+relying instead on models of the standard library. This should result in
+significantly faster extraction and analysis times, while the effect on
+alerts should be minimal. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3794"">#3794</a></li>
+<li>Fixed a bug in the validation of OIDC configurations for private
+registries that was added in CodeQL Action 4.33.0 / 3.33.0. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3807"">#3807</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.2"">2.25.2</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3823"">#3823</a></li>
+</ul>
+<h2>4.35.1 - 27 Mar 2026</h2>
+<ul>
+<li>Fix incorrect minimum required Git version for <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a>: it should have been 2.36.0, not 2.11.0. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3781"">#3781</a></li>
+</ul>
+<h2>4.35.0 - 27 Mar 2026</h2>
+<ul>
+<li>Reduced the minimum Git version required for <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> from 2.38.0 to 2.11.0. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3767"">#3767</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.1"">2.25.1</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3773"">#3773</a></li>
+</ul>
+<h2>4.34.1 - 20 Mar 2026</h2>
+<ul>
+<li>Downgrade default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.24.3"">2.24.3</a>
+due to issues with a small percentage of Actions and JavaScript
+analyses. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3762"">#3762</a></li>
+</ul>
+<h2>4.34.0 - 20 Mar 2026</h2>
+<ul>
+<li>Added an experimental change which disables TRAP caching when <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> is enabled, since improved incremental analysis
+supersedes TRAP caching. This will improve performance and reduce
+Actions cache usage. We expect to roll this change out to everyone in
+March. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3569"">#3569</a></li>
+<li>We are rolling out improved incremental analysis to C/C++ analyses
+that use build mode <code>none</code>. We expect this rollout to be
+complete by the end of April 2026. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3584"">#3584</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.0"">2.25.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3585"">#3585</a></li>
+</ul>
+<h2>4.33.0 - 16 Mar 2026</h2>
+<ul>
+<li>Upcoming change: Starting April 2026, the CodeQL Action will skip
+collecting file coverage information on pull requests to improve
+analysis performance. File coverage information will still be computed
+on non-PR analyses. Pull request analyses will log a warning about this
+upcoming change. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3562"">#3562</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/e46ed2cbd01164d986452f91f178727624ae40d7""><code>e46ed2c</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3867"">#3867</a>
+from github/update-v4.35.3-8c6e48dbe</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/b73d1d163446ca5e62b96698027210ab41df6a4a""><code>b73d1d1</code></a>
+Add changelog entry for <a
+href=""https://redirect.github.com/github/codeql-action/issues/3853"">#3853</a></li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/24e0bb00a931e2a5edb703ce3b22a70f3a3e800b""><code>24e0bb0</code></a>
+Reorder changelog entries</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/ec298daba71cf7592feacbd1c0887cddc0659f62""><code>ec298da</code></a>
+Update changelog for v4.35.3</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/8c6e48dbe051ceb3015c19554831af1b43275f46""><code>8c6e48d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3865"">#3865</a>
+from github/update-bundle/codeql-bundle-v2.25.3</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/719098349ea5beae8aa364bf9b71ff1c8d937df2""><code>7190983</code></a>
+Add changelog note</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/2bb209555a024d051f6271c8a846b402497f9445""><code>2bb2095</code></a>
+Update default bundle to codeql-bundle-v2.25.3</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/7851e55dc3be31ec4bcc3ef98453de2cb306e698""><code>7851e55</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3850"">#3850</a>
+from github/mbg/private-registry/cloudsmith-gcp</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/262a15f6cf4c7a43d6a38ad76392e5e2d4977751""><code>262a15f</code></a>
+Add generic non-printable chars test for OIDC configs</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/a6109b1c07173a53ece3d179a925ff9644d1fabd""><code>a6109b1</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3853"">#3853</a>
+from github/mbg/start-proxy/improved-checks</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/95e58e9a2cdfd71adc6e0353d5c52f41a045d225...e46ed2cbd01164d986452f91f178727624ae40d7"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=github/codeql-action&package-manager=github_actions&previous-version=4.35.2&new-version=4.35.3)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a38f57ff5171ff10ebc354992d8d49c253893ccf,1046,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,"Core, Hive: Detect if a view already exists when registering a table",- build(deps): bump github/codeql-action from 4.35.2 to 4.35.3 (#1046) (Thanks dependabot[bot]!)
+apache/iceberg-go,0e7b58671fff7980f24ec1963cb60d53ba624a0c,0e7b586,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-27T12:01:50-04:00,GitHub,noreply@github.com,2026-04-27T12:01:50-04:00,build(deps): bump github/codeql-action from 4.35.1 to 4.35.2 (#938),"Bumps [github/codeql-action](https://github.com/github/codeql-action)
+from 4.35.1 to 4.35.2.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.35.2</h2>
+<ul>
+<li>The undocumented TRAP cache cleanup feature that could be enabled
+using the <code>CODEQL_ACTION_CLEANUP_TRAP_CACHES</code> environment
+variable is deprecated and will be removed in May 2026. If you are
+affected by this, we recommend disabling TRAP caching by passing the
+<code>trap-caching: false</code> input to the <code>init</code> Action.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3795"">#3795</a></li>
+<li>The Git version 2.36.0 requirement for improved incremental analysis
+now only applies to repositories that contain submodules. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3789"">#3789</a></li>
+<li>Python analysis on GHES no longer extracts the standard library,
+relying instead on models of the standard library. This should result in
+significantly faster extraction and analysis times, while the effect on
+alerts should be minimal. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3794"">#3794</a></li>
+<li>Fixed a bug in the validation of OIDC configurations for private
+registries that was added in CodeQL Action 4.33.0 / 3.33.0. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3807"">#3807</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.2"">2.25.2</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3823"">#3823</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<p>No user facing changes.</p>
+<h2>4.35.2 - 15 Apr 2026</h2>
+<ul>
+<li>The undocumented TRAP cache cleanup feature that could be enabled
+using the <code>CODEQL_ACTION_CLEANUP_TRAP_CACHES</code> environment
+variable is deprecated and will be removed in May 2026. If you are
+affected by this, we recommend disabling TRAP caching by passing the
+<code>trap-caching: false</code> input to the <code>init</code> Action.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3795"">#3795</a></li>
+<li>The Git version 2.36.0 requirement for improved incremental analysis
+now only applies to repositories that contain submodules. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3789"">#3789</a></li>
+<li>Python analysis on GHES no longer extracts the standard library,
+relying instead on models of the standard library. This should result in
+significantly faster extraction and analysis times, while the effect on
+alerts should be minimal. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3794"">#3794</a></li>
+<li>Fixed a bug in the validation of OIDC configurations for private
+registries that was added in CodeQL Action 4.33.0 / 3.33.0. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3807"">#3807</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.2"">2.25.2</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3823"">#3823</a></li>
+</ul>
+<h2>4.35.1 - 27 Mar 2026</h2>
+<ul>
+<li>Fix incorrect minimum required Git version for <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a>: it should have been 2.36.0, not 2.11.0. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3781"">#3781</a></li>
+</ul>
+<h2>4.35.0 - 27 Mar 2026</h2>
+<ul>
+<li>Reduced the minimum Git version required for <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> from 2.38.0 to 2.11.0. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3767"">#3767</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.1"">2.25.1</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3773"">#3773</a></li>
+</ul>
+<h2>4.34.1 - 20 Mar 2026</h2>
+<ul>
+<li>Downgrade default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.24.3"">2.24.3</a>
+due to issues with a small percentage of Actions and JavaScript
+analyses. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3762"">#3762</a></li>
+</ul>
+<h2>4.34.0 - 20 Mar 2026</h2>
+<ul>
+<li>Added an experimental change which disables TRAP caching when <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> is enabled, since improved incremental analysis
+supersedes TRAP caching. This will improve performance and reduce
+Actions cache usage. We expect to roll this change out to everyone in
+March. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3569"">#3569</a></li>
+<li>We are rolling out improved incremental analysis to C/C++ analyses
+that use build mode <code>none</code>. We expect this rollout to be
+complete by the end of April 2026. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3584"">#3584</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.0"">2.25.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3585"">#3585</a></li>
+</ul>
+<h2>4.33.0 - 16 Mar 2026</h2>
+<ul>
+<li>
+<p>Upcoming change: Starting April 2026, the CodeQL Action will skip
+collecting file coverage information on pull requests to improve
+analysis performance. File coverage information will still be computed
+on non-PR analyses. Pull request analyses will log a warning about this
+upcoming change. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3562"">#3562</a></p>
+<p>To opt out of this change:</p>
+<ul>
+<li><strong>Repositories owned by an organization:</strong> Create a
+custom repository property with the name
+<code>github-codeql-file-coverage-on-prs</code> and the type
+&quot;True/false&quot;, then set this property to <code>true</code> in
+the repository's settings. For more information, see <a
+href=""https://docs.github.com/en/organizations/managing-organization-settings/managing-custom-properties-for-repositories-in-your-organization"">Managing
+custom properties for repositories in your organization</a>.
+Alternatively, if you are using an advanced setup workflow, you can set
+the <code>CODEQL_ACTION_FILE_COVERAGE_ON_PRS</code> environment variable
+to <code>true</code> in your workflow.</li>
+<li><strong>User-owned repositories using default setup:</strong> Switch
+to an advanced setup workflow and set the
+<code>CODEQL_ACTION_FILE_COVERAGE_ON_PRS</code> environment variable to
+<code>true</code> in your workflow.</li>
+<li><strong>User-owned repositories using advanced setup:</strong> Set
+the <code>CODEQL_ACTION_FILE_COVERAGE_ON_PRS</code> environment variable
+to <code>true</code> in your workflow.</li>
+</ul>
+</li>
+<li>
+<p>Fixed <a
+href=""https://redirect.github.com/github/codeql-action/issues/3555"">a
+bug</a> which caused the CodeQL Action to fail loading repository
+properties if a &quot;Multi select&quot; repository property was
+configured for the repository. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3557"">#3557</a></p>
+</li>
+<li>
+<p>The CodeQL Action now loads <a
+href=""https://docs.github.com/en/organizations/managing-organization-settings/managing-custom-properties-for-repositories-in-your-organization"">custom
+repository properties</a> on GitHub Enterprise Server, enabling the
+customization of features such as
+<code>github-codeql-disable-overlay</code> that was previously only
+available on GitHub.com. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3559"">#3559</a></p>
+</li>
+<li>
+<p>Once <a
+href=""https://docs.github.com/en/code-security/how-tos/secure-at-scale/configure-organization-security/manage-usage-and-access/giving-org-access-private-registries"">private
+package registries</a> can be configured with OIDC-based authentication
+for organizations, the CodeQL Action will now be able to accept such
+configurations. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3563"">#3563</a></p>
+</li>
+<li>
+<p>Fixed the retry mechanism for database uploads. Previously this would
+fail with the error &quot;Response body object should not be disturbed
+or locked&quot;. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3564"">#3564</a></p>
+</li>
+<li>
+<p>A warning is now emitted if the CodeQL Action detects a repository
+property whose name suggests that it relates to the CodeQL Action, but
+which is not one of the properties recognised by the current version of
+the CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3570"">#3570</a></p>
+</li>
+</ul>
+<h2>4.32.6 - 05 Mar 2026</h2>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/95e58e9a2cdfd71adc6e0353d5c52f41a045d225""><code>95e58e9</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3824"">#3824</a>
+from github/update-v4.35.2-d2e135a73</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/6f31bfe060e817d81e938dbec767969d20031e25""><code>6f31bfe</code></a>
+Update changelog for v4.35.2</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/d2e135a73a39154e3a231aeb49163c4661c5b8b1""><code>d2e135a</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3823"">#3823</a>
+from github/update-bundle/codeql-bundle-v2.25.2</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/60abb65df09fcf213c398e064c8a80db1f15cdaf""><code>60abb65</code></a>
+Add changelog note</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/5a0a562209255e956ad8aafcee303294e64eefa2""><code>5a0a562</code></a>
+Update default bundle to codeql-bundle-v2.25.2</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/65216971a11ded447a6b76263d5a144519e5eee1""><code>6521697</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3820"">#3820</a>
+from github/dependabot/github_actions/dot-github/wor...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/3c45af2dd258e1623af1898da5c86545b514e028""><code>3c45af2</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3821"">#3821</a>
+from github/dependabot/npm_and_yarn/npm-minor-345b93...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/f1c339364c12f922998186ed897e45e3b4ae8874""><code>f1c3393</code></a>
+Rebuild</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/1024fc496c87e944a93e98d8cf2c09e2c7602a30""><code>1024fc4</code></a>
+Rebuild</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/9dd4cfed96030ccdfe1af4daf7a7964322704fed""><code>9dd4cfe</code></a>
+Bump the npm-minor group across 1 directory with 6 updates</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/c10b8064de6f491fea524254123dbe5e09572f13...95e58e9a2cdfd71adc6e0353d5c52f41a045d225"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=github/codeql-action&package-manager=github_actions&previous-version=4.35.1&new-version=4.35.2)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a95d093f0e4e2d41e3bfbdd454ff3bef829af845,938,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.28; capped LanceDB boost for routine/low-signal commit,"Core, Hive: Detect if a view already exists when registering a table",- build(deps): bump github/codeql-action from 4.35.1 to 4.35.2 (#938) (Thanks dependabot[bot]!)
+apache/iceberg-go,7179c11d1cb324b04fce2edcd0b00800e64fd670,7179c11,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-27T12:00:30-04:00,GitHub,noreply@github.com,2026-04-27T12:00:30-04:00,build(deps): bump zizmorcore/zizmor-action from 0.5.2 to 0.5.3 (#937),"Bumps
+[zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action)
+from 0.5.2 to 0.5.3.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/zizmorcore/zizmor-action/releases"">zizmorcore/zizmor-action's
+releases</a>.</em></p>
+<blockquote>
+<h2>v0.5.3</h2>
+<h2>What's Changed</h2>
+<ul>
+<li><code>1.24.0</code> and <code>1.24.1</code> are now available via
+the action</li>
+<li><code>1.24.1</code> is now the default version of zizmor used by the
+action</li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/zizmorcore/zizmor-action/compare/v0.5.2...v0.5.3"">https://github.com/zizmorcore/zizmor-action/compare/v0.5.2...v0.5.3</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/b1d7e1fb5de872772f31590499237e7cce841e8e""><code>b1d7e1f</code></a>
+Sync zizmor versions (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/102"">#102</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/a195b57475917ddcb70845e5ffe1c3a15dbbdedc""><code>a195b57</code></a>
+Sync zizmor versions (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/100"">#100</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/629d5d01fe5939a6aeae25c1bd1acd2cfa28e9b2""><code>629d5d0</code></a>
+chore(deps): bump github/codeql-action in the github-actions group (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/99"">#99</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/453d591467e8199b1d5c6883b6ec5c22a12aac72""><code>453d591</code></a>
+chore(deps): bump the github-actions group with 2 updates (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/98"">#98</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/ea2c18b942410df0b22bed3b94c361c407518d45""><code>ea2c18b</code></a>
+Bump pins (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/97"">#97</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/zizmorcore/zizmor-action/compare/71321a20a9ded102f6e9ce5718a2fcec2c4f70d8...b1d7e1fb5de872772f31590499237e7cce841e8e"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=zizmorcore/zizmor-action&package-manager=github_actions&previous-version=0.5.2&new-version=0.5.3)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a1d883edd53dabb076ec4cfa44f706f8f204d7b9,937,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,AWS: Add scheduled refresh for the S3FileIO held storage credentials,- build(deps): bump zizmorcore/zizmor-action from 0.5.2 to 0.5.3 (#937) (Thanks dependabot[bot]!)

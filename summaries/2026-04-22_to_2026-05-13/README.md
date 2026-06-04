@@ -1,7 +1,7 @@
 # Iceberg Community Sync Summary
 
 - Period: `2026-04-22` to before `2026-05-13`
-- Review candidates: `219`
+- Review candidates: `284`
 
 ## apache/iceberg
 
@@ -14,21 +14,21 @@ _Top 20 of 131 scored commits._
 - Spark: Backport support writing shredded variant in Iceberg-Spark (#16241) (Thanks pvary!)
 - Core: Add builders for v4 structs (#16092) (Thanks Anoop Johnson and Eduard Tudenhoefner!)
 - Core, Catalogs: Add support for unique table locations via catalog property (#12892) (Thanks Dmitriy Avseitsev!)
+- Spark: Add unknown type support to Spark 3.4 and 3.5 (#16066) (Thanks Kurtis Wright!)
 - Spark: backport PR #15512 to v3.4, v3.5, v4.0 for WAP branch delete fix (#16245) (Thanks Steven Zhen Wu and Claude Opus 4.7 (1M context)!)
 - Spark: Fix LICENSE/NOTICE compliance for all versions of spark-runtime (v3.4, v3.5, v4.0, v4.1) (#16215) (Thanks Kevin Liu!)
+- AWS, GCP: add Kryo round-trip regression test for refreshed storage credentials (#16112) (Thanks Akshay Thorat!)
 - Core: Fix row ID assignment for EXISTING entry during a manifest merge (#16263) (Thanks Amogh Jahagirdar, ChengJi, and Russell Spitzer!)
 - Flink: Add Nanosecond Precision Support for Flink-Iceberg Integration (#15475) (Thanks Talat UYARER!)
 - Core: Add partition to TrackedFile (#16253) (Thanks Eduard Tudenhoefner!)
 - Core: Fix JdbcCatalog & InMemoryCatalog to prevent dropping parent namespaces with children (#16061) (Thanks sagib-sqream!)
 - Flink: Fix JdbcLockFactory to allow ClientPoolImpl connection retry (#16049) (Thanks Anupam Yadav!)
 - Flink: Backport add Nanosecond Precision Support for Flink-Iceberg Integration to Flink 1.20 (#16240) (Thanks pvary!)
-- Spark: Add unknown type support to Spark 3.4 and 3.5 (#16066) (Thanks Kurtis Wright!)
 - Core, AWS: Adapt code to S3 signing endpoint promotion (#15451) (Thanks Alexandre Dutra!)
 - Kafka Connect: Add Trivy CVE scan to CI (#15430) (#15430) (Thanks Robin Moffatt and Claude Opus 4.6!)
 - Flink: Backport add Nanosecond Precision Support for Flink-Iceberg Integration (#16183) (Thanks Talat UYARER!)
 - Spark, Hive: Fix snapshot procedure for tables with Variant columns (#15964) (Thanks Neelesh Salian!)
 - ORC: Add _row_id and _last_updated_sequence_number raeder in Orc to support lineage (#15776) (Thanks GuoYu!)
-- Flink:Backport RewriteDataFile support dynamic filter (#16132) (Thanks GuoYu!)
 
 ## apache/iceberg-python
 
@@ -66,8 +66,8 @@ _Top 20 of 37 scored commits._
 - feat(reader): Add read_with_metrics() for scan I/O metrics (#2349) (Thanks Matt Butrovich, Claude Opus 4.6 (1M context), and blackmwk!)
 - feat(encryption) [3/N] Support encryption: KMS (#2339) (Thanks Xander!)
 - feat(encryption) [4/N] Support encryption: StandardKeyMetadata (#2340) (Thanks Xander and Claude Opus 4.6 (1M context)!)
-- feat(schema): Add `update_schema` action to enable table schema updates (#2120) (Thanks Victor Ghita and Claude Sonnet 4.6!)
 - fix(catalog/memory): relax strict ms inequality in test_update_table (#2395) (Thanks Kurtis Wright!)
+- feat(schema): Add `update_schema` action to enable table schema updates (#2120) (Thanks Victor Ghita and Claude Sonnet 4.6!)
 - fix(sqllogictest): add missing tokio `rt-multi-thread` feature (#2386) (Thanks Charles-Antoine Leger!)
 - fix: allow missing sequence-number in v2 snapshots for v1-upgraded tables (#2127) (Thanks Jem Bishop!)
 - feat(datatypes): add optional and required constructors for MapType (#2405) (Thanks Liang Gong!)
@@ -83,3 +83,30 @@ _Top 20 of 37 scored commits._
 - docs: Correct docs for Int128 and UInt128 being big-endian not little-endian (#2397) (Thanks Xander!)
 - docs(arrow): clarify ScanMetrics::bytes_read includes delete files (#2379) (Thanks Matt Butrovich!)
 - ci(python): verify wheel abi3 compatibility with --no-build (#2388) (Thanks Kevin Liu!)
+
+## apache/iceberg-go
+
+### Go
+
+_Top 20 of 65 scored commits._
+
+- feat(catalog): add version-hint management for Hadoop catalog (Thanks Tanmay Rauth!)
+- feat(io): add BulkRemovableIO interface(#914) (#916) (Thanks Tanmay Rauth!)
+- feat(table): add RewriteFiles snapshot-op builder (#1033) (Thanks Tobias Pütz!)
+- test(table): add v3 OCC row lineage regression tests (#998) (#1043) (Thanks Tanmay Rauth!)
+- test(puffin): golden round-trip a deletion-vector-v1 blob (#1041) (Thanks Andrei Tserakhau!)
+- test(table): add round-trip test for v3 metadata with partition-statistics (#1012) (#1019) (Thanks Tanmay Rauth!)
+- feat(cli): add maintenance command wiring and stubs (#1073) (Thanks Tanmay Rauth!)
+- feat(table): add conflict validation framework (#928) (Thanks Andrei Tserakhau!)
+- feat(table): drop dangling equality deletes during RewriteDataFiles (#947) (Thanks Andrei Tserakhau!)
+- fix(manifest): allow ManifestListWriter to reference lower-version manifests (#1030) (Thanks Ashley Jeffs!)
+- feat(io): add ListableIO interface to replace reflect-based directory walking (#913) (#917) (Thanks Tanmay Rauth!)
+- fix(occ): manifest list rebuild (#982) (Thanks Masa and masa hoashi!)
+- feat(config,cmd/iceberg): support more rest options in config (#933) (Thanks Matt Topol!)
+- feat(cli): add partition-stats command (#1065) (Thanks Tanmay Rauth!)
+- fix(manifest): restore data_file.distinct_counts on v1/v2 Avro schemas (#1044) (Thanks Masa!)
+- feat: Deletion vector reader (#866) (Thanks Shreyas Mishra!)
+- feat(catalog): add hadoop namespace operations (#963) (Thanks Tanmay Rauth!)
+- feat(catalog): add Hadoop catalog scaffold with path helpers (#953) (Thanks Tanmay Rauth!)
+- feat(table): clustered partitioned write path (#948) (Thanks Tobias Pütz!)
+- feat(table): support zstd metadata compression codec (#1020) (Thanks Tanmay Rauth!)

@@ -113,6 +113,66 @@ def test_score_commit_downranks_dependency_bumps_below_rust_summary_signals() ->
     assert storage_score > dependency_score
 
 
+def test_score_commit_boosts_go_summary_signals() -> None:
+    rewrite = commit_row(
+        repository="apache/iceberg-go",
+        subject="feat(table): add RewriteDataFiles for compaction execution (#892)",
+        body="Add Transaction.RewriteDataFiles for table compaction.",
+        top_level_paths="table",
+        pr_number="892",
+    )
+    deletion_vector = commit_row(
+        repository="apache/iceberg-go",
+        subject="feat: Deletion vector reader (#866)",
+        files_changed="16",
+        insertions="944",
+        deletions="4",
+        top_level_paths="go.mod; go.sum; manifest.go; table",
+        pr_number="866",
+    )
+    clustered_write = commit_row(
+        repository="apache/iceberg-go",
+        subject="feat(table): clustered partitioned write path (#948)",
+        top_level_paths="table",
+        insertions="1041",
+        pr_number="948",
+    )
+    maintenance_cli = commit_row(
+        repository="apache/iceberg-go",
+        subject="feat(cli): add maintenance command wiring and stubs (#1073)",
+        top_level_paths="cmd",
+        files_changed="10",
+        pr_number="1073",
+    )
+    golden_test = commit_row(
+        repository="apache/iceberg-go",
+        subject="test(puffin): golden round-trip a deletion-vector-v1 blob (#1041)",
+        top_level_paths="puffin",
+        pr_number="1041",
+    )
+
+    rewrite_score, rewrite_reasons = score_commit(rewrite)
+    deletion_score, deletion_reasons = score_commit(deletion_vector)
+    clustered_score, clustered_reasons = score_commit(clustered_write)
+    cli_score, cli_reasons = score_commit(maintenance_cli)
+    test_score, test_reasons = score_commit(golden_test)
+
+    assert "important area: table" in rewrite_reasons
+    assert "strategic: compaction, rewritedatafiles" in rewrite_reasons
+    assert "strategic: deletion vector" in deletion_reasons
+    assert "deletion vector signal" in deletion_reasons
+    assert "strategic: clustered" in clustered_reasons
+    assert "important area: cli" in cli_reasons
+    assert "strategic: maintenance" in cli_reasons
+    assert "validation/regression test signal" in test_reasons
+    assert "downrank docs/tests/benchmarks" not in test_reasons
+    assert rewrite_score > 60
+    assert deletion_score > 50
+    assert clustered_score > 50
+    assert cli_score > 60
+    assert test_score > 40
+
+
 def test_summary_bullet_formats_thanks() -> None:
     row = commit_row(
         subject="Spark: Add feature (#123)",
@@ -294,6 +354,11 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
         remote_url="https://example.test/iceberg-rust.git",
         summary_heading="Rust",
     )
+    go_repo = RepoConfig(
+        full_name="apache/iceberg-go",
+        remote_url="https://example.test/iceberg-go.git",
+        summary_heading="Go",
+    )
     write_rows(
         input_dir / java_repo.csv_name,
         [
@@ -339,6 +404,21 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
             ),
         ],
     )
+    write_rows(
+        input_dir / go_repo.csv_name,
+        [
+            commit_row(
+                commit_sha="go1",
+                short_sha="go1",
+                subject="Catalog: Add maintenance CLI support (#404)",
+                committer_date="2026-05-23T12:00:00+00:00",
+                repository="apache/iceberg-go",
+                author_name="Go Dev",
+                top_level_paths="cmd; catalog",
+                pr_number="404",
+            ),
+        ],
+    )
 
     result = summarize_period(
         since=date(2026, 5, 13),
@@ -346,15 +426,16 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
         input_dir=input_dir,
         output_dir=output_dir,
         top=20,
-        repositories=(java_repo, python_repo, rust_repo),
+        repositories=(java_repo, python_repo, rust_repo, go_repo),
     )
 
-    assert result.candidate_count == 3
-    assert result.selected_count == 3
+    assert result.candidate_count == 4
+    assert result.selected_count == 4
     assert result.scored_csv_paths == (
         output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_scored.csv",
         output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_python_scored.csv",
         output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_rust_scored.csv",
+        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_go_scored.csv",
     )
     markdown = result.markdown_path.read_text(encoding="utf-8")
     assert "## apache/iceberg\n\n### Java" in markdown
@@ -363,6 +444,8 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
     assert "- Catalog: Add namespace support (#202) (Thanks Python Dev!)" in markdown
     assert "## apache/iceberg-rust\n\n### Rust" in markdown
     assert "- REST: Add catalog auth support (#303) (Thanks Rust Dev!)" in markdown
+    assert "## apache/iceberg-go\n\n### Go" in markdown
+    assert "- Catalog: Add maintenance CLI support (#404) (Thanks Go Dev!)" in markdown
 
 
 def commit_row(**overrides: str) -> dict[str, str]:
