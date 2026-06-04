@@ -82,8 +82,9 @@ GitHub Actions uses two workflows:
 - `collect.yml` runs commit collection daily at `13:17 UTC`, roughly 6am Pacific
   during daylight saving time.
 - `summarize.yml` runs summary generation on a separate three-week Wednesday
-  cadence anchored at 2026-06-24. It checks once per Wednesday at `13:47 UTC`,
-  then skips off-cycle Wednesdays. Manual runs generate a summary for the
+  cadence anchored at 2026-06-24. It checks once per Wednesday at `15:17 UTC`,
+  after daily collection has time to finish, then skips off-cycle Wednesdays.
+  Manual runs generate a summary for the
   supplied `meeting_date` input or today's Pacific date.
 
 Generated commit CSVs are committed under `data/commits/`; generated summary
