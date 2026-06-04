@@ -1,6 +1,6 @@
 # Iceberg Activity Tracker
 
-Collect recent commit activity from Apache Iceberg repositories and write CSV files for monthly community updates.
+Collect recent commit activity from Apache Iceberg repositories and write CSV files for community updates.
 
 The first version tracks only `apache/iceberg`. Additional repositories can be added later in `src/iceberg_activity/config.py`.
 
@@ -32,20 +32,42 @@ make collect OUTPUT_DIR=data/commits CACHE_DIR=.cache/repos
 
 The collector fetches `apache/iceberg` over read-only HTTPS, stores a bare git cache under `.cache/repos/apache_iceberg`, and writes `data/commits/apache_iceberg.csv`.
 
-Generate a monthly Java highlights draft and scored CSV:
+Generate a Java highlights draft and scored CSV for a community sync meeting.
+Meeting summaries default to the 21-day inclusive window ending on the meeting
+date:
 
 ```bash
-make summarize MONTH=2026-06
+make summarize MEETING_DATE=2026-06-03
 ```
 
 If `Iceberg Community Sync Notes.md` exists locally, summarization also builds a
 local LanceDB index from past Java highlight bullets and uses that similarity as
 part of the ranking.
 
-Collect fresh commits and then summarize a month:
+Backfill an explicit meeting window:
 
 ```bash
-make monthly MONTH=2026-06
+make summarize SUMMARY_SINCE=2026-05-14 SUMMARY_UNTIL=2026-06-03
+```
+
+Calendar-month summaries are still available for older backfills:
+
+```bash
+make summarize MONTH=2026-06
+```
+
+Collect fresh commits and then summarize the current 21-day meeting window:
+
+```bash
+make meeting
+```
+
+`make monthly` is kept as an alias for `make meeting`.
+
+Collect fresh commits and summarize a specific meeting:
+
+```bash
+make meeting MEETING_DATE=2026-06-03
 ```
 
 Backtest ranked candidates against Java sections in the community sync notes:
@@ -73,11 +95,19 @@ Each CSV row contains:
 
 ## GitHub Actions
 
-The workflow runs once per day and can also be triggered manually. It uses:
+The workflow runs once per day and can also be triggered manually. Daily runs
+collect commit data. Summary generation runs only on the 21-day Wednesday cadence
+anchored at 2026-06-03, while manual runs generate a summary for the supplied
+`meeting_date` input or today's UTC date.
+
+It uses:
 
 ```yaml
 permissions:
   contents: write
 ```
 
-The generated CSV is committed back to `data/commits/` when it changes and is also uploaded as a workflow artifact. The workflow uses the built-in `GITHUB_TOKEN`; no repository secrets are required for reading the public Apache repository.
+Generated CSV and summary files are committed back to `data/` when they change
+and are also uploaded as workflow artifacts. The workflow uses the built-in
+`GITHUB_TOKEN`; no repository secrets are required for reading the public Apache
+repository.

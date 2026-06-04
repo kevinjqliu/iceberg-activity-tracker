@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import csv
 import re
+from calendar import monthrange
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 from .git_client import CSV_FIELDS
@@ -56,6 +57,8 @@ class SummaryResult:
     markdown_path: Path
     candidate_count: int
     selected_count: int
+    since: date
+    until: date
 
 
 def parse_month(value: str) -> tuple[int, int]:
@@ -72,9 +75,19 @@ def parse_iso_datetime(value: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
-def row_month(row: dict[str, str]) -> tuple[int, int]:
+def row_commit_date(row: dict[str, str]) -> date:
     parsed = parse_iso_datetime(row["committer_date"])
-    return parsed.year, parsed.month
+    return parsed.date()
+
+
+def month_date_range(month: str) -> tuple[date, date]:
+    year, month_number = parse_month(month)
+    last_day = monthrange(year, month_number)[1]
+    return date(year, month_number, 1), date(year, month_number, last_day)
+
+
+def summary_period_label(since: date, until: date) -> str:
+    return f"{since.isoformat()}_to_{until.isoformat()}"
 
 
 def int_field(row: dict[str, str], field: str) -> int:
@@ -230,23 +243,30 @@ def write_markdown(rows: list[dict[str, str]], output_path: Path) -> None:
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def summarize_month(
+def summarize_period(
     *,
-    month: str,
+    since: date,
+    until: date,
     input_path: Path,
     output_dir: Path,
     top: int = 10,
     notes_path: Path | None = None,
     lancedb_dir: Path | None = None,
+    label: str | None = None,
 ) -> SummaryResult:
-    target = parse_month(month)
+    if since > until:
+        raise ValueError("--since must be on or before --until")
     use_lancedb = bool(notes_path and notes_path.exists() and lancedb_dir)
     indexed_examples = 0
     if use_lancedb:
         indexed_examples = build_java_highlight_index(notes_path, lancedb_dir)
         use_lancedb = indexed_examples > 0
 
-    rows = [row for row in read_commit_rows(input_path) if row_month(row) == target]
+    rows = [
+        row
+        for row in read_commit_rows(input_path)
+        if since <= row_commit_date(row) <= until
+    ]
     scored_rows: list[dict[str, str]] = []
     for row in rows:
         row = {field: row.get(field, "") for field in CSV_FIELDS} | row
@@ -277,9 +297,9 @@ def summarize_month(
     scored_rows.sort(key=sort_key, reverse=True)
     selected_rows = scored_rows[:top]
 
-    month_dir = output_dir / month
-    scored_csv_path = month_dir / "apache_iceberg_scored.csv"
-    markdown_path = month_dir / "java_highlights.md"
+    period_dir = output_dir / (label or summary_period_label(since, until))
+    scored_csv_path = period_dir / "apache_iceberg_scored.csv"
+    markdown_path = period_dir / "java_highlights.md"
     write_scored_csv(scored_rows, scored_csv_path)
     write_markdown(selected_rows, markdown_path)
     return SummaryResult(
@@ -287,6 +307,30 @@ def summarize_month(
         markdown_path=markdown_path,
         candidate_count=len(scored_rows),
         selected_count=len(selected_rows),
+        since=since,
+        until=until,
+    )
+
+
+def summarize_month(
+    *,
+    month: str,
+    input_path: Path,
+    output_dir: Path,
+    top: int = 10,
+    notes_path: Path | None = None,
+    lancedb_dir: Path | None = None,
+) -> SummaryResult:
+    since, until = month_date_range(month)
+    return summarize_period(
+        since=since,
+        until=until,
+        input_path=input_path,
+        output_dir=output_dir,
+        top=top,
+        notes_path=notes_path,
+        lancedb_dir=lancedb_dir,
+        label=month,
     )
 
 

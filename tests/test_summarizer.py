@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,7 @@ from iceberg_activity.summarizer import (
     parse_month,
     score_commit,
     summarize_month,
+    summarize_period,
     summary_bullet,
 )
 
@@ -129,6 +131,8 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
 
     assert result.candidate_count == 2
     assert result.selected_count == 1
+    assert result.since == date(2026, 6, 1)
+    assert result.until == date(2026, 6, 30)
     with result.scored_csv_path.open(newline="", encoding="utf-8") as csv_file:
         scored = list(csv.DictReader(csv_file))
     assert len(scored) == 2
@@ -143,6 +147,57 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
         "## Java\n"
         "\n"
         "- Core: Add V4 location relativization utilities (#16174) (Thanks Anoop Johnson!)\n"
+    )
+
+
+def test_summarize_period_uses_meeting_window_output_dir(tmp_path: Path) -> None:
+    input_path = tmp_path / "apache_iceberg.csv"
+    output_dir = tmp_path / "summaries"
+    rows = [
+        commit_row(
+            commit_sha="1",
+            short_sha="1",
+            subject="Spark: Implement row lineage support (#16100)",
+            committer_date="2026-05-14T00:00:00+00:00",
+            author_name="Spark Dev",
+            top_level_paths="spark",
+            pr_number="16100",
+        ),
+        commit_row(
+            commit_sha="2",
+            short_sha="2",
+            subject="Core: Add V4 location relativization utilities (#16174)",
+            committer_date="2026-06-03T23:59:59+00:00",
+            author_name="Anoop Johnson",
+            top_level_paths="core",
+            files_changed="8",
+            insertions="250",
+            pr_number="16174",
+        ),
+        commit_row(
+            commit_sha="3",
+            short_sha="3",
+            subject="Docs: Fix typo (#16000)",
+            committer_date="2026-05-13T23:59:59+00:00",
+            author_name="Doc Writer",
+            top_level_paths="docs",
+            pr_number="16000",
+        ),
+    ]
+    write_rows(input_path, rows)
+
+    result = summarize_period(
+        since=date(2026, 5, 14),
+        until=date(2026, 6, 3),
+        input_path=input_path,
+        output_dir=output_dir,
+        top=10,
+    )
+
+    assert result.candidate_count == 2
+    assert result.selected_count == 2
+    assert result.scored_csv_path == (
+        output_dir / "2026-05-14_to_2026-06-03" / "apache_iceberg_scored.csv"
     )
 
 

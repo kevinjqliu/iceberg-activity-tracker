@@ -7,9 +7,10 @@ from pathlib import Path
 from .backtester import backtest_java_highlights
 from .collector import collect_repository
 from .config import TARGET_REPOSITORIES
-from .summarizer import summarize_month
+from .summarizer import summarize_month, summarize_period
 
 DEFAULT_LOOKBACK_DAYS = 45
+DEFAULT_SUMMARY_WINDOW_DAYS = 21
 
 
 def parse_iso_date(value: str) -> date:
@@ -26,6 +27,21 @@ def default_until() -> date:
 def resolve_date_range(since: date | None, until: date | None) -> tuple[date, date]:
     resolved_until = until or default_until()
     resolved_since = since or (resolved_until - timedelta(days=DEFAULT_LOOKBACK_DAYS))
+    if resolved_since > resolved_until:
+        raise ValueError("--since must be on or before --until")
+    return resolved_since, resolved_until
+
+
+def resolve_summary_range(
+    *,
+    since: date | None,
+    until: date | None,
+    meeting_date: date | None,
+) -> tuple[date, date]:
+    if meeting_date and until and meeting_date != until:
+        raise ValueError("--meeting-date and --until must match when both are provided")
+    resolved_until = meeting_date or until or default_until()
+    resolved_since = since or (resolved_until - timedelta(days=DEFAULT_SUMMARY_WINDOW_DAYS - 1))
     if resolved_since > resolved_until:
         raise ValueError("--since must be on or before --until")
     return resolved_since, resolved_until
@@ -54,8 +70,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory for local bare git repository caches",
     )
 
-    summarize = subparsers.add_parser("summarize", help="Create a monthly Java summary")
-    summarize.add_argument("--month", required=True, help="Month to summarize, as YYYY-MM")
+    summarize = subparsers.add_parser("summarize", help="Create a Java summary")
+    summarize.add_argument(
+        "--month",
+        help="Calendar month to summarize, as YYYY-MM. Kept for backfills; use meeting-date for sync notes.",
+    )
+    summarize.add_argument(
+        "--meeting-date",
+        type=parse_iso_date,
+        help="Community sync meeting date. Defaults to today when no date range is provided.",
+    )
+    summarize.add_argument("--since", type=parse_iso_date, help="Start date, inclusive")
+    summarize.add_argument("--until", type=parse_iso_date, help="End date, inclusive")
     summarize.add_argument(
         "--input",
         type=Path,
@@ -148,20 +174,39 @@ def run_collect(args: argparse.Namespace) -> int:
 def run_summarize(args: argparse.Namespace) -> int:
     if args.top < 1:
         raise SystemExit("--top must be at least 1")
+    has_period_args = bool(args.meeting_date or args.since or args.until)
+    if args.month and has_period_args:
+        raise SystemExit("--month cannot be combined with --meeting-date, --since, or --until")
     try:
-        result = summarize_month(
-            month=args.month,
-            input_path=args.input,
-            output_dir=args.output_dir,
-            top=args.top,
-            notes_path=args.notes,
-            lancedb_dir=args.lancedb_dir,
-        )
+        if args.month:
+            result = summarize_month(
+                month=args.month,
+                input_path=args.input,
+                output_dir=args.output_dir,
+                top=args.top,
+                notes_path=args.notes,
+                lancedb_dir=args.lancedb_dir,
+            )
+        else:
+            since, until = resolve_summary_range(
+                since=args.since,
+                until=args.until,
+                meeting_date=args.meeting_date,
+            )
+            result = summarize_period(
+                since=since,
+                until=until,
+                input_path=args.input,
+                output_dir=args.output_dir,
+                top=args.top,
+                notes_path=args.notes,
+                lancedb_dir=args.lancedb_dir,
+            )
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
     print(
-        f"scored {result.candidate_count} commits and wrote {result.selected_count} "
-        f"highlights to {result.markdown_path}"
+        f"scored {result.candidate_count} commits from {result.since} to {result.until} "
+        f"and wrote {result.selected_count} highlights to {result.markdown_path}"
     )
     print(f"scored CSV: {result.scored_csv_path}")
     return 0
