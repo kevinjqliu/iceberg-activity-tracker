@@ -42,9 +42,9 @@ next meeting:
 make summarize MEETING_DATE=2026-06-03
 ```
 
-If `Iceberg Community Sync Notes.md` exists locally, summarization also builds a
-local LanceDB index from past Java highlight bullets and uses that similarity as
-part of the ranking.
+Summarization builds a local LanceDB index from
+`data/notes/iceberg_community_sync_notes.md` and uses past Java highlight bullets
+as part of the ranking.
 
 Backfill an explicit meeting window:
 

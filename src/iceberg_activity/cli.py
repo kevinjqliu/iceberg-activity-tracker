@@ -103,7 +103,7 @@ def build_parser() -> argparse.ArgumentParser:
     summarize.add_argument(
         "--notes",
         type=Path,
-        default=Path("Iceberg Community Sync Notes.md"),
+        default=Path("data/notes/iceberg_community_sync_notes.md"),
         help="Community notes file used to build a LanceDB ranking index when present",
     )
     summarize.add_argument(
@@ -120,7 +120,7 @@ def build_parser() -> argparse.ArgumentParser:
     backtest.add_argument(
         "--notes",
         type=Path,
-        default=Path("Iceberg Community Sync Notes.md"),
+        default=Path("data/notes/iceberg_community_sync_notes.md"),
         help="Community sync notes to backtest against",
     )
     backtest.add_argument(
