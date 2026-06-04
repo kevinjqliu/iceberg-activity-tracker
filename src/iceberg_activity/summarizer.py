@@ -652,6 +652,7 @@ def summarize_period(
         raise ValueError("--since must be before --until")
     period_dir = output_dir / (label or summary_period_label(since, until))
     markdown_path = period_dir / "README.md"
+    review_data_dir = period_dir / "review-data"
     scored_csv_paths: list[Path] = []
     theme_csv_paths: list[Path] = []
     sections: list[tuple[RepoConfig, list[dict[str, str]], int]] = []
@@ -662,8 +663,8 @@ def summarize_period(
         scored_rows = score_rows(rows, notes_path=notes_path, lancedb_dir=lancedb_dir)
         theme_rows = build_theme_rows(scored_rows)
         selected_rows = theme_rows[:top]
-        scored_csv_path = period_dir / f"{repo.cache_name}_scored.csv"
-        theme_csv_path = period_dir / f"{repo.cache_name}_themes.csv"
+        scored_csv_path = review_data_dir / f"{repo.cache_name}_scored.csv"
+        theme_csv_path = review_data_dir / f"{repo.cache_name}_themes.csv"
         write_scored_csv(scored_rows, scored_csv_path)
         write_theme_csv(theme_rows, theme_csv_path)
         write_single_repo_markdown(
@@ -687,8 +688,8 @@ def summarize_period(
             scored_rows = score_rows(rows, notes_path=notes_path, lancedb_dir=repo_lancedb_dir)
             theme_rows = build_theme_rows(scored_rows)
             selected_rows = theme_rows[:top]
-            scored_csv_path = period_dir / f"{repo.cache_name}_scored.csv"
-            theme_csv_path = period_dir / f"{repo.cache_name}_themes.csv"
+            scored_csv_path = review_data_dir / f"{repo.cache_name}_scored.csv"
+            theme_csv_path = review_data_dir / f"{repo.cache_name}_themes.csv"
             write_scored_csv(scored_rows, scored_csv_path)
             write_theme_csv(theme_rows, theme_csv_path)
             scored_csv_paths.append(scored_csv_path)

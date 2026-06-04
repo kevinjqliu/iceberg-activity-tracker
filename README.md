@@ -14,7 +14,7 @@ sections on the same page.
 
 ## Layout
 
-- `summaries/`: human-facing summary pages and scored candidate CSVs
+- `summaries/`: human-facing summary pages, with review CSVs under each period's `review-data/`
 - `data/commits/`: collected commit metadata used by the summarizer
 - `data/notes/`: historical community sync notes used for LanceDB ranking
 - `src/`: collector, scoring, ranking, and CLI code
@@ -93,4 +93,6 @@ GitHub Actions uses two workflows:
   supplied `meeting_date` input or today's Pacific date.
 
 Generated commit CSVs are committed under `data/commits/`; generated summary
-pages are committed under `summaries/`.
+pages are committed under `summaries/`. Each period keeps its top-level
+`README.md` uncluttered by storing scored and themed review CSVs in a nested
+`review-data/` directory.

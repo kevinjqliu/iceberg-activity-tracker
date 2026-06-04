@@ -392,7 +392,9 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
     assert result.selected_count == 1
     assert result.since == date(2026, 6, 1)
     assert result.until == date(2026, 7, 1)
-    assert result.theme_csv_path == output_dir / "2026-06" / "apache_iceberg_themes.csv"
+    assert result.theme_csv_path == (
+        output_dir / "2026-06" / "review-data" / "apache_iceberg_themes.csv"
+    )
     with result.scored_csv_path.open(newline="", encoding="utf-8") as csv_file:
         scored = list(csv.DictReader(csv_file))
     assert len(scored) == 2
@@ -472,10 +474,10 @@ def test_summarize_period_uses_meeting_window_output_dir(tmp_path: Path) -> None
     assert result.candidate_count == 2
     assert result.selected_count == 2
     assert result.scored_csv_path == (
-        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_scored.csv"
+        output_dir / "2026-05-13_to_2026-06-03" / "review-data" / "apache_iceberg_scored.csv"
     )
     assert result.theme_csv_path == (
-        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_themes.csv"
+        output_dir / "2026-05-13_to_2026-06-03" / "review-data" / "apache_iceberg_themes.csv"
     )
     assert result.markdown_path == output_dir / "2026-05-13_to_2026-06-03" / "README.md"
     assert (output_dir / "README.md").read_text(encoding="utf-8") == (
@@ -605,19 +607,20 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
 
     assert result.candidate_count == 5
     assert result.selected_count == 5
+    review_data_dir = output_dir / "2026-05-13_to_2026-06-03" / "review-data"
     assert result.scored_csv_paths == (
-        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_scored.csv",
-        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_python_scored.csv",
-        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_rust_scored.csv",
-        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_go_scored.csv",
-        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_cpp_scored.csv",
+        review_data_dir / "apache_iceberg_scored.csv",
+        review_data_dir / "apache_iceberg_python_scored.csv",
+        review_data_dir / "apache_iceberg_rust_scored.csv",
+        review_data_dir / "apache_iceberg_go_scored.csv",
+        review_data_dir / "apache_iceberg_cpp_scored.csv",
     )
     assert result.theme_csv_paths == (
-        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_themes.csv",
-        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_python_themes.csv",
-        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_rust_themes.csv",
-        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_go_themes.csv",
-        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_cpp_themes.csv",
+        review_data_dir / "apache_iceberg_themes.csv",
+        review_data_dir / "apache_iceberg_python_themes.csv",
+        review_data_dir / "apache_iceberg_rust_themes.csv",
+        review_data_dir / "apache_iceberg_go_themes.csv",
+        review_data_dir / "apache_iceberg_cpp_themes.csv",
     )
     markdown = result.markdown_path.read_text(encoding="utf-8")
     assert "## apache/iceberg\n\n### Java" in markdown
