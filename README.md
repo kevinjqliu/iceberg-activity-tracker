@@ -6,9 +6,10 @@ Start here:
 
 - [Community summaries](summaries/)
 
-Each period page is built to become a shared meeting summary page. Today it has
-an `apache/iceberg` Java section; future Iceberg repositories can be added as
-additional sections on the same page.
+Each period page is built as a shared meeting summary page with separate
+repository sections. Today it includes `apache/iceberg` and
+`apache/iceberg-python`; future Iceberg repositories can be added as additional
+sections on the same page.
 
 ## Layout
 
@@ -66,12 +67,12 @@ make backtest BACKTEST_ARGS="--start-date 2026-05-13 --end-date 2026-06-03"
 
 ## Pipeline Notes
 
-The first version tracks only `apache/iceberg`. Additional repositories can be
-added later in `src/iceberg_activity/config.py`.
+The tracked repositories are configured in `src/iceberg_activity/config.py`.
+Current targets are `apache/iceberg` and `apache/iceberg-python`.
 
-The collector fetches `apache/iceberg` over read-only HTTPS, stores a bare git
-cache under `.cache/repos/apache_iceberg`, and writes
-`data/commits/apache_iceberg.csv`.
+The collector fetches configured repositories over read-only HTTPS, stores bare
+git caches under `.cache/repos/`, and writes one CSV per repository under
+`data/commits/`.
 
 Summarization builds a local LanceDB index from
 `data/notes/iceberg_community_sync_notes.md` and uses past Java highlight bullets

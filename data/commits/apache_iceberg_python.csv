@@ -1,0 +1,1615 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths
+apache/iceberg-python,6c029c2784f0ece664c90036a50bfd8cac75f29c,6c029c2,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-07T11:10:10+02:00,GitHub,noreply@github.com,2026-04-07T11:10:10+02:00,Build: Bump gcsfs from 2026.2.0 to 2026.3.0 (#3218),,,3218,false,,0,0,0,
+apache/iceberg-python,1a54e9c5d37f6e748a4692c4bc1b505db868f965,1a54e9c,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-07T11:10:27+02:00,GitHub,noreply@github.com,2026-04-07T11:10:27+02:00,Build: Bump s3fs from 2026.2.0 to 2026.3.0 (#3217),,6c029c2784f0ece664c90036a50bfd8cac75f29c,3217,false,,0,0,0,
+apache/iceberg-python,0615eb4d2578838893da1bc3fd10a903ab5c3a41,0615eb4,geruh,dru@apache.org,2026-04-13T22:35:50-07:00,GitHub,noreply@github.com,2026-04-13T22:35:50-07:00,fix: Handle optional properties in load namespace properties response (#3169),"Closes #3167
+
+# Rationale for this change
+
+The rest spec model `GetNamespaceResponse` defines the `properties`
+field as optional, and nullable. Also, following the description if the
+rest catalog doesn't support ns properties they should return null.
+
+Link:
+https://github.com/apache/iceberg/blob/0a73da119ff38ee3a98f248b42180caa51001cec/open-api/rest-catalog-open-api.yaml#L4146-L4163
+
+```yaml
+    GetNamespaceResponse:
+      type: object
+      required:
+        - namespace
+      properties:
+        namespace:
+          $ref: '#/components/schemas/Namespace'
+        properties:
+          type: object
+          description:
+            Properties stored on the namespace, if supported by the server.
+            If the server does not support namespace properties, it should return null for this field.
+            If namespace properties are supported, but none are set, it should return an empty object.
+          additionalProperties:
+            type: string
+          example: { ""owner"": ""Ralph"", 'transient_lastDdlTime': '1452120468' }
+          default: { }
+          nullable: true
+ ```
+
+Looks like the pydantic models raise a `ValidationError` in the optional/null cases as seen in the issue above. So this PR adds a fix to handle these cases.
+
+## Are these changes tested?
+
+Yes, added tests and tested with s3tables api 
+
+## Are there any user-facing changes?
+
+Not really",1a54e9c5d37f6e748a4692c4bc1b505db868f965,3169,false,,2,41,1,pyiceberg; tests
+apache/iceberg-python,3a993e82b158919b3c1c110df6d21eb044a6616c,3a993e8,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-14T20:36:17+02:00,GitHub,noreply@github.com,2026-04-14T20:36:17+02:00,Build: Bump pypa/cibuildwheel from 3.4.0 to 3.4.1 (#3225),,0615eb4d2578838893da1bc3fd10a903ab5c3a41,3225,false,,2,2,2,.github
+apache/iceberg-python,03bbbe384a809226acd1fcde239786cf31080f50,03bbbe3,Fokko Driesprong,fokko@apache.org,2026-04-15T19:34:12+02:00,GitHub,noreply@github.com,2026-04-15T10:34:12-07:00,CI: Lock REST Fixture to 1.10.1 (#3240),,3a993e82b158919b3c1c110df6d21eb044a6616c,3240,false,,2,2,1,dev; tests
+apache/iceberg-python,7235aeab453f90e65ea0d4d061dfe45ddb6c1da1,7235aea,geruh,dru@apache.org,2026-04-15T11:15:46-07:00,GitHub,noreply@github.com,2026-04-15T11:15:46-07:00,fix zizmor ci issue by bumping codeql-action to v4.35.2 (#3245),"# Rationale for this change
+
+The zizmor workflow is currently failing on all PRs due to a ref version
+mismatch. The pinned SHAs were pointing to v4.35.1, but the comment
+referenced the major version (#v4). When v4.35.2 was released, the v4
+tag moved to the new commit, causing a mismatch between the pinned SHA
+and the tag in the comment. Updated the SHAs to v4.35.2 and switched the
+comments to use the fully qualified version so that Dependabot will bump
+both the SHA and comment together in the future!
+
+## Are these changes tested?
+
+ci run
+
+## Are there any user-facing changes?
+
+no",03bbbe384a809226acd1fcde239786cf31080f50,3245,false,,1,2,2,.github
+apache/iceberg-python,c322dbf54e22d02002808ba68ccb721ce0f83c17,c322dbf,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-04-15T11:20:11-07:00,GitHub,noreply@github.com,2026-04-15T11:20:11-07:00,ci: fix zizmor workflow (#3243),,7235aeab453f90e65ea0d4d061dfe45ddb6c1da1,3243,false,,1,1,2,.github
+apache/iceberg-python,559391cc8be4e86dcf0771417fc74a378ea4f9b3,559391c,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-15T11:56:36-07:00,GitHub,noreply@github.com,2026-04-15T11:56:36-07:00,Build: Bump cryptography from 46.0.6 to 46.0.7 (#3223),,c322dbf54e22d02002808ba68ccb721ce0f83c17,3223,false,,1,51,51,uv.lock
+apache/iceberg-python,e95a2da316a65409428d1202cda9d32e6bb78f21,e95a2da,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-15T12:04:38-07:00,GitHub,noreply@github.com,2026-04-15T12:04:38-07:00,Build: Bump daft from 0.6.14 to 0.7.7 (#3232),,559391cc8be4e86dcf0771417fc74a378ea4f9b3,3232,false,,1,16,16,uv.lock
+apache/iceberg-python,523f25decf8b81f2effbaf3da721f954e924b9ea,523f25d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-15T12:04:57-07:00,GitHub,noreply@github.com,2026-04-15T12:04:57-07:00,Build: Bump click from 8.3.1 to 8.3.2 (#3231),,e95a2da316a65409428d1202cda9d32e6bb78f21,3231,false,,1,3,3,uv.lock
+apache/iceberg-python,2b597a45671f76c661503960a8dd252c0b64df96,2b597a4,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-15T12:05:18-07:00,GitHub,noreply@github.com,2026-04-15T12:05:18-07:00,Build: Bump sqlalchemy from 2.0.48 to 2.0.49 (#3230),,523f25decf8b81f2effbaf3da721f954e924b9ea,3230,false,,1,51,51,uv.lock
+apache/iceberg-python,9ebb63e9d3f7411bd59c5db3bf2ce19c8213e2d4,9ebb63e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-15T12:05:25-07:00,GitHub,noreply@github.com,2026-04-15T12:05:25-07:00,Build: Bump huggingface-hub from 1.8.0 to 1.9.0 (#3229),,2b597a45671f76c661503960a8dd252c0b64df96,3229,false,,1,31,31,uv.lock
+apache/iceberg-python,f79561fabd7da7bd12de64dc48542b7d7f2661d6,f79561f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-15T12:05:53-07:00,GitHub,noreply@github.com,2026-04-15T12:05:53-07:00,Build: Bump google-cloud-bigquery from 3.40.1 to 3.41.0 (#3228),,9ebb63e9d3f7411bd59c5db3bf2ce19c8213e2d4,3228,false,,1,3,3,uv.lock
+apache/iceberg-python,721c5aa504e2c2069a197f01a238070e37e389d8,721c5aa,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-15T12:46:23-07:00,GitHub,noreply@github.com,2026-04-15T12:46:23-07:00,Build: Bump requests from 2.33.0 to 2.33.1 (#3227),,f79561fabd7da7bd12de64dc48542b7d7f2661d6,3227,false,,1,3,3,uv.lock
+apache/iceberg-python,da43ad5fdfeed45c9c20b2a63487dc4703caaae2,da43ad5,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-17T16:49:24-07:00,GitHub,noreply@github.com,2026-04-17T16:49:24-07:00,Build: Bump huggingface-hub from 1.9.2 to 1.10.1 (#3249),,721c5aa504e2c2069a197f01a238070e37e389d8,3249,false,,1,3,3,uv.lock
+apache/iceberg-python,6c4cffef4b2e5cf83883c530da4275adb2f75de9,6c4cffe,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-17T16:49:41-07:00,GitHub,noreply@github.com,2026-04-17T16:49:41-07:00,Build: Bump google-auth from 2.49.1 to 2.49.2 (#3250),,da43ad5fdfeed45c9c20b2a63487dc4703caaae2,3250,false,,1,3,3,uv.lock
+apache/iceberg-python,5029e467b8a9f80046172159b4c553d04583990d,5029e46,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-17T16:49:57-07:00,GitHub,noreply@github.com,2026-04-17T16:49:57-07:00,Build: Bump s3fs from 2026.2.0 to 2026.3.0 (#3251),,6c4cffef4b2e5cf83883c530da4275adb2f75de9,3251,false,,1,16,16,uv.lock
+apache/iceberg-python,973c205a60a0243db3277af23b21165a3d6d2f24,973c205,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-17T16:50:13-07:00,GitHub,noreply@github.com,2026-04-17T16:50:13-07:00,Build: Bump adlfs from 2026.2.0 to 2026.4.0 (#3252),,5029e467b8a9f80046172159b4c553d04583990d,3252,false,,1,3,3,uv.lock
+apache/iceberg-python,539a03b848545ad6a46a0fd6d4ac7c8ea3d5dd15,539a03b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-17T16:50:33-07:00,GitHub,noreply@github.com,2026-04-17T16:50:33-07:00,Build: Bump bodo from 2026.2 to 2026.4 (#3253),,973c205a60a0243db3277af23b21165a3d6d2f24,3253,false,,1,21,21,uv.lock
+apache/iceberg-python,c6b850847d3d4e7cf592d8bb99047f4ca8a54984,c6b8508,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-17T17:20:35-07:00,GitHub,noreply@github.com,2026-04-17T17:20:35-07:00,Build: Bump pytest from 9.0.2 to 9.0.3 (#3238),,539a03b848545ad6a46a0fd6d4ac7c8ea3d5dd15,3238,false,,2,5,5,pyproject.toml; uv.lock
+apache/iceberg-python,939a6e5478639a26909865c6408e4ddb93e39429,939a6e5,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-19T12:22:35-07:00,GitHub,noreply@github.com,2026-04-19T12:22:35-07:00,Build: Bump boto3 from 1.40.61 to 1.42.84 (#3226),,c6b850847d3d4e7cf592d8bb99047f4ca8a54984,3226,false,,1,13,12,uv.lock
+apache/iceberg-python,794ec02b19c96ae0cd8ec0e2d2cb797658c02445,794ec02,Sotaro Hikita,70102274+lawofcycles@users.noreply.github.com,2026-04-22T02:31:22+09:00,GitHub,noreply@github.com,2026-04-21T10:31:22-07:00,Fix ManifestEntry.snapshot_id setter writing to wrong index (#3257),,939a6e5478639a26909865c6408e4ddb93e39429,3257,false,,2,42,1,pyiceberg; tests
+apache/iceberg-python,c6a6c067498f72086b07ce94d2f2ff91412628a1,c6a6c06,David Zhao,davidzhao058@gmail.com,2026-04-21T10:56:29-07:00,GitHub,noreply@github.com,2026-04-21T10:56:29-07:00,Fix pa.Schema type annotations in schema_to_pyarrow (#3261),,794ec02b19c96ae0cd8ec0e2d2cb797658c02445,3261,false,,1,2,2,pyiceberg
+apache/iceberg-python,0826d3e800be01333791fb70f15d423f0853654f,0826d3e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-21T16:08:27-07:00,GitHub,noreply@github.com,2026-04-21T16:08:27-07:00,Build: Bump nbconvert from 7.17.0 to 7.17.1 (#3262),,c6a6c067498f72086b07ce94d2f2ff91412628a1,3262,false,,1,3,3,uv.lock
+apache/iceberg-python,df258f59c1820958a40f3de3ffb83e57c139d558,df258f5,Yingjian Wu,151791653+yingjianwu98@users.noreply.github.com,2026-04-22T13:02:53-07:00,GitHub,noreply@github.com,2026-04-22T13:02:53-07:00,perf: build partition filter with balanced tree to avoid RecursionError (#3264),,0826d3e800be01333791fb70f15d423f0853654f,3264,false,,2,25,12,pyiceberg; tests
+apache/iceberg-python,f56724347e9c89508439161818ef911574a3f5e8,f567243,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-24T15:24:42-07:00,GitHub,noreply@github.com,2026-04-24T15:24:42-07:00,Build: Bump boto3 from 1.42.84 to 1.42.91 (#3274),,df258f59c1820958a40f3de3ffb83e57c139d558,3274,false,,1,9,9,uv.lock
+apache/iceberg-python,0c4823ab08d06cafe0f1160a8fe8da0961cc99d3,0c4823a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-24T15:25:11-07:00,GitHub,noreply@github.com,2026-04-24T15:25:11-07:00,Build: Bump pydantic from 2.12.5 to 2.13.2 (#3275),,f56724347e9c89508439161818ef911574a3f5e8,3275,false,,1,111,113,uv.lock
+apache/iceberg-python,654b10dbd20d476c5b7f9c4a33a8250604d41a53,654b10d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-24T15:25:36-07:00,GitHub,noreply@github.com,2026-04-24T15:25:36-07:00,Build: Bump mkdocs-section-index from 0.3.11 to 0.3.12 (#3276),,0c4823ab08d06cafe0f1160a8fe8da0961cc99d3,3276,false,,2,5,5,pyproject.toml; uv.lock
+apache/iceberg-python,403c9ef72c1d624af37b5515189c8b7dee477260,403c9ef,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-24T15:26:20-07:00,GitHub,noreply@github.com,2026-04-24T15:26:20-07:00,Build: Bump daft from 0.6.14 to 0.7.9 (#3277),,654b10dbd20d476c5b7f9c4a33a8250604d41a53,3277,false,,1,16,16,uv.lock
+apache/iceberg-python,15c1a5acb7cd2c0daf82cb8b474b366909bcd490,15c1a5a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-24T15:26:51-07:00,GitHub,noreply@github.com,2026-04-24T15:26:51-07:00,Build: Bump duckdb from 1.5.1 to 1.5.2 (#3278),,403c9ef72c1d624af37b5515189c8b7dee477260,3278,false,,1,38,38,uv.lock
+apache/iceberg-python,1f699c709b43625e905de6e6ff7c49a0e3fdfb03,1f699c7,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-24T15:27:15-07:00,GitHub,noreply@github.com,2026-04-24T15:27:15-07:00,Build: Bump huggingface-hub from 1.10.1 to 1.11.0 (#3279),,15c1a5acb7cd2c0daf82cb8b474b366909bcd490,3279,false,,1,3,3,uv.lock
+apache/iceberg-python,cdb625f593ad1e6bed80bb2b90ea201e866ee6be,cdb625f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-24T15:27:42-07:00,GitHub,noreply@github.com,2026-04-24T15:27:42-07:00,Build: Bump mypy-boto3-glue from 1.42.70 to 1.42.89 (#3280),,1f699c709b43625e905de6e6ff7c49a0e3fdfb03,3280,false,,1,3,3,uv.lock
+apache/iceberg-python,0677211dba733de16deacc015165b3a7d3ce92e3,0677211,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-04-25T16:24:46-04:00,GitHub,noreply@github.com,2026-04-25T13:24:46-07:00,"bug: NoopCatalog should return False, not throw error (#3284)",,cdb625f593ad1e6bed80bb2b90ea201e866ee6be,3284,false,,1,1,1,pyiceberg
+apache/iceberg-python,e1906450722714958bde4d03e9547ace65be6c17,e190645,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-25T13:25:28-07:00,GitHub,noreply@github.com,2026-04-25T13:25:28-07:00,Build: Bump prek from 0.3.8 to 0.3.9 (#3281),,0677211dba733de16deacc015165b3a7d3ce92e3,3281,false,,1,20,20,uv.lock
+apache/iceberg-python,516a234bf124eecb90687a0a2fd664dc9ad1dd60,516a234,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-25T13:25:50-07:00,GitHub,noreply@github.com,2026-04-25T13:25:50-07:00,Build: Bump mkdocstrings from 1.0.3 to 1.0.4 (#3282),,e1906450722714958bde4d03e9547ace65be6c17,3282,false,,2,5,5,pyproject.toml; uv.lock
+apache/iceberg-python,b67b7241690e05413f3cfea69287f897b0b2410e,b67b724,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-25T13:26:12-07:00,GitHub,noreply@github.com,2026-04-25T13:26:12-07:00,Build: Bump rich from 14.3.3 to 15.0.0 (#3283),,516a234bf124eecb90687a0a2fd664dc9ad1dd60,3283,false,,2,5,5,pyproject.toml; uv.lock
+apache/iceberg-python,e6d5129159988b52c892eae5532685883b92fbe7,e6d5129,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-04-30T12:44:55-07:00,GitHub,noreply@github.com,2026-04-30T12:44:55-07:00,Build: Bump jupyterlab from 4.5.6 to 4.5.7 (#3300),,b67b7241690e05413f3cfea69287f897b0b2410e,3300,false,,1,3,3,uv.lock
+apache/iceberg-python,2558dcdb4c90de41631399f2a155d987f7ee3a8f,2558dcd,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-04-30T18:01:33-07:00,GitHub,noreply@github.com,2026-04-30T18:01:33-07:00,Reading upper/lower bounds values with type promotions (#3293),,e6d5129159988b52c892eae5532685883b92fbe7,3293,false,,2,98,2,pyiceberg; tests
+apache/iceberg-python,69ca97b314797be2c03eeced2e033f563156bb03,69ca97b,Sotaro Hikita,70102274+lawofcycles@users.noreply.github.com,2026-05-02T01:07:32+09:00,GitHub,noreply@github.com,2026-05-01T09:07:32-07:00,Fix DELETED manifest entry snapshot_id in OverwriteFiles (#3237),"# Rationale for this change
+When _OverwriteFiles._deleted_entries() creates DELETED manifest
+entries, it now sets snapshot_id to the current (deleting) snapshot's ID
+instead of retaining the original INSERT snapshot's ID.
+
+Closes #3236 
+
+According to the [Iceberg spec (Manifest Entry
+Fields)](https://iceberg.apache.org/spec/#manifest-entry-fields),
+`snapshot_id` for a DELETED entry (status=2) should be the snapshot ID
+in which the file was deleted. However,
+`_OverwriteFiles._deleted_entries()` was copying the original entry's
+`snapshot_id` (from the INSERT snapshot) into the new DELETED entry.
+
+This caused downstream consumers that filter manifest entries by
+`snapshot_id` (e.g. Iceberg Java's `IncrementalChangelogScan`) to
+silently miss DELETED files, breaking CDC pipelines.
+
+## Are these changes tested?
+Added `test_manifest_entry_snapshot_id_after_partial_deletes` in
+`tests/integration/test_deletes.py`.
+
+## Are there any user-facing changes?
+N/A
+
+---------
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>",2558dcdb4c90de41631399f2a155d987f7ee3a8f,3237,false,,2,50,1,pyiceberg; tests
+apache/iceberg-python,14ddcdc047767de6beb92eade31c0f1ad3f72917,14ddcdc,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-02T07:03:41+02:00,GitHub,noreply@github.com,2026-05-02T07:03:41+02:00,Build: Bump boto3 from 1.42.91 to 1.42.96 (#3317),,69ca97b314797be2c03eeced2e033f563156bb03,3317,false,,1,9,9,uv.lock
+apache/iceberg-python,6a17897908a6de44d58b5eca5e9367c2f1756f12,6a17897,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-02T07:04:04+02:00,GitHub,noreply@github.com,2026-05-02T07:04:04+02:00,Build: Bump prek from 0.3.9 to 0.3.10 (#3316),,14ddcdc047767de6beb92eade31c0f1ad3f72917,3316,false,,1,20,20,uv.lock
+apache/iceberg-python,acd59c50c29c9aa26b04b563e19b6936f3b0370a,acd59c5,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-02T07:04:19+02:00,GitHub,noreply@github.com,2026-05-02T07:04:19+02:00,Build: Bump click from 8.3.2 to 8.3.3 (#3315),,6a17897908a6de44d58b5eca5e9367c2f1756f12,3315,false,,1,3,3,uv.lock
+apache/iceberg-python,4deee4a8c8d1af11e6396205ef9a8372c689411f,4deee4a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-02T07:04:47+02:00,GitHub,noreply@github.com,2026-05-02T07:04:47+02:00,Build: Bump pydantic from 2.13.2 to 2.13.3 (#3314),,acd59c50c29c9aa26b04b563e19b6936f3b0370a,3314,false,,1,111,111,uv.lock
+apache/iceberg-python,798bbee00abd5db321902574a110f329dcd459a0,798bbee,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-02T07:08:37+02:00,GitHub,noreply@github.com,2026-05-02T07:08:37+02:00,Build: Bump pyroaring from 1.0.4 to 1.1.0 (#3312),,4deee4a8c8d1af11e6396205ef9a8372c689411f,3312,false,,1,75,75,uv.lock
+apache/iceberg-python,51997d808b79922fe9660aa2ec91109f421e6146,51997d8,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-02T07:09:32+02:00,GitHub,noreply@github.com,2026-05-02T07:09:32+02:00,Build: Bump s3fs from 2026.2.0 to 2026.3.0 (#3311),,798bbee00abd5db321902574a110f329dcd459a0,3311,false,,1,16,16,uv.lock
+apache/iceberg-python,800fc08e18e662971f40288953ec841906b995b5,800fc08,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-02T07:10:34+02:00,GitHub,noreply@github.com,2026-05-02T07:10:34+02:00,Build: Bump fastavro from 1.12.1 to 1.12.2 (#3310),,51997d808b79922fe9660aa2ec91109f421e6146,3310,false,,2,49,45,pyproject.toml; uv.lock
+apache/iceberg-python,3a19aa49185632e1d54c9efb65326fbb2f412f03,3a19aa4,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-02T07:10:55+02:00,GitHub,noreply@github.com,2026-05-02T07:10:55+02:00,Build: Bump huggingface-hub from 1.11.0 to 1.12.0 (#3309),,800fc08e18e662971f40288953ec841906b995b5,3309,false,,1,3,3,uv.lock
+apache/iceberg-python,fbd76e7e8b23ce23ed16d09f84e0899aeefedd9b,fbd76e7,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-02T07:11:13+02:00,GitHub,noreply@github.com,2026-05-02T07:11:13+02:00,Build: Bump psycopg2-binary from 2.9.11 to 2.9.12 (#3308),,3a19aa49185632e1d54c9efb65326fbb2f412f03,3308,false,,1,59,59,uv.lock
+apache/iceberg-python,8e1c4bd9298927bbf4b761b3f72ab7f97060a9b2,8e1c4bd,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-02T07:11:24+02:00,GitHub,noreply@github.com,2026-05-02T07:11:24+02:00,Build: Bump cachetools from 7.0.5 to 7.0.6 (#3307),,fbd76e7e8b23ce23ed16d09f84e0899aeefedd9b,3307,false,,1,3,3,uv.lock
+apache/iceberg-python,714c24f2a0e6c6c6878aed947d29c21039b16782,714c24f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-02T07:11:43+02:00,GitHub,noreply@github.com,2026-05-02T07:11:43+02:00,Build: Bump polars from 1.39.3 to 1.40.1 (#3306),,8e1c4bd9298927bbf4b761b3f72ab7f97060a9b2,3306,false,,1,15,15,uv.lock
+apache/iceberg-python,bb124d0acaffdfbe03c282f887575066e2592df2,bb124d0,Adam,afeldman1@users.noreply.github.com,2026-05-03T10:45:49-04:00,GitHub,noreply@github.com,2026-05-03T07:45:49-07:00,infra: add python 3.14 support (#3299),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #3123 -->
+
+# Rationale for this change
+Adds prebuilt support for python 3.14
+Free-threaded is still not supported for now
+Closes #3123 for standard python
+
+## Are these changes tested?
+test using:
+`PYTHON=3.14 make test`
+`PYTHON=3.14 make test-integration `
+
+Python Build Release Candidate workflow was run:
+https://github.com/afeldman1/iceberg-python/actions/runs/25267237725
+
+## Are there any user-facing changes?
+Just support of python 3.14
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",714c24f2a0e6c6c6878aed947d29c21039b16782,3299,false,Kevin Liu,6,84,70,.github; pyproject.toml; tests; uv.lock
+apache/iceberg-python,9f20f32ecccbc8d66aef9da62fe555b849356dea,9f20f32,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-05-03T14:39:07-04:00,GitHub,noreply@github.com,2026-05-03T11:39:07-07:00,Bump daft dependency to >=0.7.10 (fix Python 3.14 compatibility) (#3323),,bb124d0acaffdfbe03c282f887575066e2592df2,3323,false,,2,22,22,pyproject.toml; uv.lock
+apache/iceberg-python,842d01c8815706b3f679b3f07c5b073df35c0297,842d01c,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-05-03T15:01:38-04:00,GitHub,noreply@github.com,2026-05-03T12:01:38-07:00,fix: SaslServer busy-loop causes process hang after test suite (#3305),,9f20f32ecccbc8d66aef9da62fe555b849356dea,3305,false,,1,6,3,tests
+apache/iceberg-python,144bf72c3242a64b9f4221fb9be6edb8bc1d953b,144bf72,Ruiyang Wang,56065503+rynewang@users.noreply.github.com,2026-05-03T23:47:47-07:00,GitHub,noreply@github.com,2026-05-04T08:47:47+02:00,perf: Hoist `table_metadata` at remaining repeat-access (#3301),"## Summary
+
+Follow-up to #2674. `Transaction.table_metadata` replays all staged
+updates via `model_copy(deep=True)` on every access, so reading it (or
+`spec()`/`schema()` derived from it) repeatedly within a single
+snapshot-producer method is redundant deep-copy work.
+
+\#2674 hoisted the property access in `_summary()`; this PR extends the
+same pattern to three more call sites in
+`pyiceberg/table/update/snapshot.py` that still read the property more
+than once per invocation.
+
+## Changes
+
+- `_SnapshotProducer._summary`: hoist `spec()`/`schema()` out of the
+per-data-file loop (they are invariant across files; still called 2× per
+file before this change)
+- `_DeleteFiles._compute_deletes`: hoist `table_metadata`/`schema` once
+at method entry (was 3 accesses — two via `self.schema()` for the
+metrics evaluators and one direct for `snapshot_by_id`)
+- `_MergeAppendFiles.__init__`: 3 consecutive
+`self._transaction.table_metadata.properties` accesses → 1
+
+All hoists are at method entry. Nothing inside these methods stages a
+transaction update (the `AddSnapshotUpdate` is staged by the caller
+after `_commit()` returns), so `table_metadata` is invariant for the
+duration of each method.
+
+Not touched here: the `new_manifest_writer(self.spec(id))` calls inside
+per-manifest loops in `_write_delete_manifest` / `_compute_deletes` /
+`_OverwriteFiles._existing_manifests` also trigger 2–3 property accesses
+per iteration via the `schema()`/`spec()`/`new_manifest_writer()`
+helpers. Those loops are O(partition-groups or rewritten-manifests)
+rather than O(files), and fixing them cleanly would mean changing the
+helper signatures — happy to do that in a follow-up if there's interest.
+
+## Testing
+
+New `test_snapshot_producer_bounded_metadata_access` wraps
+`Transaction.table_metadata` with a call counter and asserts:
+- `_summary()` access count is identical for 10 vs 100 appended files
+(independent of N), and ≤ 2
+- `_MergeAppendFiles.__init__` makes exactly 1 more access than
+`_FastAppendFiles.__init__` (was 3 before this change — verified the
+test fails with the production diff reverted)
+
+The test constructs `_FastAppendFiles` / `_MergeAppendFiles` directly
+rather than going through the public append path, since the public path
+writes manifest avro files; the property-access count it measures is the
+behaviour under test and doesn't require I/O.
+
+Existing `tests/table/test_snapshots.py` passing.
+
+## Motivation
+
+For appends/deletes/overwrites touching large numbers of files or
+manifests, the per-iteration property access dominates wall-clock (each
+access replays the staged-updates list through pydantic `model_copy`).
+This keeps the cost constant per method call.
+
+---------
+
+Co-authored-by: Ruiyang Wang <rynewang@users.noreply.github.com>",842d01c8815706b3f679b3f07c5b073df35c0297,3301,false,Ruiyang Wang,2,58,11,pyiceberg; tests
+apache/iceberg-python,96bafaf15c71ba48f5bf8e79b9e609cf65fa9f5e,96bafaf,Rob Reeves,robertpreeves@gmail.com,2026-05-04T01:21:05-07:00,GitHub,noreply@github.com,2026-05-04T10:21:05+02:00,"Fix deepcopy for `And`, `Or`, and `Not` expressions (#3295)","Closes #3297 
+
+# Rationale for this change
+
+`copy.deepcopy()` on `And`, `Or`, and `Not` expressions raises
+`TypeError` because Pydantic v2's default `__deepcopy__` calls
+`cls.__new__(cls)` with no args, but these classes require positional
+arguments in `__new__`.
+
+The fix adds `__deepcopy__` to `And`, `Or`, and `Not` that deepcopy
+their fields and call the constructor directly.
+
+## Are these changes tested?
+
+Yes. 11 new unit tests covering all expression types, balanced trees,
+nested expressions, and deepcopy followed by pickle.
+
+## Are there any user-facing changes?
+
+Yes, `copy.deepcopy()` on expressions now works instead of raising an
+exception.",144bf72c3242a64b9f4221fb9be6edb8bc1d953b,3295,false,,2,83,0,pyiceberg; tests
+apache/iceberg-python,0dce453ca955866aea23ca4273c550a207c9d13a,0dce453,Yuya Ebihara,ebyhry@gmail.com,2026-05-04T17:32:04+09:00,GitHub,noreply@github.com,2026-05-04T10:32:04+02:00,Add support for 'overwrite' option in register_table (#3290),"# Rationale for this change
+
+- Relates to https://github.com/apache/iceberg/pull/12239
+
+## Are these changes tested?
+
+## Are there any user-facing changes?
+
+This PR adds `overwrite` parameter to `catalog.register_table` method.",96bafaf15c71ba48f5bf8e79b9e609cf65fa9f5e,3290,false,,10,67,8,mkdocs; pyiceberg; tests
+apache/iceberg-python,52cd0a7e8cb1076c365a6ac915419bbcb3d3effd,52cd0a7,Yuya Ebihara,ebyhry@gmail.com,2026-05-04T17:37:22+09:00,GitHub,noreply@github.com,2026-05-04T10:37:22+02:00,Document `TableAlreadyExistsError` in `rename_table` (#3289),"# Rationale for this change
+
+Add a missing exception to `catalog.rename_table` method. 
+
+## Are these changes tested?
+
+No
+
+## Are there any user-facing changes?
+
+No
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",0dce453ca955866aea23ca4273c550a207c9d13a,3289,false,,1,1,0,pyiceberg
+apache/iceberg-python,240e519dc1a6a2bc2f16905f9e2b7d2a2bc983a8,240e519,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-04T10:37:51+02:00,GitHub,noreply@github.com,2026-05-04T10:37:51+02:00,Build: Bump zizmorcore/zizmor-action from 0.5.2 to 0.5.3 (#3273),,52cd0a7e8cb1076c365a6ac915419bbcb3d3effd,3273,false,,1,1,1,.github
+apache/iceberg-python,6e68c9c93f29ec7d45f02f074c7863d6251edc61,6e68c9c,Neelesh Salian,nssalian@users.noreply.github.com,2026-05-04T05:02:30-07:00,GitHub,noreply@github.com,2026-05-04T14:02:30+02:00,Initial work for file format writer API (#3119),"Initial work for #3100. Since this is a large change, doing it in parts
+similar to the `AuthManager` so it's easier to review and move the
+existing code around.
+
+# Rationale for this change
+Introduces the pluggable file format writer API: `FileFormatWriter`,
+`FileFormatModel`, and
+`FileFormatFactory` in `pyiceberg/io/fileformat.py`. Moves
+`DataFileStatistics` from `pyarrow.py` with a
+re-export for backward compatibility. The move is more forward looking
+and the idea is to keep the stats generic in the future as we add
+additional formats too.
+This is the first part of work for #3100. No behavioral changes; the
+write path remains hardcoded to Parquet.
+
+## Are these changes tested?
+
+Yes. `tests/io/test_fileformat.py` tests backward-compatible import of
+`DataFileStatistics`
+
+## Are there any user-facing changes?
+
+No",240e519dc1a6a2bc2f16905f9e2b7d2a2bc983a8,3119,false,,3,265,74,pyiceberg; tests
+apache/iceberg-python,0f10a97261c6c7e97a18f2bfeade7f48f70e6036,0f10a97,Yingjian Wu,151791653+yingjianwu98@users.noreply.github.com,2026-05-06T10:33:50-07:00,GitHub,noreply@github.com,2026-05-06T10:33:50-07:00,fix:update config during table refresh (#3327),"# Rationale for this change
+Table.refresh() was not updating self.config from the refreshed
+TableResponse. The config field contains out of date, server-generated
+properties such as per-table access tokens (token) and credential
+refresh endpoints(client.refresh-credentials-endpoint).
+
+## Are these changes tested?
+Yes, with a new test.
+
+## Are there any user-facing changes?
+No
+
+Co-authored-by: Yingjian Wu <yingjianw@netflix.com>",6e68c9c93f29ec7d45f02f074c7863d6251edc61,3327,false,Yingjian Wu,2,34,0,pyiceberg; tests
+apache/iceberg-python,d4e1abf8b49d4e0e4f832aada6ecc29c16f2a3d7,d4e1abf,Yuya Ebihara,ebyhry@gmail.com,2026-05-07T02:35:40+09:00,GitHub,noreply@github.com,2026-05-06T10:35:40-07:00,Remove unused code (#3326),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+Remove unused code
+
+## Are these changes tested?
+
+N/A
+
+## Are there any user-facing changes?
+
+No
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",0f10a97261c6c7e97a18f2bfeade7f48f70e6036,3326,false,,1,2,6,pyiceberg
+apache/iceberg-python,8e6d97ff5945691194d652682b4c09c140d94247,8e6d97f,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-05-06T14:16:47-04:00,GitHub,noreply@github.com,2026-05-06T20:16:47+02:00,Update NOTICE year 2025 -> 2026 (#3332),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+## Are these changes tested?
+
+## Are there any user-facing changes?
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",d4e1abf8b49d4e0e4f832aada6ecc29c16f2a3d7,3332,false,,1,1,1,NOTICE
+apache/iceberg-python,d008a04a7cf8ec6c73855285117dca1ad25b35d1,d008a04,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-05-06T14:33:37-04:00,GitHub,noreply@github.com,2026-05-06T11:33:37-07:00,CI: Use specific patch versions in workflow action comments (#3331),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+Similar to https://github.com/apache/iceberg/pull/16229
+
+The workflow files use SHA-pinned actions (immutable), but the
+human-readable comments referenced only major versions (e.g., `# v6`, `#
+v5`).
+**When maintainers move these mutable tags to a new commit, zizmor fails
+in CI because the SHA no longer matches the stated tag.**
+
+## Are these changes tested?
+
+## Are there any user-facing changes?
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",8e6d97ff5945691194d652682b4c09c140d94247,3331,false,,11,40,40,.github
+apache/iceberg-python,ee7d04b7cff3d61344aff7616418b4945b3735d2,ee7d04b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-07T11:02:09-07:00,GitHub,noreply@github.com,2026-05-07T11:02:09-07:00,Build: Bump jupyter-server from 2.17.0 to 2.18.0 (#3329),,d008a04a7cf8ec6c73855285117dca1ad25b35d1,3329,false,,1,4,4,uv.lock
+apache/iceberg-python,7fb55cd5a80e2f93ec22f1e0f01bd499088847f0,7fb55cd,spr0els,58633269+spr0els@users.noreply.github.com,2026-05-07T21:57:05+02:00,GitHub,noreply@github.com,2026-05-07T12:57:05-07:00,feat: add load_view to REST catalog (#3224),,ee7d04b7cff3d61344aff7616418b4945b3735d2,3224,false,,11,138,0,pyiceberg; tests
+apache/iceberg-python,2dadcdf7566f8466ffe0f2bcb2569bbaa9c3c433,2dadcdf,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-07T13:01:54-07:00,GitHub,noreply@github.com,2026-05-07T13:01:54-07:00,Build: Bump mistune from 3.2.0 to 3.2.1 (#3333),,7fb55cd5a80e2f93ec22f1e0f01bd499088847f0,3333,false,,1,3,3,uv.lock
+apache/iceberg-python,214038df802b64f22da046e3dadd7a38aa818348,214038d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-10T13:28:54-07:00,GitHub,noreply@github.com,2026-05-10T13:28:54-07:00,Build: Bump github/codeql-action from 4.35.2 to 4.35.3 (#3339),,2dadcdf7566f8466ffe0f2bcb2569bbaa9c3c433,3339,false,,1,2,2,.github
+apache/iceberg-python,3276b7436f8834f13cbb2989c4fd0d5eb130bcaf,3276b74,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-10T13:29:33-07:00,GitHub,noreply@github.com,2026-05-10T13:29:33-07:00,Build: Bump huggingface-hub from 1.12.0 to 1.13.0 (#3340),,214038df802b64f22da046e3dadd7a38aa818348,3340,false,,1,3,3,uv.lock
+apache/iceberg-python,e3427035bde27ab0fccefdd43b65d4617a8f7e01,e342703,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-10T13:30:24-07:00,GitHub,noreply@github.com,2026-05-10T13:30:24-07:00,Build: Bump prek from 0.3.10 to 0.3.11 (#3341),,3276b7436f8834f13cbb2989c4fd0d5eb130bcaf,3341,false,,1,20,20,uv.lock
+apache/iceberg-python,603920b4cf0cdb90f34185a68d9ef1a4122d1ed1,603920b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-10T13:31:45-07:00,GitHub,noreply@github.com,2026-05-10T13:31:45-07:00,Build: Bump mypy-boto3-glue from 1.42.89 to 1.43.0 (#3342),,e3427035bde27ab0fccefdd43b65d4617a8f7e01,3342,false,,1,3,3,uv.lock
+apache/iceberg-python,aa80a45a3b38f38ca6458785162181420d0a835a,aa80a45,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-10T13:32:40-07:00,GitHub,noreply@github.com,2026-05-10T13:32:40-07:00,Build: Bump google-auth from 2.49.2 to 2.50.0 (#3343),,603920b4cf0cdb90f34185a68d9ef1a4122d1ed1,3343,false,,1,3,3,uv.lock
+apache/iceberg-python,ca6b9db6d2488350e65a2584566e7d44d117a326,ca6b9db,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-10T13:33:27-07:00,GitHub,noreply@github.com,2026-05-10T13:33:27-07:00,Build: Bump cachetools from 7.0.6 to 7.1.0 (#3344),,aa80a45a3b38f38ca6458785162181420d0a835a,3344,false,,1,3,3,uv.lock
+apache/iceberg-python,b21b7e85397c78914316aeaa220dc79c308210a0,b21b7e8,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-10T13:34:02-07:00,GitHub,noreply@github.com,2026-05-10T13:34:02-07:00,Build: Bump mypy-boto3-dynamodb from 1.42.73 to 1.43.0 (#3345),,ca6b9db6d2488350e65a2584566e7d44d117a326,3345,false,,1,3,3,uv.lock
+apache/iceberg-python,e5988277fc841566b308c670176ab43592a25692,e598827,Yuya Ebihara,ebyhry@gmail.com,2026-05-11T13:18:22+09:00,GitHub,noreply@github.com,2026-05-11T06:18:22+02:00,Add support for registering views (#3288),"# Rationale for this change
+
+- Relates to https://github.com/apache/iceberg/pull/14869
+
+## Are these changes tested?
+
+tests/catalog/test_rest.py contains new tests.
+
+## Are there any user-facing changes?
+
+This PR adds a new `register_view` method to `catalog`. 
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",b21b7e85397c78914316aeaa220dc79c308210a0,3288,false,,10,142,0,mkdocs; pyiceberg; tests
+apache/iceberg-python,a9ad3a305fb91abd7edecc029ccc4178398056fe,a9ad3a3,Paul Mathew,ptmathew96@gmail.com,2026-05-11T00:19:38-04:00,GitHub,noreply@github.com,2026-05-11T06:19:38+02:00,fix(tests): isolate state in `test_write_optional_list` (#3334),"# Rationale for this change
+
+`test_write_optional_list` uses `create_table_if_not_exists` and then
+asserts exact row counts (2 after the first append, 4 after the second).
+The table is reused across runs, so a second invocation against the same
+docker-compose stack accumulates rows — counts become 6, 10, 14, … and
+the asserts fail.
+
+CI hides this because it spins up a fresh `docker-compose-integration`
+stack for every job. Locally it bites anyone who runs `make
+test-integration-exec` twice without `make test-integration-cleanup` in
+between.
+
+Fix: drop the table at the start so the test always starts from a clean
+slate, matching the `drop-then-create` pattern used by `_create_table()`
+for every other write test in this module.
+
+# Are these changes tested?
+
+Yes — verified locally that the test now passes when run twice
+back-to-back without resetting the docker stack:
+
+```bash
+docker compose -f dev/docker-compose-integration.yml up -d --wait
+uv run python dev/provision.py
+uv run python -m pytest tests/integration/test_writes/test_writes.py::test_write_optional_list -m integration  # PASS
+uv run python -m pytest tests/integration/test_writes/test_writes.py::test_write_optional_list -m integration  # PASS (was previously: 8 == 2)
+```
+
+Full `tests/integration/test_writes/test_writes.py` suite: 122 passed, 1
+skipped.
+
+# Are there any user-facing changes?
+
+No.
+
+---
+
+Noticed while preparing the PR for #2152 (`RecordBatchReader` streaming
+append).
+
+Co-authored-by: Paul Mathew <paul.mathew@aircall.io>",e5988277fc841566b308c670176ab43592a25692,3334,false,Paul Mathew,1,1,1,tests
+apache/iceberg-python,95c45d44094cce592452dee9b81492673f1fe548,95c45d4,Federico,62903636+federicsp@users.noreply.github.com,2026-05-15T10:13:54+02:00,GitHub,noreply@github.com,2026-05-15T10:13:54+02:00,Add papermill-based tests for PyIceberg examples (#3330),"Closes #3328
+
+# Rationale for this change
+`pyiceberg_example.ipynb` and `spark_integration_example.ipynb` had no
+automated test coverage. Breaking changes to notebook cells could go
+undetected in CI. 
+
+This PR adds papermill-based tests that execute the
+real notebooks as-is, so any change to a cell is automatically reflected
+in the tests.
+
+
+## Are these changes tested?
+Yes. The tests themselves are the change. Run them with:
+
+```bash
+make test-notebook
+```
+
+## Are there any user-facing changes?
+No.",a9ad3a305fb91abd7edecc029ccc4178398056fe,3330,false,,5,314,1,Makefile; pyproject.toml; tests; uv.lock
+apache/iceberg-python,2f7911666d280599068e44eb588d92da14e10f8d,2f79116,Yuya Ebihara,ebyhry@gmail.com,2026-05-16T03:20:17+09:00,GitHub,noreply@github.com,2026-05-15T20:20:17+02:00,REST: Add pagination support for `list_views` (#3349),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+Follows REST catalog spec: 
+
+- /v1/{prefix}/views:
+https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L1525-L1562
+- ListTablesResponse:
+https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L4210-L4219
+- PageToken:
+https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L2233-L2256
+
+## Are these changes tested?
+
+Yes, includes unit tests for paginated cases.
+
+## Are there any user-facing changes?
+
+- Before: returned incomplete view list when server paginated (only
+first page)
+- After: returns complete view list (fetches all pages)
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",95c45d44094cce592452dee9b81492673f1fe548,3349,false,,2,106,6,pyiceberg; tests
+apache/iceberg-python,4b3ccbb7a43530717dad1cf6e5768a25d44d621b,4b3ccbb,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-15T20:26:20+02:00,GitHub,noreply@github.com,2026-05-15T20:26:20+02:00,Build: Bump urllib3 from 2.6.3 to 2.7.0 (#3352),,2f7911666d280599068e44eb588d92da14e10f8d,3352,false,,1,4,3,uv.lock
+apache/iceberg-python,a99320bf8bfe8c81415dc6ff2148d4f5a23067e5,a99320b,Minh Vu,vuhoangminh97@gmail.com,2026-05-15T21:10:00+02:00,GitHub,noreply@github.com,2026-05-15T21:10:00+02:00,fix(fsspec): handle zero-byte files in `__len__` (#3353),"## Summary
+
+Fix `FsspecInputFile.__len__` and `FsspecOutputFile.__len__` so
+zero-byte files return `0` instead of being treated as missing metadata.
+
+Both methods previously used truthiness checks on
+`object_info.get(...)`, which caused valid sizes like `0` to fall
+through to the runtime error path.
+
+## Changes
+
+- check for `Size` key presence explicitly
+- check for `size` key presence explicitly
+- add a regression test covering zero-byte lengths for both metadata key
+variants
+
+## Verification
+
+- `python -m pytest tests/io/test_fsspec.py -k zero_length_of_file -q`",4b3ccbb7a43530717dad1cf6e5768a25d44d621b,3353,false,,2,22,8,pyiceberg; tests
+apache/iceberg-python,0bdff48005c0969d1bc320c7fdfa5c96f49bb4ae,0bdff48,vishnu prakash,nvishnuprakash02@gmail.com,2026-05-16T01:59:43+05:30,GitHub,noreply@github.com,2026-05-15T22:29:43+02:00,Add `@typing.override` to catalog and FileIO implementations (#3360),"Adds `@override` from `typing_extensions` to all concrete
+implementations of `Catalog`, `MetastoreCatalog`, `FileIO`, `InputFile`,
+and `OutputFile` so overridden base-class methods are explicit and can
+be verified by static type checkers.
+
+Uses `from typing_extensions import override` (same pattern already used
+for `Self` in `typedef.py`) instead of `from typing import override`
+which requires Python 3.12+ and would break the supported 3.10/3.11
+versions.
+
+Closes #1310
+
+# Rationale for this change
+
+`@typing.override` (PEP 698) makes it explicit which methods
+intentionally override a parent class method, helping static type
+checkers catch mistakes early. The previous attempt (#1312) and the
+currently open PR (#3359) both use `from typing import override` which
+only exists in Python 3.12+. This PR uses `typing_extensions` to support
+all versions from 3.10+.
+
+## Are these changes tested?
+
+No new tests are needed — `@override` is a static analysis marker with
+zero runtime effect. `make lint` and `make test` (3625 passed) both pass
+cleanly.
+
+## Are there any user-facing changes?
+
+No.",a99320bf8bfe8c81415dc6ff2148d4f5a23067e5,3360,false,,10,173,0,pyiceberg
+apache/iceberg-python,7078a5d8a86b491f9984711a455273e1199493f8,7078a5d,Yuya Ebihara,ebyhry@gmail.com,2026-05-18T22:46:23+09:00,GitHub,noreply@github.com,2026-05-18T15:46:23+02:00,Fix typo in `test_add_files` (#3378),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+Fix typo in test_add_files
+
+## Are these changes tested?
+
+N/A
+
+## Are there any user-facing changes?
+
+No
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",0bdff48005c0969d1bc320c7fdfa5c96f49bb4ae,3378,false,,1,1,1,tests
+apache/iceberg-python,19d49a78e02fe0fc51bf86e6ab70327925ddaaf2,19d49a7,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:48:44+02:00,GitHub,noreply@github.com,2026-05-18T15:48:44+02:00,Build: Bump github/codeql-action from 4.35.3 to 4.35.4 (#3366),,7078a5d8a86b491f9984711a455273e1199493f8,3366,false,,1,2,2,.github
+apache/iceberg-python,d5446d976896a90e404b630e332830048d1fcdfb,d5446d9,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:48:56+02:00,GitHub,noreply@github.com,2026-05-18T15:48:56+02:00,Build: Bump cachetools from 7.1.0 to 7.1.1 (#3367),,19d49a78e02fe0fc51bf86e6ab70327925ddaaf2,3367,false,,1,3,3,uv.lock
+apache/iceberg-python,7c8ff3db4a1f6fddc1b0d47e135e5477ef7c74cc,7c8ff3d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:49:16+02:00,GitHub,noreply@github.com,2026-05-18T15:49:16+02:00,Build: Bump huggingface-hub from 1.13.0 to 1.14.0 (#3368),,d5446d976896a90e404b630e332830048d1fcdfb,3368,false,,1,3,3,uv.lock
+apache/iceberg-python,70923a3777cb3adacb622ac77f08c0976dcd1125,70923a3,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:49:30+02:00,GitHub,noreply@github.com,2026-05-18T15:49:30+02:00,Build: Bump pydantic from 2.13.3 to 2.13.4 (#3369),,7c8ff3db4a1f6fddc1b0d47e135e5477ef7c74cc,3369,false,,1,111,111,uv.lock
+apache/iceberg-python,da23378f7736f48502203f1f533303afc88614b8,da23378,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:49:47+02:00,GitHub,noreply@github.com,2026-05-18T15:49:47+02:00,Build: Bump pyiceberg-core from 0.9.0 to 0.9.1 (#3370),,70923a3777cb3adacb622ac77f08c0976dcd1125,3370,false,,1,7,8,uv.lock
+apache/iceberg-python,0b942d259feb849f79d97576eb72047f4e0c20e9,0b942d2,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:50:01+02:00,GitHub,noreply@github.com,2026-05-18T15:50:01+02:00,Build: Bump google-auth from 2.50.0 to 2.52.0 (#3371),,da23378f7736f48502203f1f533303afc88614b8,3371,false,,1,3,3,uv.lock
+apache/iceberg-python,5d4873edc5377ad72e5dbf100d7bfa9c0d4b5a91,5d4873e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:50:16+02:00,GitHub,noreply@github.com,2026-05-18T15:50:16+02:00,Build: Bump ipykernel from 7.1.0 to 7.2.0 (#3372),,0b942d259feb849f79d97576eb72047f4e0c20e9,3372,false,,1,6,6,uv.lock
+apache/iceberg-python,cde24522ab785d8765cfb0ef614a32c1d1aabb35,cde2452,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:50:30+02:00,GitHub,noreply@github.com,2026-05-18T15:50:30+02:00,Build: Bump mypy-boto3-glue from 1.43.0 to 1.43.5 (#3373),,5d4873edc5377ad72e5dbf100d7bfa9c0d4b5a91,3373,false,,1,3,3,uv.lock
+apache/iceberg-python,e9d07390d0450455ec4100b93eca44a1586b5a13,e9d0739,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:50:48+02:00,GitHub,noreply@github.com,2026-05-18T15:50:48+02:00,Build: Bump prek from 0.3.11 to 0.3.13 (#3374),,cde24522ab785d8765cfb0ef614a32c1d1aabb35,3374,false,,1,20,20,uv.lock
+apache/iceberg-python,7f8a9f2924a234268ea8a5bd1159970bf5d8b1d6,7f8a9f2,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:51:04+02:00,GitHub,noreply@github.com,2026-05-18T15:51:04+02:00,Build: Bump adlfs from 2026.4.0 to 2026.5.0 (#3375),,e9d07390d0450455ec4100b93eca44a1586b5a13,3375,false,,1,3,18,uv.lock
+apache/iceberg-python,43d1f1fc18ce66d5e1bc0c9ede04dddb9a6cfe2d,43d1f1f,barking-code,62703911+barking-code@users.noreply.github.com,2026-05-18T22:52:02+09:00,GitHub,noreply@github.com,2026-05-18T15:52:02+02:00,fix: avoid `TSaslClientTransport` reuse to eliminate server-side SASL noise (#3357),"Related: #1744, #1747, #1941
+
+# Rationale for this change
+
+#1747 / #1941 caught the `TSaslClientTransport` reopen failure on the
+client side, but the doomed `open()` attempt still completes a TCP
+handshake before aborting, which leaves a `TTransportException` event in
+the HMS server log per `_HiveClient` re-entry. In production this
+produces a steady stream of server-side error events matched by HMS
+alert filters.
+
+`TSaslClientTransport` is single-use by design: its `SASLClient` is
+disposed on `close()` and there is no API to reset it. Reusing the same
+transport across context-manager entries was the original misuse. This
+PR keeps the existing `_HiveClient.__init__` setup intact — the
+transport is still created in `__init__` so `_HiveClient` can be used
+without a context manager (per @kevinjqliu's note in #1747) — and
+reinitializes the transport before `open()` whenever the client has been
+used before:
+
+```python
+def __enter__(self) -> Client:
+    if self._was_opened:
+        self._transport = self._init_thrift_transport()
+    self._transport.open()
+    self._was_opened = True
+    return self._client()
+```
+
+The `try/except` retry from #1747 / #1941 is removed because the failure
+mode it covered (reopening a disposed SASL session) cannot occur on a
+fresh transport.
+
+The public behaviour of `_HiveClient` (`with hive_client as c:` returns
+a working `Client`, `__exit__` closes it) is unchanged.
+
+# Are these changes tested?
+
+- New unit test `test_kerberized_client_uses_fresh_transport_on_reuse`
+asserts that the transport instance differs between two consecutive
+context-manager entries
+- Existing `test_create_hive_client_with_kerberos_using_context_manager`
+continues to pass
+
+# Are there any user-facing changes?
+
+No.",7f8a9f2924a234268ea8a5bd1159970bf5d8b1d6,3357,false,,2,38,13,pyiceberg; tests
+apache/iceberg-python,706390fc1b75c462bc50da5b11c0bc768e7b213c,706390f,Paul Mathew,ptmathew96@gmail.com,2026-05-19T06:16:22-04:00,GitHub,noreply@github.com,2026-05-19T12:16:22+02:00,"Support `pa.RecordBatchReader` in Table.`{append,overwrite}` (#3335)","# Rationale for this change
+
+Closes #2152, addresses the long-standing memory problem reported in
+#1004 and re-discovered by dlt-hub#3753.
+
+`Table.append(df)` and `Table.overwrite(df)` currently require a fully
+materialised `pa.Table`. For large or unbounded inputs this means
+loading the entire dataset into memory before writing — fatal at any
+non-trivial scale and a recurring complaint going back to #1004 (Aug
+2024). The reference Java implementation has streaming append;
+iceberg-go shipped it in iceberg-go#369 (Apr 2025). Python is the last
+major SDK without it.
+
+This PR adds `pa.RecordBatchReader` as a valid input to
+`Table.append/overwrite` (and `Transaction.append/overwrite`). The
+reader is consumed lazily, microbatched into Parquet files via the new
+`bin_pack_record_batches` helper, and committed in a single snapshot via
+the existing `fast_append` pipeline.
+
+```python
+reader = pa.RecordBatchReader.from_batches(schema, batch_iter)
+tbl.append(reader)        # ← streams, doesn't materialise
+tbl.overwrite(reader)     # ← also supported
+```
+
+## Scope (unpartitioned only)
+
+Streaming into a partitioned table raises `NotImplementedError` pointing
+back to #2152. Partitioned support is genuinely the harder case — it
+needs design discussion around partition cardinality bounds,
+per-partition rolling writers, and idempotency on retry — so I'm
+proposing to land in three reviewable PRs:
+
+1. **This PR** — API + unpartitioned + buffered byte-budget bin-packing.
+2. **PR2 (next)** — switch internals to a rolling `pq.ParquetWriter` +
+`OutputStream.tell()` for constant-memory streaming. No API change.
+Detailed plan below.
+3. **PR3 (later)** — partitioned streaming, after design discussion on
+#2152.
+
+This mirrors iceberg-go#369's staging: ship the unpartitioned API first,
+iterate from there.
+
+## Implementation
+
+The streaming path reuses the existing `WriteTask` → `write_file` →
+`fast_append` pipeline. The only new primitive is
+`bin_pack_record_batches` (sibling of the existing
+`bin_pack_arrow_table`):
+
+- Accumulates incoming `RecordBatch`es into an in-memory buffer.
+- Flushes when `sum(batch.nbytes) >= write.target-file-size-bytes`.
+- Each flushed buffer becomes one parquet file via the existing
+`write_parquet` task.
+- Schema check (`_check_pyarrow_schema_compatible`) runs against
+`reader.schema` before the snapshot producer opens — schema mismatches
+fail before any data file is written, so no orphans.
+
+## Acknowledged trade-offs
+
+**Memory**: peak memory is bounded by `N_workers ×
+write.target-file-size-bytes` (default 8 × 512 MiB ≈ 4 GiB), not
+constant. This is materially better than today's ""materialise
+everything"" but isn't yet ""constant memory streaming"". PR2 fixes this.
+
+**Byte semantics**: `write.target-file-size-bytes` is currently
+interpreted as **uncompressed in-memory Arrow bytes**
+(`RecordBatch.nbytes` — the bin-packing weight), not compressed on-disk
+Parquet bytes. The resulting files are typically 3-10× smaller than the
+property suggests after zstd / dictionary / RLE encoding. This matches
+the existing `pa.Table` write path (`bin_pack_arrow_table` uses the same
+accounting) — this PR doesn't change pyiceberg's existing semantics, it
+only documents them in the docstrings of both helpers and the
+`Transaction.append/overwrite` `Note:` blocks. PR2 fixes this too.
+
+**Retry**: `pa.RecordBatchReader` is single-pass, so a failed catalog
+commit leaves the reader drained and a naive retry writes zero rows.
+Documented in the `Note:` block — callers needing at-least-once
+semantics should reconstruct the reader on each attempt via a factory
+callable, or use the two-stage `add_files` pattern (whose input is a
+replayable list of paths).
+
+## PR2 — proposed scope (FYI, not in this PR)
+
+Drop the buffer-and-flush approach and use a rolling `pq.ParquetWriter`
+driven by `OutputStream.tell()` (added in #2998 specifically for this
+kind of use case):
+
+```python
+# sketch
+writer = pq.ParquetWriter(fos, schema, **kwargs)
+for batch in reader:
+    writer.write_batch(batch)
+    if fos.tell() >= target_file_size:   # compressed on-disk bytes
+        writer.close()
+        finalize_data_file(...)
+        # open next file
+        fos = io.new_output(next_path).create(overwrite=True)
+        writer = pq.ParquetWriter(fos, schema, **kwargs)
+writer.close()
+```
+
+What this delivers:
+
+- **Constant memory**: `O(1 batch)` per worker (~10s of MB) regardless
+of `target_file_size`. The 4 GiB peak in this PR drops to ~50-100 MB.
+- **Spec-correct byte semantics**: `write.target-file-size-bytes`
+becomes actual on-disk compressed bytes, matching the Java/Spark/Flink
+writers and the spec.
+- **No public API change**: same `tx.append(reader)` /
+`tx.overwrite(reader)` — internals only.
+
+Open design questions for PR2 (will surface on the issue thread before
+coding):
+
+- **Parallelism**: a single rolling writer is serial. Either accept that
+for streaming (memory-vs-throughput trade), or add a hybrid (N rolling
+writers fed via a queue) and pick a default that matches today's
+`executor.map(write_parquet, tasks)` parallelism.
+- **Backwards compat**: switching `bin_pack_arrow_table` to the same
+rolling-writer mechanism would also tighten the `pa.Table` path's byte
+semantics. That changes file-size characteristics for every existing
+pyiceberg writer. Probably worth a separate change with a deprecation
+note, or a feature flag.
+- **`add_files` interaction**: rolling writes produce data files we know
+about directly; we shouldn't go through the parquet-footer round-trip in
+`_dataframe_to_data_files`. Means a small refactor in the streaming-only
+path.
+
+## Are these changes tested?
+
+Yes, comprehensively at four layers.
+
+**1. Unit tests** (`tests/io/test_pyarrow.py`) — 4 new tests for
+`bin_pack_record_batches` covering single-bin, microbatched, empty
+input, and lazy generator consumption.
+
+**2. End-to-end behaviour tests**
+(`tests/catalog/test_catalog_behaviors.py`) — 8 new tests parametrised
+across all three in-process catalog backends (`memory`, `sql`,
+`sql_without_rowcount`) → 24 test runs covering append, overwrite,
+microbatch verification (multiple files in one snapshot), empty reader,
+partitioned-table-raises, invalid-input-rejected,
+reader-consumed-exactly-once, and schema-mismatch-writes-no-files.
+
+**3. Integration tests**
+(`tests/integration/test_writes/test_writes.py`) — 6 new Spark-readback
+tests for v1 + v2 format versions covering append, overwrite, and
+multi-file microbatch. Proves Spark can read tables written via the
+streaming path against the docker-compose stack.
+
+**4. Smoke test on a real production stack** — verified end-to-end
+against AWS Glue + S3 in our staging account: 100 k-row streaming append
+in 17 s, 20-file microbatched commit, Athena read-back (`COUNT(*)` and
+`MAX(id)` matched the input exactly), schema-mismatch rejection leaving
+no orphan files.
+
+Full unit suite: 3 647 passed. Full integration suite: 122 passed, 1
+skipped.
+
+## Are there any user-facing changes?
+
+Yes, intentionally:
+
+- `Transaction.append(df)`, `Transaction.overwrite(df)`,
+`Table.append(df)`, `Table.overwrite(df)` accept `pa.Table |
+pa.RecordBatchReader`.
+- The `ValueError` raised on bad input changes from `""Expected PyArrow
+table, got: ...""` to `""Expected pa.Table or pa.RecordBatchReader, got:
+...""`. Updated `test_invalid_arguments` accordingly.
+- New module-level helper `bin_pack_record_batches` in
+`pyiceberg.io.pyarrow` (sibling of `bin_pack_arrow_table`).
+- `bin_pack_arrow_table` gained its first docstring, documenting the
+existing uncompressed-Arrow-bytes accounting.
+- Docs: new ""Streaming writes from a RecordBatchReader"" subsection in
+`mkdocs/docs/api.md`.
+- Docstrings on `Transaction.append/overwrite` document retry semantics
+and the byte-semantics caveat.
+
+## Related
+
+- Closes #2152
+- Addresses #1004 (closed by reporter without a fix)
+- Reference implementation: iceberg-go#369
+- Downstream consumer hitting the same problem: dlt-hub/dlt#3753
+(independent rediscovery of the same approach)
+- Builds on the maintainer-blessed pattern from #1742's review
+(`_dataframe_to_data_files` + `fast_append.append_data_file()`, no
+separate `write_parquet` API)
+- Companion fix (already merged separately): test-state isolation in
+`test_write_optional_list`
+- PR2 will build on `OutputStream.tell()` from #2998
+
+---------
+
+Co-authored-by: Paul Mathew <paul.mathew@aircall.io>",43d1f1fc18ce66d5e1bc0c9ede04dddb9a6cfe2d,3335,false,Paul Mathew,7,498,30,mkdocs; pyiceberg; tests
+apache/iceberg-python,739373fcdf68d01ab7ab6d577199cdc2058eb74e,739373f,Yuya Ebihara,ebyhry@gmail.com,2026-05-19T23:11:41+09:00,GitHub,noreply@github.com,2026-05-19T07:11:41-07:00,REST: Rename rest-scan-planning-enabled to scan-planning-mode (#3376),"# Rationale for this change
+
+Boolean properties should be avoided as much as possible. 
+We may consider introducing a new scan planning mode in the future.
+
+The Java implementation has already changed from
+`rest-scan-planning-enabled` to `scan-planning-mode` in
+https://github.com/apache/iceberg/pull/15572.
+
+## Are these changes tested?
+
+Yes.
+
+## Are there any user-facing changes?
+
+Rename `rest-scan-planning-enabled` to `scan-planning-mode`.
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",706390fc1b75c462bc50da5b11c0bc768e7b213c,3376,false,,2,14,9,pyiceberg; tests
+apache/iceberg-python,b31b7625748c42f8c35a117f8ef9612c25533bbf,b31b762,Minh Vu,vuhoangminh97@gmail.com,2026-05-19T16:15:46+02:00,GitHub,noreply@github.com,2026-05-19T07:15:46-07:00,fix(table): avoid committing update builders after exceptions (#3354),"## Summary
+
+Avoid committing update builders when the body of a `with` block raises.
+
+`UpdateTableMetadata.__exit__` currently commits unconditionally, so
+user code like `with table.update_schema() as update:` can still mutate
+table metadata even when an exception is raised before the block
+finishes. This change makes update builders mirror
+`Transaction.__exit__` and only commit on a clean exit.
+
+## Testing
+
+- `.venv\\Scripts\\python -m pytest
+""tests/catalog/test_catalog_behaviors.py::test_update_schema_with_statement_does_not_commit_on_exception[memory]""
+""tests/catalog/test_catalog_behaviors.py::test_update_schema_with_statement_does_not_commit_on_exception[sql]""
+-q`",739373fcdf68d01ab7ab6d577199cdc2058eb74e,3354,false,,2,25,3,pyiceberg; tests
+apache/iceberg-python,d3393910065a282e96f9b471d0a9b1047ef28b7a,d339391,Ben Lai,laichunpongben@gmail.com,2026-05-19T22:31:13+08:00,GitHub,noreply@github.com,2026-05-19T07:31:13-07:00,perf(add_files): stream manifest entries for duplicate-files check (#3287),"Fixes #3286.
+
+## The hot path today
+
+```python
+if check_duplicate_files:
+    import pyarrow.compute as pc
+
+    expr = pc.field(""file_path"").isin(file_paths)
+    referenced_files = [file[""file_path""] for file in self._table.inspect.data_files().filter(expr).to_pylist()]
+```
+
+What this actually does, per call:
+
+1. `inspect.data_files()` — for every manifest in the current snapshot,
+calls `_get_files_from_manifest` (`pyiceberg/table/inspect.py:548`),
+which for each `ManifestEntry` builds a Python dict with ~17 fields. The
+expensive ones:
+- `readable_metrics` — for **every column** in the table schema, decodes
+lower/upper bound bytes via `from_bytes` and packs the result into a
+per-column dict. This is the single biggest cost on wide tables.
+- `partition` — decodes the partition struct into a name → value dict.
+- `column_sizes`, `value_counts`, `null_value_counts`,
+`nan_value_counts`, `lower_bounds`, `upper_bounds` — each materialized
+as a Python dict per file.
+2. The dicts are batched into a `pyarrow.Table` per manifest.
+3. `pa.concat_tables` glues all manifests' Tables together.
+4. `.filter(expr)` applies an Arrow-compute `isin` over the concatenated
+Table.
+5. `.to_pylist()` converts back to Python dicts.
+6. The list comprehension throws away 16 of the 17 columns and keeps
+only `file_path`.
+
+For a backfill that calls `add_files` once per day on a growing table,
+per-call cost is O(snapshot file count); cumulative cost is O(N²). After
+~15 daily commits on a wide-schema table, dup-check time dominates: each
+call takes ~10–15 minutes vs seconds early on.
+
+The workaround in #2132 / docs PR #2249 is
+`check_duplicate_files=False`, which trades away the idempotency
+guarantee that re-running a partial-failure resume is safe.
+
+## Benchmark — before vs after
+
+`tests/benchmark/bench_add_files_dup_check.py` (added in this PR) runs
+10 sequential `add_files(check_duplicate_files=True)` calls on an
+`InMemoryCatalog` table with a 30-column schema, 200 small parquet files
+per call. Measures wall-clock and `tracemalloc` peak per call. Run on
+macOS arm64 / Python 3.11.
+
+**Before (upstream `main`):**
+```
+batch   wall_s    tracemalloc_peak_MB  cumulative_files
+    0     1.05                    5.5               200
+    1     1.00                    9.2               400
+    2     1.06                   12.7               600
+    3     1.13                   18.5               800
+    4     1.18                   20.2              1000
+    5     1.26                   23.4              1200
+    6     1.32                   30.2              1400
+    7     1.39                   34.0              1600
+    8     1.46                   29.9              1800
+    9     1.51                   39.8              2000
+```
+
+Wall climbs ~44%; tracemalloc peak grows ~7.2×.
+
+**After (this PR):**
+```
+batch   wall_s    tracemalloc_peak_MB  cumulative_files
+    0     1.05                    5.5               200
+    1     1.56                    5.6               400
+    2     0.96                    6.2               600
+    3     0.97                    6.3               800
+    4     0.98                    6.5              1000
+    5     1.00                    6.8              1200
+    6     1.00                    6.6              1400
+    7     1.03                    8.2              1600
+    8     1.04                    7.2              1800
+    9     1.07                    6.9              2000
+```
+
+Wall flat at ~1s; tracemalloc peak flat at ~6–8 MB. The growth
+disappears because the dup-check no longer materializes per-file dicts /
+pyarrow Tables / readable_metrics — it just does set containment on
+`file_path` while streaming manifest entries.
+
+This is a 10-batch run on a small, narrow workload. Real backfills with
+wider schemas (more columns × more row groups), more files per batch,
+and many more batches see the constant factor amplify; the production
+workload that motivated this PR was hitting ~10–15 minutes per call
+after 15 commits.
+
+## What this PR does
+
+Replace the materialize-then-filter with a streaming scan that reuses
+the existing `_open_manifest` helper
+(`pyiceberg/table/__init__.py:1918`) — the canonical ""open a manifest,
+fetch entries with `discard_deleted=True`, apply data-file predicates""
+pattern already used by `DataScan.scan_plan_helper` (line 2050). Delete
+manifests are skipped at the top level (same shape as
+`_min_sequence_number`).
+
+The loop body becomes a `set` containment check on
+`data_file.file_path`, scheduled via `executor.map` and flattened with
+`chain.from_iterable` — same idiom as the existing scan path.
+
+The same approach Spark's `add_files` action takes: predicate-based
+against the new paths only, no pre-scan of all data files.
+
+## What this is and isn't
+
+- **Is**: a constant-factor reduction. The Avro decode of manifest
+entries is unchanged (still happens via `fetch_manifest_entry`), but
+everything downstream of the read — `readable_metrics` computation,
+partition decode, per-file dict construction, pyarrow Table
+construction, `concat_tables`, `filter`, `to_pylist` — is gone. That
+post-processing was the bulk of the time, not the Avro read.
+- **Isn't**: an asymptotic fix. Per-call cost is still O(snapshot file
+count) for the manifest entry reads; cumulative backfill cost is still
+O(N²). Truly eliminating the linear scan would need `file_path`
+lower/upper bounds at the `ManifestFile` level so most manifests can be
+pruned without opening — that's a spec extension and a follow-up.
+
+## Compatibility / behavior preservation
+
+Audited the change for any behavioral divergence from the old
+`inspect.data_files().filter(...)` path:
+
+- **Public API**: `add_files` signature and exception message unchanged.
+Existing integration tests at
+`tests/integration/test_add_files.py:test_add_files_that_referenced_by_current_snapshot{,_with_check_duplicate_files_true,_with_check_duplicate_files_false}`
+exercise the dup-check contract and assert the exact error string — both
+preserved verbatim.
+- **Callers**: only `Table.add_files`
+(`pyiceberg/table/__init__.py:1491`). No subclass overrides exist (e.g.
+`CreateTableTransaction` doesn't redefine it).
+`Transaction.upsert`/`append`/`overwrite`, `_FastAppendFiles`,
+`MergingSnapshotProducer` don't share the dup-check path.
+- **File set scanned**: `inspect.data_files()` filtered per-entry on
+`DataFileContent.DATA`; new code filters at `ManifestContent.DATA`.
+These are theoretically distinct but produce identical sets per the
+Iceberg spec — delete entries cannot live in DATA manifests.
+- **`discard_deleted`**: both paths use `True` (`fetch_manifest_entry`
+defaults to `True`; `_open_manifest` passes it explicitly).
+- **Snapshot scope**: both paths use `current_snapshot()` —
+`inspect.data_files()` via `_get_snapshot(None)`, new code directly via
+`self.table_metadata.current_snapshot()`.
+- **Empty `file_paths`**: same result (empty list) and same exceptions
+either way. Slight efficiency regression in this edge case — the new
+code still walks data manifests where the old code short-circuited via
+`pc.field(""file_path"").isin([])`. Not user-visible; can be optimized in
+a follow-up if anyone cares.
+- **Side effects**: both paths are read-only; no manifest cache state
+mutation, no transaction state changes.
+- **Concurrency**: both submit to the shared
+`ExecutorFactory.get_or_create()` thread pool.
+- **Branch parameter**: `add_files` accepts a `branch` argument, but the
+dup-check has always run against `current_snapshot()` (i.e. main)
+regardless. This is a **pre-existing inconsistency**, not introduced by
+this PR. Preserved exactly to keep this change behavior-preserving.
+
+## Refs
+
+- Issue: #3286
+- Related: #2132 (closed as docs), #2133 (parallelization)",b31b7625748c42f8c35a117f8ef9612c25533bbf,3287,false,,2,155,5,pyiceberg; tests
+apache/iceberg-python,6eddf1a7bfa804568c8b069ade6ee4584a3a46b4,6eddf1a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-21T06:43:24+02:00,GitHub,noreply@github.com,2026-05-21T06:43:24+02:00,Build: Bump idna from 3.11 to 3.15 (#3386),"Bumps [idna](https://github.com/kjd/idna) from 3.11 to 3.15.
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/kjd/idna/blob/master/HISTORY.md"">idna's
+changelog</a>.</em></p>
+<blockquote>
+<h2>3.15 (2026-05-12)</h2>
+<ul>
+<li>Enforce DNS-length cap on individual labels early in
+<code>check_label</code>,
+short-circuiting contextual-rule processing for oversized input
+while staying compatible with UTS 46 usage.</li>
+<li>Tidy core helpers: hoist bidi category sets to module-level
+frozensets (avoiding per-codepoint list construction), simplify
+length checks, and reuse the shared <code>_unicode_dots_re</code> from
+<code>idna.core</code> in the codec module.</li>
+<li>Use <code>raise ... from err</code> for proper exception chaining
+and
+switch internal string formatting to f-strings.</li>
+<li>Allow <code>flit_core</code> 4.x in the build backend.</li>
+<li>Expand the ruff lint set (flake8-bugbear, flake8-simplify,
+pyupgrade, perflint) and apply the surfaced fixes; pin lint CI
+to Python 3.14.</li>
+<li>Add Dependabot configuration for GitHub Actions.</li>
+<li>Convert README and HISTORY from reStructuredText to Markdown.</li>
+<li>Reference CVE-2026-45409 for the 3.14 advisory in place of the
+initial GHSA identifier.</li>
+</ul>
+<p>Thanks to Felix Yan, Stan Ulbrych, and metsw24-max for
+contributions to this release.</p>
+<h2>3.14 (2026-05-10)</h2>
+<ul>
+<li>Removed opportunity to process long inputs into quadratic
+time by rejecting oversize inputs up-front. Closes a bypass
+of the CVE-2024-3651 mitigation. [CVE-2026-45409]</li>
+</ul>
+<p>Thanks to Stan Ulbrych for reporting the issue.</p>
+<h2>3.13 (2026-04-22)</h2>
+<ul>
+<li>Correct classification error for codepoint U+A7F1</li>
+</ul>
+<h2>3.12 (2026-04-21)</h2>
+<ul>
+<li>Update to Unicode 17.0.0.</li>
+<li>Issue a deprecation warning for the transitional argument.</li>
+<li>Added lazy-loading to provide some performance improvements.</li>
+<li>Removed vestiges of code related to Python 2 support, including
+segmentation of data structures specific to Jython.</li>
+</ul>
+<p>Thanks to Rodrigo Nogueira for contributions to this release.</p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/kjd/idna/commit/af30a092e158181d0b35ac66dfa813788126bdd8""><code>af30a09</code></a>
+Release 3.15</li>
+<li><a
+href=""https://github.com/kjd/idna/commit/30314d4628744ca14cf2b5820564e5127a9f86f2""><code>30314d4</code></a>
+Pre-release 3.15rc0</li>
+<li><a
+href=""https://github.com/kjd/idna/commit/05d4b219aa9eddc47371fcbd2000f0301016f3e9""><code>05d4b21</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/kjd/idna/issues/237"">#237</a> from
+kjd/convert-docs-to-markdown</li>
+<li><a
+href=""https://github.com/kjd/idna/commit/2987fdba1962bbb2358399e0084ba062b98a0bee""><code>2987fdb</code></a>
+Convert README and HISTORY from reStructuredText to Markdown</li>
+<li><a
+href=""https://github.com/kjd/idna/commit/59fa8002d514bf4a5ce7b58f67b9ec587d53fa9c""><code>59fa800</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/kjd/idna/issues/236"">#236</a> from
+kjd/dependabot/github_actions/actions-f3e34333ea</li>
+<li><a
+href=""https://github.com/kjd/idna/commit/def69834ced5d4b3c50439d8b99c4c856ec19ca2""><code>def6983</code></a>
+Merge branch 'master' into
+dependabot/github_actions/actions-f3e34333ea</li>
+<li><a
+href=""https://github.com/kjd/idna/commit/bbd8004a797185d8c56bb555cd5c88fde05e0631""><code>bbd8004</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/kjd/idna/issues/234"">#234</a> from
+StanFromIreland/patch-1</li>
+<li><a
+href=""https://github.com/kjd/idna/commit/edd07c05024344a6ccb517414ccb36683aee99fc""><code>edd07c0</code></a>
+Bump github/codeql-action from 3.35.2 to 4.35.2 in the actions
+group</li>
+<li><a
+href=""https://github.com/kjd/idna/commit/5557db030c11bdec50d62aa5f631d705d33ba123""><code>5557db0</code></a>
+Merge branch 'master' into patch-1</li>
+<li><a
+href=""https://github.com/kjd/idna/commit/f11746cf4981d25123ef7830d3ee60f07de8ae3d""><code>f11746c</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/kjd/idna/issues/235"">#235</a> from
+StanFromIreland/patch-2</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/kjd/idna/compare/v3.11...v3.15"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=idna&package-manager=uv&previous-version=3.11&new-version=3.15)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+You can disable automated security fix PRs for this repo from the
+[Security Alerts
+page](https://github.com/apache/iceberg-python/network/alerts).
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",d3393910065a282e96f9b471d0a9b1047ef28b7a,3386,false,dependabot[bot],1,3,3,uv.lock
+apache/iceberg-python,3bd5f275d012246debd6ee99a3433f7d7814818d,3bd5f27,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-21T06:59:10+02:00,GitHub,noreply@github.com,2026-05-21T06:59:10+02:00,Build: Bump pymdown-extensions from 10.16.1 to 10.21.3 (#3385),,6eddf1a7bfa804568c8b069ade6ee4584a3a46b4,3385,false,,1,3,3,uv.lock
+apache/iceberg-python,208c1e211a0bc8316a5287b6ec4641d484fc7baa,208c1e2,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-23T07:48:54+02:00,GitHub,noreply@github.com,2026-05-23T07:48:54+02:00,Build: Bump github/codeql-action from 4.35.4 to 4.35.5 (#3393),,3bd5f275d012246debd6ee99a3433f7d7814818d,3393,false,,1,2,2,.github
+apache/iceberg-python,768ba467cbda1bf35609d3c2e1425d862b952da9,768ba46,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-23T07:49:05+02:00,GitHub,noreply@github.com,2026-05-23T07:49:05+02:00,Build: Bump huggingface-hub from 1.14.0 to 1.15.0 (#3394),,208c1e211a0bc8316a5287b6ec4641d484fc7baa,3394,false,,1,3,3,uv.lock
+apache/iceberg-python,68286048a3dd7db65dbfa7f80538b61946625e13,6828604,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-23T07:49:18+02:00,GitHub,noreply@github.com,2026-05-23T07:49:18+02:00,Build: Bump thrift from 0.22.0 to 0.23.0 (#3395),,768ba467cbda1bf35609d3c2e1425d862b952da9,3395,false,,1,2,2,uv.lock
+apache/iceberg-python,6dcdcafa26cffd1a8e7ff4f251d94cc859511b03,6dcdcaf,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-23T07:49:30+02:00,GitHub,noreply@github.com,2026-05-23T07:49:30+02:00,Build: Bump google-auth from 2.52.0 to 2.53.0 (#3396),,68286048a3dd7db65dbfa7f80538b61946625e13,3396,false,,1,3,3,uv.lock
+apache/iceberg-python,1c870a4a260a74e4b738b47dc7106f7af33c869a,1c870a4,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-23T07:49:45+02:00,GitHub,noreply@github.com,2026-05-23T07:49:45+02:00,Build: Bump requests from 2.33.1 to 2.34.2 (#3397),,6dcdcafa26cffd1a8e7ff4f251d94cc859511b03,3397,false,,1,3,3,uv.lock
+apache/iceberg-python,ef08b711a2b21ab7fb18e6c6c30ccce1df53b1cf,ef08b71,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-23T07:49:55+02:00,GitHub,noreply@github.com,2026-05-23T07:49:55+02:00,Build: Bump mypy-boto3-glue from 1.43.5 to 1.43.8 (#3398),,1c870a4a260a74e4b738b47dc7106f7af33c869a,3398,false,,1,3,3,uv.lock
+apache/iceberg-python,b2b720809438166a3ad45661af2b2cad89d09065,b2b7208,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-23T07:50:07+02:00,GitHub,noreply@github.com,2026-05-23T07:50:07+02:00,Build: Bump daft from 0.7.10 to 0.7.13 (#3399),,ef08b711a2b21ab7fb18e6c6c30ccce1df53b1cf,3399,false,,1,7,7,uv.lock
+apache/iceberg-python,fbd4c3bbaa882b8818d2dcdfc3835b6ed3aa90c5,fbd4c3b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-23T07:50:20+02:00,GitHub,noreply@github.com,2026-05-23T07:50:20+02:00,Build: Bump prek from 0.3.13 to 0.4.0 (#3400),,b2b720809438166a3ad45661af2b2cad89d09065,3400,false,,2,20,20,pyproject.toml; uv.lock
+apache/iceberg-python,88e8c2540f770a77ae6f6a9b5b4e90d39ed05bcf,88e8c25,Yuya Ebihara,ebyhry@gmail.com,2026-05-23T14:51:04+09:00,GitHub,noreply@github.com,2026-05-23T07:51:04+02:00,Build: Update actions/upload-artifact to v7.0.1 (#3401),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+Fix warning of Node.js: 
+```
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+```
+
+https://github.com/apache/iceberg already uses v7.0.1. 
+
+## Are these changes tested?
+
+N/A
+
+## Are there any user-facing changes?
+
+No",fbd4c3bbaa882b8818d2dcdfc3835b6ed3aa90c5,3401,false,,3,6,6,.github
+apache/iceberg-python,4bd751d7d8af9786db76ec0e3e6d0114d89d4921,4bd751d,Minh Vu,vuhoangminh97@gmail.com,2026-05-23T07:52:05+02:00,GitHub,noreply@github.com,2026-05-23T07:52:05+02:00,docs: fix New York longitude sign in partial overwrite example (#3403),"## Summary
+- correct the New York longitude in the partial overwrite docs example
+- update the rendered output snippet to keep the example internally
+consistent
+
+Closes #3402",88e8c2540f770a77ae6f6a9b5b4e90d39ed05bcf,3403,false,,1,2,2,mkdocs
+apache/iceberg-python,00d0962d7472a21fbcb548dd23b1e0e5a90695d8,00d0962,Yuya Ebihara,ebyhry@gmail.com,2026-05-24T06:52:53+09:00,GitHub,noreply@github.com,2026-05-23T14:52:53-07:00,Test: Replace rest-scan-planning-enabled with scan-planning-mode (#3391),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+- Follow-up of https://github.com/apache/iceberg-python/pull/3376
+
+There are no other usages of `rest-scan-planning-enabled`. 
+
+## Are these changes tested?
+
+Yes
+
+## Are there any user-facing changes?
+
+No",4bd751d7d8af9786db76ec0e3e6d0114d89d4921,3391,false,,2,3,3,tests
+apache/iceberg-python,1d31eff86154540129f40fe9146c8f27d5e54d41,1d31eff,Gabriel Igliozzi,gaboiglio@gmail.com,2026-05-24T00:14:50+02:00,GitHub,noreply@github.com,2026-05-23T15:14:50-07:00,feat(view): View object API (#3338),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+Add view api to abstract away access to the metadata
+
+## Are these changes tested?
+
+Yes, created tests/test_view.py
+
+## Are there any user-facing changes?
+
+Yes, a new api is available for views
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",00d0962d7472a21fbcb548dd23b1e0e5a90695d8,3338,false,,3,204,4,pyiceberg; tests
+apache/iceberg-python,62e393fbfb64c226a42a0db3df4bb9b0799c70be,62e393f,Yuya Ebihara,ebyhry@gmail.com,2026-05-24T08:34:43+09:00,GitHub,noreply@github.com,2026-05-23T16:34:43-07:00,REST: Add pagination support for list_namespaces (#3347),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+Follows REST catalog spec: 
+
+- /v1/{prefix}/namespaces:
+https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L250-L306
+- ListNamespacesResponse:
+https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L4221-L4230
+- PageToken:
+https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L2233-L2256
+
+## Are these changes tested?
+
+Yes, includes unit tests for paginated cases.
+
+## Are there any user-facing changes?
+
+- Before: returned incomplete namespace list when server paginated (only
+first page)
+- After: returns complete namespace list (fetches all pages)
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",1d31eff86154540129f40fe9146c8f27d5e54d41,3347,false,Kevin Liu,2,124,12,pyiceberg; tests
+apache/iceberg-python,2be1827bf9a9a8e82f0cb4e8cb6a2ae535bafd7f,2be1827,Yuya Ebihara,ebyhry@gmail.com,2026-05-24T08:38:08+09:00,GitHub,noreply@github.com,2026-05-23T16:38:08-07:00,REST: Add pagination support for list_tables (#3348),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+Follows REST catalog spec: 
+
+- /v1/{prefix}/tables:
+https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L525-L562
+- ListTablesResponse:
+https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L4210-L4219
+- PageToken:
+https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L2233-L2256
+
+## Are these changes tested?
+
+Yes, includes unit tests for paginated cases.
+
+## Are there any user-facing changes?
+
+- Before: returned incomplete table list when server paginated (only
+first page)
+- After: returns complete table list (fetches all pages)
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",62e393fbfb64c226a42a0db3df4bb9b0799c70be,3348,false,Kevin Liu,2,108,6,pyiceberg; tests
+apache/iceberg-python,1adff267a44038c8ae98ebbbc538cd521312c20c,1adff26,Yuya Ebihara,ebyhry@gmail.com,2026-05-24T11:58:13+09:00,GitHub,noreply@github.com,2026-05-23T19:58:13-07:00,Make `View.sql_for` case-insensitive and return None for unknown dialect (#3407),"# Rationale for this change
+
+Iceberg Java compares the dialect in a case-insensitive manner, and
+returns null if the dialect is unknown.
+
+
+https://github.com/apache/iceberg/blob/29ba0a14dc6667db0683fdfcd520639b3da77774/core/src/main/java/org/apache/iceberg/view/BaseView.java#L113-L130
+
+## Are these changes tested?
+
+Yes
+
+## Are there any user-facing changes?
+
+No - the method isn't released yet
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",2be1827bf9a9a8e82f0cb4e8cb6a2ae535bafd7f,3407,false,,2,14,5,pyiceberg; tests
+apache/iceberg-python,a24af23012f9c7767499efbeeb4dd524e0353d3f,a24af23,Yuya Ebihara,ebyhry@gmail.com,2026-05-24T12:00:20+09:00,GitHub,noreply@github.com,2026-05-23T20:00:20-07:00,REST: Add integration test for views (#3406),"# Rationale for this change
+
+Improve test coverage of views in REST catalog.
+
+## Are these changes tested?
+
+Yes
+
+## Are there any user-facing changes?
+
+No",1adff267a44038c8ae98ebbbc538cd521312c20c,3406,false,,2,57,0,tests
+apache/iceberg-python,8055a60af5d32ec4d2e1d02cd020a78273785558,8055a60,Yuya Ebihara,ebyhry@gmail.com,2026-05-24T12:04:50+09:00,GitHub,noreply@github.com,2026-05-23T20:04:50-07:00,"REST: Add support for page-size in list_namespaces, list_tables, and list_views (#3377)","<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+Follows REST catalog spec:
+* `/v1/{prefix}/views`:
+https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L1525-L1538
+* `page-size`:
+https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L2029-L2038
+
+
+
+## Are these changes tested?
+
+Yes. 
+
+## Are there any user-facing changes?
+
+Add support for `page-size` in list_views in REST catalog.
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",a24af23012f9c7767499efbeeb4dd524e0353d3f,3377,false,,2,111,3,pyiceberg; tests
+apache/iceberg-python,e4869850b5632b29bc65cd2d549bfda9fb22d27c,e486985,Yuya Ebihara,ebyhry@gmail.com,2026-05-25T01:37:58+09:00,GitHub,noreply@github.com,2026-05-24T09:37:58-07:00,REST: Allow Identifier type in `drop_view` method (#3408),"# Rationale for this change
+
+Fix the warning message in the IDE. 
+
+The base class and other classes use the `str | Identifier` style in the
+`drop_view` method.
+I also confirmed that other methods in the REST catalog class use `str |
+Identifier` for identifiers.
+
+## Are these changes tested?
+
+N/A
+
+## Are there any user-facing changes?
+
+No
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",8055a60af5d32ec4d2e1d02cd020a78273785558,3408,false,,1,1,1,pyiceberg
+apache/iceberg-python,55887b46ca70a1e03419873348f2f55d8491ada5,55887b4,Chris Qiu,churchqq030@hotmail.com,2026-05-25T01:14:47+08:00,GitHub,noreply@github.com,2026-05-24T10:14:47-07:00,feat(cli): deprecate version command in favor of --version flag (#3206),"Closes #3160
+
+<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+The `pyiceberg version` subcommand is non-standard. Most CLI tools use
+`--version` instead.
+This PR adds `--version` via Click's built-in `click.version_option()`
+and deprecates the
+old `version` subcommand with a visible warning message, following the
+project's deprecation
+conventions.
+
+Note: I chose `removed_in=""1.0.0""` to match the existing deprecation in
+the REST catalog
+(see `pyiceberg/catalog/rest/__init__.py`), but happy to adjust if a
+different version is preferred.
+
+## Are these changes tested?
+
+Yes. Added two new tests:
+- `test_version_flag` — verifies `pyiceberg --version` works correctly
+- `test_version_command_emits_deprecation_warning` — verifies the old
+command still works but emits a `DeprecationWarning` and prints a
+visible deprecation notice to stderr
+
+Updated the existing `test_version_does_not_load_catalog` to account for
+the deprecation warning.
+<img width=""884"" height=""116"" alt=""Screenshot 2026-03-29 at 11 47 37 pm""
+src=""https://github.com/user-attachments/assets/cb4fe218-3671-41a3-83db-e90933271bb1""
+/>
+
+<img width=""884"" height=""116"" alt=""Screenshot 2026-03-29 at 11 59 54 pm""
+src=""https://github.com/user-attachments/assets/10bafeaa-9bea-4d81-b7e1-0ec2abce571e""
+/>
+
+
+## Are there any user-facing changes?
+
+Yes:
+- `pyiceberg --version` is now available
+- `pyiceberg version` still works but prints a deprecation warning
+- Help text updated to reflect the deprecation
+<!-- In the case of user-facing changes, please add the changelog label.
+-->
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",e4869850b5632b29bc65cd2d549bfda9fb22d27c,3206,false,Kevin Liu,2,26,2,pyiceberg; tests
+apache/iceberg-python,720708a00f8a259d2f2ad86c1c55d5b88ad6c373,720708a,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-05-25T15:57:38-04:00,GitHub,noreply@github.com,2026-05-25T21:57:38+02:00,Fix walrus truthiness on metrics bounds and identity-partition projection (#3412),"Inspired by the walrus issue in #3353
+
+## Summary
+
+Several `if x := dict.get(k):` checks treated legitimate falsy values as
+missing:
+
+- `lower_bounds.get(field_id)` / `upper_bounds.get(field_id)` return
+`bytes`. `b""""` is a valid serialization of an empty string and was being
+skipped, causing metrics-based row filtering to return
+`ROWS_MIGHT_MATCH` when it should have been `ROWS_CANNOT_MATCH` (and
+vice versa for strict eval).
+- `accessors[...].get(file.partition)` can return `0` or `""""` for an
+`IdentityTransform` partition. The walrus dropped it, so projected
+partition columns were filled with `null` instead of the actual value.
+- `inspect.py` `lower_bound` / `upper_bound` rendering had the same
+`b""""` issue, showing `None` instead of `""""` in `readable_metrics`.
+
+All conditions are switched to explicit `is not None` checks. A small
+`_readable_bound` helper deduplicates the inspect rendering.
+
+## Changes
+
+- `pyiceberg/expressions/visitors.py` — `_InclusiveMetricsEvaluator` and
+`_StrictMetricsEvaluator` bound lookups (21 sites).
+- `pyiceberg/io/pyarrow.py` — `_get_column_projection_values` and
+`ArrowProjectionVisitor` missing-field handling.
+- `pyiceberg/table/inspect.py` — extract `_readable_bound`, use it in
+both the `entries` and `_get_files_from_manifest` rendering paths.
+
+## Tests
+
+- `tests/expressions/test_evaluator.py` — inclusive and strict
+evaluators with empty-string bounds, covering lower-only, upper-only,
+and both-bounds branches.
+- `tests/io/test_pyarrow.py` — parametrized identity-transform
+projection with falsy partition values (`0`, `""""`, `None`).
+- `tests/table/test_inspect.py` — `_readable_bound` helper plus
+integration tests via `tbl.inspect.entries()` and `tbl.inspect.files()`
+for empty-string and null bounds.",55887b46ca70a1e03419873348f2f55d8491ada5,3412,false,,6,252,35,pyiceberg; tests
+apache/iceberg-python,b7ca7be605043b26e2078da357ad4f94e22e771a,b7ca7be,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-05-25T16:01:52-04:00,GitHub,noreply@github.com,2026-05-25T22:01:52+02:00,Reject empty `source-ids` in `PartitionField` / `SortField` (#3411),"Inspired by the walrus issue in #3353
+
+## Problem
+
+`PartitionField` and `SortField` accept the v3 `source-ids` list (added
+in [#1554](https://github.com/apache/iceberg-python/pull/1554)) and map
+it to the legacy singular `source-id`. Both validators try to reject an
+empty list:
+
+```python
+if ""source-id"" not in data and (source_ids := data[""source-ids""]):
+    if isinstance(source_ids, list):
+        if len(source_ids) == 0:
+            raise ValueError(""Empty source-ids is not allowed"")
+        ...
+        data[""source-id""] = source_ids[0]
+```
+
+The walrus uses truthiness, and `[]` is falsy — so the `len(source_ids)
+== 0` branch is unreachable. Passing `{""source-ids"": []}` silently skips
+the mapping, and Pydantic then reports a generic ""field required"" error
+instead of the intended message. A missing `source-ids` key also raises
+`KeyError` instead of being handled cleanly.
+
+## Fix
+
+Replace the walrus with an explicit key check in both validators:
+
+```python
+if ""source-id"" not in data and ""source-ids"" in data:
+    source_ids = data[""source-ids""]
+    ...
+```
+
+This makes the empty-list validation reachable and avoids the
+`KeyError`.
+
+## Tests
+
+Added regression tests that deserialize `{""source-ids"": []}` and assert
+`ValueError(""Empty source-ids is not allowed"")` is raised, for both
+`PartitionField` and `SortField`.",720708a00f8a259d2f2ad86c1c55d5b88ad6c373,3411,false,,4,16,2,pyiceberg; tests
+apache/iceberg-python,75cd77fda94a6bdd242c8d892d2bae5db595653c,75cd77f,Minh Vu,vuhoangminh97@gmail.com,2026-05-25T22:03:47+02:00,GitHub,noreply@github.com,2026-05-25T22:03:47+02:00,Fix precision loss in large integral string conversions (#3405),"## Summary
+
+Fixes precision loss when converting large integral strings in two
+runtime paths:
+
+- `StringLiteral.to(IntegerType/LongType)`
+- `partition_to_py(...)` for integral and time-based partition values
+backed by integers
+
+## Root cause
+
+Both paths were converting through `float` before converting to `int`,
+which loses precision for values outside the IEEE-754 exact integer
+range.
+
+That caused valid 64-bit integers like `LongType.max` and
+`9007199254740993` to be corrupted.
+
+## What changed
+
+- Replaced `int(float(...))` with exact integer parsing in
+`partition_to_py`
+- For `StringLiteral.to(IntegerType/LongType)`, exact integral strings
+now use exact integer parsing while fractional numeric strings retain
+the existing truncation behavior
+- Added regression tests for `LongType.max` and `9007199254740993`
+
+## Validation
+
+- `uv run pytest tests/expressions/test_literals.py
+tests/test_conversions.py`
+
+Closes #3404.",b7ca7be605043b26e2078da357ad4f94e22e771a,3405,false,,4,50,7,pyiceberg; tests
+apache/iceberg-python,d99e4633de170046c6a5fa1b63bfb35eb0ba9f7d,d99e463,CalebWeisgerber,122579734+CalebWeisgerber@users.noreply.github.com,2026-05-26T12:37:21-07:00,GitHub,noreply@github.com,2026-05-26T12:37:21-07:00,Chore: Updated PyArrow Dependencies (#3362),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+Closes #3356
+
+# Rationale for this change
+Update ```pyproject.toml``` so ```pyarrow``` no longer pulls in
+```pyarrow-core```. The ```uv.lock``` was also regenerated to reflect
+the change of the dependency tree. All test passed in both test and
+test-integration. However, in integration 80 test where skipped after
+the update,
+
+This is an issue presented in
+https://github.com/apache/iceberg-rust/pull/2442
+
+## Are these changes tested?
+
+## Are there any user-facing changes?
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",75cd77fda94a6bdd242c8d892d2bae5db595653c,3362,false,,2,0,3,pyproject.toml; uv.lock
+apache/iceberg-python,aa33ab496a226aaf5ff7a9791eb053fb143dd5b8,aa33ab4,Yuya Ebihara,ebyhry@gmail.com,2026-05-29T00:01:16+09:00,GitHub,noreply@github.com,2026-05-28T08:01:16-07:00,Fix typo (#3424),"# Rationale for this change
+
+Fix typo
+
+## Are these changes tested?
+
+Yes
+
+## Are there any user-facing changes?
+
+No
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",d99e4633de170046c6a5fa1b63bfb35eb0ba9f7d,3424,false,,4,4,4,tests
+apache/iceberg-python,5da8186d0a77456e2da2a0286bc016af94c043ed,5da8186,Sung Yun,107272191+sungwy@users.noreply.github.com,2026-05-28T15:54:41-04:00,GitHub,noreply@github.com,2026-05-28T15:54:41-04:00,docs: add Iceberg security model (#3425),"Similar to: https://github.com/apache/iceberg/pull/16538
+
+This PR publishes a security model for Iceberg and adds a detailed
+threat model referenced from AGENTS.md so there is a clear project
+reference for how Iceberg distinguishes security issues from other bugs.
+
+The goal is to make Iceberg’s security boundaries explicit for both
+human triage and automated scanning, and to reduce false positives in
+future security reporting.
+
+This PR was drafted with AI assistance and then manually reviewed and
+edited to reflect the project’s current approach to security roles,
+trust boundaries, and the handling of recent security reports.",aa33ab496a226aaf5ff7a9791eb053fb143dd5b8,3425,false,,2,258,0,AGENTS.md; SECURITY-THREAT-MODEL.md
+apache/iceberg-python,0f3f00f3ae955d983f85aad8de2a35184621a255,0f3f00f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-02T09:08:13+02:00,GitHub,noreply@github.com,2026-06-02T09:08:13+02:00,Build: Bump github/codeql-action from 4.35.5 to 4.36.0 (#3430),,5da8186d0a77456e2da2a0286bc016af94c043ed,3430,false,,1,2,2,.github
+apache/iceberg-python,d70e45645ff153500056c05c9be9ad571c0f774d,d70e456,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-02T09:08:27+02:00,GitHub,noreply@github.com,2026-06-02T09:08:27+02:00,Build: Bump actions/stale from 10.2.0 to 10.3.0 (#3431),,0f3f00f3ae955d983f85aad8de2a35184621a255,3431,false,,1,1,1,.github
+apache/iceberg-python,6245f4aa2d413dd25f9e21b552d70cc945e695df,6245f4a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-02T09:13:34+02:00,GitHub,noreply@github.com,2026-06-02T09:13:34+02:00,Build: Bump duckdb from 1.5.2 to 1.5.3 (#3440),,d70e45645ff153500056c05c9be9ad571c0f774d,3440,false,,1,38,38,uv.lock
+apache/iceberg-python,0dcabc0a708d3d7f49cfd63333c213c40161954f,0dcabc0,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-02T09:13:45+02:00,GitHub,noreply@github.com,2026-06-02T09:13:45+02:00,Build: Bump huggingface-hub from 1.15.0 to 1.16.1 (#3439),,6245f4aa2d413dd25f9e21b552d70cc945e695df,3439,false,,1,3,3,uv.lock
+apache/iceberg-python,8cf0df6595ae46e211313a428ea480539f7b815a,8cf0df6,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-02T09:13:58+02:00,GitHub,noreply@github.com,2026-06-02T09:13:58+02:00,Build: Bump cachetools from 7.1.1 to 7.1.4 (#3438),,0dcabc0a708d3d7f49cfd63333c213c40161954f,3438,false,,1,3,3,uv.lock
+apache/iceberg-python,199a0d342ad01c67ba3359faecaaf1dd14daf4be,199a0d3,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-02T09:14:10+02:00,GitHub,noreply@github.com,2026-06-02T09:14:10+02:00,Build: Bump bodo from 2026.4 to 2026.5 (#3437),,8cf0df6595ae46e211313a428ea480539f7b815a,3437,false,,1,21,21,uv.lock
+apache/iceberg-python,dcdc3db5adf6658db9f55b5b0f0b65ab1ff95b46,dcdc3db,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-02T09:16:30+02:00,GitHub,noreply@github.com,2026-06-02T09:16:30+02:00,Build: Bump click from 8.3.3 to 8.4.1 (#3435),,199a0d342ad01c67ba3359faecaaf1dd14daf4be,3435,false,,1,3,3,uv.lock
+apache/iceberg-python,bc1026563107aafc7c6f0bfc4abfd3924fa132b8,bc10265,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-02T09:16:47+02:00,GitHub,noreply@github.com,2026-06-02T09:16:47+02:00,Build: Bump prek from 0.4.0 to 0.4.1 (#3433),,dcdc3db5adf6658db9f55b5b0f0b65ab1ff95b46,3433,false,,1,19,19,uv.lock
+apache/iceberg-python,b29c94ff41f9141ba2e40ea70da01cd8daaf8bc0,b29c94f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-02T09:17:01+02:00,GitHub,noreply@github.com,2026-06-02T09:17:01+02:00,Build: Bump zizmorcore/zizmor-action from 0.5.3 to 0.5.6 (#3432),,bc1026563107aafc7c6f0bfc4abfd3924fa132b8,3432,false,,1,1,1,.github
+apache/iceberg-python,77b27924bebfa64113f38178b6391dcbdf1cd84a,77b2792,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-02T09:17:20+02:00,GitHub,noreply@github.com,2026-06-02T09:17:20+02:00,Build: Bump daft from 0.7.13 to 0.7.14 (#3434),,b29c94ff41f9141ba2e40ea70da01cd8daaf8bc0,3434,false,,1,7,7,uv.lock

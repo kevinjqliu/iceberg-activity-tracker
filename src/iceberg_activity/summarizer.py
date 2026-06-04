@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 
+from .config import TARGET_REPOSITORIES, RepoConfig
 from .git_client import CSV_FIELDS
 from .vector_ranker import build_java_highlight_index, rank_with_lancedb
 
@@ -53,12 +54,16 @@ LOW_SIGNAL_RE = re.compile(r"\b(docs?|javadoc|readme|tests?|benchmark|benchmarks
 
 @dataclass(frozen=True)
 class SummaryResult:
-    scored_csv_path: Path
+    scored_csv_paths: tuple[Path, ...]
     markdown_path: Path
     candidate_count: int
     selected_count: int
     since: date
     until: date
+
+    @property
+    def scored_csv_path(self) -> Path:
+        return self.scored_csv_paths[0]
 
 
 def parse_month(value: str) -> tuple[int, int]:
@@ -240,23 +245,109 @@ def write_scored_csv(rows: list[dict[str, str]], output_path: Path) -> None:
 
 
 def write_markdown(
+    sections: list[tuple[RepoConfig, list[dict[str, str]], int]],
+    output_path: Path,
+    *,
+    since: date,
+    until: date,
+) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    total_candidates = sum(candidate_count for _, _, candidate_count in sections)
+    lines: list[str] = [
+        "# Iceberg Community Sync Summary",
+        "",
+        f"- Period: `{since.isoformat()}` to before `{until.isoformat()}`",
+        f"- Review candidates: `{total_candidates}`",
+        "",
+    ]
+    for repo, rows, candidate_count in sections:
+        lines.extend(
+            [
+                f"## {repo.full_name}",
+                "",
+                f"### {repo.summary_heading}",
+                "",
+                f"_Top {len(rows)} of {candidate_count} scored commits._",
+                "",
+                *[row["summary_bullet"] for row in rows],
+                "",
+            ]
+        )
+    output_path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def score_rows(
+    rows: list[dict[str, str]],
+    *,
+    notes_path: Path | None = None,
+    lancedb_dir: Path | None = None,
+) -> list[dict[str, str]]:
+    use_lancedb = bool(notes_path and notes_path.exists() and lancedb_dir)
+    indexed_examples = 0
+    if use_lancedb:
+        indexed_examples = build_java_highlight_index(notes_path, lancedb_dir)
+        use_lancedb = indexed_examples > 0
+
+    scored_rows: list[dict[str, str]] = []
+    for row in rows:
+        row = {field: row.get(field, "") for field in CSV_FIELDS} | row
+        heuristic_score, reasons = score_commit(row)
+        lancedb_score = 0
+        lancedb_match = ""
+        if use_lancedb and lancedb_dir:
+            match = rank_with_lancedb(row, lancedb_dir)
+            lancedb_score = match.score
+            lancedb_match = match.matched_example
+            reasons = f"{reasons}; {match.reason}"
+            if is_low_signal_for_semantic_boost(row):
+                lancedb_score = min(lancedb_score, 3)
+                reasons = f"{reasons}; capped LanceDB boost for routine/low-signal commit"
+        elif notes_path and not notes_path.exists():
+            reasons = f"{reasons}; no notes file for LanceDB ranking"
+        elif notes_path and indexed_examples == 0:
+            reasons = f"{reasons}; no Java highlights indexed for LanceDB ranking"
+
+        row["heuristic_score"] = str(heuristic_score)
+        row["lancedb_score"] = str(lancedb_score)
+        row["score"] = str(heuristic_score + lancedb_score)
+        row["lancedb_match"] = lancedb_match
+        row["score_reasons"] = reasons
+        row["summary_bullet"] = summary_bullet(row)
+        scored_rows.append(row)
+
+    scored_rows.sort(key=sort_key, reverse=True)
+    return scored_rows
+
+
+def rows_for_period(input_path: Path, *, since: date, until: date) -> list[dict[str, str]]:
+    return [
+        row
+        for row in read_commit_rows(input_path)
+        if since <= row_commit_date(row) < until
+    ]
+
+
+def write_single_repo_markdown(
     rows: list[dict[str, str]],
     output_path: Path,
     *,
     since: date,
     until: date,
-    repository: str = "apache/iceberg",
+    repo: RepoConfig,
+    candidate_count: int,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     lines = [
         "# Iceberg Community Sync Summary",
         "",
         f"- Period: `{since.isoformat()}` to before `{until.isoformat()}`",
-        f"- Review candidates: `{len(rows)}`",
+        f"- Review candidates: `{candidate_count}`",
         "",
-        f"## {repository}",
+        f"## {repo.full_name}",
         "",
-        "### Java",
+        f"### {repo.summary_heading}",
+        "",
+        f"_Top {len(rows)} of {candidate_count} scored commits._",
         "",
         *[row["summary_bullet"] for row in rows],
         "",
@@ -286,67 +377,60 @@ def summarize_period(
     *,
     since: date,
     until: date,
-    input_path: Path,
+    input_path: Path | None = None,
+    input_dir: Path = Path("data/commits"),
     output_dir: Path,
     top: int = 10,
     notes_path: Path | None = None,
     lancedb_dir: Path | None = None,
     label: str | None = None,
+    repositories: tuple[RepoConfig, ...] = TARGET_REPOSITORIES,
 ) -> SummaryResult:
     if since >= until:
         raise ValueError("--since must be before --until")
-    use_lancedb = bool(notes_path and notes_path.exists() and lancedb_dir)
-    indexed_examples = 0
-    if use_lancedb:
-        indexed_examples = build_java_highlight_index(notes_path, lancedb_dir)
-        use_lancedb = indexed_examples > 0
-
-    rows = [
-        row
-        for row in read_commit_rows(input_path)
-        if since <= row_commit_date(row) < until
-    ]
-    scored_rows: list[dict[str, str]] = []
-    for row in rows:
-        row = {field: row.get(field, "") for field in CSV_FIELDS} | row
-        heuristic_score, reasons = score_commit(row)
-        lancedb_score = 0
-        lancedb_match = ""
-        if use_lancedb and lancedb_dir:
-            match = rank_with_lancedb(row, lancedb_dir)
-            lancedb_score = match.score
-            lancedb_match = match.matched_example
-            reasons = f"{reasons}; {match.reason}"
-            if is_low_signal_for_semantic_boost(row):
-                lancedb_score = min(lancedb_score, 3)
-                reasons = f"{reasons}; capped LanceDB boost for routine/low-signal commit"
-        elif notes_path and not notes_path.exists():
-            reasons = f"{reasons}; no notes file for LanceDB ranking"
-        elif notes_path and indexed_examples == 0:
-            reasons = f"{reasons}; no Java highlights indexed for LanceDB ranking"
-
-        row["heuristic_score"] = str(heuristic_score)
-        row["lancedb_score"] = str(lancedb_score)
-        row["score"] = str(heuristic_score + lancedb_score)
-        row["lancedb_match"] = lancedb_match
-        row["score_reasons"] = reasons
-        row["summary_bullet"] = summary_bullet(row)
-        scored_rows.append(row)
-
-    scored_rows.sort(key=sort_key, reverse=True)
-    selected_rows = scored_rows[:top]
-
     period_dir = output_dir / (label or summary_period_label(since, until))
-    scored_csv_path = period_dir / "apache_iceberg_scored.csv"
     markdown_path = period_dir / "README.md"
-    write_scored_csv(scored_rows, scored_csv_path)
-    write_markdown(selected_rows, markdown_path, since=since, until=until)
+    scored_csv_paths: list[Path] = []
+    sections: list[tuple[RepoConfig, list[dict[str, str]], int]] = []
+
+    if input_path:
+        repo = repositories[0]
+        rows = rows_for_period(input_path, since=since, until=until)
+        scored_rows = score_rows(rows, notes_path=notes_path, lancedb_dir=lancedb_dir)
+        selected_rows = scored_rows[:top]
+        scored_csv_path = period_dir / f"{repo.cache_name}_scored.csv"
+        write_scored_csv(scored_rows, scored_csv_path)
+        write_single_repo_markdown(
+            selected_rows,
+            markdown_path,
+            since=since,
+            until=until,
+            repo=repo,
+            candidate_count=len(scored_rows),
+        )
+        scored_csv_paths.append(scored_csv_path)
+        sections.append((repo, selected_rows, len(scored_rows)))
+    else:
+        for repo in repositories:
+            repo_input_path = input_dir / repo.csv_name
+            if not repo_input_path.exists():
+                continue
+            repo_lancedb_dir = lancedb_dir / repo.cache_name if lancedb_dir else None
+            rows = rows_for_period(repo_input_path, since=since, until=until)
+            scored_rows = score_rows(rows, notes_path=notes_path, lancedb_dir=repo_lancedb_dir)
+            selected_rows = scored_rows[:top]
+            scored_csv_path = period_dir / f"{repo.cache_name}_scored.csv"
+            write_scored_csv(scored_rows, scored_csv_path)
+            scored_csv_paths.append(scored_csv_path)
+            sections.append((repo, selected_rows, len(scored_rows)))
+        write_markdown(sections, markdown_path, since=since, until=until)
+
     write_summary_index(output_dir)
     return SummaryResult(
-        scored_csv_path=scored_csv_path,
+        scored_csv_paths=tuple(scored_csv_paths),
         markdown_path=markdown_path,
-        candidate_count=len(scored_rows),
-        selected_count=len(selected_rows),
+        candidate_count=sum(candidate_count for _, _, candidate_count in sections),
+        selected_count=sum(len(rows) for _, rows, _ in sections),
         since=since,
         until=until,
     )
@@ -355,22 +439,26 @@ def summarize_period(
 def summarize_month(
     *,
     month: str,
-    input_path: Path,
+    input_path: Path | None = None,
+    input_dir: Path = Path("data/commits"),
     output_dir: Path,
     top: int = 10,
     notes_path: Path | None = None,
     lancedb_dir: Path | None = None,
+    repositories: tuple[RepoConfig, ...] = TARGET_REPOSITORIES,
 ) -> SummaryResult:
     since, until = month_date_range(month)
     return summarize_period(
         since=since,
         until=until,
         input_path=input_path,
+        input_dir=input_dir,
         output_dir=output_dir,
         top=top,
         notes_path=notes_path,
         lancedb_dir=lancedb_dir,
         label=month,
+        repositories=repositories,
     )
 
 

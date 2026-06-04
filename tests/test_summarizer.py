@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from iceberg_activity.config import RepoConfig
 from iceberg_activity.git_client import CSV_FIELDS
 from iceberg_activity.summarizer import (
     contributor_names,
@@ -147,11 +148,13 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
         "# Iceberg Community Sync Summary\n"
         "\n"
         "- Period: `2026-06-01` to before `2026-07-01`\n"
-        "- Review candidates: `1`\n"
+        "- Review candidates: `2`\n"
         "\n"
         "## apache/iceberg\n"
         "\n"
         "### Java\n"
+        "\n"
+        "_Top 1 of 2 scored commits._\n"
         "\n"
         "- Core: Add V4 location relativization utilities (#16174) (Thanks Anoop Johnson!)\n"
     )
@@ -219,6 +222,72 @@ def test_summarize_period_uses_meeting_window_output_dir(tmp_path: Path) -> None
     assert commit_shas == {"1", "3"}
 
 
+def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
+    input_dir = tmp_path / "commits"
+    output_dir = tmp_path / "summaries"
+    java_repo = RepoConfig(
+        full_name="apache/iceberg",
+        remote_url="https://example.test/iceberg.git",
+        summary_heading="Java",
+    )
+    python_repo = RepoConfig(
+        full_name="apache/iceberg-python",
+        remote_url="https://example.test/iceberg-python.git",
+        summary_heading="Python",
+    )
+    write_rows(
+        input_dir / java_repo.csv_name,
+        [
+            commit_row(
+                commit_sha="java1",
+                short_sha="java1",
+                subject="Core: Add REST feature (#101)",
+                committer_date="2026-05-20T12:00:00+00:00",
+                repository="apache/iceberg",
+                author_name="Java Dev",
+                top_level_paths="core",
+                pr_number="101",
+            ),
+        ],
+    )
+    write_rows(
+        input_dir / python_repo.csv_name,
+        [
+            commit_row(
+                commit_sha="py1",
+                short_sha="py1",
+                subject="Catalog: Add namespace support (#202)",
+                committer_date="2026-05-21T12:00:00+00:00",
+                repository="apache/iceberg-python",
+                author_name="Python Dev",
+                top_level_paths="pyiceberg",
+                pr_number="202",
+            ),
+        ],
+    )
+
+    result = summarize_period(
+        since=date(2026, 5, 13),
+        until=date(2026, 6, 3),
+        input_dir=input_dir,
+        output_dir=output_dir,
+        top=20,
+        repositories=(java_repo, python_repo),
+    )
+
+    assert result.candidate_count == 2
+    assert result.selected_count == 2
+    assert result.scored_csv_paths == (
+        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_scored.csv",
+        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_python_scored.csv",
+    )
+    markdown = result.markdown_path.read_text(encoding="utf-8")
+    assert "## apache/iceberg\n\n### Java" in markdown
+    assert "- Core: Add REST feature (#101) (Thanks Java Dev!)" in markdown
+    assert "## apache/iceberg-python\n\n### Python" in markdown
+    assert "- Catalog: Add namespace support (#202) (Thanks Python Dev!)" in markdown
+
+
 def commit_row(**overrides: str) -> dict[str, str]:
     row = {field: "" for field in CSV_FIELDS}
     row.update(
@@ -249,6 +318,7 @@ def commit_row(**overrides: str) -> dict[str, str]:
 
 
 def write_rows(path: Path, rows: list[dict[str, str]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=CSV_FIELDS)
         writer.writeheader()

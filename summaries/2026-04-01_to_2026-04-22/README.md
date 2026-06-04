@@ -1,11 +1,13 @@
 # Iceberg Community Sync Summary
 
 - Period: `2026-04-01` to before `2026-04-22`
-- Review candidates: `20`
+- Review candidates: `96`
 
 ## apache/iceberg
 
 ### Java
+
+_Top 20 of 72 scored commits._
 
 - Core: Add fromId to EntryStatus and ManifestEntry.Status (#15983) (Thanks Anoop Johnson!)
 - Core: Introduce default values in RESTCatalogProperties (#15873) (Thanks gaborkaszab!)
@@ -27,3 +29,30 @@
 - Core: Fix StructLikeWrapper.equals exception with mismatched partition types (#15945) (Thanks Yuya Ebihara!)
 - Hive encryption nits (#14659) (Thanks Sreesh Maheshwar and Claude Opus 4.6 (1M context)!)
 - AWS, Core: Switch Jetty to use new Compression API for GZIP (#15043) (Thanks Eduard Tudenhoefner!)
+
+## apache/iceberg-python
+
+### Python
+
+_Top 20 of 24 scored commits._
+
+- Fix ManifestEntry.snapshot_id setter writing to wrong index (#3257) (Thanks Sotaro Hikita!)
+- fix: Handle optional properties in load namespace properties response (#3169) (Thanks geruh!)
+- fix zizmor ci issue by bumping codeql-action to v4.35.2 (#3245) (Thanks geruh!)
+- Fix pa.Schema type annotations in schema_to_pyarrow (#3261) (Thanks David Zhao!)
+- ci: fix zizmor workflow (#3243) (Thanks Kevin Liu!)
+- CI: Lock REST Fixture to 1.10.1 (#3240) (Thanks Fokko Driesprong!)
+- Build: Bump pytest from 9.0.2 to 9.0.3 (#3238) (Thanks dependabot[bot]!)
+- Build: Bump nbconvert from 7.17.0 to 7.17.1 (#3262) (Thanks dependabot[bot]!)
+- Build: Bump boto3 from 1.40.61 to 1.42.84 (#3226) (Thanks dependabot[bot]!)
+- Build: Bump bodo from 2026.2 to 2026.4 (#3253) (Thanks dependabot[bot]!)
+- Build: Bump adlfs from 2026.2.0 to 2026.4.0 (#3252) (Thanks dependabot[bot]!)
+- Build: Bump s3fs from 2026.2.0 to 2026.3.0 (#3251) (Thanks dependabot[bot]!)
+- Build: Bump google-auth from 2.49.1 to 2.49.2 (#3250) (Thanks dependabot[bot]!)
+- Build: Bump huggingface-hub from 1.9.2 to 1.10.1 (#3249) (Thanks dependabot[bot]!)
+- Build: Bump requests from 2.33.0 to 2.33.1 (#3227) (Thanks dependabot[bot]!)
+- Build: Bump google-cloud-bigquery from 3.40.1 to 3.41.0 (#3228) (Thanks dependabot[bot]!)
+- Build: Bump huggingface-hub from 1.8.0 to 1.9.0 (#3229) (Thanks dependabot[bot]!)
+- Build: Bump sqlalchemy from 2.0.48 to 2.0.49 (#3230) (Thanks dependabot[bot]!)
+- Build: Bump click from 8.3.1 to 8.3.2 (#3231) (Thanks dependabot[bot]!)
+- Build: Bump daft from 0.6.14 to 0.7.7 (#3232) (Thanks dependabot[bot]!)

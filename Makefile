@@ -13,11 +13,13 @@ SUMMARY_UNTIL ?=
 TOP ?= 20
 COMPARISON_TOP ?= 20
 SUMMARY_OUTPUT_DIR ?= summaries
-SUMMARY_INPUT ?= data/commits/apache_iceberg.csv
+SUMMARY_INPUT ?=
+SUMMARY_INPUT_DIR ?= data/commits
 NOTES ?= data/notes/iceberg_community_sync_notes.md
 LANCEDB_DIR ?= .cache/lancedb
 BACKTEST_OUTPUT_DIR ?= data/backtests
 BACKTEST_LANCEDB_DIR ?= .cache/lancedb-backtest
+BACKTEST_INPUT ?= data/commits/apache_iceberg.csv
 BACKTEST_ARGS ?=
 
 all: collect
@@ -32,14 +34,14 @@ collect:
 
 summarize:
 	@if [ -n "$(MONTH)" ] && { [ -n "$(MEETING_DATE)" ] || [ -n "$(SUMMARY_SINCE)" ] || [ -n "$(SUMMARY_UNTIL)" ]; }; then echo "Use MONTH or meeting/date range variables, not both" && exit 1; fi
-	UV_CACHE_DIR=$(UV_CACHE_DIR) $(UV) run --python $(PYTHON_VERSION) iceberg-activity summarize $(if $(MONTH),--month $(MONTH)) $(if $(MEETING_DATE),--meeting-date $(MEETING_DATE)) $(if $(SUMMARY_SINCE),--since $(SUMMARY_SINCE)) $(if $(SUMMARY_UNTIL),--until $(SUMMARY_UNTIL)) --input $(SUMMARY_INPUT) --output-dir $(SUMMARY_OUTPUT_DIR) --top $(TOP) --notes "$(NOTES)" --lancedb-dir $(LANCEDB_DIR)
+	UV_CACHE_DIR=$(UV_CACHE_DIR) $(UV) run --python $(PYTHON_VERSION) iceberg-activity summarize $(if $(MONTH),--month $(MONTH)) $(if $(MEETING_DATE),--meeting-date $(MEETING_DATE)) $(if $(SUMMARY_SINCE),--since $(SUMMARY_SINCE)) $(if $(SUMMARY_UNTIL),--until $(SUMMARY_UNTIL)) $(if $(SUMMARY_INPUT),--input $(SUMMARY_INPUT),--input-dir $(SUMMARY_INPUT_DIR)) --output-dir $(SUMMARY_OUTPUT_DIR) --top $(TOP) --notes "$(NOTES)" --lancedb-dir $(LANCEDB_DIR)
 
 meeting: collect summarize
 
 monthly: meeting
 
 backtest:
-	UV_CACHE_DIR=$(UV_CACHE_DIR) $(UV) run --python $(PYTHON_VERSION) iceberg-activity backtest --notes "$(NOTES)" --input $(SUMMARY_INPUT) --output-dir $(BACKTEST_OUTPUT_DIR) --lancedb-dir $(BACKTEST_LANCEDB_DIR) --top $(TOP) --comparison-top $(COMPARISON_TOP) $(BACKTEST_ARGS)
+	UV_CACHE_DIR=$(UV_CACHE_DIR) $(UV) run --python $(PYTHON_VERSION) iceberg-activity backtest --notes "$(NOTES)" --input $(BACKTEST_INPUT) --output-dir $(BACKTEST_OUTPUT_DIR) --lancedb-dir $(BACKTEST_LANCEDB_DIR) --top $(TOP) --comparison-top $(COMPARISON_TOP) $(BACKTEST_ARGS)
 
 test:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) $(UV) run --python $(PYTHON_VERSION) --group dev pytest

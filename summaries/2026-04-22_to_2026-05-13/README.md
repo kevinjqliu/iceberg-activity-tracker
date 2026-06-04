@@ -1,11 +1,13 @@
 # Iceberg Community Sync Summary
 
 - Period: `2026-04-22` to before `2026-05-13`
-- Review candidates: `20`
+- Review candidates: `182`
 
 ## apache/iceberg
 
 ### Java
+
+_Top 20 of 131 scored commits._
 
 - Core: Add implementations of v4 TrackedFile interfaces (#15854) (Thanks Anoop Johnson!)
 - Spark: Support writing shredded variant in Iceberg-Spark (#14297) (Thanks Aihua Xu and Neelesh Salian!)
@@ -27,3 +29,30 @@
 - ORC: Add _row_id and _last_updated_sequence_number raeder in Orc to support lineage (#15776) (Thanks GuoYu!)
 - Flink:Backport RewriteDataFile support dynamic filter (#16132) (Thanks GuoYu!)
 - Spark: Support TimestampNTZ in SparkZOrderUDF (#15778) (Thanks milleniax and abdullin.marsel9!)
+
+## apache/iceberg-python
+
+### Python
+
+_Top 20 of 51 scored commits._
+
+- Add support for 'overwrite' option in register_table (#3290) (Thanks Yuya Ebihara!)
+- Add support for registering views (#3288) (Thanks Yuya Ebihara!)
+- infra: add python 3.14 support (#3299) (Thanks Adam and Kevin Liu!)
+- feat: add load_view to REST catalog (#3224) (Thanks spr0els!)
+- Fix DELETED manifest entry snapshot_id in OverwriteFiles (#3237) (Thanks Sotaro Hikita!)
+- perf: Hoist `table_metadata` at remaining repeat-access (#3301) (Thanks Ruiyang Wang!)
+- bug: NoopCatalog should return False, not throw error (#3284) (Thanks Alex Stephen!)
+- Update NOTICE year 2025 -> 2026 (#3332) (Thanks Kevin Liu!)
+- Document `TableAlreadyExistsError` in `rename_table` (#3289) (Thanks Yuya Ebihara!)
+- fix:update config during table refresh (#3327) (Thanks Yingjian Wu!)
+- Fix deepcopy for `And`, `Or`, and `Not` expressions (#3295) (Thanks Rob Reeves!)
+- Reading upper/lower bounds values with type promotions (#3293) (Thanks Alex Stephen!)
+- CI: Use specific patch versions in workflow action comments (#3331) (Thanks Kevin Liu!)
+- Remove unused code (#3326) (Thanks Yuya Ebihara!)
+- fix(tests): isolate state in `test_write_optional_list` (#3334) (Thanks Paul Mathew!)
+- Bump daft dependency to >=0.7.10 (fix Python 3.14 compatibility) (#3323) (Thanks Kevin Liu!)
+- perf: build partition filter with balanced tree to avoid RecursionError (#3264) (Thanks Yingjian Wu!)
+- fix: SaslServer busy-loop causes process hang after test suite (#3305) (Thanks Kevin Liu!)
+- Initial work for file format writer API (#3119) (Thanks Neelesh Salian!)
+- Build: Bump fastavro from 1.12.1 to 1.12.2 (#3310) (Thanks dependabot[bot]!)

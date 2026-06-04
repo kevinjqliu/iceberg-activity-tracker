@@ -85,8 +85,13 @@ def build_parser() -> argparse.ArgumentParser:
     summarize.add_argument(
         "--input",
         type=Path,
-        default=Path("data/commits/apache_iceberg.csv"),
-        help="Commit CSV to summarize",
+        help="Single commit CSV to summarize. By default all configured repository CSVs are used.",
+    )
+    summarize.add_argument(
+        "--input-dir",
+        type=Path,
+        default=Path("data/commits"),
+        help="Directory containing commit CSVs for configured repositories",
     )
     summarize.add_argument(
         "--output-dir",
@@ -182,6 +187,7 @@ def run_summarize(args: argparse.Namespace) -> int:
             result = summarize_month(
                 month=args.month,
                 input_path=args.input,
+                input_dir=args.input_dir,
                 output_dir=args.output_dir,
                 top=args.top,
                 notes_path=args.notes,
@@ -197,6 +203,7 @@ def run_summarize(args: argparse.Namespace) -> int:
                 since=since,
                 until=until,
                 input_path=args.input,
+                input_dir=args.input_dir,
                 output_dir=args.output_dir,
                 top=args.top,
                 notes_path=args.notes,
@@ -208,7 +215,8 @@ def run_summarize(args: argparse.Namespace) -> int:
         f"scored {result.candidate_count} commits from {result.since} before {result.until} "
         f"and wrote {result.selected_count} highlights to {result.markdown_path}"
     )
-    print(f"scored CSV: {result.scored_csv_path}")
+    for scored_csv_path in result.scored_csv_paths:
+        print(f"scored CSV: {scored_csv_path}")
     return 0
 
 
