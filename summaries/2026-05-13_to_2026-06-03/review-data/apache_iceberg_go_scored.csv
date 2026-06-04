@@ -64,7 +64,7 @@ fallback
 
 ---------
 
-Signed-off-by: Mithil Girish <t.r.mithil@gmail.com>",6a4c96ea311b36beec9387934e5a0c644f5247e5,1104,false,,13,703,32,catalog; cmd; go.mod; table,97,6,103,"base; feature/api verb; important area: catalog; strategic: catalog, manifest, storage; medium file count; medium churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.19",OpenAPI: Add CatalogObjectIdentifier schema,- feat(catalog): add PurgeTable as optional interface for physical file deletion (#1104) (Thanks Mithil Girish!)
+Signed-off-by: Mithil Girish <t.r.mithil@gmail.com>",6a4c96ea311b36beec9387934e5a0c644f5247e5,1104,false,,13,703,32,catalog; cmd; go.mod; table,115,6,121,"base; feature/api verb; important area: catalog; strategic: catalog, manifest, storage; community signal: purgetable; medium file count; medium churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.19",OpenAPI: Add CatalogObjectIdentifier schema,- feat(catalog): add PurgeTable as optional interface for physical file deletion (#1104) (Thanks Mithil Girish!)
 apache/iceberg-go,7a3c8e99fe6b77ce7b61109728643d3b302f97f1,7a3c8e9,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-28T20:31:45+02:00,GitHub,noreply@github.com,2026-05-28T20:31:45+02:00,feat(table/dv): accept partition spec and data on DVWriter.Add (#1136),"Part of #1135. Matches Java's BaseDVFileWriter.delete signature so DV
 manifest entries can carry the data file's partition record and spec id,
 unblocking the follow-up that lifts the unpartitioned-only gate in
@@ -83,7 +83,7 @@ referenced data file (one puffin file can carry multiple blobs);
 distinct DVs for the same data file are rejected. PlanFiles also stops
 pairing pos-delete files with a data file when a DV applies, per spec.
 
-Tests build the puffin in-process so this isn't blocked on #1041. 
+Tests build the puffin in-process so this isn't blocked on #1041.
 
 Adjacent gaps deferred to follow-ups:
 - #1048 (puffin DV header check)
@@ -103,7 +103,7 @@ Also documents that `next-row-id` accounting intentionally overcounts
 `Projection()` synthesis helpers replaced by the explicit
 `WithRowLineage()` scan option.
 ## Test plan
-   
+
 - `TestCoWRewritePreservesRowID` : verifies surviving rows keep original
 `_row_id` after a CoW delete
 - `TestCoWRewriteRowIDNextRowIDAccounting` : validates next-row-id
@@ -152,6 +152,28 @@ shape including v3 row lineage.
 
 cc @laskoviymishka, this continues building blocks for distributed
 compaction",c131e0e828e78d4f937e1fe89ce9a5eef78179b5,1075,false,,10,1416,1,.github; Makefile; codec; data_file_codec.go; data_file_codec_test.go; go.mod; internal,86,8,94,"base; feature/api verb; strategic: compaction, manifest, round-trip, row lineage, v3; summary signal: compaction, round-trip; medium file count; large churn; multi-area change; has PR number; LanceDB similarity 0.28",Flink: Backport TableMaintenance Support Coordinator Lock to 1.20 and 2.0,- feat: add wire codec helpers for DataFile and FileScanTask (#1075) (Thanks Tobias Pütz!)
+apache/iceberg-go,bf990e88b23bb76669e06c813ac47e11d401bf2c,bf990e8,Tanmay Rauth,t_rauth@apple.com,2026-05-27T16:14:56+05:30,GitHub,noreply@github.com,2026-05-27T12:44:56+02:00,feat(table): MoR equality-rewrite - insert/reinsert writer API (#1120),"Adds `table.PositionDeltaWriter` for the MoR insert/reinsert split on v3
+tables. Mirrors the data-file half of Java's `SparkPositionDeltaWrite`:
+
+- `Reinsert(batch)` — survivor rows from a position-delta rewrite, with
+explicit non-null `_row_id` values to preserve identity.
+- `Insert(batch)` — fresh rows; writer appends a null `_row_id` column
+so the reader synthesizes a new ID at scan time.
+
+Output schema is `SchemaWithRowID` (a new helper): `_row_id` written
+explicitly, `_last_updated_sequence_number` left absent so it inherits
+from the manifest entry's `data_sequence_number` — exactly the value the
+spec requires for rewritten rows.
+
+Scope: data files only. The position-delete entries that pair with
+reinserts (turning an UPDATE into delete-old + reinsert) are the engine
+driver's responsibility — the writer doc spells this out so a reader
+doesn't expect Java's full `SparkPositionDeltaWrite` semantics from the
+name alone.
+
+
+Part 2 of #999
+Closes: #999",a7c491261d495dcb055033583db34695eabe81c2,1120,false,,4,750,0,metadata_columns.go; table,86,7,93,"base; important area: table; strategic: manifest, v3; community signal: equality-rewrite, mor; medium churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.23","API, CORE, Flink, Spark: Deprecate Snapshot.changes Methods with SnapshotChange Utility",- feat(table): MoR equality-rewrite - insert/reinsert writer API (#1120) (Thanks Tanmay Rauth!)
 apache/iceberg-go,f8b8ee9e98e577601f9f900f0bfc653d51be5017,f8b8ee9,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-17T19:43:04+02:00,GitHub,noreply@github.com,2026-05-17T10:43:04-07:00,feat(puffin): enforce required DV blob properties on write (#1060),"Closes #1057. Puffin spec requires `deletion-vector-v1` blobs to carry
 both `cardinality` and `referenced-data-file` properties. AddBlob
 already enforces the snapshot-id/sequence-number invariants for DV
@@ -175,6 +197,27 @@ Test byte-patches a non-DV blob to claim it's a deletion-vector and
 asserts the reader rejects both invariant violations; uses a same-
 length placeholder type so the footer-payload-size trailer stays
 accurate.",52c1108ad8719c446c9d3c1fbbab1368107051cb,1055,false,,3,160,3,puffin,79,6,85,"base; important area: puffin; strategic: puffin, variant; summary signal: deletion-vector; deletion vector signal; has PR number; LanceDB similarity 0.21","Revert ""Move deleted files to Hadoop trash if configured """,- feat(puffin): validate deletion-vector blob header invariants on read (#1055) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,8eff0730e13ecdcfa72fb11c674083fb74dfd209,8eff073,Jacob Marble,jacobmarble@gmail.com,2026-05-15T12:18:18-07:00,GitHub,noreply@github.com,2026-05-15T21:18:18+02:00,fix(table): map nanosecond Arrow timestamps to v3 TimestampNs/TimestampTzNs types (#1081),"`table/Transaction.AddFiles()` and `table/WriteRecords()` panic with
+'ns' timestamp precision not supported (#695). I've managed to work
+around this with `table/Transaction.AddDataFiles()`.
+
+The fix is pretty simple, just map the new type in
+`table/ArrowTypeToIceberg()`. I've left the downcast path
+`downcastTimestamp=true` unchanged.
+
+**Behavior change for v1/v2 callers:** Previously `UTC-tz` and
+`empty-tz` nanosecond timestamps with `downcastTimestamp=false` failed
+immediately at the conversion step with 'ns' timestamp precision not
+supported. They will now produce a `TimestampTzNs`/`TimestampNs` Iceberg
+type and fail later at `minFormatVersionForType` if the table is format
+version 1 or 2. The failure is preserved — only the site moves.
+
+Closes #695 (again)
+Helps #589
+
+---------
+
+Signed-off-by: Jacob Marble <jacob@estuary.dev>",dafadaa60719292c1f3e303b9db0519e5d13dd8e,1081,false,,2,13,3,table,73,9,82,base; fix; important area: table; strategic: v3; community signal: timestampns; has PR number; LanceDB similarity 0.31,Kafka Connect: fix table UUID check,- fix(table): map nanosecond Arrow timestamps to v3 TimestampNs/TimestampTzNs types (#1081) (Thanks Jacob Marble!)
 apache/iceberg-go,5a30113d38de3eb41899d9d13f548f6315fcf07c,5a30113,Neelesh Salian,nssalian@users.noreply.github.com,2026-05-20T09:53:25-07:00,GitHub,noreply@github.com,2026-05-20T12:53:25-04:00,feat: add variant type support (Iceberg v3) - non shredding (#932),"Part of [#589](https://github.com/apache/iceberg-go/issues/589) and
 [#929](https://github.com/apache/iceberg-go/issues/929)
 
@@ -188,7 +231,7 @@ dependencies.
 `SchemaVisitorPerPrimitiveType[T]` gains `VisitVariant() T` (same
 pattern as `VisitTimestampNs`/`VisitUnknown` additions in #594, #605).
 
-Non-shredded path only; shredding is a follow-up. 
+Non-shredded path only; shredding is a follow-up.
 
 ## Testing
 
@@ -206,18 +249,18 @@ yielded
 
 ```
 Spark master: local[*], Application Id: local-1776835497117
-ts                      bigint                                      
-event                   string                                      
-payload                 variant    
+ts                      bigint
+event                   string
+payload                 variant
 ```
 
-and reading 
+and reading
 
 ```
 docker compose -f internal/recipe/docker-compose.yml exec -T spark-iceberg spark-sql -e ""SELECT * FROM default.go_variant_events""
 ```
 
-yielded 
+yielded
 
 ```
 Spark master: local[*], Application Id: local-1776835403757
@@ -254,28 +297,363 @@ got None"".
 
 Co-authored-by: Krutika Dhananjay <krutika@min.io>
 Co-authored-by: Matt Topol <zotthewizard@gmail.com>",47ea028d9a9ad70adc2f3f894d1599056d905f34,1102,false,Krutika Dhananjay; Matt Topol,8,200,135,codec; data_file_codec.go; internal; manifest.go; manifest_test.go; table,71,8,79,base; fix; important area: manifest; strategic: manifest; medium file count; medium churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.26,Core: Propagate Avro compression settings to manifest writers,- fix(manifest): stop writing deprecated distinct_counts (field-id 111) (#1102) (Thanks Krutika Dhananjay and Matt Topol!)
-apache/iceberg-go,bf990e88b23bb76669e06c813ac47e11d401bf2c,bf990e8,Tanmay Rauth,t_rauth@apple.com,2026-05-27T16:14:56+05:30,GitHub,noreply@github.com,2026-05-27T12:44:56+02:00,feat(table): MoR equality-rewrite - insert/reinsert writer API (#1120),"Adds `table.PositionDeltaWriter` for the MoR insert/reinsert split on v3
-tables. Mirrors the data-file half of Java's `SparkPositionDeltaWrite`:
+apache/iceberg-go,6a4c96ea311b36beec9387934e5a0c644f5247e5,6a4c96e,David Zhao,143900483+happydave1@users.noreply.github.com,2026-05-22T20:14:14+02:00,GitHub,noreply@github.com,2026-05-22T14:14:14-04:00,feat(table): Adding geometry and geography type + schema plumbing (#984),"Based on #628 and addresses #990
 
-- `Reinsert(batch)` — survivor rows from a position-delta rewrite, with
-explicit non-null `_row_id` values to preserve identity.
-- `Insert(batch)` — fresh rows; writer appends a null `_row_id` column
-so the reader synthesizes a new ID at scan time.
+Note that this PR sets up a PR to address #991
 
-Output schema is `SchemaWithRowID` (a new helper): `_row_id` written
-explicitly, `_last_updated_sequence_number` left absent so it inherits
-from the manifest entry's `data_sequence_number` — exactly the value the
-spec requires for rewritten rows.
+Co-authored-by: David Zhao <happydave1@users.noreply.github.com>",359c90fec3f8bc29a5c18ff8bacd025a4ff0fcfd,984,false,David Zhao,16,1046,17,exprs.go; go.mod; go.sum; schema.go; schema_test.go; table; transforms.go; transforms_test.go; types.go; types_test.go; visitors.go,65,6,71,"base; important area: table; community signal: geography, geometry; medium file count; large churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.22",Flink: Support UUID type in Avro and Parquet readers and writers,- feat(table): Adding geometry and geography type + schema plumbing (#984) (Thanks David Zhao!)
+apache/iceberg-go,bd8f7c048729979930c27ca49cfcf99b68bf29f1,bd8f7c0,Sung Yun,107272191+sungwy@users.noreply.github.com,2026-05-28T15:54:12-04:00,GitHub,noreply@github.com,2026-05-28T15:54:12-04:00,docs: add Iceberg security model (#1137),"Similar to: https://github.com/apache/iceberg/pull/16538
 
-Scope: data files only. The position-delete entries that pair with
-reinserts (turning an UPDATE into delete-old + reinsert) are the engine
-driver's responsibility — the writer doc spells this out so a reader
-doesn't expect Java's full `SparkPositionDeltaWrite` semantics from the
-name alone.
+This PR publishes a security model for Iceberg and adds a detailed
+threat model referenced from AGENTS.md so there is a clear project
+reference for how Iceberg distinguishes security issues from other bugs.
+
+The goal is to make Iceberg’s security boundaries explicit for both
+human triage and automated scanning, and to reduce false positives in
+future security reporting.
+
+This PR was drafted with AI assistance and then manually reviewed and
+edited to reflect the project’s current approach to security roles,
+trust boundaries, and the handling of recent security reports.",7a3c8e99fe6b77ce7b61109728643d3b302f97f1,1137,false,,2,253,0,AGENTS.md; SECURITY-THREAT-MODEL.md,54,9,63,base; feature/api verb; medium churn; multi-area change; release/security/notice signal; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.31,https://github.com/apache/iceberg/milestone/59,- docs: add Iceberg security model (#1137) (Thanks Sung Yun!)
+apache/iceberg-go,e303dfdeb8fc51834573cc7f6ccff1c454478744,e303dfd,Alessandro Nori,alessandro.nori@datadoghq.com,2026-05-26T14:29:42+02:00,GitHub,noreply@github.com,2026-05-26T14:29:42+02:00,feat(io): add ManagedIdentityCredential support for Azure (#1062),"## Changes
+- Add `ADLSManagedIdentityEnabled`
+(`adls.auth.managed-identity.enabled`) property to opt into
+`ManagedIdentityCredential` instead of `DefaultAzureCredential`
+- Add `ADLSManagedIdentityClientID`
+(`adls.auth.managed-identity.client-id`) property for user-assigned
+managed identities
+
+## Motivation
+`DefaultAzureCredential` sets a short timeout on its first managed
+identity attempt. In production, this causes frequent ""managed identity
+timed out"" errors when the app requests a token. Using
+`ManagedIdentityCredential` directly avoids this timeout.
+
+Reference:
+https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/azidentity/TROUBLESHOOTING.md#troubleshoot-defaultazurecredential-authentication-issues",1f8b81ffd005ba260604847a68c688bc5e93c811,1062,false,,3,44,0,io,52,7,59,base; feature/api verb; important area: io; has PR number; LanceDB similarity 0.25,"Core, REST: Add support for overwrite in RegisterTableRequest",- feat(io): add ManagedIdentityCredential support for Azure (#1062) (Thanks Alessandro Nori!)
+apache/iceberg-go,a7c491261d495dcb055033583db34695eabe81c2,a7c4912,Tanmay Rauth,t_rauth@apple.com,2026-05-26T22:21:50+05:30,GitHub,noreply@github.com,2026-05-26T12:51:50-04:00,feat(table): wire DVWriter into position-delete producer with property gating (#1113),"Wires DVWriter into the position-delete producer with property gating.
+
+Adds write.delete.format table property (v2 default: position, v3
+default: dv). When set to ""dv"", positionDeleteRecordsToDataFiles routes
+through DVWriter instead of the Parquet position-delete writer. The
+existing v3 warning now only fires when write.delete.format is
+explicitly set to ""position"".
+
+  Part 2 of #997
+
+  Out of scope (tracked as follow-ups):
+- In-snapshot DV merging when multiple writes target the same data file.
+  - v2 Parquet pos-delete → v3 DV upgrade path within a single snapshot.
+  - Full cross-client scan test lands in PR #3.",87c1958ffac77956e00cfdf868dc7916dc51aed9,1113,false,,3,361,30,table,51,8,59,base; important area: table; strategic: v3; medium churn; has PR number; LanceDB similarity 0.28,docs: Add CREATE DATABASE step before CREATE TABLE in Spark quickstart,- feat(table): wire DVWriter into position-delete producer with property gating (#1113) (Thanks Tanmay Rauth!)
+apache/iceberg-go,2fcff157abdaec817077f423da54c754ee8634ae,2fcff15,Ondřej Pavela,pavela.ondrej@gmail.com,2026-05-25T09:13:54+02:00,GitHub,noreply@github.com,2026-05-25T09:13:54+02:00,perf(table): dedupe shared manifest reads during snapshot expiration (#1118),"Fixes https://github.com/apache/iceberg-go/issues/1117
+
+### What changed
+Reworked `removeSnapshotsUpdate.PostCommit` so each unique manifest file
+is
+opened at most once per call, regardless of how many expired or retained
+snapshots reference it.
+
+Two passes, both deduped:
+
+1) Build the set of manifest paths reachable from any retained snapshot,
+reading only manifest-lists. Cache the resulting `[]ManifestFile` per
+snapshot so the retained-side pass below doesn't re-download each list.
+2) Walk expired snapshots' manifest lists; for each manifest, skip if
+it's
+in the retained set (its data files are live by definition and the
+manifest itself must not be deleted) or if a prior expired snapshot
+already enumerated it. Otherwise read its entries once.
+3) Subtract live data files via a single walk over each unique retained
+manifest. DELETED entries remain tombstones (unchanged from prior
+semantics).
+
+### Behavior
+Semantically equivalent to the previous implementation — the final
+`filesToDelete` set is the same on well-formed metadata. No spec change,
+no API change. The only difference is the I/O cost.
+
+### Performance impact
+For a 491-snapshot incremental-append table where expiring 490 snapshots
+previously triggered ~sum(1..490) ≈ 120,000 manifest-file downloads, the
+rewrite reduces that to roughly the count of unique orphaned manifests
+(a few hundred in practice). Two-to-three orders of magnitude fewer
+object-store reads, in our test.",aa21ab58ccae84dfbf900097e981ca02e0d970d7,1118,false,,2,276,109,table,51,8,59,base; important area: table; strategic: manifest; medium churn; has PR number; LanceDB similarity 0.26,Core: Unlink table metadata's last-updated timestamp from snapshot timestamp,- perf(table): dedupe shared manifest reads during snapshot expiration (#1118) (Thanks Ondřej Pavela!)
+apache/iceberg-go,ab1ce32e712d0d34b7c8dea0fcb255eee8ddf253,ab1ce32,Tanmay Rauth,t_rauth@apple.com,2026-05-22T18:16:51+05:30,GitHub,noreply@github.com,2026-05-22T14:46:51+02:00,feat(table): add DV planning validations to match Java's DeleteFileIndex (#1050) (#1108),"Add sequence-number guard and reject multiple DVs per data file during
+scan planning, matching Java's DeleteFileIndex behavior.
+
+Closes: #1050",350ae7270d7c44578638ef55e7e0392227745e8a,1108,false,,2,140,41,table,52,5,57,base; feature/api verb; important area: table; has PR number; LanceDB similarity 0.17,Fix NPE in `ParquetAvroWriter` when schema contains variant type,- feat(table): add DV planning validations to match Java's DeleteFileIndex (#1050) (#1108) (Thanks Tanmay Rauth!)
+apache/iceberg-go,53fa29ccc29817c2238405c50716e8058419ac61,53fa29c,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-18T17:50:59+02:00,GitHub,noreply@github.com,2026-05-18T17:50:59+02:00,feat(table): gate v2-only metadata fields on v1 reads (#1088),"Closes #1087.
+
+`#1069` added `rejectV3OnlyFields` to catch v3-only fields in pre-v3
+metadata.
+
+This PR applies the same idea to `last-sequence-number`: it’s a v2+
+field on the shared `commonMetadata` struct, but today we silently
+accept it when reading v1 metadata.
+
+To keep the check from becoming one-off, this generalizes the helper to
+`rejectFieldsBeyondVersion(currentVersion, fields...)`, where each field
+includes the format version it was introduced in. `last-sequence-number`
+is then wired into the v1 read path. For v2 reads, `next-row-id` /
+`encryption-keys` go through the same generalized helper, with no
+behavior change.
+
+One caveat: this depends on the discussion in `#1086`. If we decide to
+relax the v3-only gate and silently ignore forward-looking fields for
+compatibility, then this PR becomes moot and should be revisited
+together with the strictness introduced in `#1069`.",a59f2a276087562ea2d02dcfbb92e44e07d8dac0,1088,false,,2,39,15,table,47,9,56,"base; important area: table; strategic: encryption, v3; has PR number; LanceDB similarity 0.29","API, Core: Add overwrite-aware table registration",- feat(table): gate v2-only metadata fields on v1 reads (#1088) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,dafadaa60719292c1f3e303b9db0519e5d13dd8e,dafadaa,Tanmay Rauth,t_rauth@apple.com,2026-05-13T15:19:51-07:00,GitHub,noreply@github.com,2026-05-14T00:19:51+02:00,feat(cli): add branch create and tag create commands (#1068),"Add `iceberg branch create TABLE_ID NAME` and `iceberg tag create
+TABLE_ID NAME` with snapshot ref retention options.
+
+Related: #957
+Depends On: #1073",eee234ea08b27ad35a6d8f76fd2e9812fb3f35fd,1068,false,,3,385,12,cmd,48,8,56,base; feature/api verb; important area: cli; medium churn; downrank narrow CLI change; has PR number; LanceDB similarity 0.27,docs: Add CREATE DATABASE step before CREATE TABLE in Spark quickstart,- feat(cli): add branch create and tag create commands (#1068) (Thanks Tanmay Rauth!)
+apache/iceberg-go,51e26d3ef6989a4b2d03ef0e8a90756491ca0c0e,51e26d3,Tanmay Rauth,t_rauth@apple.com,2026-05-13T12:35:58-07:00,GitHub,noreply@github.com,2026-05-13T21:35:58+02:00,feat(cli): add expire-snapshots command with dry-run (#1063),"Add `iceberg expire-snapshots TABLE_ID` with --older-than,
+--retain-last, --dry-run, and --yes flags. Uses StagedTable diff for
+dry-run preview.
 
 
-Part 2 of #999 
-Closes: #999",a7c491261d495dcb055033583db34695eabe81c2,1120,false,,4,750,0,metadata_columns.go; table,68,7,75,"base; important area: table; strategic: manifest, v3; medium churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.23","API, CORE, Flink, Spark: Deprecate Snapshot.changes Methods with SnapshotChange Utility",- feat(table): MoR equality-rewrite - insert/reinsert writer API (#1120) (Thanks Tanmay Rauth!)
+Related: #957
+Depends On: #1073",97c2a683234b525295ec03c10f3518cc0ae1b1e6,1063,false,,2,312,6,cmd,48,8,56,base; feature/api verb; important area: cli; medium churn; downrank narrow CLI change; has PR number; LanceDB similarity 0.26,docs: Add CREATE DATABASE step before CREATE TABLE in Spark quickstart,- feat(cli): add expire-snapshots command with dry-run (#1063) (Thanks Tanmay Rauth!)
+apache/iceberg-go,2e6b2b6da79189232189d4714bec2b09cd9bc98b,2e6b2b6,Tanmay Rauth,t_rauth@apple.com,2026-05-17T10:03:42-07:00,GitHub,noreply@github.com,2026-05-17T19:03:42+02:00,feat(table): gate v3-only metadata fields on sub-v3 reads (#1006) (#1069),"Reject next-row-id and encryption-keys during v1/v2 metadata parsing
+with a descriptive error naming the field and required format version.
+
+Closes: #1006",8eff0730e13ecdcfa72fb11c674083fb74dfd209,1069,false,,2,151,0,table,47,8,55,"base; important area: table; strategic: encryption, v3; has PR number; LanceDB similarity 0.27",Core: v4 table metadata location should be optional,- feat(table): gate v3-only metadata fields on sub-v3 reads (#1006) (#1069) (Thanks Tanmay Rauth!)
+apache/iceberg-go,52c1108ad8719c446c9d3c1fbbab1368107051cb,52c1108,Tanmay Rauth,t_rauth@apple.com,2026-05-13T12:36:42-07:00,GitHub,noreply@github.com,2026-05-13T21:36:42+02:00,feat(cli): add snapshots and refs commands (#1072),"Add `iceberg snapshots TABLE_ID` to list snapshots with ID, timestamp,
+parent, operation, and file counts. Add `iceberg refs TABLE_ID` to list
+snapshot refs with --type filter.
+
+
+Depends On: #1073",14470e5b24fecdd7867e6bb9724762268f29c06b,1072,false,,2,403,11,cmd,48,7,55,base; feature/api verb; important area: cli; medium churn; downrank narrow CLI change; has PR number; LanceDB similarity 0.25,Core: Add partition to TrackedFile,- feat(cli): add snapshots and refs commands (#1072) (Thanks Tanmay Rauth!)
+apache/iceberg-go,77c0f63a030e318012e339f7472463a63d5173fb,77c0f63,Lei Zhang,1091517373@qq.com,2026-05-13T15:01:12+08:00,GitHub,noreply@github.com,2026-05-13T09:01:12+02:00,feat(io): register oss scheme for aliyun oss S3-compatible storage (#1074),,d64fd545fadbbd535f7681789e1ee74d1d4de443,1074,false,,2,4,0,io,47,8,55,base; important area: io; strategic: storage; has PR number; LanceDB similarity 0.26,Make StandardEncryptionManager serializable,- feat(io): register oss scheme for aliyun oss S3-compatible storage (#1074) (Thanks Lei Zhang!)
+apache/iceberg-go,e308fedba4bbeeec8c142afa9c77e27698639ecf,e308fed,Krutika Dhananjay,dhananjaykrutika@gmail.com,2026-05-14T02:19:56+05:30,GitHub,noreply@github.com,2026-05-13T22:49:56+02:00,Skip DELETED tombstones in DeleteOrphanFiles' referenced set (#1076),"DeleteOrphanFiles builds ""referenced files"" set by walking each live
+snapshot's manifests, fetching every entry with discardDeleted=false,
+and unconditionally marking entry as referenced. This treats
+DELETED-status entries (tombstones) the same as ADDED/EXISTING entries,
+so any data file that had ever been overwritten or deleted in a
+copy-on-write operation remains referenced by the surviving snapshot's
+tombstone manifest. After every snapshot that actually held the file
+live is expired, the file is still reachable and orphan cleanup skips
+it.
+
+This is a deviation from iceberg-java and iceberg-python
+implementations.
+
+Switch manifest.Entries() to use discardDeleted=true so tombstones are
+excluded before they reach the reference-collection loop.
+
+---------
+
+Co-authored-by: Krutika Dhananjay <krutika@min.io>",bcf85500d8f35eeac80b93b7d074e5b73da4d955,1076,false,Krutika Dhananjay,2,136,1,table,47,7,54,"base; strategic: copy-on-write, manifest; summary signal: copy-on-write; co-authored; has PR number; LanceDB similarity 0.24","Revert ""Move deleted files to Hadoop trash if configured """,- Skip DELETED tombstones in DeleteOrphanFiles' referenced set (#1076) (Thanks Krutika Dhananjay!)
+apache/iceberg-go,14470e5b24fecdd7867e6bb9724762268f29c06b,14470e5,Tanmay Rauth,t_rauth@apple.com,2026-05-13T12:36:24-07:00,GitHub,noreply@github.com,2026-05-13T21:36:24+02:00,feat(cli): add clean-orphan-files command (#1066),"Add `iceberg clean-orphan-files TABLE_ID` with --older-than (default
+72h), --dry-run, --yes, and --location flags.
+
+
+Related: #957
+ Depends On: #1073",51e26d3ef6989a4b2d03ef0e8a90756491ca0c0e,1066,false,,2,310,6,cmd,48,6,54,base; feature/api verb; important area: cli; medium churn; downrank narrow CLI change; has PR number; LanceDB similarity 0.21,"Core, Spark: Adds a Table Property for Relying on Identifier Fields",- feat(cli): add clean-orphan-files command (#1066) (Thanks Tanmay Rauth!)
+apache/iceberg-go,97c2a683234b525295ec03c10f3518cc0ae1b1e6,97c2a68,Tanmay Rauth,t_rauth@apple.com,2026-05-13T12:35:35-07:00,GitHub,noreply@github.com,2026-05-13T21:35:35+02:00,feat(cli): add --show-defaults flag to schema command (#1067),"Enhance `iceberg schema TABLE_ID --show-defaults` to display
+initial-default and write-default values alongside field definitions.
+
+
+Related: #957
+Depends On: #1073",77c0f63a030e318012e339f7472463a63d5173fb,1067,false,,2,195,6,cmd,48,6,54,base; feature/api verb; important area: cli; medium churn; downrank narrow CLI change; has PR number; LanceDB similarity 0.21,Core: Make sequence number conflicts retryable when there are concurrent commits,- feat(cli): add --show-defaults flag to schema command (#1067) (Thanks Tanmay Rauth!)
+apache/iceberg-go,1401cb6be0656b36771ac7d5d13e87cb224db006,1401cb6,Tanmay Rauth,t_rauth@apple.com,2026-05-21T19:11:59+05:30,GitHub,noreply@github.com,2026-05-21T15:41:59+02:00,feat(table): reject AddDataFiles on v3 when first_row_id is missing (#1000) (#1101),"Closes #1000
+When users call `AddDataFiles` (or `ReplaceDataFilesWithDataFiles` /
+`ReplaceFiles`) with externally-written parquet files on a v3 table,
+reject the operation if `first_row_id` is not set. This mirrors
+pyiceberg's behavior — the library cannot fabricate row IDs
+retroactively, so callers must supply them explicitly via
+`DataFileBuilder.FirstRowID()`.
+## Changes
+
+- Added validation in `validateDataFilesToAdd` to require `first_row_id`
+on format version >= 3
+  - Error message directs users to `DataFileBuilder.FirstRowID()`
+  - v2 tables are unaffected",9792958839c4d90551e114382dcff3c7f0f428c9,1101,false,,2,50,0,table,47,6,53,base; important area: table; strategic: v3; has PR number; LanceDB similarity 0.21,Upgrade to Spark 3.5.8,- feat(table): reject AddDataFiles on v3 when first_row_id is missing (#1000) (#1101) (Thanks Tanmay Rauth!)
+apache/iceberg-go,9792958839c4d90551e114382dcff3c7f0f428c9,9792958,Minh Vu,vuhoangminh97@gmail.com,2026-05-21T10:09:07+02:00,GitHub,noreply@github.com,2026-05-21T10:09:07+02:00,fix(table): tighten strict negative metrics checks (#1106),"## Summary
+
+- use `containsNullsOnly` / `containsNansOnly` for strict `NotEqual` and
+`NotIn` metrics evaluation
+- remove now-unused strict `canContain*` helpers
+- add regression coverage for mixed null/value and mixed NaN/value files
+
+## Why
+
+For strict negative predicates, the evaluator can only prove a whole
+file matches from null/NaN metrics when the column contains only nulls
+or only NaNs. Mixed null/value or NaN/value files still need to fall
+through to bounds checks and remain conservative when bounds do not
+prove the predicate.
+
+Fixes #1103.
+
+## Testing
+
+- `go test ./table -run TestEvaluators`
+- `go test ./...`
+- `git diff --check`",c9609c342ceac390e69dc000c5ab9286f9e9ce04,1106,false,,2,52,15,table,35,9,44,base; fix; important area: table; has PR number; LanceDB similarity 0.29,Kafka Connect: fix table UUID check,- fix(table): tighten strict negative metrics checks (#1106) (Thanks Minh Vu!)
+apache/iceberg-go,c9609c342ceac390e69dc000c5ab9286f9e9ce04,c9609c3,Minh Vu,vuhoangminh97@gmail.com,2026-05-20T22:29:13+02:00,GitHub,noreply@github.com,2026-05-20T22:29:13+02:00,fix(table): handle missing strict metrics conservatively (#1098),"## Summary
+
+- treat missing null counts for optional fields as unknown during strict
+range/equality evaluation
+- treat missing NaN counts for float/double fields as unknown in the
+same strict checks
+- add regression coverage for nullable fields and float fields with
+bounds present but missing metrics
+
+## Why
+
+The strict metrics evaluator is used to decide when a file is guaranteed
+to match a predicate. Missing metrics should not be interpreted as zero.
+For optional fields, an absent null count means the file may contain
+nulls. For float/double fields, an absent NaN count means the file may
+contain NaNs.
+
+Fixes #1091.
+
+## Testing
+
+- `go test ./table -run TestEvaluators`
+- `go test ./...`
+- `git diff --check`",4e5a072efd74236e8d5086901102b0adf2985a8d,1098,false,,2,113,7,table,35,8,43,base; fix; important area: table; has PR number; LanceDB similarity 0.28,Kafka Connect: fix table UUID check,- fix(table): handle missing strict metrics conservatively (#1098) (Thanks Minh Vu!)
+apache/iceberg-go,621e10f20370f587e33016a872fd7f5b5da26eea,621e10f,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-20T18:07:33+02:00,GitHub,noreply@github.com,2026-05-20T12:07:33-04:00,fix(table): release Arrow chunks on GetRecords error paths (#1093),"GetRecords and Transaction.makePositionDeleteRecordsForFilter drop the
+perFilePosDeletes map on error without releasing its *arrow.Chunked
+values; extract releasePerFilePosDeletes and call on each error return.
+
+Closes #1051.",efe96b6f826d674c9edb0e09f6558dedc524e16b,1093,false,,3,94,5,table,35,7,42,base; fix; important area: table; has PR number; LanceDB similarity 0.24,Flink: Support UUID type in Avro and Parquet readers and writers,- fix(table): release Arrow chunks on GetRecords error paths (#1093) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,a59f2a276087562ea2d02dcfbb92e44e07d8dac0,a59f2a2,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-18T03:41:43+02:00,GitHub,noreply@github.com,2026-05-17T19:41:43-06:00,fix(table): derive position-delete partition paths from table schema (#1089),"The partitioned position-delete writer was building partition paths from
+`iceberg.PositionalDeleteSchema`, which only contains `file_path` and
+`pos`.
+
+That breaks for partition specs based on real table columns.
+`PartitionSpec.PartitionType` silently skips fields whose source IDs are
+not present in the schema, so those partitions collapse to an empty
+struct and `PartitionToPath` returns `""""`.
+
+The downstream effect is pretty bad:
+`writerFactory.getOrCreateRollingDataWriter` keys writers by that path,
+so every partition ends up sharing the same rolling writer. Since the
+writer keeps the first partition’s `partitionData`, the resulting delete
+file is tagged as belonging to the first partition while containing
+position deletes for files from multiple partitions.
+
+This PR fixes that by deriving the partition path from
+`metadata.CurrentSchema()`, matching what the data-side
+`partitionedFanoutWriter` already does.
+
+The actual file contents schema is unchanged: position-delete files
+still use `PositionalDeleteSchema`, which is passed separately to the
+writer factory via `withFactoryFileSchema`.
+
+Fixes #1082.",7df00ed08c4dcf4a2fcb49954219c457b0dccee2,1089,false,,2,175,8,table,35,7,42,base; fix; important area: table; has PR number; LanceDB similarity 0.25,Kafka Connect: fix table UUID check,- fix(table): derive position-delete partition paths from table schema (#1089) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,1a446112ccb7a3453853ab5c5f10c7aa24cfb945,1a44611,David Zhao,143900483+happydave1@users.noreply.github.com,2026-05-18T23:36:57+02:00,GitHub,noreply@github.com,2026-05-18T23:36:57+02:00,feat(table): project reserved row-lineage fields as null when the file lacks them (#1045),"fixes #1010.
+
+---------
+
+Signed-off-by: happydave1 <dzhao2004@gmail.com>",53fa29ccc29817c2238405c50716e8058419ac61,1045,false,,3,500,0,schema_test.go; table,36,5,41,base; important area: table; medium churn; multi-area change; has PR number; LanceDB similarity 0.16,"Core, Data: File Format API interfaces",- feat(table): project reserved row-lineage fields as null when the file lacks them (#1045) (Thanks David Zhao!)
+apache/iceberg-go,eee234ea08b27ad35a6d8f76fd2e9812fb3f35fd,eee234e,Tanmay Rauth,t_rauth@apple.com,2026-05-13T15:05:15-07:00,GitHub,noreply@github.com,2026-05-14T00:05:15+02:00,feat(cli): add upgrade and rollback commands (#1071),"Add `iceberg upgrade TABLE_ID VERSION` with --dry-run and --yes. Add
+`iceberg rollback TABLE_ID --snapshot-id ID` with --yes.
+
+Related: #957
+Depends On: #1073",e308fedba4bbeeec8c142afa9c77e27698639ecf,1071,false,,3,595,11,cmd; table,38,3,41,base; feature/api verb; important area: cli; medium churn; multi-area change; downrank narrow CLI change; downrank routine build/deps; has PR number; LanceDB similarity 0.33; capped LanceDB boost for routine/low-signal commit,Add idempotency adapter and E2E coverage,- feat(cli): add upgrade and rollback commands (#1071) (Thanks Tanmay Rauth!)
+apache/iceberg-go,db5392bf4f9c8fff37215fac32852483f1cd4ac7,db5392b,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-27T18:16:58+02:00,GitHub,noreply@github.com,2026-05-27T12:16:58-04:00,fix(substrait): emit decimal literals as 16-byte little-endian (#1130),"DecimalLiteral.MarshalBinary returns big-endian min-byte; Substrait's
+expr.NewLiteral needs 16-byte little-endian and was silently returning
+nil for everything else, panicking downstream. Convert before emit and
+add whitebox tests covering small/zero/16-byte-negative values.",bf990e88b23bb76669e06c813ac47e11d401bf2c,1130,false,,5,132,2,table,24,6,30,base; fix; medium file count; has PR number; LanceDB similarity 0.21,Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,- fix(substrait): emit decimal literals as 16-byte little-endian (#1130) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,1f8b81ffd005ba260604847a68c688bc5e93c811,1f8b81f,Masa,80936176+mzzz-zzm@users.noreply.github.com,2026-05-26T18:03:34+10:00,GitHub,noreply@github.com,2026-05-26T10:03:34+02:00,fix(substrait): use bound field precision in toDecimalLiteral (#1028) (#1121),"DecimalLiteral.Type() hardcodes precision 9 because DecimalLiteral does
+not carry the originating column's declared precision. The only
+confirmed consumer that mis-uses this is toDecimalLiteral in
+table/substrait/substrait.go, which embedded the wrong precision in
+emitted Substrait literals for any column with precision != 9.
+
+Per the Option B consensus on #1028:
+
+1. toDecimalLiteral now reads precision from the bound field's
+iceberg.DecimalType rather than v.Type().
+2. Replaces the latent panic v.Type().(*iceberg.DecimalType) with the
+correct value-type assertion v.Type().(iceberg.DecimalType);
+DecimalTypeOf returns by value.
+3. Documents the precision caveat on DecimalLiteral.Type() so future
+callers consult the bound field type for real precision.
+4. Adds whitebox regression tests for the bound-field path and the
+defensive fallback path.
+
+Fixes #1028
+
+Signed-off-by: mzzz-zzm <80936176+mzzz-zzm@users.noreply.github.com>",2fcff157abdaec817077f423da54c754ee8634ae,1121,false,,3,113,3,literals.go; table,25,5,30,base; fix; multi-area change; has PR number; LanceDB similarity 0.17,Flink: Dynamic Sink: Fix serialization issues with schemas larger than 2^16 bytes <Maximilian Michels>,- fix(substrait): use bound field precision in toDecimalLiteral (#1028) (#1121) (Thanks Masa!)
+apache/iceberg-go,287c5a83dcd0b833e687650815fac7148cde4812,287c5a8,Minh Vu,vuhoangminh97@gmail.com,2026-05-22T16:43:17+02:00,GitHub,noreply@github.com,2026-05-22T16:43:17+02:00,fix: reject invalid transform widths (#1110),"## Summary
+
+- reject invalid `bucket[...]` and `truncate[...]` widths during
+`ParseTransform`
+- treat `Atoi` errors, zero widths, and values above `math.MaxInt32` as
+invalid transforms
+- add parse regression coverage for zero, huge overflow, and
+int32-overflow widths
+
+## Why
+
+`ParseTransform` previously ignored the `strconv.Atoi` error and
+accepted zero widths. Those invalid transforms could later panic when
+bucket/truncate logic performed modulo by the width. Values larger than
+`math.MaxInt32` are also unsafe because bucket/truncate implementations
+narrow widths through int32-sized paths.
+
+Fixes #1109.
+
+## Testing
+
+- `go test . -run TestParseTransform`
+- `go test .`
+- `git diff --check`",ab1ce32e712d0d34b7c8dea0fcb255eee8ddf253,1110,false,,2,14,2,transforms.go; transforms_test.go,25,4,29,base; fix; multi-area change; has PR number; LanceDB similarity 0.14,Spark: Fix javadoc mentioning Spark 3.3 in Spark 3.4 benchmark classes,- fix: reject invalid transform widths (#1110) (Thanks Minh Vu!)
+apache/iceberg-go,598c2d776c0ddba5953a535f3b85844954672910,598c2d7,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-27T23:35:29+02:00,GitHub,noreply@github.com,2026-05-27T23:35:29+02:00,test(table): end-to-end deletion-vector scan over a real Parquet file (#1134),"Closes #1052.
+
+End-to-end test through the public `ReadTasks` API for a real on-disk
+Parquet file. Locks that DV-deleted positions actually disappear from
+scan output via the composition through
+`recordBatchesFromTasksAndDeletes`.
+
+Seven cases:
+
+- no-DV baseline
+- interior / boundary / all-rows deletes
+- empty bitmap
+- two files with asymmetric ranges + DV positions so a bitmap-swap
+  aggregates differently
+- stale out-of-range positions
+
+Verified by replacing `filterByDeletionVector` with a passthrough and
+observing predicted mismatches.
+
+Sits alongside cross-client fixture work in
+https://github.com/apache/iceberg-go/pull/1041 — this pins Go-side
+composition semantics for the scan path,
+https://github.com/apache/iceberg-go/pull/1041 pins the wire format
+against externally-produced fixtures.",db5392bf4f9c8fff37215fac32852483f1cd4ac7,1134,false,,1,337,0,table,19,3,22,base; important area: table; medium churn; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,"Core, Spark: Adds a Table Property for Relying on Identifier Fields",- test(table): end-to-end deletion-vector scan over a real Parquet file (#1134) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,47ea028d9a9ad70adc2f3f894d1599056d905f34,47ea028,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-21T18:12:20+02:00,GitHub,noreply@github.com,2026-05-21T12:12:20-04:00,fix(test): TestCreateTable existence check failure (#1105),"PR #355 renamed the table created in TestCreateTable from ""test-table""
+to ""test-create-table"" but left the follow-up CheckTableExists and
+DropTable calls pointing at the old name. CheckTableExists returns
+false, s.True(exists) fails, the actual table is never dropped, and the
+orphan in the namespace cascades into failures for every other suite
+test via ensureNamespace.",1401cb6be0656b36771ac7d5d13e87cb224db006,1105,false,,1,4,4,catalog,8,3,11,base; fix; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,"Core, Spark: add the comment table property key",- fix(test): TestCreateTable existence check failure (#1105) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,ed2a18f1e2acd6dc2ce960de1f06441a20eda487,ed2a18f,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-05-19T15:06:06-04:00,GitHub,noreply@github.com,2026-05-19T12:06:06-07:00,Fix Azure credential test that fails when az is logged in (#1095),"`TestCreateAzureBucketDefaultCredentialCalled` fails when Azure
+credentials are present on the machine (e.g., via `az login`).
+
+When `DefaultAzureCredential` succeeds in creating a client, the `List`
+operation returns an Azure service error (e.g.,
+`AuthorizationPermissionMismatch`) that does not contain
+""DefaultAzureCredential"". The assertion was checking for a string that
+can never appear in this code path.
+
+Removed the incorrect `assert.Contains` on the List error. The test
+still validates that `DefaultAzureCredential` is used (via the creation
+error path or non-nil bucket assertion).",1a446112ccb7a3453853ab5c5f10c7aa24cfb945,1095,false,,1,1,4,io,8,3,11,base; fix; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,Kafka Connect: Fix CVE-2025-67721 in io.airlift:aircompressor by bumping to 2.0.3,- Fix Azure credential test that fails when az is logged in (#1095) (Thanks Kevin Liu!)
+apache/iceberg-go,6499c4963c577e52cab0feffdae3b2952ecb1f6e,6499c49,Tanmay Rauth,t_rauth@apple.com,2026-05-29T13:29:08+05:30,GitHub,noreply@github.com,2026-05-29T09:59:08+02:00,test(table): add cross-client DV format compliance tests (#1131),"Validates that Go's DVWriter output conforms to the spec envelope format
+(length + magic + bitmap + CRC32) and produces Puffin files with correct
+blob metadata (type, snapshot-id=-1, sequence-number=-1, cardinality,
+referenced-data-file). Asserts byte equivalence between Go's SerializeDV
+output and a Java-produced DV fixture for the same input positions, and
+that multi-blob Puffin files have correct independent offsets.
+
+Part 3 of #997.",bd8f7c048729979930c27ca49cfcf99b68bf29f1,1131,false,,9,502,0,dev; table,3,3,6,base; feature/api verb; important area: table; medium file count; medium churn; multi-area change; downrank docs/tests/benchmarks; downrank low-signal sync item; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,- test(table): add cross-client DV format compliance tests (#1131) (Thanks Tanmay Rauth!)
 apache/iceberg-go,350ae7270d7c44578638ef55e7e0392227745e8a,350ae72,Matt Topol,zotthewizard@gmail.com,2026-05-21T16:21:23-04:00,GitHub,noreply@github.com,2026-05-21T16:21:23-04:00,fix(table): restore Summary/ColumnSizes test expectations to arrow-go v18.6.0 (#1114),"Restores main CI to green by reverting only the test-expectation byte
 counts that #1102 (""fix(manifest): stop writing deprecated
 distinct_counts"") inadvertently changed.
@@ -376,288 +754,7 @@ These tests are inherently brittle — they'll keep breaking on every
 arrow-go bump that nudges parquet metadata encoding. A future cleanup
 could replace exact byte assertions with bounds (`> 0`, monotonic
 relationships between added/removed/total) or assert on row counts only.
-Not addressing here to keep the diff minimal and unblock main.",51b3140b3a96826622f2a9bc10be357b75d509ba,1114,false,,2,9,9,table,67,3,70,"base; fix; important area: table; strategic: catalog, compaction, manifest, puffin; summary signal: compaction; correctness signal; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit",Bump to Parquet 1.17.0,- fix(table): restore Summary/ColumnSizes test expectations to arrow-go v18.6.0 (#1114) (Thanks Matt Topol!)
-apache/iceberg-go,8eff0730e13ecdcfa72fb11c674083fb74dfd209,8eff073,Jacob Marble,jacobmarble@gmail.com,2026-05-15T12:18:18-07:00,GitHub,noreply@github.com,2026-05-15T21:18:18+02:00,fix(table): map nanosecond Arrow timestamps to v3 TimestampNs/TimestampTzNs types (#1081),"`table/Transaction.AddFiles()` and `table/WriteRecords()` panic with
-'ns' timestamp precision not supported (#695). I've managed to work
-around this with `table/Transaction.AddDataFiles()`.
-
-The fix is pretty simple, just map the new type in
-`table/ArrowTypeToIceberg()`. I've left the downcast path
-`downcastTimestamp=true` unchanged.
-
-**Behavior change for v1/v2 callers:** Previously `UTC-tz` and
-`empty-tz` nanosecond timestamps with `downcastTimestamp=false` failed
-immediately at the conversion step with 'ns' timestamp precision not
-supported. They will now produce a `TimestampTzNs`/`TimestampNs` Iceberg
-type and fail later at `minFormatVersionForType` if the table is format
-version 1 or 2. The failure is preserved — only the site moves.
-
-Closes #695 (again)
-Helps #589
-
----------
-
-Signed-off-by: Jacob Marble <jacob@estuary.dev>",dafadaa60719292c1f3e303b9db0519e5d13dd8e,1081,false,,2,13,3,table,55,9,64,base; fix; important area: table; strategic: v3; has PR number; LanceDB similarity 0.31,Kafka Connect: fix table UUID check,- fix(table): map nanosecond Arrow timestamps to v3 TimestampNs/TimestampTzNs types (#1081) (Thanks Jacob Marble!)
-apache/iceberg-go,dafadaa60719292c1f3e303b9db0519e5d13dd8e,dafadaa,Tanmay Rauth,t_rauth@apple.com,2026-05-13T15:19:51-07:00,GitHub,noreply@github.com,2026-05-14T00:19:51+02:00,feat(cli): add branch create and tag create commands (#1068),"Add `iceberg branch create TABLE_ID NAME` and `iceberg tag create
-TABLE_ID NAME` with snapshot ref retention options.
-
-Related: #957
-Depends On: #1073",eee234ea08b27ad35a6d8f76fd2e9812fb3f35fd,1068,false,,3,385,12,cmd,56,8,64,base; feature/api verb; important area: cli; medium churn; has PR number; LanceDB similarity 0.27,docs: Add CREATE DATABASE step before CREATE TABLE in Spark quickstart,- feat(cli): add branch create and tag create commands (#1068) (Thanks Tanmay Rauth!)
-apache/iceberg-go,51e26d3ef6989a4b2d03ef0e8a90756491ca0c0e,51e26d3,Tanmay Rauth,t_rauth@apple.com,2026-05-13T12:35:58-07:00,GitHub,noreply@github.com,2026-05-13T21:35:58+02:00,feat(cli): add expire-snapshots command with dry-run (#1063),"Add `iceberg expire-snapshots TABLE_ID` with --older-than,
---retain-last, --dry-run, and --yes flags. Uses StagedTable diff for
-dry-run preview.
-
-
-Related: #957
-Depends On: #1073",97c2a683234b525295ec03c10f3518cc0ae1b1e6,1063,false,,2,312,6,cmd,56,8,64,base; feature/api verb; important area: cli; medium churn; has PR number; LanceDB similarity 0.26,docs: Add CREATE DATABASE step before CREATE TABLE in Spark quickstart,- feat(cli): add expire-snapshots command with dry-run (#1063) (Thanks Tanmay Rauth!)
-apache/iceberg-go,bd8f7c048729979930c27ca49cfcf99b68bf29f1,bd8f7c0,Sung Yun,107272191+sungwy@users.noreply.github.com,2026-05-28T15:54:12-04:00,GitHub,noreply@github.com,2026-05-28T15:54:12-04:00,docs: add Iceberg security model (#1137),"Similar to: https://github.com/apache/iceberg/pull/16538
-
-This PR publishes a security model for Iceberg and adds a detailed
-threat model referenced from AGENTS.md so there is a clear project
-reference for how Iceberg distinguishes security issues from other bugs.
-
-The goal is to make Iceberg’s security boundaries explicit for both
-human triage and automated scanning, and to reduce false positives in
-future security reporting.
-
-This PR was drafted with AI assistance and then manually reviewed and
-edited to reflect the project’s current approach to security roles,
-trust boundaries, and the handling of recent security reports.",7a3c8e99fe6b77ce7b61109728643d3b302f97f1,1137,false,,2,253,0,AGENTS.md; SECURITY-THREAT-MODEL.md,54,9,63,base; feature/api verb; medium churn; multi-area change; release/security/notice signal; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.31,https://github.com/apache/iceberg/milestone/59,- docs: add Iceberg security model (#1137) (Thanks Sung Yun!)
-apache/iceberg-go,52c1108ad8719c446c9d3c1fbbab1368107051cb,52c1108,Tanmay Rauth,t_rauth@apple.com,2026-05-13T12:36:42-07:00,GitHub,noreply@github.com,2026-05-13T21:36:42+02:00,feat(cli): add snapshots and refs commands (#1072),"Add `iceberg snapshots TABLE_ID` to list snapshots with ID, timestamp,
-parent, operation, and file counts. Add `iceberg refs TABLE_ID` to list
-snapshot refs with --type filter.
-
-
-Depends On: #1073",14470e5b24fecdd7867e6bb9724762268f29c06b,1072,false,,2,403,11,cmd,56,7,63,base; feature/api verb; important area: cli; medium churn; has PR number; LanceDB similarity 0.25,Core: Add partition to TrackedFile,- feat(cli): add snapshots and refs commands (#1072) (Thanks Tanmay Rauth!)
-apache/iceberg-go,621e10f20370f587e33016a872fd7f5b5da26eea,621e10f,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-20T18:07:33+02:00,GitHub,noreply@github.com,2026-05-20T12:07:33-04:00,fix(table): release Arrow chunks on GetRecords error paths (#1093),"GetRecords and Transaction.makePositionDeleteRecordsForFilter drop the
-perFilePosDeletes map on error without releasing its *arrow.Chunked
-values; extract releasePerFilePosDeletes and call on each error return.
-
-Closes #1051.",efe96b6f826d674c9edb0e09f6558dedc524e16b,1093,false,,3,94,5,table,55,7,62,base; fix; important area: table; release/security/notice signal; has PR number; LanceDB similarity 0.24,Flink: Support UUID type in Avro and Parquet readers and writers,- fix(table): release Arrow chunks on GetRecords error paths (#1093) (Thanks Andrei Tserakhau!)
-apache/iceberg-go,14470e5b24fecdd7867e6bb9724762268f29c06b,14470e5,Tanmay Rauth,t_rauth@apple.com,2026-05-13T12:36:24-07:00,GitHub,noreply@github.com,2026-05-13T21:36:24+02:00,feat(cli): add clean-orphan-files command (#1066),"Add `iceberg clean-orphan-files TABLE_ID` with --older-than (default
-72h), --dry-run, --yes, and --location flags.
-
-
-Related: #957
- Depends On: #1073",51e26d3ef6989a4b2d03ef0e8a90756491ca0c0e,1066,false,,2,310,6,cmd,56,6,62,base; feature/api verb; important area: cli; medium churn; has PR number; LanceDB similarity 0.21,"Core, Spark: Adds a Table Property for Relying on Identifier Fields",- feat(cli): add clean-orphan-files command (#1066) (Thanks Tanmay Rauth!)
-apache/iceberg-go,97c2a683234b525295ec03c10f3518cc0ae1b1e6,97c2a68,Tanmay Rauth,t_rauth@apple.com,2026-05-13T12:35:35-07:00,GitHub,noreply@github.com,2026-05-13T21:35:35+02:00,feat(cli): add --show-defaults flag to schema command (#1067),"Enhance `iceberg schema TABLE_ID --show-defaults` to display
-initial-default and write-default values alongside field definitions.
-
-
-Related: #957
-Depends On: #1073",77c0f63a030e318012e339f7472463a63d5173fb,1067,false,,2,195,6,cmd,56,6,62,base; feature/api verb; important area: cli; medium churn; has PR number; LanceDB similarity 0.21,Core: Make sequence number conflicts retryable when there are concurrent commits,- feat(cli): add --show-defaults flag to schema command (#1067) (Thanks Tanmay Rauth!)
-apache/iceberg-go,6499c4963c577e52cab0feffdae3b2952ecb1f6e,6499c49,Tanmay Rauth,t_rauth@apple.com,2026-05-29T13:29:08+05:30,GitHub,noreply@github.com,2026-05-29T09:59:08+02:00,test(table): add cross-client DV format compliance tests (#1131),"Validates that Go's DVWriter output conforms to the spec envelope format
-(length + magic + bitmap + CRC32) and produces Puffin files with correct
-blob metadata (type, snapshot-id=-1, sequence-number=-1, cardinality,
-referenced-data-file). Asserts byte equivalence between Go's SerializeDV
-output and a Java-produced DV fixture for the same input positions, and
-that multi-blob Puffin files have correct independent offsets.
-
-Part 3 of #997.",bd8f7c048729979930c27ca49cfcf99b68bf29f1,1131,false,,9,502,0,dev; table,58,3,61,base; feature/api verb; important area: table; strategic: puffin; medium file count; medium churn; multi-area change; downrank docs/tests/benchmarks; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,- test(table): add cross-client DV format compliance tests (#1131) (Thanks Tanmay Rauth!)
-apache/iceberg-go,e303dfdeb8fc51834573cc7f6ccff1c454478744,e303dfd,Alessandro Nori,alessandro.nori@datadoghq.com,2026-05-26T14:29:42+02:00,GitHub,noreply@github.com,2026-05-26T14:29:42+02:00,feat(io): add ManagedIdentityCredential support for Azure (#1062),"## Changes
-- Add `ADLSManagedIdentityEnabled`
-(`adls.auth.managed-identity.enabled`) property to opt into
-`ManagedIdentityCredential` instead of `DefaultAzureCredential`
-- Add `ADLSManagedIdentityClientID`
-(`adls.auth.managed-identity.client-id`) property for user-assigned
-managed identities
-
-## Motivation
-`DefaultAzureCredential` sets a short timeout on its first managed
-identity attempt. In production, this causes frequent ""managed identity
-timed out"" errors when the app requests a token. Using
-`ManagedIdentityCredential` directly avoids this timeout.
-
-Reference:
-https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/azidentity/TROUBLESHOOTING.md#troubleshoot-defaultazurecredential-authentication-issues",1f8b81ffd005ba260604847a68c688bc5e93c811,1062,false,,3,44,0,io,52,7,59,base; feature/api verb; important area: io; has PR number; LanceDB similarity 0.25,"Core, REST: Add support for overwrite in RegisterTableRequest",- feat(io): add ManagedIdentityCredential support for Azure (#1062) (Thanks Alessandro Nori!)
-apache/iceberg-go,a7c491261d495dcb055033583db34695eabe81c2,a7c4912,Tanmay Rauth,t_rauth@apple.com,2026-05-26T22:21:50+05:30,GitHub,noreply@github.com,2026-05-26T12:51:50-04:00,feat(table): wire DVWriter into position-delete producer with property gating (#1113),"Wires DVWriter into the position-delete producer with property gating.
-
-Adds write.delete.format table property (v2 default: position, v3
-default: dv). When set to ""dv"", positionDeleteRecordsToDataFiles routes
-through DVWriter instead of the Parquet position-delete writer. The
-existing v3 warning now only fires when write.delete.format is
-explicitly set to ""position"".
-
-  Part 2 of #997
-
-  Out of scope (tracked as follow-ups):
-- In-snapshot DV merging when multiple writes target the same data file.
-  - v2 Parquet pos-delete → v3 DV upgrade path within a single snapshot.
-  - Full cross-client scan test lands in PR #3.",87c1958ffac77956e00cfdf868dc7916dc51aed9,1113,false,,3,361,30,table,51,8,59,base; important area: table; strategic: v3; medium churn; has PR number; LanceDB similarity 0.28,docs: Add CREATE DATABASE step before CREATE TABLE in Spark quickstart,- feat(table): wire DVWriter into position-delete producer with property gating (#1113) (Thanks Tanmay Rauth!)
-apache/iceberg-go,2fcff157abdaec817077f423da54c754ee8634ae,2fcff15,Ondřej Pavela,pavela.ondrej@gmail.com,2026-05-25T09:13:54+02:00,GitHub,noreply@github.com,2026-05-25T09:13:54+02:00,perf(table): dedupe shared manifest reads during snapshot expiration (#1118),"Fixes https://github.com/apache/iceberg-go/issues/1117
-
-### What changed
-Reworked `removeSnapshotsUpdate.PostCommit` so each unique manifest file
-is
-opened at most once per call, regardless of how many expired or retained
-snapshots reference it.
-
-Two passes, both deduped:
-
-1) Build the set of manifest paths reachable from any retained snapshot,
-reading only manifest-lists. Cache the resulting `[]ManifestFile` per
-snapshot so the retained-side pass below doesn't re-download each list.
-2) Walk expired snapshots' manifest lists; for each manifest, skip if
-it's
-in the retained set (its data files are live by definition and the
-manifest itself must not be deleted) or if a prior expired snapshot
-already enumerated it. Otherwise read its entries once.
-3) Subtract live data files via a single walk over each unique retained
-manifest. DELETED entries remain tombstones (unchanged from prior
-semantics).
-
-### Behavior
-Semantically equivalent to the previous implementation — the final
-`filesToDelete` set is the same on well-formed metadata. No spec change,
-no API change. The only difference is the I/O cost.
-
-### Performance impact
-For a 491-snapshot incremental-append table where expiring 490 snapshots
-previously triggered ~sum(1..490) ≈ 120,000 manifest-file downloads, the
-rewrite reduces that to roughly the count of unique orphaned manifests
-(a few hundred in practice). Two-to-three orders of magnitude fewer
-object-store reads, in our test.",aa21ab58ccae84dfbf900097e981ca02e0d970d7,1118,false,,2,276,109,table,51,8,59,base; important area: table; strategic: manifest; medium churn; has PR number; LanceDB similarity 0.26,Core: Unlink table metadata's last-updated timestamp from snapshot timestamp,- perf(table): dedupe shared manifest reads during snapshot expiration (#1118) (Thanks Ondřej Pavela!)
-apache/iceberg-go,ab1ce32e712d0d34b7c8dea0fcb255eee8ddf253,ab1ce32,Tanmay Rauth,t_rauth@apple.com,2026-05-22T18:16:51+05:30,GitHub,noreply@github.com,2026-05-22T14:46:51+02:00,feat(table): add DV planning validations to match Java's DeleteFileIndex (#1050) (#1108),"Add sequence-number guard and reject multiple DVs per data file during
-scan planning, matching Java's DeleteFileIndex behavior.
-
-Closes: #1050",350ae7270d7c44578638ef55e7e0392227745e8a,1108,false,,2,140,41,table,52,5,57,base; feature/api verb; important area: table; has PR number; LanceDB similarity 0.17,Fix NPE in `ParquetAvroWriter` when schema contains variant type,- feat(table): add DV planning validations to match Java's DeleteFileIndex (#1050) (#1108) (Thanks Tanmay Rauth!)
-apache/iceberg-go,53fa29ccc29817c2238405c50716e8058419ac61,53fa29c,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-18T17:50:59+02:00,GitHub,noreply@github.com,2026-05-18T17:50:59+02:00,feat(table): gate v2-only metadata fields on v1 reads (#1088),"Closes #1087.
-
-`#1069` added `rejectV3OnlyFields` to catch v3-only fields in pre-v3
-metadata.
-
-This PR applies the same idea to `last-sequence-number`: it’s a v2+
-field on the shared `commonMetadata` struct, but today we silently
-accept it when reading v1 metadata.
-
-To keep the check from becoming one-off, this generalizes the helper to
-`rejectFieldsBeyondVersion(currentVersion, fields...)`, where each field
-includes the format version it was introduced in. `last-sequence-number`
-is then wired into the v1 read path. For v2 reads, `next-row-id` /
-`encryption-keys` go through the same generalized helper, with no
-behavior change.
-
-One caveat: this depends on the discussion in `#1086`. If we decide to
-relax the v3-only gate and silently ignore forward-looking fields for
-compatibility, then this PR becomes moot and should be revisited
-together with the strictness introduced in `#1069`.",a59f2a276087562ea2d02dcfbb92e44e07d8dac0,1088,false,,2,39,15,table,47,9,56,"base; important area: table; strategic: encryption, v3; has PR number; LanceDB similarity 0.29","API, Core: Add overwrite-aware table registration",- feat(table): gate v2-only metadata fields on v1 reads (#1088) (Thanks Andrei Tserakhau!)
-apache/iceberg-go,2e6b2b6da79189232189d4714bec2b09cd9bc98b,2e6b2b6,Tanmay Rauth,t_rauth@apple.com,2026-05-17T10:03:42-07:00,GitHub,noreply@github.com,2026-05-17T19:03:42+02:00,feat(table): gate v3-only metadata fields on sub-v3 reads (#1006) (#1069),"Reject next-row-id and encryption-keys during v1/v2 metadata parsing
-with a descriptive error naming the field and required format version.
-
-Closes: #1006",8eff0730e13ecdcfa72fb11c674083fb74dfd209,1069,false,,2,151,0,table,47,8,55,"base; important area: table; strategic: encryption, v3; has PR number; LanceDB similarity 0.27",Core: v4 table metadata location should be optional,- feat(table): gate v3-only metadata fields on sub-v3 reads (#1006) (#1069) (Thanks Tanmay Rauth!)
-apache/iceberg-go,77c0f63a030e318012e339f7472463a63d5173fb,77c0f63,Lei Zhang,1091517373@qq.com,2026-05-13T15:01:12+08:00,GitHub,noreply@github.com,2026-05-13T09:01:12+02:00,feat(io): register oss scheme for aliyun oss S3-compatible storage (#1074),,d64fd545fadbbd535f7681789e1ee74d1d4de443,1074,false,,2,4,0,io,47,8,55,base; important area: io; strategic: storage; has PR number; LanceDB similarity 0.26,Make StandardEncryptionManager serializable,- feat(io): register oss scheme for aliyun oss S3-compatible storage (#1074) (Thanks Lei Zhang!)
-apache/iceberg-go,598c2d776c0ddba5953a535f3b85844954672910,598c2d7,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-27T23:35:29+02:00,GitHub,noreply@github.com,2026-05-27T23:35:29+02:00,test(table): end-to-end deletion-vector scan over a real Parquet file (#1134),"Closes #1052.
-
-End-to-end test through the public `ReadTasks` API for a real on-disk
-Parquet file. Locks that DV-deleted positions actually disappear from
-scan output via the composition through
-`recordBatchesFromTasksAndDeletes`.
-
-Seven cases:
-
-- no-DV baseline
-- interior / boundary / all-rows deletes
-- empty bitmap
-- two files with asymmetric ranges + DV positions so a bitmap-swap
-  aggregates differently
-- stale out-of-range positions
-
-Verified by replacing `filterByDeletionVector` with a passthrough and
-observing predicted mismatches.
-
-Sits alongside cross-client fixture work in
-https://github.com/apache/iceberg-go/pull/1041 — this pins Go-side
-composition semantics for the scan path,
-https://github.com/apache/iceberg-go/pull/1041 pins the wire format
-against externally-produced fixtures.",db5392bf4f9c8fff37215fac32852483f1cd4ac7,1134,false,,1,337,0,table,51,3,54,base; important area: table; summary signal: deletion-vector; deletion vector signal; medium churn; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,"Core, Spark: Adds a Table Property for Relying on Identifier Fields",- test(table): end-to-end deletion-vector scan over a real Parquet file (#1134) (Thanks Andrei Tserakhau!)
-apache/iceberg-go,e308fedba4bbeeec8c142afa9c77e27698639ecf,e308fed,Krutika Dhananjay,dhananjaykrutika@gmail.com,2026-05-14T02:19:56+05:30,GitHub,noreply@github.com,2026-05-13T22:49:56+02:00,Skip DELETED tombstones in DeleteOrphanFiles' referenced set (#1076),"DeleteOrphanFiles builds ""referenced files"" set by walking each live
-snapshot's manifests, fetching every entry with discardDeleted=false,
-and unconditionally marking entry as referenced. This treats
-DELETED-status entries (tombstones) the same as ADDED/EXISTING entries,
-so any data file that had ever been overwritten or deleted in a
-copy-on-write operation remains referenced by the surviving snapshot's
-tombstone manifest. After every snapshot that actually held the file
-live is expired, the file is still reachable and orphan cleanup skips
-it.
-
-This is a deviation from iceberg-java and iceberg-python
-implementations.
-
-Switch manifest.Entries() to use discardDeleted=true so tombstones are
-excluded before they reach the reference-collection loop.
-
----------
-
-Co-authored-by: Krutika Dhananjay <krutika@min.io>",bcf85500d8f35eeac80b93b7d074e5b73da4d955,1076,false,Krutika Dhananjay,2,136,1,table,47,7,54,"base; strategic: copy-on-write, manifest; summary signal: copy-on-write; co-authored; has PR number; LanceDB similarity 0.24","Revert ""Move deleted files to Hadoop trash if configured """,- Skip DELETED tombstones in DeleteOrphanFiles' referenced set (#1076) (Thanks Krutika Dhananjay!)
-apache/iceberg-go,6a4c96ea311b36beec9387934e5a0c644f5247e5,6a4c96e,David Zhao,143900483+happydave1@users.noreply.github.com,2026-05-22T20:14:14+02:00,GitHub,noreply@github.com,2026-05-22T14:14:14-04:00,feat(table): Adding geometry and geography type + schema plumbing (#984),"Based on #628 and addresses #990 
-
-Note that this PR sets up a PR to address #991 
-
-Co-authored-by: David Zhao <happydave1@users.noreply.github.com>",359c90fec3f8bc29a5c18ff8bacd025a4ff0fcfd,984,false,David Zhao,16,1046,17,exprs.go; go.mod; go.sum; schema.go; schema_test.go; table; transforms.go; transforms_test.go; types.go; types_test.go; visitors.go,47,6,53,base; important area: table; medium file count; large churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.22,Flink: Support UUID type in Avro and Parquet readers and writers,- feat(table): Adding geometry and geography type + schema plumbing (#984) (Thanks David Zhao!)
-apache/iceberg-go,1401cb6be0656b36771ac7d5d13e87cb224db006,1401cb6,Tanmay Rauth,t_rauth@apple.com,2026-05-21T19:11:59+05:30,GitHub,noreply@github.com,2026-05-21T15:41:59+02:00,feat(table): reject AddDataFiles on v3 when first_row_id is missing (#1000) (#1101),"Closes #1000
-When users call `AddDataFiles` (or `ReplaceDataFilesWithDataFiles` /
-`ReplaceFiles`) with externally-written parquet files on a v3 table,
-reject the operation if `first_row_id` is not set. This mirrors
-pyiceberg's behavior — the library cannot fabricate row IDs
-retroactively, so callers must supply them explicitly via
-`DataFileBuilder.FirstRowID()`.
-## Changes
-   
-- Added validation in `validateDataFilesToAdd` to require `first_row_id`
-on format version >= 3
-  - Error message directs users to `DataFileBuilder.FirstRowID()`
-  - v2 tables are unaffected",9792958839c4d90551e114382dcff3c7f0f428c9,1101,false,,2,50,0,table,47,6,53,base; important area: table; strategic: v3; has PR number; LanceDB similarity 0.21,Upgrade to Spark 3.5.8,- feat(table): reject AddDataFiles on v3 when first_row_id is missing (#1000) (#1101) (Thanks Tanmay Rauth!)
-apache/iceberg-go,eee234ea08b27ad35a6d8f76fd2e9812fb3f35fd,eee234e,Tanmay Rauth,t_rauth@apple.com,2026-05-13T15:05:15-07:00,GitHub,noreply@github.com,2026-05-14T00:05:15+02:00,feat(cli): add upgrade and rollback commands (#1071),"Add `iceberg upgrade TABLE_ID VERSION` with --dry-run and --yes. Add
-`iceberg rollback TABLE_ID --snapshot-id ID` with --yes.
-
-Related: #957
-Depends On: #1073",e308fedba4bbeeec8c142afa9c77e27698639ecf,1071,false,,3,595,11,cmd; table,46,3,49,base; feature/api verb; important area: cli; medium churn; multi-area change; downrank routine build/deps; has PR number; LanceDB similarity 0.33; capped LanceDB boost for routine/low-signal commit,Add idempotency adapter and E2E coverage,- feat(cli): add upgrade and rollback commands (#1071) (Thanks Tanmay Rauth!)
-apache/iceberg-go,9792958839c4d90551e114382dcff3c7f0f428c9,9792958,Minh Vu,vuhoangminh97@gmail.com,2026-05-21T10:09:07+02:00,GitHub,noreply@github.com,2026-05-21T10:09:07+02:00,fix(table): tighten strict negative metrics checks (#1106),"## Summary
-
-- use `containsNullsOnly` / `containsNansOnly` for strict `NotEqual` and
-`NotIn` metrics evaluation
-- remove now-unused strict `canContain*` helpers
-- add regression coverage for mixed null/value and mixed NaN/value files
-
-## Why
-
-For strict negative predicates, the evaluator can only prove a whole
-file matches from null/NaN metrics when the column contains only nulls
-or only NaNs. Mixed null/value or NaN/value files still need to fall
-through to bounds checks and remain conservative when bounds do not
-prove the predicate.
-
-Fixes #1103.
-
-## Testing
-
-- `go test ./table -run TestEvaluators`
-- `go test ./...`
-- `git diff --check`",c9609c342ceac390e69dc000c5ab9286f9e9ce04,1106,false,,2,52,15,table,35,9,44,base; fix; important area: table; has PR number; LanceDB similarity 0.29,Kafka Connect: fix table UUID check,- fix(table): tighten strict negative metrics checks (#1106) (Thanks Minh Vu!)
-apache/iceberg-go,c9609c342ceac390e69dc000c5ab9286f9e9ce04,c9609c3,Minh Vu,vuhoangminh97@gmail.com,2026-05-20T22:29:13+02:00,GitHub,noreply@github.com,2026-05-20T22:29:13+02:00,fix(table): handle missing strict metrics conservatively (#1098),"## Summary
-
-- treat missing null counts for optional fields as unknown during strict
-range/equality evaluation
-- treat missing NaN counts for float/double fields as unknown in the
-same strict checks
-- add regression coverage for nullable fields and float fields with
-bounds present but missing metrics
-
-## Why
-
-The strict metrics evaluator is used to decide when a file is guaranteed
-to match a predicate. Missing metrics should not be interpreted as zero.
-For optional fields, an absent null count means the file may contain
-nulls. For float/double fields, an absent NaN count means the file may
-contain NaNs.
-
-Fixes #1091.
-
-## Testing
-
-- `go test ./table -run TestEvaluators`
-- `go test ./...`
-- `git diff --check`",4e5a072efd74236e8d5086901102b0adf2985a8d,1098,false,,2,113,7,table,35,8,43,base; fix; important area: table; has PR number; LanceDB similarity 0.28,Kafka Connect: fix table UUID check,- fix(table): handle missing strict metrics conservatively (#1098) (Thanks Minh Vu!)
+Not addressing here to keep the diff minimal and unblock main.",51b3140b3a96826622f2a9bc10be357b75d509ba,1114,false,,2,9,9,table,-12,3,-9,base; fix; important area: table; downrank docs/tests/benchmarks; downrank low-signal sync item; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,Bump to Parquet 1.17.0,- fix(table): restore Summary/ColumnSizes test expectations to arrow-go v18.6.0 (#1114) (Thanks Matt Topol!)
 apache/iceberg-go,c131e0e828e78d4f937e1fe89ce9a5eef78179b5,c131e0e,Colton Loftus,70598503+C-Loftus@users.noreply.github.com,2026-05-19T17:27:16-04:00,GitHub,noreply@github.com,2026-05-19T23:27:16+02:00,test(table): geospatial test fixtures (#1094),"- Add geospatial test fixtures that can be used for validating
 geospatial logic performs as expected. All fixtures come from the
 [parquet-testing](https://github.com/apache/parquet-testing/tree/master/data/geospatial)
@@ -684,107 +781,10 @@ that the initial geospatial PRs here have not been merged yet. Given
 these are standard parquet test files, it can be assumed they will need
 to be able to be parsed and conform to the spec.
 
-Closes #1090",ed2a18f1e2acd6dc2ce960de1f06441a20eda487,1094,false,,10,129,0,table,39,3,42,base; important area: table; strategic: storage; medium file count; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.27; capped LanceDB boost for routine/low-signal commit,Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,- test(table): geospatial test fixtures (#1094) (Thanks Colton Loftus!)
-apache/iceberg-go,a59f2a276087562ea2d02dcfbb92e44e07d8dac0,a59f2a2,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-18T03:41:43+02:00,GitHub,noreply@github.com,2026-05-17T19:41:43-06:00,fix(table): derive position-delete partition paths from table schema (#1089),"The partitioned position-delete writer was building partition paths from
-`iceberg.PositionalDeleteSchema`, which only contains `file_path` and
-`pos`.
-
-That breaks for partition specs based on real table columns.
-`PartitionSpec.PartitionType` silently skips fields whose source IDs are
-not present in the schema, so those partitions collapse to an empty
-struct and `PartitionToPath` returns `""""`.
-
-The downstream effect is pretty bad:
-`writerFactory.getOrCreateRollingDataWriter` keys writers by that path,
-so every partition ends up sharing the same rolling writer. Since the
-writer keeps the first partition’s `partitionData`, the resulting delete
-file is tagged as belonging to the first partition while containing
-position deletes for files from multiple partitions.
-
-This PR fixes that by deriving the partition path from
-`metadata.CurrentSchema()`, matching what the data-side
-`partitionedFanoutWriter` already does.
-
-The actual file contents schema is unchanged: position-delete files
-still use `PositionalDeleteSchema`, which is passed separately to the
-writer factory via `withFactoryFileSchema`.
-
-Fixes #1082.",7df00ed08c4dcf4a2fcb49954219c457b0dccee2,1089,false,,2,175,8,table,35,7,42,base; fix; important area: table; has PR number; LanceDB similarity 0.25,Kafka Connect: fix table UUID check,- fix(table): derive position-delete partition paths from table schema (#1089) (Thanks Andrei Tserakhau!)
-apache/iceberg-go,1a446112ccb7a3453853ab5c5f10c7aa24cfb945,1a44611,David Zhao,143900483+happydave1@users.noreply.github.com,2026-05-18T23:36:57+02:00,GitHub,noreply@github.com,2026-05-18T23:36:57+02:00,feat(table): project reserved row-lineage fields as null when the file lacks them (#1045),"fixes #1010.
-
----------
-
-Signed-off-by: happydave1 <dzhao2004@gmail.com>",53fa29ccc29817c2238405c50716e8058419ac61,1045,false,,3,500,0,schema_test.go; table,36,5,41,base; important area: table; medium churn; multi-area change; has PR number; LanceDB similarity 0.16,"Core, Data: File Format API interfaces",- feat(table): project reserved row-lineage fields as null when the file lacks them (#1045) (Thanks David Zhao!)
-apache/iceberg-go,db5392bf4f9c8fff37215fac32852483f1cd4ac7,db5392b,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-27T18:16:58+02:00,GitHub,noreply@github.com,2026-05-27T12:16:58-04:00,fix(substrait): emit decimal literals as 16-byte little-endian (#1130),"DecimalLiteral.MarshalBinary returns big-endian min-byte; Substrait's
-expr.NewLiteral needs 16-byte little-endian and was silently returning
-nil for everything else, panicking downstream. Convert before emit and
-add whitebox tests covering small/zero/16-byte-negative values.",bf990e88b23bb76669e06c813ac47e11d401bf2c,1130,false,,5,132,2,table,24,6,30,base; fix; medium file count; has PR number; LanceDB similarity 0.21,Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,- fix(substrait): emit decimal literals as 16-byte little-endian (#1130) (Thanks Andrei Tserakhau!)
-apache/iceberg-go,1f8b81ffd005ba260604847a68c688bc5e93c811,1f8b81f,Masa,80936176+mzzz-zzm@users.noreply.github.com,2026-05-26T18:03:34+10:00,GitHub,noreply@github.com,2026-05-26T10:03:34+02:00,fix(substrait): use bound field precision in toDecimalLiteral (#1028) (#1121),"DecimalLiteral.Type() hardcodes precision 9 because DecimalLiteral does
-not carry the originating column's declared precision. The only
-confirmed consumer that mis-uses this is toDecimalLiteral in
-table/substrait/substrait.go, which embedded the wrong precision in
-emitted Substrait literals for any column with precision != 9.
-
-Per the Option B consensus on #1028:
-
-1. toDecimalLiteral now reads precision from the bound field's
-iceberg.DecimalType rather than v.Type().
-2. Replaces the latent panic v.Type().(*iceberg.DecimalType) with the
-correct value-type assertion v.Type().(iceberg.DecimalType);
-DecimalTypeOf returns by value.
-3. Documents the precision caveat on DecimalLiteral.Type() so future
-callers consult the bound field type for real precision.
-4. Adds whitebox regression tests for the bound-field path and the
-defensive fallback path.
-
-Fixes #1028
-
-Signed-off-by: mzzz-zzm <80936176+mzzz-zzm@users.noreply.github.com>",2fcff157abdaec817077f423da54c754ee8634ae,1121,false,,3,113,3,literals.go; table,25,5,30,base; fix; multi-area change; has PR number; LanceDB similarity 0.17,Flink: Dynamic Sink: Fix serialization issues with schemas larger than 2^16 bytes <Maximilian Michels>,- fix(substrait): use bound field precision in toDecimalLiteral (#1028) (#1121) (Thanks Masa!)
-apache/iceberg-go,287c5a83dcd0b833e687650815fac7148cde4812,287c5a8,Minh Vu,vuhoangminh97@gmail.com,2026-05-22T16:43:17+02:00,GitHub,noreply@github.com,2026-05-22T16:43:17+02:00,fix: reject invalid transform widths (#1110),"## Summary
-
-- reject invalid `bucket[...]` and `truncate[...]` widths during
-`ParseTransform`
-- treat `Atoi` errors, zero widths, and values above `math.MaxInt32` as
-invalid transforms
-- add parse regression coverage for zero, huge overflow, and
-int32-overflow widths
-
-## Why
-
-`ParseTransform` previously ignored the `strconv.Atoi` error and
-accepted zero widths. Those invalid transforms could later panic when
-bucket/truncate logic performed modulo by the width. Values larger than
-`math.MaxInt32` are also unsafe because bucket/truncate implementations
-narrow widths through int32-sized paths.
-
-Fixes #1109.
-
-## Testing
-
-- `go test . -run TestParseTransform`
-- `go test .`
-- `git diff --check`",ab1ce32e712d0d34b7c8dea0fcb255eee8ddf253,1110,false,,2,14,2,transforms.go; transforms_test.go,25,4,29,base; fix; multi-area change; has PR number; LanceDB similarity 0.14,Spark: Fix javadoc mentioning Spark 3.3 in Spark 3.4 benchmark classes,- fix: reject invalid transform widths (#1110) (Thanks Minh Vu!)
-apache/iceberg-go,ed2a18f1e2acd6dc2ce960de1f06441a20eda487,ed2a18f,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-05-19T15:06:06-04:00,GitHub,noreply@github.com,2026-05-19T12:06:06-07:00,Fix Azure credential test that fails when az is logged in (#1095),"`TestCreateAzureBucketDefaultCredentialCalled` fails when Azure
-credentials are present on the machine (e.g., via `az login`).
-
-When `DefaultAzureCredential` succeeds in creating a client, the `List`
-operation returns an Azure service error (e.g.,
-`AuthorizationPermissionMismatch`) that does not contain
-""DefaultAzureCredential"". The assertion was checking for a string that
-can never appear in this code path.
-
-Removed the incorrect `assert.Contains` on the List error. The test
-still validates that `DefaultAzureCredential` is used (via the creation
-error path or non-nil bucket assertion).",1a446112ccb7a3453853ab5c5f10c7aa24cfb945,1095,false,,1,1,4,io,20,3,23,base; fix; correctness signal; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,Kafka Connect: Fix CVE-2025-67721 in io.airlift:aircompressor by bumping to 2.0.3,- Fix Azure credential test that fails when az is logged in (#1095) (Thanks Kevin Liu!)
-apache/iceberg-go,47ea028d9a9ad70adc2f3f894d1599056d905f34,47ea028,Andrei Tserakhau,laskoviymishka@gmail.com,2026-05-21T18:12:20+02:00,GitHub,noreply@github.com,2026-05-21T12:12:20-04:00,fix(test): TestCreateTable existence check failure (#1105),"PR #355 renamed the table created in TestCreateTable from ""test-table""
-to ""test-create-table"" but left the follow-up CheckTableExists and
-DropTable calls pointing at the old name. CheckTableExists returns
-false, s.True(exists) fails, the actual table is never dropped, and the
-orphan in the namespace cascades into failures for every other suite
-test via ensureNamespace.",1401cb6be0656b36771ac7d5d13e87cb224db006,1105,false,,1,4,4,catalog,8,3,11,base; fix; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,"Core, Spark: add the comment table property key",- fix(test): TestCreateTable existence check failure (#1105) (Thanks Andrei Tserakhau!)
+Closes #1090",ed2a18f1e2acd6dc2ce960de1f06441a20eda487,1094,false,,10,129,0,table,-16,3,-13,base; important area: table; medium file count; downrank docs/tests/benchmarks; downrank low-signal sync item; has PR number; LanceDB similarity 0.27; capped LanceDB boost for routine/low-signal commit,Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,- test(table): geospatial test fixtures (#1094) (Thanks Colton Loftus!)
 apache/iceberg-go,4e5a072efd74236e8d5086901102b0adf2985a8d,4e5a072,Fokko Driesprong,fokko@apache.org,2026-05-20T19:30:59+02:00,GitHub,noreply@github.com,2026-05-20T13:30:59-04:00,refactor: Slight refactor of the integration test (#355),"This makes it easier to track where the tables come from.
 
-Co-authored-by: Fokko Driesprong <Fokko@users.noreply.github.com>",5a30113d38de3eb41899d9d13f548f6315fcf07c,355,false,Fokko Driesprong,1,8,11,catalog,3,3,6,base; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,"Core, Hive: Detect if a view already exists when registering a table",- refactor: Slight refactor of the integration test (#355) (Thanks Fokko Driesprong!)
+Co-authored-by: Fokko Driesprong <Fokko@users.noreply.github.com>",5a30113d38de3eb41899d9d13f548f6315fcf07c,355,false,Fokko Driesprong,1,8,11,catalog,-32,3,-29,base; co-authored; downrank docs/tests/benchmarks; downrank low-signal sync item; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,"Core, Hive: Detect if a view already exists when registering a table",- refactor: Slight refactor of the integration test (#355) (Thanks Fokko Driesprong!)
 apache/iceberg-go,8ccaad7935ffa0501a32ea7ee8da4c9701973154,8ccaad7,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-02T14:25:10-07:00,GitHub,noreply@github.com,2026-06-02T14:25:10-07:00,build(deps): bump the gomod_updates group with 5 updates (#1146),"Bumps the gomod_updates group with 5 updates:
 
 | Package | From | To |

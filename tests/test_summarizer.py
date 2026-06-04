@@ -108,22 +108,34 @@ def test_score_commit_downranks_dependency_bumps_below_rust_summary_signals() ->
         top_level_paths="crates",
         pr_number="2487",
     )
+    pyiceberg_core_fix = commit_row(
+        repository="apache/iceberg-rust",
+        subject="Fix pyiceberg-core dev dependency resolution (#2442)",
+        author_name="Kevin Liu",
+        files_changed="3",
+        insertions="1200",
+        top_level_paths="bindings",
+        pr_number="2442",
+    )
 
     dependency_score, dependency_reasons = score_commit(dependency_bump)
     build_bump_score, build_bump_reasons = score_commit(build_bump)
     publishing_score, publishing_reasons = score_commit(publishing_fix)
     correctness_score, correctness_reasons = score_commit(correctness_fix)
     storage_score, storage_reasons = score_commit(storage_update)
+    pyiceberg_score, pyiceberg_reasons = score_commit(pyiceberg_core_fix)
 
     assert "downrank dependency bump" in dependency_reasons
     assert "downrank dependency bump" in build_bump_reasons
     assert "publishing/release signal" in publishing_reasons
     assert "correctness signal" in correctness_reasons
-    assert "strategic: opendal, storage" in storage_reasons
+    assert "downrank docs/tests/benchmarks" in storage_reasons
+    assert "community signal: pyiceberg-core" in pyiceberg_reasons
     assert publishing_score > dependency_score
     assert correctness_score > dependency_score
     assert storage_score > dependency_score
     assert storage_score > build_bump_score
+    assert pyiceberg_score > build_bump_score
 
 
 def test_score_commit_boosts_go_summary_signals() -> None:
@@ -163,12 +175,29 @@ def test_score_commit_boosts_go_summary_signals() -> None:
         top_level_paths="puffin",
         pr_number="1041",
     )
+    geospatial = commit_row(
+        repository="apache/iceberg-go",
+        subject="feat(table): Adding geometry and geography type + schema plumbing (#984)",
+        top_level_paths="table",
+        files_changed="16",
+        insertions="1000",
+        deletions="63",
+        pr_number="984",
+    )
+    test_expectations = commit_row(
+        repository="apache/iceberg-go",
+        subject="fix(table): restore Summary/ColumnSizes test expectations to arrow-go v18.6.0 (#1114)",
+        top_level_paths="table",
+        pr_number="1114",
+    )
 
     rewrite_score, rewrite_reasons = score_commit(rewrite)
     deletion_score, deletion_reasons = score_commit(deletion_vector)
     clustered_score, clustered_reasons = score_commit(clustered_write)
     cli_score, cli_reasons = score_commit(maintenance_cli)
     test_score, test_reasons = score_commit(golden_test)
+    geospatial_score, geospatial_reasons = score_commit(geospatial)
+    expectations_score, expectations_reasons = score_commit(test_expectations)
 
     assert "important area: table" in rewrite_reasons
     assert "strategic: compaction, rewritedatafiles" in rewrite_reasons
@@ -179,11 +208,51 @@ def test_score_commit_boosts_go_summary_signals() -> None:
     assert "strategic: maintenance" in cli_reasons
     assert "validation/regression test signal" in test_reasons
     assert "downrank docs/tests/benchmarks" not in test_reasons
+    assert "community signal: geography, geometry" in geospatial_reasons
+    assert "downrank low-signal sync item" in expectations_reasons
     assert rewrite_score > 60
     assert deletion_score > 50
     assert clustered_score > 50
     assert cli_score > 60
     assert test_score > 40
+    assert geospatial_score > expectations_score
+
+
+def test_score_commit_downranks_java_backport_and_test_cleanup() -> None:
+    v4_spec = commit_row(
+        repository="apache/iceberg",
+        subject="[SPEC] Add relative paths to v4 spec (#15630)",
+        top_level_paths="format",
+        pr_number="15630",
+    )
+    test_cleanup = commit_row(
+        repository="apache/iceberg",
+        subject="Spark: Trim row-level test parameter rows from 6 to 3 (#16549)",
+        top_level_paths="spark",
+        files_changed="7",
+        insertions="120",
+        deletions="89",
+        pr_number="16549",
+    )
+    backport = commit_row(
+        repository="apache/iceberg",
+        subject="Flink: Backport support UUID type in Avro and Parquet readers and writers (#16333)",
+        top_level_paths="flink",
+        files_changed="12",
+        insertions="300",
+        deletions="158",
+        pr_number="16333",
+    )
+
+    v4_score, v4_reasons = score_commit(v4_spec)
+    cleanup_score, cleanup_reasons = score_commit(test_cleanup)
+    backport_score, backport_reasons = score_commit(backport)
+
+    assert "strategic: v4" in v4_reasons
+    assert "downrank low-signal sync item" in cleanup_reasons
+    assert "downrank low-signal sync item" in backport_reasons
+    assert v4_score > cleanup_score
+    assert v4_score > backport_score
 
 
 def test_summary_bullet_formats_thanks() -> None:

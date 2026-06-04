@@ -80,14 +80,15 @@ FEATURE_RE = re.compile(r"\b(add|support|implement|introduce|enable|allow|expose
 FIX_RE = re.compile(r"\b(fix|avoid|prevent|correct|resolve|retry)\b", re.I)
 DEPENDENCY_BUMP_RE = re.compile(
     r"(^\s*(chore|build)\(deps?\)|^\s*(chore|build):\s*bump\b|"
-    r"\bbump\b.*\b(from|to|updates?)\b|\bupdate deps\b)",
+    r"\bbump\b.*\b(from|to|updates?)\b|\bupdate deps\b|"
+    r"\bupdated?\b.*\bdependenc(?:y|ies)\b)",
     re.I,
 )
 ROUTINE_RE = re.compile(
     r"\b(build|dependency|dependencies|deps|maven|gradle|bump|upgrade|format|formatting)\b",
     re.I,
 )
-IMPORTANT_INFRA_RE = re.compile(r"\b(cve|security|release|license|notice|blocking|block)\b", re.I)
+IMPORTANT_INFRA_RE = re.compile(r"\b(cve|security|license|notice|blocking|block)\b", re.I)
 PUBLISHING_RE = re.compile(r"\b(cargo publish|publish crates?|missing crates?)\b", re.I)
 CORRECTNESS_RE = re.compile(
     r"\b(correctness|data loss|corrupt|incorrect|preserve|dropping|reappear|delete-only)\b",
@@ -104,7 +105,30 @@ SUMMARY_SIGNAL_RE = re.compile(
     r")\b",
     re.I,
 )
+COMMUNITY_SIGNAL_RE = re.compile(
+    r"\b("
+    r"geometry|geography|geospatial|mor|equality-rewrite|purgetable|"
+    r"manifestfilter|manifestmerge|manifest filter|manifest merge|"
+    r"v3 timestamp|timestampns|timestampnanos|timestamp nanosecond|"
+    r"bulk delete|fileio|file io|file scan task|scan task reader|"
+    r"pyiceberg-core|bindings/python|python bindings|"
+    r"partition statistics scan|shredded variant|v4 content stats|"
+    r"parquet/avro manifests?|unregister table|view object api"
+    r")\b",
+    re.I,
+)
 LOW_SIGNAL_RE = re.compile(r"\b(docs?|javadoc|readme|tests?|benchmark|benchmarks?)\b", re.I)
+SYNC_LOW_SIGNAL_RE = re.compile(
+    r"\b("
+    r"backport|trim .*test|test expectations|flaky test|integration test|"
+    r"test fixtures|cross-client .*tests?|typo|release notes?|issue template|"
+    r"^test:|users|dependabot|release scripts?|scripts? .*release|help release|"
+    r"cargo-public-api|lock check|check_standalone|toml fmt|"
+    r"install headers|meson|hive option|draft prs?"
+    r")\b",
+    re.I,
+)
+CLI_ONLY_RE = re.compile(r"\b(cli|cmd)\b", re.I)
 
 
 @dataclass(frozen=True)
@@ -191,6 +215,8 @@ def score_commit(row: dict[str, str]) -> tuple[int, str]:
     reasons: list[str] = ["base"]
     score = 10
     is_dependency_bump = is_dependency_bump_subject(subject)
+    is_validation_test = bool(VALIDATION_TEST_RE.search(subject))
+    is_subject_low_signal = bool(LOW_SIGNAL_RE.search(subject) and not is_validation_test)
 
     if FEATURE_RE.search(subject):
         score += 25
@@ -206,16 +232,22 @@ def score_commit(row: dict[str, str]) -> tuple[int, str]:
         reasons.append(f"important area: {', '.join(important_area_hits)}")
 
     strategic_hits = sorted(term for term in STRATEGIC_TERMS if term in lowered)
-    if strategic_hits and not is_dependency_bump:
+    if strategic_hits and not is_dependency_bump and not is_subject_low_signal:
         score += 20
         reasons.append(f"strategic: {', '.join(strategic_hits)}")
     summary_signal_hits = sorted(
         {match.group(1).lower() for match in SUMMARY_SIGNAL_RE.finditer(text)}
     )
-    if summary_signal_hits and not is_dependency_bump:
+    if summary_signal_hits and not is_dependency_bump and not is_subject_low_signal:
         score += 12
         reasons.append(f"summary signal: {', '.join(summary_signal_hits)}")
-    if DELETION_VECTOR_RE.search(text) and not is_dependency_bump:
+    community_signal_hits = sorted(
+        {match.group(1).lower() for match in COMMUNITY_SIGNAL_RE.finditer(text)}
+    )
+    if community_signal_hits and not is_dependency_bump and not is_subject_low_signal:
+        score += 18
+        reasons.append(f"community signal: {', '.join(community_signal_hits)}")
+    if DELETION_VECTOR_RE.search(text) and not is_dependency_bump and not is_subject_low_signal:
         score += 20
         reasons.append("deletion vector signal")
 
@@ -247,7 +279,7 @@ def score_commit(row: dict[str, str]) -> tuple[int, str]:
     if PUBLISHING_RE.search(text):
         score += 20
         reasons.append("publishing/release signal")
-    if CORRECTNESS_RE.search(text) and not is_dependency_bump:
+    if CORRECTNESS_RE.search(text) and not is_dependency_bump and not is_subject_low_signal:
         score += 12
         reasons.append("correctness signal")
 
@@ -263,14 +295,19 @@ def score_commit(row: dict[str, str]) -> tuple[int, str]:
     if is_dependency_bump:
         score -= 45
         reasons.append("downrank dependency bump")
-    is_validation_test = bool(VALIDATION_TEST_RE.search(subject))
     if is_validation_test:
         score += 12
         reasons.append("validation/regression test signal")
-    if LOW_SIGNAL_RE.search(subject) and not is_validation_test:
+    if is_subject_low_signal:
         score -= 12
         reasons.append("downrank docs/tests/benchmarks")
-    if ROUTINE_RE.search(subject) and not has_important_infra:
+    if SYNC_LOW_SIGNAL_RE.search(subject) and not is_validation_test:
+        score -= 35
+        reasons.append("downrank low-signal sync item")
+    if CLI_ONLY_RE.search(subject) and not community_signal_hits and files_changed < 5:
+        score -= 8
+        reasons.append("downrank narrow CLI change")
+    if ROUTINE_RE.search(subject) and not has_important_infra and not community_signal_hits:
         score -= 15
         reasons.append("downrank routine build/deps")
 
@@ -480,6 +517,20 @@ def read_commit_rows(input_path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(csv_file))
 
 
+def clean_csv_value(value: str) -> str:
+    return "\n".join(line.rstrip() for line in value.splitlines())
+
+
+def clean_csv_rows(rows: list[dict[str, str]], fields: list[str]) -> list[dict[str, str]]:
+    return [
+        {
+            field: clean_csv_value(row.get(field, ""))
+            for field in fields
+        }
+        for row in rows
+    ]
+
+
 def write_scored_csv(rows: list[dict[str, str]], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as csv_file:
@@ -490,7 +541,7 @@ def write_scored_csv(rows: list[dict[str, str]], output_path: Path) -> None:
             lineterminator="\n",
         )
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(clean_csv_rows(rows, SCORED_FIELDS))
 
 
 def write_theme_csv(rows: list[dict[str, str]], output_path: Path) -> None:
@@ -503,7 +554,7 @@ def write_theme_csv(rows: list[dict[str, str]], output_path: Path) -> None:
             lineterminator="\n",
         )
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(clean_csv_rows(rows, THEME_FIELDS))
 
 
 def write_markdown(

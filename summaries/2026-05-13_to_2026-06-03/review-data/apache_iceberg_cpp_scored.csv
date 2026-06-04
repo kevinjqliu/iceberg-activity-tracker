@@ -1,17 +1,4 @@
 repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
-apache/iceberg-cpp,bf26218098778356b9f8d703478ddd2235d7cc68,bf26218,Guotao Yu,guotao.yugt@gmail.com,2026-05-20T14:19:01+08:00,GitHub,noreply@github.com,2026-05-20T14:19:01+08:00,feat(manifest): add ManifestFilterManager and ManifestMergeManager (#652),"Implement two manifest management classes for table write operations:
-
-- ManifestFilterManager: filters manifest entries by row filter
-expression, file path, or partition value; supports
-FailMissingDeletePaths validation. Rewrites manifests that contain
-matching files, marking entries as DELETED; passes through manifests
-that cannot contain matching files unchanged.
-
-- ManifestMergeManager: merges small manifests using greedy bin-packing,
-grouping by partition_spec_id (manifests with different specs are never
-merged). Oversized manifests pass through unchanged. ADDED entries from
-prior manifests become EXISTING when merged (matching Java semantics).",83aa9884555fbdb37d6e171dea54606bac38531a,652,false,,13,1711,0,src,84,9,93,base; feature/api verb; important area: manifest; strategic: manifest; medium file count; large churn; has PR number; LanceDB similarity 0.29,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- feat(manifest): add ManifestFilterManager and ManifestMergeManager (#652) (Thanks Guotao Yu!)
-apache/iceberg-cpp,100bbe39624f3eb5724359e258dbacd8a320e5b2,100bbe3,ZhaoXuan,425932451@qq.com,2026-05-28T08:59:59+08:00,GitHub,noreply@github.com,2026-05-28T08:59:59+08:00,feat(puffin): add puffin file reader and writer (#624),,8601f168a2e61c00656b8821d16b82e96f84c96b,624,false,,14,1228,16,src,84,7,91,base; feature/api verb; important area: puffin; strategic: puffin; medium file count; large churn; has PR number; LanceDB similarity 0.24,Docs: Add informational properties section for table comment,- feat(puffin): add puffin file reader and writer (#624) (Thanks ZhaoXuan!)
 apache/iceberg-cpp,6c781c7b1fa56a46f1f7994f18a5dbf8b62385b3,6c781c7,slfan1989,55643692+slfan1989@users.noreply.github.com,2026-05-21T16:53:55+08:00,GitHub,noreply@github.com,2026-05-21T16:53:55+08:00,feat(io): add bulk delete API to FileIO. (#659),"## Summary
 
 Add a new `FileIO::DeleteFiles(...)` API as a bulk deletion entry point.
@@ -27,7 +14,7 @@ yet update `ExpireSnapshots` to use `DeleteFiles(...)`, and it does not
 introduce
 parallel deletion.
 
-Fixed: #658 
+Fixed: #658
 
 ## Motivation
 
@@ -37,8 +24,34 @@ bulk deletion API gives FileIO implementations a common extension point
 for
 future optimized deletion strategies, such as storage-native batch
 deletion or
-parallel fallback deletion.",136b4683f70bb48913bf236644100485e964356d,659,false,,9,134,11,src,76,10,86,base; feature/api verb; important area: io; strategic: storage; medium file count; has PR number; LanceDB similarity 0.34,"API, Core: Add FileIO to Scan API",- feat(io): add bulk delete API to FileIO. (#659) (Thanks slfan1989!)
-apache/iceberg-cpp,35dde9a66e0c50f1ac19ae7e9ab4cf09d574e3f0,35dde9a,Junwang Zhao,zhjwpku@gmail.com,2026-05-23T11:16:03+08:00,GitHub,noreply@github.com,2026-05-23T11:16:03+08:00,feat: Add v3 timestamp nanosecond primitive types (#653),,3d2537cd3bebf3c9d5d72961e42e749cc3d42f5e,653,false,,39,1140,88,src,73,6,79,base; feature/api verb; strategic: v3; large file count; large churn; has PR number; LanceDB similarity 0.21,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- feat: Add v3 timestamp nanosecond primitive types (#653) (Thanks Junwang Zhao!)
+parallel fallback deletion.",136b4683f70bb48913bf236644100485e964356d,659,false,,9,134,11,src,94,10,104,"base; feature/api verb; important area: io; strategic: storage; community signal: bulk delete, fileio; medium file count; has PR number; LanceDB similarity 0.34","API, Core: Add FileIO to Scan API",- feat(io): add bulk delete API to FileIO. (#659) (Thanks slfan1989!)
+apache/iceberg-cpp,35dde9a66e0c50f1ac19ae7e9ab4cf09d574e3f0,35dde9a,Junwang Zhao,zhjwpku@gmail.com,2026-05-23T11:16:03+08:00,GitHub,noreply@github.com,2026-05-23T11:16:03+08:00,feat: Add v3 timestamp nanosecond primitive types (#653),,3d2537cd3bebf3c9d5d72961e42e749cc3d42f5e,653,false,,39,1140,88,src,91,6,97,base; feature/api verb; strategic: v3; community signal: v3 timestamp; large file count; large churn; has PR number; LanceDB similarity 0.21,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- feat: Add v3 timestamp nanosecond primitive types (#653) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,bf26218098778356b9f8d703478ddd2235d7cc68,bf26218,Guotao Yu,guotao.yugt@gmail.com,2026-05-20T14:19:01+08:00,GitHub,noreply@github.com,2026-05-20T14:19:01+08:00,feat(manifest): add ManifestFilterManager and ManifestMergeManager (#652),"Implement two manifest management classes for table write operations:
+
+- ManifestFilterManager: filters manifest entries by row filter
+expression, file path, or partition value; supports
+FailMissingDeletePaths validation. Rewrites manifests that contain
+matching files, marking entries as DELETED; passes through manifests
+that cannot contain matching files unchanged.
+
+- ManifestMergeManager: merges small manifests using greedy bin-packing,
+grouping by partition_spec_id (manifests with different specs are never
+merged). Oversized manifests pass through unchanged. ADDED entries from
+prior manifests become EXISTING when merged (matching Java semantics).",83aa9884555fbdb37d6e171dea54606bac38531a,652,false,,13,1711,0,src,84,9,93,base; feature/api verb; important area: manifest; strategic: manifest; medium file count; large churn; has PR number; LanceDB similarity 0.29,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- feat(manifest): add ManifestFilterManager and ManifestMergeManager (#652) (Thanks Guotao Yu!)
+apache/iceberg-cpp,100bbe39624f3eb5724359e258dbacd8a320e5b2,100bbe3,ZhaoXuan,425932451@qq.com,2026-05-28T08:59:59+08:00,GitHub,noreply@github.com,2026-05-28T08:59:59+08:00,feat(puffin): add puffin file reader and writer (#624),,8601f168a2e61c00656b8821d16b82e96f84c96b,624,false,,14,1228,16,src,84,7,91,base; feature/api verb; important area: puffin; strategic: puffin; medium file count; large churn; has PR number; LanceDB similarity 0.24,Docs: Add informational properties section for table comment,- feat(puffin): add puffin file reader and writer (#624) (Thanks ZhaoXuan!)
+apache/iceberg-cpp,3d2537cd3bebf3c9d5d72961e42e749cc3d42f5e,3d2537c,Gang Wu,ustcwg@gmail.com,2026-05-22T15:20:33+08:00,GitHub,noreply@github.com,2026-05-22T15:20:33+08:00,feat(data): add MOR file scan task reader (#657),"Add FileScanTaskReader as the delete-aware Arrow stream entrypoint for
+file scan tasks, covering both no-delete reader passthrough and
+merge-on-read filtering with position and equality deletes.
+
+Introduce reusable Arrow C Data utilities for stream wrapping and batch
+projection, including ProjectionContext caching and optional Arrow
+compute registration via arrow::RegisterAll. Move Arrow IO registration
+into arrow_register and remove FileScanTask::ToArrow.
+
+Add coverage for projection behavior across nanoarrow and Arrow compute
+paths, plus end-to-end FileScanTaskReader tests for projected reads,
+position deletes, equality deletes, dropped equality fields, and fully
+deleted batches.",e97a8e84d9fa31ea15f793a009769c9d6d65e9af,657,false,,18,1877,166,arrow_register.cc; arrow_register.h; src,72,7,79,"base; feature/api verb; community signal: file scan task, mor; medium file count; large churn; multi-area change; has PR number; LanceDB similarity 0.23","Data, Spark, Flink: Add TCK for File Format API",- feat(data): add MOR file scan task reader (#657) (Thanks Gang Wu!)
 apache/iceberg-cpp,3e7b20ab8555f51105e56176af23f22641fcea18,3e7b20a,Xinli Shang,shangx@uber.com,2026-05-20T08:22:49-07:00,GitHub,noreply@github.com,2026-05-20T23:22:49+08:00,feat: add IncrementalFileCleanup strategy and dispatch in ExpireSnapshots::Finalize (#648),"Mirrors Java's IncrementalFileCleanup for the linear-ancestry case: each
 manifest is attributed to its writer snapshot, so two passes are enough
 instead of the full reachability scan. Cherry-pick protection via
@@ -80,20 +93,6 @@ trust boundaries, and the handling of recent security reports.
 `AGENTS.md` is currently in `.gitignore`, but this file was force
 committed to ensure that agents running automated security scans will be
 able to find the security model.",d6c1da02c2b4fb53479ba1b3a7f5ad2a44d9784f,688,false,,2,268,0,AGENTS.md; SECURITY-THREAT-MODEL.md,54,9,63,base; feature/api verb; medium churn; multi-area change; release/security/notice signal; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.30,https://github.com/apache/iceberg/milestone/59,- docs: add Iceberg security model (#688) (Thanks Sung Yun!)
-apache/iceberg-cpp,3d2537cd3bebf3c9d5d72961e42e749cc3d42f5e,3d2537c,Gang Wu,ustcwg@gmail.com,2026-05-22T15:20:33+08:00,GitHub,noreply@github.com,2026-05-22T15:20:33+08:00,feat(data): add MOR file scan task reader (#657),"Add FileScanTaskReader as the delete-aware Arrow stream entrypoint for
-file scan tasks, covering both no-delete reader passthrough and
-merge-on-read filtering with position and equality deletes.
-
-Introduce reusable Arrow C Data utilities for stream wrapping and batch
-projection, including ProjectionContext caching and optional Arrow
-compute registration via arrow::RegisterAll. Move Arrow IO registration
-into arrow_register and remove FileScanTask::ToArrow.
-
-Add coverage for projection behavior across nanoarrow and Arrow compute
-paths, plus end-to-end FileScanTaskReader tests for projected reads,
-position deletes, equality deletes, dropped equality fields, and fully
-deleted batches.",e97a8e84d9fa31ea15f793a009769c9d6d65e9af,657,false,,18,1877,166,arrow_register.cc; arrow_register.h; src,54,7,61,base; feature/api verb; medium file count; large churn; multi-area change; has PR number; LanceDB similarity 0.23,"Data, Spark, Flink: Add TCK for File Format API",- feat(data): add MOR file scan task reader (#657) (Thanks Gang Wu!)
-apache/iceberg-cpp,8601f168a2e61c00656b8821d16b82e96f84c96b,8601f16,Gang Wu,ustcwg@gmail.com,2026-05-27T17:37:11+08:00,GitHub,noreply@github.com,2026-05-27T17:37:11+08:00,fix(meson): add missing install headers for meson (#684),,7b0720953caf1d8c2d7a2a63fb098ce8f969736c,684,false,,5,35,11,src,49,7,56,base; feature/api verb; fix; medium file count; has PR number; LanceDB similarity 0.24,"Data, Spark, Flink: Add TCK for File Format API",- fix(meson): add missing install headers for meson (#684) (Thanks Gang Wu!)
 apache/iceberg-cpp,a0c494817347658a780e7f65f8f4a0af5c5fc7e0,a0c4948,liuxiaoyu,45345701+MisterRaindrop@users.noreply.github.com,2026-05-31T15:52:25+08:00,GitHub,noreply@github.com,2026-05-31T15:52:25+08:00,build(hive): add ICEBERG_BUILD_HIVE option and skeleton (#689),"Introduce a top-level ICEBERG_BUILD_HIVE CMake option (default OFF) and
 wire src/iceberg/catalog/hive/ into the build as a subdirectory. The new
 directory installs only iceberg_hive_export.h for now and mirrors the
@@ -200,7 +199,7 @@ apache/iceberg-cpp,d6c1da02c2b4fb53479ba1b3a7f5ad2a44d9784f,d6c1da0,Yingfan Guo,
 `nan_value_counts` map, and `false` for non-floating-point types
 - Add regression tests covering the missing-entry scenario
 
-Close #685 
+Close #685
 
 ## Motivation
 
@@ -214,10 +213,11 @@ rows that do not satisfy the predicate.
 
 - All 40 existing + new StrictMetrics tests pass
 - pre-commit (clang-format, trailing whitespace, etc.) passes",100bbe39624f3eb5724359e258dbacd8a320e5b2,686,false,,2,109,10,src,20,4,24,base; fix; has PR number; LanceDB similarity 0.15,Fix NPE in `ParquetAvroWriter` when schema contains variant type,- fix: correct StrictMetricsEvaluator::CanContainNulls/CanContainNaNs when field missing from stats map (#686) (Thanks Yingfan Guo!)
-apache/iceberg-cpp,a8578e1bddb55f7efbd3a9319f96ed8d03f53c2a,a8578e1,Junwang Zhao,zhjwpku@gmail.com,2026-05-25T13:34:02+08:00,GitHub,noreply@github.com,2026-05-25T13:34:02+08:00,chore(ci): skip actions for draft PRs (#680),,1f7a318dd01283f46bdd67ae519c3df7a0950cf7,680,false,,9,23,1,.github,16,4,20,base; medium file count; has PR number; LanceDB similarity 0.15,Spark: Initial support for 4.1.0 <manuzhang>,- chore(ci): skip actions for draft PRs (#680) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,8601f168a2e61c00656b8821d16b82e96f84c96b,8601f16,Gang Wu,ustcwg@gmail.com,2026-05-27T17:37:11+08:00,GitHub,noreply@github.com,2026-05-27T17:37:11+08:00,fix(meson): add missing install headers for meson (#684),,7b0720953caf1d8c2d7a2a63fb098ce8f969736c,684,false,,5,35,11,src,14,7,21,base; feature/api verb; fix; medium file count; downrank low-signal sync item; has PR number; LanceDB similarity 0.24,"Data, Spark, Flink: Add TCK for File Format API",- fix(meson): add missing install headers for meson (#684) (Thanks Gang Wu!)
 apache/iceberg-cpp,7b0720953caf1d8c2d7a2a63fb098ce8f969736c,7b07209,Guotao Yu,guotao.yugt@gmail.com,2026-05-27T14:47:41+08:00,GitHub,noreply@github.com,2026-05-27T14:47:41+08:00,ci: update pre-commit workflow permissions to write (#683),"Change `contents` permission from `read` to `write` in the pre-commit
 workflow.",e599010ef210d0be073815f493339cf6029a9a6a,683,false,,1,1,1,.github,12,6,18,base; has PR number; LanceDB similarity 0.20,Spark: Add ordering to TestSelect to remove flakiness <Huaxin Gao>,- ci: update pre-commit workflow permissions to write (#683) (Thanks Guotao Yu!)
-apache/iceberg-cpp,d690aaa8037fda0269caac873d4d018cf291baf8,d690aaa,slfan1989,55643692+slfan1989@users.noreply.github.com,2026-05-18T14:42:51+08:00,GitHub,noreply@github.com,2026-05-18T14:42:51+08:00,build: sync Meson project version with CMake (#655),Update the Meson project version from 0.2.0 to 0.3.0 to match the CMake project version.,c41c26978fde247a3e29260e8f15a0a3274c4c22,655,false,,1,1,1,meson.build,-3,3,0,base; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Flink: Add the possibility to use Coordinator Lock when using Flink SQL,- build: sync Meson project version with CMake (#655) (Thanks slfan1989!)
+apache/iceberg-cpp,a8578e1bddb55f7efbd3a9319f96ed8d03f53c2a,a8578e1,Junwang Zhao,zhjwpku@gmail.com,2026-05-25T13:34:02+08:00,GitHub,noreply@github.com,2026-05-25T13:34:02+08:00,chore(ci): skip actions for draft PRs (#680),,1f7a318dd01283f46bdd67ae519c3df7a0950cf7,680,false,,9,23,1,.github,-19,4,-15,base; medium file count; downrank low-signal sync item; has PR number; LanceDB similarity 0.15,Spark: Initial support for 4.1.0 <manuzhang>,- chore(ci): skip actions for draft PRs (#680) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,d690aaa8037fda0269caac873d4d018cf291baf8,d690aaa,slfan1989,55643692+slfan1989@users.noreply.github.com,2026-05-18T14:42:51+08:00,GitHub,noreply@github.com,2026-05-18T14:42:51+08:00,build: sync Meson project version with CMake (#655),Update the Meson project version from 0.2.0 to 0.3.0 to match the CMake project version.,c41c26978fde247a3e29260e8f15a0a3274c4c22,655,false,,1,1,1,meson.build,-38,3,-35,base; downrank low-signal sync item; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Flink: Add the possibility to use Coordinator Lock when using Flink SQL,- build: sync Meson project version with CMake (#655) (Thanks slfan1989!)
 apache/iceberg-cpp,f936553ef248ff5204a0988c4c691301800a5950,f936553,Junwang Zhao,zhjwpku@gmail.com,2026-06-01T23:14:50+08:00,GitHub,noreply@github.com,2026-06-01T23:14:50+08:00,chore(doc): bump minimum Clang version to 18 (#695),"ErrorCollector uses the C++23 ""deducing this"" feature (P0847 / explicit
 object parameters), which is first supported in Clang 18.
 

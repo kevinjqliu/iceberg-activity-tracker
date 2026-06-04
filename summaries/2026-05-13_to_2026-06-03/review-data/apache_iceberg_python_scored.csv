@@ -221,7 +221,7 @@ ${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
 
 # Rationale for this change
 
-Follows REST catalog spec: 
+Follows REST catalog spec:
 
 - /v1/{prefix}/tables:
 https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L525-L562
@@ -266,7 +266,7 @@ https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/
 
 ## Are these changes tested?
 
-Yes. 
+Yes.
 
 ## Are there any user-facing changes?
 
@@ -284,7 +284,7 @@ ${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
 
 # Rationale for this change
 
-Follows REST catalog spec: 
+Follows REST catalog spec:
 
 - /v1/{prefix}/namespaces:
 https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L250-L306
@@ -309,6 +309,36 @@ first page)
 ---------
 
 Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",1d31eff86154540129f40fe9146c8f27d5e54d41,3347,false,Kevin Liu,2,124,12,pyiceberg; tests,80,8,88,base; feature/api verb; important area: rest; strategic: catalog; multi-area change; co-authored; has PR number; LanceDB similarity 0.28,"Core, REST: Add support for overwrite in RegisterTableRequest",- REST: Add pagination support for list_namespaces (#3347) (Thanks Yuya Ebihara and Kevin Liu!)
+apache/iceberg-python,0bdff48005c0969d1bc320c7fdfa5c96f49bb4ae,0bdff48,vishnu prakash,nvishnuprakash02@gmail.com,2026-05-16T01:59:43+05:30,GitHub,noreply@github.com,2026-05-15T22:29:43+02:00,Add `@typing.override` to catalog and FileIO implementations (#3360),"Adds `@override` from `typing_extensions` to all concrete
+implementations of `Catalog`, `MetastoreCatalog`, `FileIO`, `InputFile`,
+and `OutputFile` so overridden base-class methods are explicit and can
+be verified by static type checkers.
+
+Uses `from typing_extensions import override` (same pattern already used
+for `Self` in `typedef.py`) instead of `from typing import override`
+which requires Python 3.12+ and would break the supported 3.10/3.11
+versions.
+
+Closes #1310
+
+# Rationale for this change
+
+`@typing.override` (PEP 698) makes it explicit which methods
+intentionally override a parent class method, helping static type
+checkers catch mistakes early. The previous attempt (#1312) and the
+currently open PR (#3359) both use `from typing import override` which
+only exists in Python 3.12+. This PR uses `typing_extensions` to support
+all versions from 3.10+.
+
+## Are these changes tested?
+
+No new tests are needed — `@override` is a static analysis marker with
+zero runtime effect. `make lint` and `make test` (3625 passed) both pass
+cleanly.
+
+## Are there any user-facing changes?
+
+No.",a99320bf8bfe8c81415dc6ff2148d4f5a23067e5,3360,false,,10,173,0,pyiceberg,79,8,87,base; feature/api verb; strategic: catalog; community signal: fileio; medium file count; has PR number; LanceDB similarity 0.27,Flink: Support UUID type in Avro and Parquet readers and writers,- Add `@typing.override` to catalog and FileIO implementations (#3360) (Thanks vishnu prakash!)
 apache/iceberg-python,2f7911666d280599068e44eb588d92da14e10f8d,2f79116,Yuya Ebihara,ebyhry@gmail.com,2026-05-16T03:20:17+09:00,GitHub,noreply@github.com,2026-05-15T20:20:17+02:00,REST: Add pagination support for `list_views` (#3349),"<!--
 Thanks for opening a pull request!
 -->
@@ -319,7 +349,7 @@ ${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
 
 # Rationale for this change
 
-Follows REST catalog spec: 
+Follows REST catalog spec:
 
 - /v1/{prefix}/views:
 https://github.com/apache/iceberg/blob/e7a5a87f26f9de5b200254155aa037368b13a29c/open-api/rest-catalog-open-api.yaml#L1525-L1562
@@ -340,6 +370,25 @@ first page)
 
 <!-- In the case of user-facing changes, please add the changelog label.
 -->",95c45d44094cce592452dee9b81492673f1fe548,3349,false,,2,106,6,pyiceberg; tests,77,9,86,base; feature/api verb; important area: rest; strategic: catalog; multi-area change; has PR number; LanceDB similarity 0.31,"Core, REST: Add support for overwrite in RegisterTableRequest",- REST: Add pagination support for `list_views` (#3349) (Thanks Yuya Ebihara!)
+apache/iceberg-python,e4869850b5632b29bc65cd2d549bfda9fb22d27c,e486985,Yuya Ebihara,ebyhry@gmail.com,2026-05-25T01:37:58+09:00,GitHub,noreply@github.com,2026-05-24T09:37:58-07:00,REST: Allow Identifier type in `drop_view` method (#3408),"# Rationale for this change
+
+Fix the warning message in the IDE.
+
+The base class and other classes use the `str | Identifier` style in the
+`drop_view` method.
+I also confirmed that other methods in the REST catalog class use `str |
+Identifier` for identifiers.
+
+## Are these changes tested?
+
+N/A
+
+## Are there any user-facing changes?
+
+No
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",8055a60af5d32ec4d2e1d02cd020a78273785558,3408,false,,1,1,1,pyiceberg,72,9,81,base; feature/api verb; important area: rest; strategic: catalog; has PR number; LanceDB similarity 0.30,Add TCK tests for Schema Evolution in BaseFormatModelTests,- REST: Allow Identifier type in `drop_view` method (#3408) (Thanks Yuya Ebihara!)
 apache/iceberg-python,55887b46ca70a1e03419873348f2f55d8491ada5,55887b4,Chris Qiu,churchqq030@hotmail.com,2026-05-25T01:14:47+08:00,GitHub,noreply@github.com,2026-05-24T10:14:47-07:00,feat(cli): deprecate version command in favor of --version flag (#3206),"Closes #3160
 
 <!--
@@ -395,56 +444,7 @@ Yes:
 
 ---------
 
-Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",e4869850b5632b29bc65cd2d549bfda9fb22d27c,3206,false,Kevin Liu,2,26,2,pyiceberg; tests,75,6,81,base; important area: cli; strategic: catalog; multi-area change; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.19,Core: Fix useSnapshotSchema logic and projection in RESTTableScan,- feat(cli): deprecate version command in favor of --version flag (#3206) (Thanks Chris Qiu and Kevin Liu!)
-apache/iceberg-python,e4869850b5632b29bc65cd2d549bfda9fb22d27c,e486985,Yuya Ebihara,ebyhry@gmail.com,2026-05-25T01:37:58+09:00,GitHub,noreply@github.com,2026-05-24T09:37:58-07:00,REST: Allow Identifier type in `drop_view` method (#3408),"# Rationale for this change
-
-Fix the warning message in the IDE. 
-
-The base class and other classes use the `str | Identifier` style in the
-`drop_view` method.
-I also confirmed that other methods in the REST catalog class use `str |
-Identifier` for identifiers.
-
-## Are these changes tested?
-
-N/A
-
-## Are there any user-facing changes?
-
-No
-
-<!-- In the case of user-facing changes, please add the changelog label.
--->",8055a60af5d32ec4d2e1d02cd020a78273785558,3408,false,,1,1,1,pyiceberg,72,9,81,base; feature/api verb; important area: rest; strategic: catalog; has PR number; LanceDB similarity 0.30,Add TCK tests for Schema Evolution in BaseFormatModelTests,- REST: Allow Identifier type in `drop_view` method (#3408) (Thanks Yuya Ebihara!)
-apache/iceberg-python,0bdff48005c0969d1bc320c7fdfa5c96f49bb4ae,0bdff48,vishnu prakash,nvishnuprakash02@gmail.com,2026-05-16T01:59:43+05:30,GitHub,noreply@github.com,2026-05-15T22:29:43+02:00,Add `@typing.override` to catalog and FileIO implementations (#3360),"Adds `@override` from `typing_extensions` to all concrete
-implementations of `Catalog`, `MetastoreCatalog`, `FileIO`, `InputFile`,
-and `OutputFile` so overridden base-class methods are explicit and can
-be verified by static type checkers.
-
-Uses `from typing_extensions import override` (same pattern already used
-for `Self` in `typedef.py`) instead of `from typing import override`
-which requires Python 3.12+ and would break the supported 3.10/3.11
-versions.
-
-Closes #1310
-
-# Rationale for this change
-
-`@typing.override` (PEP 698) makes it explicit which methods
-intentionally override a parent class method, helping static type
-checkers catch mistakes early. The previous attempt (#1312) and the
-currently open PR (#3359) both use `from typing import override` which
-only exists in Python 3.12+. This PR uses `typing_extensions` to support
-all versions from 3.10+.
-
-## Are these changes tested?
-
-No new tests are needed — `@override` is a static analysis marker with
-zero runtime effect. `make lint` and `make test` (3625 passed) both pass
-cleanly.
-
-## Are there any user-facing changes?
-
-No.",a99320bf8bfe8c81415dc6ff2148d4f5a23067e5,3360,false,,10,173,0,pyiceberg,61,8,69,base; feature/api verb; strategic: catalog; medium file count; has PR number; LanceDB similarity 0.27,Flink: Support UUID type in Avro and Parquet readers and writers,- Add `@typing.override` to catalog and FileIO implementations (#3360) (Thanks vishnu prakash!)
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",e4869850b5632b29bc65cd2d549bfda9fb22d27c,3206,false,Kevin Liu,2,26,2,pyiceberg; tests,67,6,73,base; important area: cli; strategic: catalog; multi-area change; co-authored; release/security/notice signal; downrank narrow CLI change; has PR number; LanceDB similarity 0.19,Core: Fix useSnapshotSchema logic and projection in RESTTableScan,- feat(cli): deprecate version command in favor of --version flag (#3206) (Thanks Chris Qiu and Kevin Liu!)
 apache/iceberg-python,720708a00f8a259d2f2ad86c1c55d5b88ad6c373,720708a,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-05-25T15:57:38-04:00,GitHub,noreply@github.com,2026-05-25T21:57:38+02:00,Fix walrus truthiness on metrics bounds and identity-partition projection (#3412),"Inspired by the walrus issue in #3353
 
 ## Summary
@@ -485,17 +485,6 @@ projection with falsy partition values (`0`, `""""`, `None`).
 - `tests/table/test_inspect.py` — `_readable_bound` helper plus
 integration tests via `tbl.inspect.entries()` and `tbl.inspect.files()`
 for empty-string and null bounds.",55887b46ca70a1e03419873348f2f55d8491ada5,3412,false,,6,252,35,pyiceberg; tests,53,10,63,base; fix; strategic: manifest; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.35,Bump to Parquet 1.17.0,- Fix walrus truthiness on metrics bounds and identity-partition projection (#3412) (Thanks Kevin Liu!)
-apache/iceberg-python,a24af23012f9c7767499efbeeb4dd524e0353d3f,a24af23,Yuya Ebihara,ebyhry@gmail.com,2026-05-24T12:00:20+09:00,GitHub,noreply@github.com,2026-05-23T20:00:20-07:00,REST: Add integration test for views (#3406),"# Rationale for this change
-
-Improve test coverage of views in REST catalog.
-
-## Are these changes tested?
-
-Yes
-
-## Are there any user-facing changes?
-
-No",1adff267a44038c8ae98ebbbc538cd521312c20c,3406,false,,2,57,0,tests,60,3,63,base; feature/api verb; important area: rest; strategic: catalog; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.27; capped LanceDB boost for routine/low-signal commit,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- REST: Add integration test for views (#3406) (Thanks Yuya Ebihara!)
 apache/iceberg-python,5da8186d0a77456e2da2a0286bc016af94c043ed,5da8186,Sung Yun,107272191+sungwy@users.noreply.github.com,2026-05-28T15:54:41-04:00,GitHub,noreply@github.com,2026-05-28T15:54:41-04:00,docs: add Iceberg security model (#3425),"Similar to: https://github.com/apache/iceberg/pull/16538
 
 This PR publishes a security model for Iceberg and adds a detailed
@@ -575,6 +564,28 @@ continues to pass
 # Are there any user-facing changes?
 
 No.",7f8a9f2924a234268ea8a5bd1159970bf5d8b1d6,3357,false,,2,38,13,pyiceberg; tests,45,6,51,base; fix; strategic: occ; multi-area change; has PR number; LanceDB similarity 0.21,"Core, Spark 4.1: Fix distributed planning for CoW operations",- fix: avoid `TSaslClientTransport` reuse to eliminate server-side SASL noise (#3357) (Thanks barking-code!)
+apache/iceberg-python,1d31eff86154540129f40fe9146c8f27d5e54d41,1d31eff,Gabriel Igliozzi,gaboiglio@gmail.com,2026-05-24T00:14:50+02:00,GitHub,noreply@github.com,2026-05-23T15:14:50-07:00,feat(view): View object API (#3338),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+Add view api to abstract away access to the metadata
+
+## Are these changes tested?
+
+Yes, created tests/test_view.py
+
+## Are there any user-facing changes?
+
+Yes, a new api is available for views
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",00d0962d7472a21fbcb548dd23b1e0e5a90695d8,3338,false,,3,204,4,pyiceberg; tests,39,7,46,base; community signal: view object api; medium churn; multi-area change; has PR number; LanceDB similarity 0.22,Hive: Update view query in HMS when replacing view <wuya>,- feat(view): View object API (#3338) (Thanks Gabriel Igliozzi!)
 apache/iceberg-python,d3393910065a282e96f9b471d0a9b1047ef28b7a,d339391,Ben Lai,laichunpongben@gmail.com,2026-05-19T22:31:13+08:00,GitHub,noreply@github.com,2026-05-19T07:31:13-07:00,perf(add_files): stream manifest entries for duplicate-files check (#3287),"Fixes #3286.
 
 ## The hot path today
@@ -788,7 +799,7 @@ apache/iceberg-python,95c45d44094cce592452dee9b81492673f1fe548,95c45d4,Federico,
 # Rationale for this change
 `pyiceberg_example.ipynb` and `spark_integration_example.ipynb` had no
 automated test coverage. Breaking changes to notebook cells could go
-undetected in CI. 
+undetected in CI.
 
 This PR adds papermill-based tests that execute the
 real notebooks as-is, so any change to a cell is automatically reflected
@@ -806,7 +817,7 @@ make test-notebook
 No.",a9ad3a305fb91abd7edecc029ccc4178398056fe,3330,false,,5,314,1,Makefile; pyproject.toml; tests; uv.lock,38,3,41,base; feature/api verb; medium file count; medium churn; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,GCP: Add scheduled refresh for storage credentials held by GCSFileIO,- Add papermill-based tests for PyIceberg examples (#3330) (Thanks Federico!)
 apache/iceberg-python,739373fcdf68d01ab7ab6d577199cdc2058eb74e,739373f,Yuya Ebihara,ebyhry@gmail.com,2026-05-19T23:11:41+09:00,GitHub,noreply@github.com,2026-05-19T07:11:41-07:00,REST: Rename rest-scan-planning-enabled to scan-planning-mode (#3376),"# Rationale for this change
 
-Boolean properties should be avoided as much as possible. 
+Boolean properties should be avoided as much as possible.
 We may consider introducing a new scan planning mode in the future.
 
 The Java implementation has already changed from
@@ -856,64 +867,6 @@ the existing truncation behavior
 tests/test_conversions.py`
 
 Closes #3404.",b7ca7be605043b26e2078da357ad4f94e22e771a,3405,false,,4,50,7,pyiceberg; tests,25,8,33,base; fix; multi-area change; has PR number; LanceDB similarity 0.26,API: Implement properties method in EncryptingFileIO,- Fix precision loss in large integral string conversions (#3405) (Thanks Minh Vu!)
-apache/iceberg-python,1d31eff86154540129f40fe9146c8f27d5e54d41,1d31eff,Gabriel Igliozzi,gaboiglio@gmail.com,2026-05-24T00:14:50+02:00,GitHub,noreply@github.com,2026-05-23T15:14:50-07:00,feat(view): View object API (#3338),"<!--
-Thanks for opening a pull request!
--->
-
-<!-- In the case this PR will resolve an issue, please replace
-${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
-<!-- Closes #${GITHUB_ISSUE_ID} -->
-
-# Rationale for this change
-
-Add view api to abstract away access to the metadata
-
-## Are these changes tested?
-
-Yes, created tests/test_view.py
-
-## Are there any user-facing changes?
-
-Yes, a new api is available for views
-
-<!-- In the case of user-facing changes, please add the changelog label.
--->",00d0962d7472a21fbcb548dd23b1e0e5a90695d8,3338,false,,3,204,4,pyiceberg; tests,21,7,28,base; medium churn; multi-area change; has PR number; LanceDB similarity 0.22,Hive: Update view query in HMS when replacing view <wuya>,- feat(view): View object API (#3338) (Thanks Gabriel Igliozzi!)
-apache/iceberg-python,aa33ab496a226aaf5ff7a9791eb053fb143dd5b8,aa33ab4,Yuya Ebihara,ebyhry@gmail.com,2026-05-29T00:01:16+09:00,GitHub,noreply@github.com,2026-05-28T08:01:16-07:00,Fix typo (#3424),"# Rationale for this change
-
-Fix typo
-
-## Are these changes tested?
-
-Yes
-
-## Are there any user-facing changes?
-
-No
-
-<!-- In the case of user-facing changes, please add the changelog label.
--->",d99e4633de170046c6a5fa1b63bfb35eb0ba9f7d,3424,false,,4,4,4,tests,20,6,26,base; fix; has PR number; LanceDB similarity 0.20,Core: Propagate Avro compression settings to manifest writers,- Fix typo (#3424) (Thanks Yuya Ebihara!)
-apache/iceberg-python,7078a5d8a86b491f9984711a455273e1199493f8,7078a5d,Yuya Ebihara,ebyhry@gmail.com,2026-05-18T22:46:23+09:00,GitHub,noreply@github.com,2026-05-18T15:46:23+02:00,Fix typo in `test_add_files` (#3378),"<!--
-Thanks for opening a pull request!
--->
-
-<!-- In the case this PR will resolve an issue, please replace
-${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
-<!-- Closes #${GITHUB_ISSUE_ID} -->
-
-# Rationale for this change
-
-Fix typo in test_add_files
-
-## Are these changes tested?
-
-N/A
-
-## Are there any user-facing changes?
-
-No
-
-<!-- In the case of user-facing changes, please add the changelog label.
--->",0bdff48005c0969d1bc320c7fdfa5c96f49bb4ae,3378,false,,1,1,1,tests,20,6,26,base; fix; has PR number; LanceDB similarity 0.22,Add TCK tests for Schema Evolution in BaseFormatModelTests,- Fix typo in `test_add_files` (#3378) (Thanks Yuya Ebihara!)
 apache/iceberg-python,1adff267a44038c8ae98ebbbc538cd521312c20c,1adff26,Yuya Ebihara,ebyhry@gmail.com,2026-05-24T11:58:13+09:00,GitHub,noreply@github.com,2026-05-23T19:58:13-07:00,Make `View.sql_for` case-insensitive and return None for unknown dialect (#3407),"# Rationale for this change
 
 Iceberg Java compares the dialect in a case-insensitive manner, and
@@ -938,6 +891,98 @@ apache/iceberg-python,4bd751d7d8af9786db76ec0e3e6d0114d89d4921,4bd751d,Minh Vu,v
 consistent
 
 Closes #3402",88e8c2540f770a77ae6f6a9b5b4e90d39ed05bcf,3403,false,,1,2,2,mkdocs,8,3,11,base; fix; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,OpenAPI: Promote the S3 signing endpoint to the main spec,- docs: fix New York longitude sign in partial overwrite example (#3403) (Thanks Minh Vu!)
+apache/iceberg-python,a24af23012f9c7767499efbeeb4dd524e0353d3f,a24af23,Yuya Ebihara,ebyhry@gmail.com,2026-05-24T12:00:20+09:00,GitHub,noreply@github.com,2026-05-23T20:00:20-07:00,REST: Add integration test for views (#3406),"# Rationale for this change
+
+Improve test coverage of views in REST catalog.
+
+## Are these changes tested?
+
+Yes
+
+## Are there any user-facing changes?
+
+No",1adff267a44038c8ae98ebbbc538cd521312c20c,3406,false,,2,57,0,tests,5,3,8,base; feature/api verb; important area: rest; downrank docs/tests/benchmarks; downrank low-signal sync item; has PR number; LanceDB similarity 0.27; capped LanceDB boost for routine/low-signal commit,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- REST: Add integration test for views (#3406) (Thanks Yuya Ebihara!)
+apache/iceberg-python,00d0962d7472a21fbcb548dd23b1e0e5a90695d8,00d0962,Yuya Ebihara,ebyhry@gmail.com,2026-05-24T06:52:53+09:00,GitHub,noreply@github.com,2026-05-23T14:52:53-07:00,Test: Replace rest-scan-planning-enabled with scan-planning-mode (#3391),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+- Follow-up of https://github.com/apache/iceberg-python/pull/3376
+
+There are no other usages of `rest-scan-planning-enabled`.
+
+## Are these changes tested?
+
+Yes
+
+## Are there any user-facing changes?
+
+No",4bd751d7d8af9786db76ec0e3e6d0114d89d4921,3391,false,,2,3,3,tests,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,Core: Avoid exceptions for accessing schema for metadata tables in SnapshotUtil,- Test: Replace rest-scan-planning-enabled with scan-planning-mode (#3391) (Thanks Yuya Ebihara!)
+apache/iceberg-python,88e8c2540f770a77ae6f6a9b5b4e90d39ed05bcf,88e8c25,Yuya Ebihara,ebyhry@gmail.com,2026-05-23T14:51:04+09:00,GitHub,noreply@github.com,2026-05-23T07:51:04+02:00,Build: Update actions/upload-artifact to v7.0.1 (#3401),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+Fix warning of Node.js:
+```
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+```
+
+https://github.com/apache/iceberg already uses v7.0.1.
+
+## Are these changes tested?
+
+N/A
+
+## Are there any user-facing changes?
+
+No",fbd4c3bbaa882b8818d2dcdfc3835b6ed3aa90c5,3401,false,,3,6,6,.github,-3,3,0,base; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,Add runtime dependency guard for all bundled shadow JAR artifacts,- Build: Update actions/upload-artifact to v7.0.1 (#3401) (Thanks Yuya Ebihara!)
+apache/iceberg-python,aa33ab496a226aaf5ff7a9791eb053fb143dd5b8,aa33ab4,Yuya Ebihara,ebyhry@gmail.com,2026-05-29T00:01:16+09:00,GitHub,noreply@github.com,2026-05-28T08:01:16-07:00,Fix typo (#3424),"# Rationale for this change
+
+Fix typo
+
+## Are these changes tested?
+
+Yes
+
+## Are there any user-facing changes?
+
+No
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",d99e4633de170046c6a5fa1b63bfb35eb0ba9f7d,3424,false,,4,4,4,tests,-15,6,-9,base; fix; downrank low-signal sync item; has PR number; LanceDB similarity 0.20,Core: Propagate Avro compression settings to manifest writers,- Fix typo (#3424) (Thanks Yuya Ebihara!)
+apache/iceberg-python,7078a5d8a86b491f9984711a455273e1199493f8,7078a5d,Yuya Ebihara,ebyhry@gmail.com,2026-05-18T22:46:23+09:00,GitHub,noreply@github.com,2026-05-18T15:46:23+02:00,Fix typo in `test_add_files` (#3378),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+Fix typo in test_add_files
+
+## Are these changes tested?
+
+N/A
+
+## Are there any user-facing changes?
+
+No
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",0bdff48005c0969d1bc320c7fdfa5c96f49bb4ae,3378,false,,1,1,1,tests,-15,6,-9,base; fix; downrank low-signal sync item; has PR number; LanceDB similarity 0.22,Add TCK tests for Schema Evolution in BaseFormatModelTests,- Fix typo in `test_add_files` (#3378) (Thanks Yuya Ebihara!)
 apache/iceberg-python,d99e4633de170046c6a5fa1b63bfb35eb0ba9f7d,d99e463,CalebWeisgerber,122579734+CalebWeisgerber@users.noreply.github.com,2026-05-26T12:37:21-07:00,GitHub,noreply@github.com,2026-05-26T12:37:21-07:00,Chore: Updated PyArrow Dependencies (#3362),"<!--
 Thanks for opening a pull request!
 -->
@@ -961,52 +1006,8 @@ https://github.com/apache/iceberg-rust/pull/2442
 ## Are there any user-facing changes?
 
 <!-- In the case of user-facing changes, please add the changelog label.
--->",75cd77fda94a6bdd242c8d892d2bae5db595653c,3362,false,,2,0,3,pyproject.toml; uv.lock,2,3,5,base; multi-area change; downrank routine build/deps; has PR number; LanceDB similarity 0.14; capped LanceDB boost for routine/low-signal commit,"API, Spark: Optimize NOT IN and != predicate evaluation for fields containing a single-value <Joy Haldar>",- Chore: Updated PyArrow Dependencies (#3362) (Thanks CalebWeisgerber!)
-apache/iceberg-python,00d0962d7472a21fbcb548dd23b1e0e5a90695d8,00d0962,Yuya Ebihara,ebyhry@gmail.com,2026-05-24T06:52:53+09:00,GitHub,noreply@github.com,2026-05-23T14:52:53-07:00,Test: Replace rest-scan-planning-enabled with scan-planning-mode (#3391),"<!--
-Thanks for opening a pull request!
--->
-
-<!-- In the case this PR will resolve an issue, please replace
-${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
-<!-- Closes #${GITHUB_ISSUE_ID} -->
-
-# Rationale for this change
-
-- Follow-up of https://github.com/apache/iceberg-python/pull/3376
-
-There are no other usages of `rest-scan-planning-enabled`. 
-
-## Are these changes tested?
-
-Yes
-
-## Are there any user-facing changes?
-
-No",4bd751d7d8af9786db76ec0e3e6d0114d89d4921,3391,false,,2,3,3,tests,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,Core: Avoid exceptions for accessing schema for metadata tables in SnapshotUtil,- Test: Replace rest-scan-planning-enabled with scan-planning-mode (#3391) (Thanks Yuya Ebihara!)
-apache/iceberg-python,88e8c2540f770a77ae6f6a9b5b4e90d39ed05bcf,88e8c25,Yuya Ebihara,ebyhry@gmail.com,2026-05-23T14:51:04+09:00,GitHub,noreply@github.com,2026-05-23T07:51:04+02:00,Build: Update actions/upload-artifact to v7.0.1 (#3401),"<!--
-Thanks for opening a pull request!
--->
-
-<!-- In the case this PR will resolve an issue, please replace
-${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
-<!-- Closes #${GITHUB_ISSUE_ID} -->
-
-# Rationale for this change
-
-Fix warning of Node.js: 
-```
-Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
-```
-
-https://github.com/apache/iceberg already uses v7.0.1. 
-
-## Are these changes tested?
-
-N/A
-
-## Are there any user-facing changes?
-
-No",fbd4c3bbaa882b8818d2dcdfc3835b6ed3aa90c5,3401,false,,3,6,6,.github,-3,3,0,base; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,Add runtime dependency guard for all bundled shadow JAR artifacts,- Build: Update actions/upload-artifact to v7.0.1 (#3401) (Thanks Yuya Ebihara!)
+-->",75cd77fda94a6bdd242c8d892d2bae5db595653c,3362,false,,2,0,3,pyproject.toml; uv.lock,-43,3,-40,base; multi-area change; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.14; capped LanceDB boost for routine/low-signal commit,"API, Spark: Optimize NOT IN and != predicate evaluation for fields containing a single-value <Joy Haldar>",- Chore: Updated PyArrow Dependencies (#3362) (Thanks CalebWeisgerber!)
+apache/iceberg-python,da23378f7736f48502203f1f533303afc88614b8,da23378,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:49:47+02:00,GitHub,noreply@github.com,2026-05-18T15:49:47+02:00,Build: Bump pyiceberg-core from 0.9.0 to 0.9.1 (#3370),,70923a3777cb3adacb622ac77f08c0976dcd1125,3370,false,,1,7,8,uv.lock,-58,3,-55,base; downrank bot; downrank dependency bump; has PR number; LanceDB similarity 0.40; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump pyiceberg-core from 0.9.0 to 0.9.1 (#3370) (Thanks dependabot[bot]!)
 apache/iceberg-python,fbd4c3bbaa882b8818d2dcdfc3835b6ed3aa90c5,fbd4c3b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-23T07:50:20+02:00,GitHub,noreply@github.com,2026-05-23T07:50:20+02:00,Build: Bump prek from 0.3.13 to 0.4.0 (#3400),,b2b720809438166a3ad45661af2b2cad89d09065,3400,false,,2,20,20,pyproject.toml; uv.lock,-68,3,-65,base; multi-area change; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump prek from 0.3.13 to 0.4.0 (#3400) (Thanks dependabot[bot]!)
 apache/iceberg-python,70923a3777cb3adacb622ac77f08c0976dcd1125,70923a3,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:49:30+02:00,GitHub,noreply@github.com,2026-05-18T15:49:30+02:00,Build: Bump pydantic from 2.13.3 to 2.13.4 (#3369),,7c8ff3db4a1f6fddc1b0d47e135e5477ef7c74cc,3369,false,,1,111,111,uv.lock,-69,3,-66,base; medium churn; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.45; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump pydantic from 2.13.3 to 2.13.4 (#3369) (Thanks dependabot[bot]!)
 apache/iceberg-python,6eddf1a7bfa804568c8b069ade6ee4584a3a46b4,6eddf1a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-21T06:43:24+02:00,GitHub,noreply@github.com,2026-05-21T06:43:24+02:00,Build: Bump idna from 3.11 to 3.15 (#3386),"Bumps [idna](https://github.com/kjd/idna) from 3.11 to 3.15.
@@ -1175,7 +1176,6 @@ apache/iceberg-python,e9d07390d0450455ec4100b93eca44a1586b5a13,e9d0739,dependabo
 apache/iceberg-python,cde24522ab785d8765cfb0ef614a32c1d1aabb35,cde2452,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:50:30+02:00,GitHub,noreply@github.com,2026-05-18T15:50:30+02:00,Build: Bump mypy-boto3-glue from 1.43.0 to 1.43.5 (#3373),,5d4873edc5377ad72e5dbf100d7bfa9c0d4b5a91,3373,false,,1,3,3,uv.lock,-73,3,-70,base; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.34; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump mypy-boto3-glue from 1.43.0 to 1.43.5 (#3373) (Thanks dependabot[bot]!)
 apache/iceberg-python,5d4873edc5377ad72e5dbf100d7bfa9c0d4b5a91,5d4873e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:50:16+02:00,GitHub,noreply@github.com,2026-05-18T15:50:16+02:00,Build: Bump ipykernel from 7.1.0 to 7.2.0 (#3372),,0b942d259feb849f79d97576eb72047f4e0c20e9,3372,false,,1,6,6,uv.lock,-73,3,-70,base; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.34; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump ipykernel from 7.1.0 to 7.2.0 (#3372) (Thanks dependabot[bot]!)
 apache/iceberg-python,0b942d259feb849f79d97576eb72047f4e0c20e9,0b942d2,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:50:01+02:00,GitHub,noreply@github.com,2026-05-18T15:50:01+02:00,Build: Bump google-auth from 2.50.0 to 2.52.0 (#3371),,da23378f7736f48502203f1f533303afc88614b8,3371,false,,1,3,3,uv.lock,-73,3,-70,base; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.34; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump google-auth from 2.50.0 to 2.52.0 (#3371) (Thanks dependabot[bot]!)
-apache/iceberg-python,da23378f7736f48502203f1f533303afc88614b8,da23378,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:49:47+02:00,GitHub,noreply@github.com,2026-05-18T15:49:47+02:00,Build: Bump pyiceberg-core from 0.9.0 to 0.9.1 (#3370),,70923a3777cb3adacb622ac77f08c0976dcd1125,3370,false,,1,7,8,uv.lock,-73,3,-70,base; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.40; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump pyiceberg-core from 0.9.0 to 0.9.1 (#3370) (Thanks dependabot[bot]!)
 apache/iceberg-python,7c8ff3db4a1f6fddc1b0d47e135e5477ef7c74cc,7c8ff3d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:49:16+02:00,GitHub,noreply@github.com,2026-05-18T15:49:16+02:00,Build: Bump huggingface-hub from 1.13.0 to 1.14.0 (#3368),,d5446d976896a90e404b630e332830048d1fcdfb,3368,false,,1,3,3,uv.lock,-73,3,-70,base; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.29; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump huggingface-hub from 1.13.0 to 1.14.0 (#3368) (Thanks dependabot[bot]!)
 apache/iceberg-python,d5446d976896a90e404b630e332830048d1fcdfb,d5446d9,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:48:56+02:00,GitHub,noreply@github.com,2026-05-18T15:48:56+02:00,Build: Bump cachetools from 7.1.0 to 7.1.1 (#3367),,19d49a78e02fe0fc51bf86e6ab70327925ddaaf2,3367,false,,1,3,3,uv.lock,-73,3,-70,base; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.38; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump cachetools from 7.1.0 to 7.1.1 (#3367) (Thanks dependabot[bot]!)
 apache/iceberg-python,19d49a78e02fe0fc51bf86e6ab70327925ddaaf2,19d49a7,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-05-18T15:48:44+02:00,GitHub,noreply@github.com,2026-05-18T15:48:44+02:00,Build: Bump github/codeql-action from 4.35.3 to 4.35.4 (#3366),,7078a5d8a86b491f9984711a455273e1199493f8,3366,false,,1,2,2,.github,-73,3,-70,base; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.30; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump github/codeql-action from 4.35.3 to 4.35.4 (#3366) (Thanks dependabot[bot]!)
