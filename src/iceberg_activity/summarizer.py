@@ -239,10 +239,47 @@ def write_scored_csv(rows: list[dict[str, str]], output_path: Path) -> None:
         writer.writerows(rows)
 
 
-def write_markdown(rows: list[dict[str, str]], output_path: Path) -> None:
+def write_markdown(
+    rows: list[dict[str, str]],
+    output_path: Path,
+    *,
+    since: date,
+    until: date,
+    repository: str = "apache/iceberg",
+) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    lines = ["## Java", "", *[row["summary_bullet"] for row in rows], ""]
+    lines = [
+        "# Iceberg Community Sync Summary",
+        "",
+        f"- Period: `{since.isoformat()}` to before `{until.isoformat()}`",
+        f"- Review candidates: `{len(rows)}`",
+        "",
+        f"## {repository}",
+        "",
+        "### Java",
+        "",
+        *[row["summary_bullet"] for row in rows],
+        "",
+    ]
     output_path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def write_summary_index(output_dir: Path) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    summary_dirs = sorted(
+        (path for path in output_dir.iterdir() if (path / "README.md").exists()),
+        key=lambda path: path.name,
+        reverse=True,
+    )
+    lines = [
+        "# Iceberg Community Summaries",
+        "",
+        "Generated review-candidate summaries for Iceberg community sync meetings.",
+        "",
+    ]
+    lines.extend(f"- [{path.name}]({path.name}/)" for path in summary_dirs)
+    lines.append("")
+    (output_dir / "README.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def summarize_period(
@@ -301,9 +338,10 @@ def summarize_period(
 
     period_dir = output_dir / (label or summary_period_label(since, until))
     scored_csv_path = period_dir / "apache_iceberg_scored.csv"
-    markdown_path = period_dir / "java_highlights.md"
+    markdown_path = period_dir / "README.md"
     write_scored_csv(scored_rows, scored_csv_path)
-    write_markdown(selected_rows, markdown_path)
+    write_markdown(selected_rows, markdown_path, since=since, until=until)
+    write_summary_index(output_dir)
     return SummaryResult(
         scored_csv_path=scored_csv_path,
         markdown_path=markdown_path,

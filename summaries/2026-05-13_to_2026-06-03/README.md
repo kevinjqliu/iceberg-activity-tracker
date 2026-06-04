@@ -1,4 +1,11 @@
-## Java
+# Iceberg Community Sync Summary
+
+- Period: `2026-05-13` to before `2026-06-03`
+- Review candidates: `20`
+
+## apache/iceberg
+
+### Java
 
 - Core, Parquet: Allow for Writing Parquet/Avro Manifests in V4 (#15634) (Thanks Russell Spitzer!)
 - Flink: Support writing shredded variant (#15596) (Thanks GuoYu!)

@@ -91,7 +91,7 @@ def build_parser() -> argparse.ArgumentParser:
     summarize.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("data/summaries"),
+        default=Path("summaries"),
         help="Directory for generated summary files",
     )
     summarize.add_argument(

@@ -1,4 +1,11 @@
-## Java
+# Iceberg Community Sync Summary
+
+- Period: `2026-04-22` to before `2026-05-13`
+- Review candidates: `20`
+
+## apache/iceberg
+
+### Java
 
 - Core: Add implementations of v4 TrackedFile interfaces (#15854) (Thanks Anoop Johnson!)
 - Spark: Support writing shredded variant in Iceberg-Spark (#14297) (Thanks Aihua Xu and Neelesh Salian!)

@@ -1,4 +1,11 @@
-## Java
+# Iceberg Community Sync Summary
+
+- Period: `2026-04-01` to before `2026-04-22`
+- Review candidates: `20`
+
+## apache/iceberg
+
+### Java
 
 - Core: Add fromId to EntryStatus and ManifestEntry.Status (#15983) (Thanks Anoop Johnson!)
 - Core: Introduce default values in RESTCatalogProperties (#15873) (Thanks gaborkaszab!)

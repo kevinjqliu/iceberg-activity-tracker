@@ -144,7 +144,14 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
 
     markdown = result.markdown_path.read_text(encoding="utf-8")
     assert markdown == (
-        "## Java\n"
+        "# Iceberg Community Sync Summary\n"
+        "\n"
+        "- Period: `2026-06-01` to before `2026-07-01`\n"
+        "- Review candidates: `1`\n"
+        "\n"
+        "## apache/iceberg\n"
+        "\n"
+        "### Java\n"
         "\n"
         "- Core: Add V4 location relativization utilities (#16174) (Thanks Anoop Johnson!)\n"
     )
@@ -198,6 +205,14 @@ def test_summarize_period_uses_meeting_window_output_dir(tmp_path: Path) -> None
     assert result.selected_count == 2
     assert result.scored_csv_path == (
         output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_scored.csv"
+    )
+    assert result.markdown_path == output_dir / "2026-05-13_to_2026-06-03" / "README.md"
+    assert (output_dir / "README.md").read_text(encoding="utf-8") == (
+        "# Iceberg Community Summaries\n"
+        "\n"
+        "Generated review-candidate summaries for Iceberg community sync meetings.\n"
+        "\n"
+        "- [2026-05-13_to_2026-06-03](2026-05-13_to_2026-06-03/)\n"
     )
     with result.scored_csv_path.open(newline="", encoding="utf-8") as csv_file:
         commit_shas = {row["commit_sha"] for row in csv.DictReader(csv_file)}
