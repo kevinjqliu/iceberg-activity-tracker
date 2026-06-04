@@ -1,7 +1,7 @@
 # Iceberg Community Sync Summary
 
 - Period: `2026-04-22` to before `2026-05-13`
-- Review candidates: `284`
+- Review candidates: `303`
 
 ## apache/iceberg
 
@@ -110,3 +110,29 @@ _Top 20 of 65 scored commits._
 - feat(catalog): add Hadoop catalog scaffold with path helpers (#953) (Thanks Tanmay Rauth!)
 - feat(table): clustered partitioned write path (#948) (Thanks Tobias Pütz!)
 - feat(table): support zstd metadata compression codec (#1020) (Thanks Tanmay Rauth!)
+
+## apache/iceberg-cpp
+
+### C++
+
+_Top 19 of 19 scored commits._
+
+- feat(io): add streaming FileIO support (#641) (Thanks Gang Wu!)
+- feat: add iceberg_data library alongside iceberg (#631) (Thanks Junwang Zhao!)
+- fix: typo in RoaringPositionBitmap deletion vector note (#632) (Thanks Junwang Zhao!)
+- feat(data): add delete filter support (#650) (Thanks Gang Wu!)
+- feat: add ReachableFileCleanup to expire snapshots (#592) (Thanks Xinli Shang!)
+- feat: retry failed transaction commit (#626) (Thanks SkylerLin!)
+- fix: concurrent Lazy::Get should get correct result (#634) (Thanks Zehua Zou!)
+- fix: repair shared package linkage and export scan builder symbols (#635) (Thanks Junwang Zhao!)
+- refactor(util): make retry policy explicit and deterministic (#633) (Thanks Gang Wu!)
+- fix(cmake): use consistent generator expressions to link libraries (#639) (Thanks Junwang Zhao!)
+- CI: Use specific patch versions in workflow action comments (#644) (Thanks Kevin Liu!)
+- ci: split S3/MinIO into a Linux and macOS-only workflow (#642) (Thanks Junwang Zhao!)
+- ci: use ilammy/msvc-dev-cmd for Windows MSVC environment (#643) (Thanks Junwang Zhao!)
+- fix(ci): restore auth for docs gh-pages deploy (#625) (Thanks Gang Wu and Kevin Liu!)
+- chore: bump arrow-cpp to 24.0.0 (#623) (Thanks Gang Wu!)
+- chore(deps): bump github/codeql-action from 4.35.2 to 4.35.3 (#647) (Thanks dependabot[bot]!)
+- chore(deps): bump mozilla-actions/sccache-action from 0.0.9 to 0.0.10 (#636) (Thanks dependabot[bot]!)
+- chore(deps): bump zizmorcore/zizmor-action from 0.5.2 to 0.5.3 (#630) (Thanks dependabot[bot]!)
+- chore(deps): bump github/codeql-action from 4.35.1 to 4.35.2 (#629) (Thanks dependabot[bot]!)

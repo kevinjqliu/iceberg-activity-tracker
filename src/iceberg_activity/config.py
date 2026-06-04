@@ -41,4 +41,9 @@ TARGET_REPOSITORIES: tuple[RepoConfig, ...] = (
         remote_url="https://github.com/apache/iceberg-go.git",
         summary_heading="Go",
     ),
+    RepoConfig(
+        full_name="apache/iceberg-cpp",
+        remote_url="https://github.com/apache/iceberg-cpp.git",
+        summary_heading="C++",
+    ),
 )

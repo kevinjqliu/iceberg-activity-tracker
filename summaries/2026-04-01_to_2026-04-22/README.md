@@ -1,7 +1,7 @@
 # Iceberg Community Sync Summary
 
 - Period: `2026-04-01` to before `2026-04-22`
-- Review candidates: `176`
+- Review candidates: `186`
 
 ## apache/iceberg
 
@@ -110,3 +110,20 @@ _Top 20 of 58 scored commits._
 - feat(table): add snapshot ancestry utility (#911) (Thanks Andrei Tserakhau!)
 - fix(table): fast-append must inherit all parent manifests unconditionally (#869) (Thanks cassio-paesleme!)
 - fix(table): delete statistics files in ExpireSnapshots PostCommit #837 (#882) (Thanks Tanmay Rauth!)
+
+## apache/iceberg-cpp
+
+### C++
+
+_Top 10 of 10 scored commits._
+
+- feat(puffin): add format constants, utilities, and JSON serde (#603) (Thanks ZhaoXuan!)
+- feat: add s3 file io integration (#548) (Thanks liuxiaoyu!)
+- feat(data): add DeleteLoader for position and equality delete files (#610) (Thanks Gang Wu!)
+- feat(rest): support namespace separator (#617) (Thanks Gang Wu!)
+- feat: implement incremental changelog scan (#611) (Thanks wzhuo!)
+- chore: add more ai related .gitignore (#621) (Thanks Zehua Zou!)
+- ci: apply github workflow best practice (zizmor/codeql/asf-allowlist-check) (#618) (Thanks Kevin Liu!)
+- ci: set zizmor min-severity and min-confidence to medium (#620) (Thanks Kevin Liu!)
+- feat(perf): optimize AddRange in RoaringPositionBitmap (#608) (Thanks Sebastian Baunsgaard!)
+- chore(deps): bump actions/upload-artifact from 7.0.0 to 7.0.1 (#622) (Thanks dependabot[bot]!)

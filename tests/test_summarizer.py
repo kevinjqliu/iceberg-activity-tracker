@@ -359,6 +359,11 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
         remote_url="https://example.test/iceberg-go.git",
         summary_heading="Go",
     )
+    cpp_repo = RepoConfig(
+        full_name="apache/iceberg-cpp",
+        remote_url="https://example.test/iceberg-cpp.git",
+        summary_heading="C++",
+    )
     write_rows(
         input_dir / java_repo.csv_name,
         [
@@ -419,6 +424,21 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
             ),
         ],
     )
+    write_rows(
+        input_dir / cpp_repo.csv_name,
+        [
+            commit_row(
+                commit_sha="cpp1",
+                short_sha="cpp1",
+                subject="REST: Add namespace separator support (#505)",
+                committer_date="2026-05-24T12:00:00+00:00",
+                repository="apache/iceberg-cpp",
+                author_name="Cpp Dev",
+                top_level_paths="src; include",
+                pr_number="505",
+            ),
+        ],
+    )
 
     result = summarize_period(
         since=date(2026, 5, 13),
@@ -426,16 +446,17 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
         input_dir=input_dir,
         output_dir=output_dir,
         top=20,
-        repositories=(java_repo, python_repo, rust_repo, go_repo),
+        repositories=(java_repo, python_repo, rust_repo, go_repo, cpp_repo),
     )
 
-    assert result.candidate_count == 4
-    assert result.selected_count == 4
+    assert result.candidate_count == 5
+    assert result.selected_count == 5
     assert result.scored_csv_paths == (
         output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_scored.csv",
         output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_python_scored.csv",
         output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_rust_scored.csv",
         output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_go_scored.csv",
+        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_cpp_scored.csv",
     )
     markdown = result.markdown_path.read_text(encoding="utf-8")
     assert "## apache/iceberg\n\n### Java" in markdown
@@ -446,6 +467,8 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
     assert "- REST: Add catalog auth support (#303) (Thanks Rust Dev!)" in markdown
     assert "## apache/iceberg-go\n\n### Go" in markdown
     assert "- Catalog: Add maintenance CLI support (#404) (Thanks Go Dev!)" in markdown
+    assert "## apache/iceberg-cpp\n\n### C++" in markdown
+    assert "- REST: Add namespace separator support (#505) (Thanks Cpp Dev!)" in markdown
 
 
 def commit_row(**overrides: str) -> dict[str, str]:

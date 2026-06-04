@@ -1,7 +1,7 @@
 # Iceberg Community Sync Summary
 
 - Period: `2026-05-13` to before `2026-06-03`
-- Review candidates: `289`
+- Review candidates: `316`
 
 ## apache/iceberg
 
@@ -110,3 +110,30 @@ _Top 20 of 54 scored commits._
 - feat(cli): add snapshots and refs commands (#1072) (Thanks Tanmay Rauth!)
 - fix(table): release Arrow chunks on GetRecords error paths (#1093) (Thanks Andrei Tserakhau!)
 - feat(cli): add clean-orphan-files command (#1066) (Thanks Tanmay Rauth!)
+
+## apache/iceberg-cpp
+
+### C++
+
+_Top 20 of 27 scored commits._
+
+- feat(manifest): add ManifestFilterManager and ManifestMergeManager (#652) (Thanks Guotao Yu!)
+- feat(puffin): add puffin file reader and writer (#624) (Thanks ZhaoXuan!)
+- feat(io): add bulk delete API to FileIO. (#659) (Thanks slfan1989!)
+- feat: Add v3 timestamp nanosecond primitive types (#653) (Thanks Junwang Zhao!)
+- feat: add IncrementalFileCleanup strategy and dispatch in ExpireSnapshots::Finalize (#648) (Thanks Xinli Shang, shangxinli, and Claude Opus 4.6!)
+- docs: add Iceberg security model (#688) (Thanks Sung Yun!)
+- feat(data): add MOR file scan task reader (#657) (Thanks Gang Wu!)
+- fix(meson): add missing install headers for meson (#684) (Thanks Gang Wu!)
+- build(hive): add ICEBERG_BUILD_HIVE option and skeleton (#689) (Thanks liuxiaoyu!)
+- fix: evaluate ManifestGroup file filters (#664) (Thanks Minh Vu!)
+- fix(parquet): fix parquet writer metrics conversion (#681) (Thanks Gang Wu!)
+- fix: preserve snapshot ID width in UseRef (#661) (Thanks Minh Vu!)
+- feat: metrics for parquet writer (#651) (Thanks wzhuo!)
+- refactor: move temporal utilities out of transform util (#675) (Thanks Junwang Zhao!)
+- fix(ci): fix macOS ci to use provided fmt (#670) (Thanks slfan1989!)
+- fix(parquet): check compression codec availability (#656) (Thanks Gang Wu!)
+- fix: disallow zoned and non-zoned literal comparisons (#676) (Thanks Junwang Zhao!)
+- feat(data): coalesce position deletes into range inserts (#645) (Thanks Sebastian Baunsgaard!)
+- fix: correct StrictMetricsEvaluator::CanContainNulls/CanContainNaNs when field missing from stats map (#686) (Thanks Yingfan Guo!)
+- chore(ci): skip actions for draft PRs (#680) (Thanks Junwang Zhao!)
