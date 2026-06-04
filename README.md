@@ -17,7 +17,6 @@ sections on the same page.
 - `summaries/`: human-facing summary pages and scored candidate CSVs
 - `data/commits/`: collected commit metadata used by the summarizer
 - `data/notes/`: historical community sync notes used for LanceDB ranking
-- `data/backtests/`: ranking backtest reports
 - `src/`: collector, scoring, ranking, and CLI code
 
 ## Common Commands
@@ -65,6 +64,9 @@ Backtest ranked candidates against Java sections in the community sync notes:
 ```bash
 make backtest BACKTEST_ARGS="--start-date 2026-05-13 --end-date 2026-06-03"
 ```
+
+Backtest reports are generated locally under `data/backtests/` and are not
+committed.
 
 ## Pipeline Notes
 

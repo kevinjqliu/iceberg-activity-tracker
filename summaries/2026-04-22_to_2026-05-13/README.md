@@ -7,7 +7,7 @@
 
 ### Java
 
-_Top 20 of 131 scored commits._
+_Top 20 themes from 131 scored commits._
 
 - Core: Add implementations of v4 TrackedFile interfaces (#15854) (Thanks Anoop Johnson!)
 - Spark: Support writing shredded variant in Iceberg-Spark (#14297) (Thanks Aihua Xu and Neelesh Salian!)
@@ -34,12 +34,11 @@ _Top 20 of 131 scored commits._
 
 ### Python
 
-_Top 20 of 51 scored commits._
+_Top 20 themes from 51 scored commits._
 
+- Catalog views: add and expand view support (#3224, #3288) (Thanks Yuya Ebihara and spr0els!)
 - Add support for 'overwrite' option in register_table (#3290) (Thanks Yuya Ebihara!)
-- Add support for registering views (#3288) (Thanks Yuya Ebihara!)
 - infra: add python 3.14 support (#3299) (Thanks Adam and Kevin Liu!)
-- feat: add load_view to REST catalog (#3224) (Thanks spr0els!)
 - Fix DELETED manifest entry snapshot_id in OverwriteFiles (#3237) (Thanks Sotaro Hikita!)
 - perf: Hoist `table_metadata` at remaining repeat-access (#3301) (Thanks Ruiyang Wang!)
 - bug: NoopCatalog should return False, not throw error (#3284) (Thanks Alex Stephen!)
@@ -56,16 +55,16 @@ _Top 20 of 51 scored commits._
 - Initial work for file format writer API (#3119) (Thanks Neelesh Salian!)
 - Bump daft dependency to >=0.7.10 (fix Python 3.14 compatibility) (#3323) (Thanks Kevin Liu!)
 - Build: Bump fastavro from 1.12.1 to 1.12.2 (#3310) (Thanks dependabot[bot]!)
+- Build: Bump rich from 14.3.3 to 15.0.0 (#3283) (Thanks dependabot[bot]!)
 
 ## apache/iceberg-rust
 
 ### Rust
 
-_Top 20 of 37 scored commits._
+_Top 20 themes from 37 scored commits._
 
+- Encryption: add key management and encrypted IO support (#2339, #2340) (Thanks Xander and Claude Opus 4.6 (1M context)!)
 - feat(reader): Add read_with_metrics() for scan I/O metrics (#2349) (Thanks Matt Butrovich, Claude Opus 4.6 (1M context), and blackmwk!)
-- feat(encryption) [3/N] Support encryption: KMS (#2339) (Thanks Xander!)
-- feat(encryption) [4/N] Support encryption: StandardKeyMetadata (#2340) (Thanks Xander and Claude Opus 4.6 (1M context)!)
 - fix(catalog/memory): relax strict ms inequality in test_update_table (#2395) (Thanks Kurtis Wright!)
 - feat(schema): Add `update_schema` action to enable table schema updates (#2120) (Thanks Victor Ghita and Claude Sonnet 4.6!)
 - fix(sqllogictest): add missing tokio `rt-multi-thread` feature (#2386) (Thanks Charles-Antoine Leger!)
@@ -83,39 +82,40 @@ _Top 20 of 37 scored commits._
 - docs: Correct docs for Int128 and UInt128 being big-endian not little-endian (#2397) (Thanks Xander!)
 - docs(arrow): clarify ScanMetrics::bytes_read includes delete files (#2379) (Thanks Matt Butrovich!)
 - ci(python): verify wheel abi3 compatibility with --no-build (#2388) (Thanks Kevin Liu!)
+- chore(deps): bump opendal to 0.56, migrate to reqsign-core 3.0 (#2401) (Thanks Krisztián Szűcs!)
 
 ## apache/iceberg-go
 
 ### Go
 
-_Top 20 of 65 scored commits._
+_Top 20 themes from 65 scored commits._
 
+- Compaction and rewrite data files: expand rewrite planning and execution (#928, #934, #947, #948, #1033) (Thanks Tobias Pütz and Andrei Tserakhau!)
+- Deletion vectors: add read, write, and validation support (#866, #1041) (Thanks Andrei Tserakhau and Shreyas Mishra!)
 - feat(catalog): add version-hint management for Hadoop catalog (Thanks Tanmay Rauth!)
 - feat(io): add BulkRemovableIO interface(#914) (#916) (Thanks Tanmay Rauth!)
-- feat(table): add RewriteFiles snapshot-op builder (#1033) (Thanks Tobias Pütz!)
 - test(table): add v3 OCC row lineage regression tests (#998) (#1043) (Thanks Tanmay Rauth!)
-- test(puffin): golden round-trip a deletion-vector-v1 blob (#1041) (Thanks Andrei Tserakhau!)
 - test(table): add round-trip test for v3 metadata with partition-statistics (#1012) (#1019) (Thanks Tanmay Rauth!)
 - feat(cli): add maintenance command wiring and stubs (#1073) (Thanks Tanmay Rauth!)
-- feat(table): add conflict validation framework (#928) (Thanks Andrei Tserakhau!)
-- feat(table): drop dangling equality deletes during RewriteDataFiles (#947) (Thanks Andrei Tserakhau!)
 - fix(manifest): allow ManifestListWriter to reference lower-version manifests (#1030) (Thanks Ashley Jeffs!)
 - feat(io): add ListableIO interface to replace reflect-based directory walking (#913) (#917) (Thanks Tanmay Rauth!)
 - fix(occ): manifest list rebuild (#982) (Thanks Masa and masa hoashi!)
 - feat(config,cmd/iceberg): support more rest options in config (#933) (Thanks Matt Topol!)
 - feat(cli): add partition-stats command (#1065) (Thanks Tanmay Rauth!)
 - fix(manifest): restore data_file.distinct_counts on v1/v2 Avro schemas (#1044) (Thanks Masa!)
-- feat: Deletion vector reader (#866) (Thanks Shreyas Mishra!)
 - feat(catalog): add hadoop namespace operations (#963) (Thanks Tanmay Rauth!)
 - feat(catalog): add Hadoop catalog scaffold with path helpers (#953) (Thanks Tanmay Rauth!)
-- feat(table): clustered partitioned write path (#948) (Thanks Tobias Pütz!)
 - feat(table): support zstd metadata compression codec (#1020) (Thanks Tanmay Rauth!)
+- feat(manifest): Add tests for Entries and migrate snapshotProducer (#1031) (Thanks Artem Alperin!)
+- feat(io): add native in-memory FS (#1025) (Thanks Alessandro Nori!)
+- fix(io): resolve S3 PermanentRedirect for S3 Table Buckets (#974) (#975) (Thanks Tanmay Rauth!)
+- feat(manifest): omit data_file.distinct_counts on v3 manifests (#1039) (Thanks Masa!)
 
 ## apache/iceberg-cpp
 
 ### C++
 
-_Top 19 of 19 scored commits._
+_Top 19 themes from 19 scored commits._
 
 - feat(io): add streaming FileIO support (#641) (Thanks Gang Wu!)
 - feat: add iceberg_data library alongside iceberg (#631) (Thanks Junwang Zhao!)

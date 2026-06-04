@@ -7,7 +7,7 @@
 
 ### Java
 
-_Top 20 of 119 scored commits._
+_Top 20 themes from 119 scored commits._
 
 - Core, Parquet: Allow for Writing Parquet/Avro Manifests in V4 (#15634) (Thanks Russell Spitzer!)
 - Flink: Support writing shredded variant (#15596) (Thanks GuoYu!)
@@ -20,11 +20,11 @@ _Top 20 of 119 scored commits._
 - Core: v4 table metadata location should be optional (#16572) (Thanks Alex Stephen and Anoop Johnson!)
 - [SPEC] Add relative paths to v4 spec (#15630) (Thanks Daniel Weeks and Talat Uyarer!)
 - Flink: Support UUID type in Avro and Parquet readers and writers (#16097) (Thanks Joy Haldar!)
+- Compaction and rewrite data files: expand rewrite planning and execution (#16219, #16593) (Thanks Varun Lakhyani!)
 - Flink: Backport Use native slot sharing group inheritance for maintenance tasks to 2.0 and 1.20 (#16337) (Thanks GuoYu!)
 - Spark: Backport Add _row_id and _last_updated_sequence_number raeder in Orc to support lineage (#16534) (Thanks GuoYu!)
 - Spark: Remove Spark 3.4 support (#14122) (Thanks Kevin Liu!)
 - Flink: Backport support UUID type in Avro and Parquet readers and writers (#16333) (Thanks Joy Haldar!)
-- Spark: Add compaction only benchmark - rewrite data files (#16219) (Thanks Varun Lakhyani!)
 - Flink: Use native slot sharing group inheritance for maintenance tasks (#16329) (Thanks GuoYu!)
 - Flink: Backport add column fix to flink v1.20, v2.0 (#16447) (Thanks Stepan Stepanishchev!)
 - REST Spec: Add unregister table endpoint (#16400) (Thanks Ryan Blue and Claude Code (Opus 4.7, 1M context)!)
@@ -34,19 +34,15 @@ _Top 20 of 119 scored commits._
 
 ### Python
 
-_Top 20 of 58 scored commits._
+_Top 20 themes from 58 scored commits._
 
+- REST pagination: add pagination and page-size support for namespaces, tables, and views (#3347, #3348, #3349, #3377) (Thanks Yuya Ebihara and Kevin Liu!)
 - Support `pa.RecordBatchReader` in Table.`{append,overwrite}` (#3335) (Thanks Paul Mathew!)
 - fix(table): avoid committing update builders after exceptions (#3354) (Thanks Minh Vu!)
-- REST: Add pagination support for list_tables (#3348) (Thanks Yuya Ebihara and Kevin Liu!)
-- REST: Add support for page-size in list_namespaces, list_tables, and list_views (#3377) (Thanks Yuya Ebihara!)
-- REST: Add pagination support for list_namespaces (#3347) (Thanks Yuya Ebihara and Kevin Liu!)
-- REST: Add pagination support for `list_views` (#3349) (Thanks Yuya Ebihara!)
+- Catalog views: add and expand view support (#3406, #3408) (Thanks Yuya Ebihara!)
 - feat(cli): deprecate version command in favor of --version flag (#3206) (Thanks Chris Qiu and Kevin Liu!)
-- REST: Allow Identifier type in `drop_view` method (#3408) (Thanks Yuya Ebihara!)
 - Add `@typing.override` to catalog and FileIO implementations (#3360) (Thanks vishnu prakash!)
 - Fix walrus truthiness on metrics bounds and identity-partition projection (#3412) (Thanks Kevin Liu!)
-- REST: Add integration test for views (#3406) (Thanks Yuya Ebihara!)
 - docs: add Iceberg security model (#3425) (Thanks Sung Yun!)
 - fix(fsspec): handle zero-byte files in `__len__` (#3353) (Thanks Minh Vu!)
 - fix: avoid `TSaslClientTransport` reuse to eliminate server-side SASL noise (#3357) (Thanks barking-code!)
@@ -56,23 +52,26 @@ _Top 20 of 58 scored commits._
 - REST: Rename rest-scan-planning-enabled to scan-planning-mode (#3376) (Thanks Yuya Ebihara!)
 - Fix precision loss in large integral string conversions (#3405) (Thanks Minh Vu!)
 - feat(view): View object API (#3338) (Thanks Gabriel Igliozzi!)
+- Fix typo (#3424) (Thanks Yuya Ebihara!)
+- Fix typo in `test_add_files` (#3378) (Thanks Yuya Ebihara!)
+- Make `View.sql_for` case-insensitive and return None for unknown dialect (#3407) (Thanks Yuya Ebihara!)
+- docs: fix New York longitude sign in partial overwrite example (#3403) (Thanks Minh Vu!)
 
 ## apache/iceberg-rust
 
 ### Rust
 
-_Top 20 of 58 scored commits._
+_Top 20 themes from 58 scored commits._
 
 - fix(puffin): add missing magic number validation for puffins (#2416) (Thanks dentiny!)
 - feat!(runtime): Support custom Runtime in Catalog (#2308) (Thanks Shawn Chang and blackmwk!)
 - feat(ci): add cargo-public-api checks for public API stability (#2525) (Thanks Xander!)
+- Encryption: add key management and encrypted IO support (#2383, #2402) (Thanks Xander!)
 - Add some scripts to help release (#2522) (Thanks blackmwk!)
 - Infra: add bindings/python into root workspace (#2506) (Thanks Kevin Liu!)
-- feat(encryption) [5/N] Support encryption: Encryption Manager (#2383) (Thanks Xander!)
 - fix(spec): support JSON binary literals (#2476) (Thanks Minh Vu!)
 - docs: add Iceberg security model (#2524) (Thanks Sung Yun!)
 - fix(transaction): preserve delete-only manifests in FastAppend (#2545) (Thanks Liang-Chi Hsieh!)
-- feat(encryption) [6/N] support `ArrowReaderOptions` in `get_metadata` (#2402) (Thanks Xander!)
 - fix(spec): don't panic on overwrite-truncate when previous totals exceed i32::MAX or are non-numeric (#2511) (Thanks Sreeram Garlapati and Aman Rawat!)
 - chore(spec): remove stale #[allow(dead_code)] from snapshot_summary (#2514) (Thanks Sreeram Garlapati!)
 - feat: HuggingFace Hub storage backend and CDC table properties (#2375) (Thanks Krisztián Szűcs!)
@@ -83,26 +82,24 @@ _Top 20 of 58 scored commits._
 - Use cargo publish to publish crates (#2489) (Thanks blackmwk!)
 - ci: add check_standalone job to verify each crate compiles independently (#2389) (Thanks Kevin Liu and Copilot!)
 - Add Spice.ai to Users (#2516) (Thanks Luke Kim!)
+- chore: add `uv` to dependabot for /bindings/python (#2444) (Thanks Kevin Liu!)
 
 ## apache/iceberg-go
 
 ### Go
 
-_Top 20 of 54 scored commits._
+_Top 20 themes from 54 scored commits._
 
-- feat(table): add SerializeDV and DVWriter for deletion vector authoring (#1100) (Thanks Tanmay Rauth!)
+- Deletion vectors: add read, write, and validation support (#1053, #1055, #1060, #1100, #1134) (Thanks Tanmay Rauth and Andrei Tserakhau!)
 - feat(catalog): add PurgeTable as optional interface for physical file deletion (#1104) (Thanks Mithil Girish!)
+- Row lineage: expand support for lineage-aware reads and writes (#1075, #1099) (Thanks Tanmay Rauth and Tobias Pütz!)
 - feat(table/dv): accept partition spec and data on DVWriter.Add (#1136) (Thanks Andrei Tserakhau!)
-- feat(table): scanner deletion-vector read path (#1053) (Thanks Andrei Tserakhau!)
-- feat(table): preserve row lineage through copy-on-write rewrites (#1099) (Thanks Tanmay Rauth!)
-- feat: add wire codec helpers for DataFile and FileScanTask (#1075) (Thanks Tobias Pütz!)
-- feat(puffin): enforce required DV blob properties on write (#1060) (Thanks Andrei Tserakhau!)
-- feat(puffin): validate deletion-vector blob header invariants on read (#1055) (Thanks Andrei Tserakhau!)
 - feat: add variant type support (Iceberg v3) - non shredding (#932) (Thanks Neelesh Salian!)
 - feat(table): emit null current-snapshot-id for empty v3 metadata (#1059) (Thanks Andrei Tserakhau!)
 - fix(manifest): stop writing deprecated distinct_counts (field-id 111) (#1102) (Thanks Krutika Dhananjay and Matt Topol!)
 - feat(table): MoR equality-rewrite - insert/reinsert writer API (#1120) (Thanks Tanmay Rauth!)
 - fix(table): restore Summary/ColumnSizes test expectations to arrow-go v18.6.0 (#1114) (Thanks Matt Topol!)
+- Encryption: add key management and encrypted IO support (#1069, #1088) (Thanks Andrei Tserakhau and Tanmay Rauth!)
 - fix(table): map nanosecond Arrow timestamps to v3 TimestampNs/TimestampTzNs types (#1081) (Thanks Jacob Marble!)
 - feat(cli): add branch create and tag create commands (#1068) (Thanks Tanmay Rauth!)
 - feat(cli): add expire-snapshots command with dry-run (#1063) (Thanks Tanmay Rauth!)
@@ -110,12 +107,15 @@ _Top 20 of 54 scored commits._
 - feat(cli): add snapshots and refs commands (#1072) (Thanks Tanmay Rauth!)
 - fix(table): release Arrow chunks on GetRecords error paths (#1093) (Thanks Andrei Tserakhau!)
 - feat(cli): add clean-orphan-files command (#1066) (Thanks Tanmay Rauth!)
+- feat(cli): add --show-defaults flag to schema command (#1067) (Thanks Tanmay Rauth!)
+- test(table): add cross-client DV format compliance tests (#1131) (Thanks Tanmay Rauth!)
+- feat(io): add ManagedIdentityCredential support for Azure (#1062) (Thanks Alessandro Nori!)
 
 ## apache/iceberg-cpp
 
 ### C++
 
-_Top 20 of 27 scored commits._
+_Top 20 themes from 27 scored commits._
 
 - feat(manifest): add ManifestFilterManager and ManifestMergeManager (#652) (Thanks Guotao Yu!)
 - feat(puffin): add puffin file reader and writer (#624) (Thanks ZhaoXuan!)

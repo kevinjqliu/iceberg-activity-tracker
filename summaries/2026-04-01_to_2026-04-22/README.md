@@ -7,7 +7,7 @@
 
 ### Java
 
-_Top 20 of 71 scored commits._
+_Top 20 themes from 71 scored commits._
 
 - Core: Add fromId to EntryStatus and ManifestEntry.Status (#15983) (Thanks Anoop Johnson!)
 - Core: Introduce default values in RESTCatalogProperties (#15873) (Thanks gaborkaszab!)
@@ -34,7 +34,7 @@ _Top 20 of 71 scored commits._
 
 ### Python
 
-_Top 20 of 24 scored commits._
+_Top 20 themes from 24 scored commits._
 
 - Fix ManifestEntry.snapshot_id setter writing to wrong index (#3257) (Thanks Sotaro Hikita!)
 - fix: Handle optional properties in load namespace properties response (#3169) (Thanks geruh!)
@@ -61,7 +61,7 @@ _Top 20 of 24 scored commits._
 
 ### Rust
 
-_Top 20 of 23 scored commits._
+_Top 20 themes from 23 scored commits._
 
 - feat(encryption) [2/N] Support encryption: Add streaming encryption/decryption (#2286) (Thanks Xander!)
 - refactor(storage): remove the configured_scheme parameter from storage impls (#2338) (Thanks R. Conner Howell!)
@@ -88,34 +88,34 @@ _Top 20 of 23 scored commits._
 
 ### Go
 
-_Top 20 of 58 scored commits._
+_Top 20 themes from 58 scored commits._
 
-- feat(table): Add support for row lineage in v3 (#735) (Thanks Dao Thanh Tung!)
-- feat(table): add bin-pack compaction strategy (#850) (Thanks Andrei Tserakhau!)
-- feat(table): add RewriteDataFiles for compaction execution (#892) (Thanks Andrei Tserakhau!)
-- feat(table): support delete file removal in overwrite commits (#851) (Thanks Andrei Tserakhau!)
-- feat(cli): add compact analyze and compact run commands (#903) (Thanks Andrei Tserakhau!)
-- perf(table): Add optional skip duplicate check on AddDataFiles (#901) (Thanks Abhi Rathod!)
+- Compaction and rewrite data files: expand rewrite planning and execution (#850, #851, #852, #892, #893, #901, #903) (Thanks Andrei Tserakhau and Abhi Rathod!)
+- Row lineage: expand support for lineage-aware reads and writes (#735, #821) (Thanks Dao Thanh Tung and Andrei Tserakhau!)
 - feat(table): classify deletion vectors in scan planning (#855) (Thanks Andrei Tserakhau!)
 - feat(table): retry doCommit on commit-conflict errors (#830) (#912) (Thanks Andrei Tserakhau!)
-- feat(compaction): add Analyze for dry-run compaction planning (#893) (Thanks Andrei Tserakhau!)
 - feat(catalog): add `WithOAuthTLSConfig` for separate OAuth server TLS (#895) (Thanks Lovro Mažgon!)
 - fix(table): populate WriteTask.SortOrderID in data file writers (#875) (Thanks Ali Asghar!)
 - fix(table): prune StatisticsList and PartitionStatsList in RemoveSnapshots (#873) (Thanks Ali Asghar!)
 - fix: decode pre-1.4 Java Iceberg legacy manifest list field names (#889) (#890) (Thanks Tanmay Rauth!)
 - feat(table)!: multi-arg transforms in partition and sort fields (#824) (Thanks Andrei Tserakhau!)
 - feat(#492): implement SetStatistics, RemoveStatistics, AddEncryptionKey, RemoveEncryptionKey updates (#902) (Thanks Tanmay Rauth and Matt Topol!)
-- bench(table): read-perf degradation under equality delete pressure (#852) (Thanks Andrei Tserakhau!)
 - fix(table): warn on row count mismatch in Overwrite (#894) (Thanks Andrei Tserakhau!)
 - feat(table): add snapshot ancestry utility (#911) (Thanks Andrei Tserakhau!)
 - fix(table): fast-append must inherit all parent manifests unconditionally (#869) (Thanks cassio-paesleme!)
 - fix(table): delete statistics files in ExpireSnapshots PostCommit #837 (#882) (Thanks Tanmay Rauth!)
+- fix: emit proper Avro fixed schema for FixedType partition columns (#845) (#881) (Thanks Tanmay Rauth!)
+- fix(table): read retention table properties as defaults in ExpireSnapshots (#877) (Thanks Ali Asghar!)
+- fix(rest): apply header.* additional props as HTTP headers on all requests (#921) (Thanks Ali Asghar!)
+- docs(website): add generator scaffold for example-driven concept pages (#920) (Thanks Andrei Tserakhau!)
+- feat(avro): replace hamba/avro with twmb/avro v1.5.0 (#871) (Thanks Travis Bischel and Claude Opus 4.6 (1M context)!)
+- perf(table): Decrease memory pressure by releasing records (#886) (Thanks Abhi Rathod!)
 
 ## apache/iceberg-cpp
 
 ### C++
 
-_Top 10 of 10 scored commits._
+_Top 10 themes from 10 scored commits._
 
 - feat(puffin): add format constants, utilities, and JSON serde (#603) (Thanks ZhaoXuan!)
 - feat: add s3 file io integration (#548) (Thanks liuxiaoyu!)

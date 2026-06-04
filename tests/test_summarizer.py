@@ -9,6 +9,8 @@ import pytest
 from iceberg_activity.config import RepoConfig
 from iceberg_activity.git_client import CSV_FIELDS
 from iceberg_activity.summarizer import (
+    THEME_FIELDS,
+    build_theme_rows,
     contributor_names,
     parse_month,
     score_commit,
@@ -70,6 +72,14 @@ def test_score_commit_downranks_dependency_bumps_below_rust_summary_signals() ->
         insertions="200",
         pr_number="2554",
     )
+    build_bump = commit_row(
+        repository="apache/iceberg-python",
+        subject="Build: Bump idna from 3.11 to 3.15 (#3386)",
+        body="Mentions views in dependency release notes.",
+        author_name="dependabot[bot]",
+        co_authors="dependabot[bot]",
+        pr_number="3386",
+    )
     publishing_fix = commit_row(
         repository="apache/iceberg-rust",
         subject="Use cargo publish to publish crates (#2489)",
@@ -100,17 +110,20 @@ def test_score_commit_downranks_dependency_bumps_below_rust_summary_signals() ->
     )
 
     dependency_score, dependency_reasons = score_commit(dependency_bump)
+    build_bump_score, build_bump_reasons = score_commit(build_bump)
     publishing_score, publishing_reasons = score_commit(publishing_fix)
     correctness_score, correctness_reasons = score_commit(correctness_fix)
     storage_score, storage_reasons = score_commit(storage_update)
 
     assert "downrank dependency bump" in dependency_reasons
+    assert "downrank dependency bump" in build_bump_reasons
     assert "publishing/release signal" in publishing_reasons
     assert "correctness signal" in correctness_reasons
     assert "strategic: opendal, storage" in storage_reasons
     assert publishing_score > dependency_score
     assert correctness_score > dependency_score
     assert storage_score > dependency_score
+    assert storage_score > build_bump_score
 
 
 def test_score_commit_boosts_go_summary_signals() -> None:
@@ -183,6 +196,137 @@ def test_summary_bullet_formats_thanks() -> None:
     assert summary_bullet(row) == "- Spark: Add feature (#123) (Thanks Alice, Bob, and Carol!)"
 
 
+def test_build_theme_rows_groups_python_rest_pagination() -> None:
+    rows = [
+        scored_commit_row(
+            commit_sha="3347",
+            short_sha="3347",
+            repository="apache/iceberg-python",
+            subject="REST: Add pagination support for list_namespaces (#3347)",
+            author_name="Yuya Ebihara",
+            co_authors="Kevin Liu",
+            pr_number="3347",
+            score="88",
+        ),
+        scored_commit_row(
+            commit_sha="3348",
+            short_sha="3348",
+            repository="apache/iceberg-python",
+            subject="REST: Add pagination support for list_tables (#3348)",
+            author_name="Yuya Ebihara",
+            co_authors="Kevin Liu",
+            pr_number="3348",
+            score="89",
+        ),
+        scored_commit_row(
+            commit_sha="3349",
+            short_sha="3349",
+            repository="apache/iceberg-python",
+            subject="REST: Add pagination support for `list_views` (#3349)",
+            author_name="Yuya Ebihara",
+            pr_number="3349",
+            score="86",
+        ),
+        scored_commit_row(
+            commit_sha="3377",
+            short_sha="3377",
+            repository="apache/iceberg-python",
+            subject="REST: Add support for page-size in list_namespaces, list_tables, and list_views (#3377)",
+            author_name="Yuya Ebihara",
+            pr_number="3377",
+            score="88",
+        ),
+        scored_commit_row(
+            commit_sha="3335",
+            short_sha="3335",
+            repository="apache/iceberg-python",
+            subject="Support `pa.RecordBatchReader` in Table.`{append,overwrite}` (#3335)",
+            body="Ready for review. Mentions FileIO in a checklist.",
+            author_name="Paul Mathew",
+            pr_number="3335",
+            score="90",
+        ),
+        scored_commit_row(
+            commit_sha="3386",
+            short_sha="3386",
+            repository="apache/iceberg-python",
+            subject="Build: Bump idna from 3.11 to 3.15 (#3386)",
+            body="Mentions list_views in dependency release notes.",
+            author_name="dependabot[bot]",
+            co_authors="dependabot[bot]",
+            pr_number="3386",
+            score="20",
+        ),
+    ]
+
+    themes = build_theme_rows(rows)
+    pagination_theme = next(row for row in themes if row["theme_key"] == "rest-pagination")
+
+    assert len(themes) == 3
+    assert {row["theme_key"] for row in themes} == {
+        "rest-pagination",
+        "commit:3335",
+        "commit:3386",
+    }
+    assert pagination_theme["theme_score"] == "113"
+    assert pagination_theme["commit_count"] == "4"
+    assert pagination_theme["pr_numbers"] == "3347; 3348; 3349; 3377"
+    assert pagination_theme["contributors"] == "Yuya Ebihara; Kevin Liu"
+    assert pagination_theme["summary_bullet"] == (
+        "- REST pagination: add pagination and page-size support for namespaces, "
+        "tables, and views (#3347, #3348, #3349, #3377) "
+        "(Thanks Yuya Ebihara and Kevin Liu!)"
+    )
+
+
+def test_build_theme_rows_preserves_single_commit_fallback() -> None:
+    row = scored_commit_row(
+        commit_sha="solo",
+        subject="Spark: Add feature (#123)",
+        author_name="Alice",
+        co_authors="Bob; Carol",
+        pr_number="123",
+        score="42",
+    )
+
+    themes = build_theme_rows([row])
+
+    assert themes == [
+        {
+            "repository": "apache/iceberg",
+            "theme_key": "commit:solo",
+            "theme_title": "Spark: Add feature (#123)",
+            "theme_score": "42",
+            "commit_count": "1",
+            "pr_numbers": "123",
+            "commit_shas": "solo",
+            "contributors": "Alice; Bob; Carol",
+            "subjects": "Spark: Add feature (#123)",
+            "summary_bullet": "- Spark: Add feature (#123) (Thanks Alice, Bob, and Carol!)",
+            "newest_committer_date": "2026-06-01T12:00:00+00:00",
+        }
+    ]
+
+
+def test_build_theme_rows_preserves_single_rule_match_as_commit() -> None:
+    row = scored_commit_row(
+        commit_sha="cli1",
+        subject="feat(cli): add maintenance command wiring and stubs (#1073)",
+        author_name="Go Dev",
+        pr_number="1073",
+        score="75",
+    )
+
+    themes = build_theme_rows([row])
+
+    assert themes[0]["theme_key"] == "commit:cli1"
+    assert themes[0]["theme_title"] == "feat(cli): add maintenance command wiring and stubs (#1073)"
+    assert themes[0]["commit_count"] == "1"
+    assert themes[0]["summary_bullet"] == (
+        "- feat(cli): add maintenance command wiring and stubs (#1073) (Thanks Go Dev!)"
+    )
+
+
 def test_contributor_names_splits_compound_author_names() -> None:
     row = commit_row(author_name="Hongyue/Steve Zhang", co_authors="Gang & emkornfield")
 
@@ -248,6 +392,7 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
     assert result.selected_count == 1
     assert result.since == date(2026, 6, 1)
     assert result.until == date(2026, 7, 1)
+    assert result.theme_csv_path == output_dir / "2026-06" / "apache_iceberg_themes.csv"
     with result.scored_csv_path.open(newline="", encoding="utf-8") as csv_file:
         scored = list(csv.DictReader(csv_file))
     assert len(scored) == 2
@@ -256,6 +401,12 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
     assert scored[0]["lancedb_score"]
     assert scored[0]["lancedb_match"]
     assert scored[0]["score_reasons"]
+    with result.theme_csv_path.open(newline="", encoding="utf-8") as csv_file:
+        theme_reader = csv.DictReader(csv_file)
+        themes = list(theme_reader)
+    assert theme_reader.fieldnames == THEME_FIELDS
+    assert len(themes) == 2
+    assert themes[0]["summary_bullet"]
 
     markdown = result.markdown_path.read_text(encoding="utf-8")
     assert markdown == (
@@ -268,7 +419,7 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
         "\n"
         "### Java\n"
         "\n"
-        "_Top 1 of 2 scored commits._\n"
+        "_Top 1 themes from 2 scored commits._\n"
         "\n"
         "- Core: Add V4 location relativization utilities (#16174) (Thanks Anoop Johnson!)\n"
     )
@@ -322,6 +473,9 @@ def test_summarize_period_uses_meeting_window_output_dir(tmp_path: Path) -> None
     assert result.selected_count == 2
     assert result.scored_csv_path == (
         output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_scored.csv"
+    )
+    assert result.theme_csv_path == (
+        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_themes.csv"
     )
     assert result.markdown_path == output_dir / "2026-05-13_to_2026-06-03" / "README.md"
     assert (output_dir / "README.md").read_text(encoding="utf-8") == (
@@ -458,6 +612,13 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
         output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_go_scored.csv",
         output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_cpp_scored.csv",
     )
+    assert result.theme_csv_paths == (
+        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_themes.csv",
+        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_python_themes.csv",
+        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_rust_themes.csv",
+        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_go_themes.csv",
+        output_dir / "2026-05-13_to_2026-06-03" / "apache_iceberg_cpp_themes.csv",
+    )
     markdown = result.markdown_path.read_text(encoding="utf-8")
     assert "## apache/iceberg\n\n### Java" in markdown
     assert "- Core: Add REST feature (#101) (Thanks Java Dev!)" in markdown
@@ -497,6 +658,13 @@ def commit_row(**overrides: str) -> dict[str, str]:
         }
     )
     row.update(overrides)
+    return row
+
+
+def scored_commit_row(**overrides: str) -> dict[str, str]:
+    row = commit_row(**overrides)
+    row.setdefault("score", "10")
+    row.setdefault("summary_bullet", summary_bullet(row))
     return row
 
 

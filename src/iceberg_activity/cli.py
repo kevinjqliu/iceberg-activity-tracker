@@ -217,6 +217,8 @@ def run_summarize(args: argparse.Namespace) -> int:
     )
     for scored_csv_path in result.scored_csv_paths:
         print(f"scored CSV: {scored_csv_path}")
+    for theme_csv_path in result.theme_csv_paths:
+        print(f"theme CSV: {theme_csv_path}")
     return 0
 
 

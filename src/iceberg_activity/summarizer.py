@@ -20,6 +20,18 @@ SCORED_FIELDS = [
     "lancedb_match",
     "summary_bullet",
 ]
+THEME_FIELDS = [
+    "repository",
+    "theme_key",
+    "theme_title",
+    "theme_score",
+    "commit_count",
+    "pr_numbers",
+    "commit_shas",
+    "contributors",
+    "subjects",
+    "summary_bullet",
+]
 
 IMPORTANT_AREAS = {
     "api",
@@ -67,7 +79,8 @@ STRATEGIC_TERMS = {
 FEATURE_RE = re.compile(r"\b(add|support|implement|introduce|enable|allow|expose|promote)\b", re.I)
 FIX_RE = re.compile(r"\b(fix|avoid|prevent|correct|resolve|retry)\b", re.I)
 DEPENDENCY_BUMP_RE = re.compile(
-    r"(^\s*(chore|build)\(deps?\)|\bbump\b.*\b(from|to|updates?)\b|\bupdate deps\b)",
+    r"(^\s*(chore|build)\(deps?\)|^\s*(chore|build):\s*bump\b|"
+    r"\bbump\b.*\b(from|to|updates?)\b|\bupdate deps\b)",
     re.I,
 )
 ROUTINE_RE = re.compile(
@@ -82,6 +95,7 @@ CORRECTNESS_RE = re.compile(
 )
 VALIDATION_TEST_RE = re.compile(r"\b(golden round-trip|round-trip|regression)\b", re.I)
 DELETION_VECTOR_RE = re.compile(r"\bdeletion[- ]vector\b", re.I)
+VIEW_RE = re.compile(r"\bviews?\b|register_view|load_view|drop_view", re.I)
 SUMMARY_SIGNAL_RE = re.compile(
     r"\b("
     r"deletion[- ]vector|rewritedatafiles|rewritefiles|compaction|"
@@ -96,6 +110,7 @@ LOW_SIGNAL_RE = re.compile(r"\b(docs?|javadoc|readme|tests?|benchmark|benchmarks
 @dataclass(frozen=True)
 class SummaryResult:
     scored_csv_paths: tuple[Path, ...]
+    theme_csv_paths: tuple[Path, ...]
     markdown_path: Path
     candidate_count: int
     selected_count: int
@@ -105,6 +120,10 @@ class SummaryResult:
     @property
     def scored_csv_path(self) -> Path:
         return self.scored_csv_paths[0]
+
+    @property
+    def theme_csv_path(self) -> Path:
+        return self.theme_csv_paths[0]
 
 
 def parse_month(value: str) -> tuple[int, int]:
@@ -296,6 +315,156 @@ def summary_bullet(row: dict[str, str]) -> str:
     return f"- {row['subject']} (Thanks {join_names(contributor_names(row))}!)"
 
 
+def grouped_contributor_names(rows: list[dict[str, str]]) -> list[str]:
+    names: list[str] = []
+    seen: set[str] = set()
+    for row in rows:
+        for name in contributor_names(row):
+            key = name.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            names.append(name)
+    return names
+
+
+def join_grouped_contributors(names: list[str]) -> str:
+    if len(names) <= 5:
+        return join_names(names)
+    return f"{', '.join(names[:5])}, and {len(names) - 5} others"
+
+
+def pr_sort_key(value: str) -> tuple[int, str]:
+    try:
+        return int(value), value
+    except ValueError:
+        return 0, value
+
+
+def theme_rule(row: dict[str, str]) -> tuple[str, str] | None:
+    subject = row.get("subject", "")
+    body = row.get("body", "")
+    text = f"{subject}\n{body}".lower()
+    if is_dependency_bump_subject(subject):
+        return None
+
+    if "rest" in text and (
+        "pagination" in text
+        or "page-size" in text
+        or "list_namespaces" in text
+        or "list_tables" in text
+        or "list_views" in text
+    ):
+        return (
+            "rest-pagination",
+            "REST pagination: add pagination and page-size support for namespaces, tables, and views",
+        )
+    if "maintenance" in text and ("cli" in text or "command" in text):
+        return "maintenance-cli", "Maintenance CLI: add and expand table maintenance commands"
+    if VIEW_RE.search(text) and (
+        "catalog" in text or "rest" in text or "register" in text or "load" in text
+    ):
+        return "catalog-view-support", "Catalog views: add and expand view support"
+    if "row lineage" in text:
+        return "row-lineage", "Row lineage: expand support for lineage-aware reads and writes"
+    if DELETION_VECTOR_RE.search(text):
+        return "deletion-vectors", "Deletion vectors: add read, write, and validation support"
+    if (
+        "compaction" in text
+        or "rewritedatafiles" in text
+        or "rewritefiles" in text
+        or "rewrite data files" in text
+    ):
+        return "compaction-rewrite", "Compaction and rewrite data files: expand rewrite planning and execution"
+    if "puffin" in text:
+        return "puffin", "Puffin: add metadata, reader, writer, and validation support"
+    if "encryption" in text or "kms" in text or "keymanagement" in text:
+        return "encryption", "Encryption: add key management and encrypted IO support"
+    if "partition statistics" in text or "partition-stats" in text:
+        return "partition-statistics", "Partition statistics: add scan and metadata support"
+    return None
+
+
+def theme_sort_key(row: dict[str, str]) -> tuple[int, str, int, str]:
+    pr_numbers = [part.strip() for part in row.get("pr_numbers", "").split(";") if part.strip()]
+    first_pr = min((pr_sort_key(pr)[0] for pr in pr_numbers), default=0)
+    return (
+        int_field(row, "theme_score"),
+        row.get("newest_committer_date", ""),
+        first_pr,
+        row.get("theme_key", ""),
+    )
+
+
+def build_theme_rows(scored_rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    grouped: dict[str, tuple[str, list[dict[str, str]]]] = {}
+    for row in scored_rows:
+        rule = theme_rule(row)
+        if rule:
+            theme_key, theme_title = rule
+        else:
+            theme_key = f"commit:{row.get('commit_sha', '')}"
+            theme_title = row.get("subject", "")
+        if theme_key not in grouped:
+            grouped[theme_key] = (theme_title, [])
+        grouped[theme_key][1].append(row)
+
+    theme_rows: list[dict[str, str]] = []
+    for theme_key, (theme_title, rows) in grouped.items():
+        rows = sorted(rows, key=sort_key, reverse=True)
+        if len(rows) == 1:
+            row = rows[0]
+            theme_rows.append(
+                {
+                    "repository": row.get("repository", ""),
+                    "theme_key": f"commit:{row.get('commit_sha', '')}",
+                    "theme_title": row.get("subject", ""),
+                    "theme_score": row.get("score", "0"),
+                    "commit_count": "1",
+                    "pr_numbers": row.get("pr_number", ""),
+                    "commit_shas": row.get("commit_sha", ""),
+                    "contributors": "; ".join(contributor_names(row)),
+                    "subjects": row.get("subject", ""),
+                    "summary_bullet": summary_bullet(row),
+                    "newest_committer_date": row.get("committer_date", ""),
+                }
+            )
+            continue
+
+        max_score = max(int_field(row, "score") for row in rows)
+        theme_score = max_score + min(24, 8 * (len(rows) - 1))
+        pr_numbers = sorted(
+            {row.get("pr_number", "") for row in rows if row.get("pr_number", "")},
+            key=pr_sort_key,
+        )
+        commit_shas = [row.get("commit_sha", "") for row in rows if row.get("commit_sha", "")]
+        contributors = grouped_contributor_names(rows)
+        subjects = [row.get("subject", "") for row in rows if row.get("subject", "")]
+        newest_committer_date = max((row.get("committer_date", "") for row in rows), default="")
+        pr_text = f" ({', '.join(f'#{pr}' for pr in pr_numbers)})" if pr_numbers else ""
+        theme_rows.append(
+            {
+                "repository": rows[0].get("repository", ""),
+                "theme_key": theme_key,
+                "theme_title": theme_title,
+                "theme_score": str(theme_score),
+                "commit_count": str(len(rows)),
+                "pr_numbers": "; ".join(pr_numbers),
+                "commit_shas": "; ".join(commit_shas),
+                "contributors": "; ".join(contributors),
+                "subjects": "; ".join(subjects),
+                "summary_bullet": (
+                    f"- {theme_title}{pr_text} "
+                    f"(Thanks {join_grouped_contributors(contributors)}!)"
+                ),
+                "newest_committer_date": newest_committer_date,
+            }
+        )
+
+    theme_rows.sort(key=theme_sort_key, reverse=True)
+    return theme_rows
+
+
 def sort_key(row: dict[str, str]) -> tuple[int, str, int, str]:
     pr_number = int_field(row, "pr_number")
     return (
@@ -314,7 +483,25 @@ def read_commit_rows(input_path: Path) -> list[dict[str, str]]:
 def write_scored_csv(rows: list[dict[str, str]], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as csv_file:
-        writer = csv.DictWriter(csv_file, fieldnames=SCORED_FIELDS, extrasaction="ignore")
+        writer = csv.DictWriter(
+            csv_file,
+            fieldnames=SCORED_FIELDS,
+            extrasaction="ignore",
+            lineterminator="\n",
+        )
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def write_theme_csv(rows: list[dict[str, str]], output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", newline="", encoding="utf-8") as csv_file:
+        writer = csv.DictWriter(
+            csv_file,
+            fieldnames=THEME_FIELDS,
+            extrasaction="ignore",
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(rows)
 
@@ -342,7 +529,7 @@ def write_markdown(
                 "",
                 f"### {repo.summary_heading}",
                 "",
-                f"_Top {len(rows)} of {candidate_count} scored commits._",
+                f"_Top {len(rows)} themes from {candidate_count} scored commits._",
                 "",
                 *[row["summary_bullet"] for row in rows],
                 "",
@@ -422,7 +609,7 @@ def write_single_repo_markdown(
         "",
         f"### {repo.summary_heading}",
         "",
-        f"_Top {len(rows)} of {candidate_count} scored commits._",
+        f"_Top {len(rows)} themes from {candidate_count} scored commits._",
         "",
         *[row["summary_bullet"] for row in rows],
         "",
@@ -466,15 +653,19 @@ def summarize_period(
     period_dir = output_dir / (label or summary_period_label(since, until))
     markdown_path = period_dir / "README.md"
     scored_csv_paths: list[Path] = []
+    theme_csv_paths: list[Path] = []
     sections: list[tuple[RepoConfig, list[dict[str, str]], int]] = []
 
     if input_path:
         repo = repositories[0]
         rows = rows_for_period(input_path, since=since, until=until)
         scored_rows = score_rows(rows, notes_path=notes_path, lancedb_dir=lancedb_dir)
-        selected_rows = scored_rows[:top]
+        theme_rows = build_theme_rows(scored_rows)
+        selected_rows = theme_rows[:top]
         scored_csv_path = period_dir / f"{repo.cache_name}_scored.csv"
+        theme_csv_path = period_dir / f"{repo.cache_name}_themes.csv"
         write_scored_csv(scored_rows, scored_csv_path)
+        write_theme_csv(theme_rows, theme_csv_path)
         write_single_repo_markdown(
             selected_rows,
             markdown_path,
@@ -484,6 +675,7 @@ def summarize_period(
             candidate_count=len(scored_rows),
         )
         scored_csv_paths.append(scored_csv_path)
+        theme_csv_paths.append(theme_csv_path)
         sections.append((repo, selected_rows, len(scored_rows)))
     else:
         for repo in repositories:
@@ -493,16 +685,21 @@ def summarize_period(
             repo_lancedb_dir = lancedb_dir / repo.cache_name if lancedb_dir else None
             rows = rows_for_period(repo_input_path, since=since, until=until)
             scored_rows = score_rows(rows, notes_path=notes_path, lancedb_dir=repo_lancedb_dir)
-            selected_rows = scored_rows[:top]
+            theme_rows = build_theme_rows(scored_rows)
+            selected_rows = theme_rows[:top]
             scored_csv_path = period_dir / f"{repo.cache_name}_scored.csv"
+            theme_csv_path = period_dir / f"{repo.cache_name}_themes.csv"
             write_scored_csv(scored_rows, scored_csv_path)
+            write_theme_csv(theme_rows, theme_csv_path)
             scored_csv_paths.append(scored_csv_path)
+            theme_csv_paths.append(theme_csv_path)
             sections.append((repo, selected_rows, len(scored_rows)))
         write_markdown(sections, markdown_path, since=since, until=until)
 
     write_summary_index(output_dir)
     return SummaryResult(
         scored_csv_paths=tuple(scored_csv_paths),
+        theme_csv_paths=tuple(theme_csv_paths),
         markdown_path=markdown_path,
         candidate_count=sum(candidate_count for _, _, candidate_count in sections),
         selected_count=sum(len(rows) for _, rows, _ in sections),
