@@ -38,6 +38,10 @@ Generate a monthly Java highlights draft and scored CSV:
 make summarize MONTH=2026-06
 ```
 
+If `Iceberg Community Sync Notes.md` exists locally, summarization also builds a
+local LanceDB index from past Java highlight bullets and uses that similarity as
+part of the ranking.
+
 Collect fresh commits and then summarize a month:
 
 ```bash

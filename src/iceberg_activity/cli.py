@@ -73,6 +73,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=10,
         help="Number of top commits to include in markdown",
     )
+    summarize.add_argument(
+        "--notes",
+        type=Path,
+        default=Path("Iceberg Community Sync Notes.md"),
+        help="Community notes file used to build a LanceDB ranking index when present",
+    )
+    summarize.add_argument(
+        "--lancedb-dir",
+        type=Path,
+        default=Path(".cache/lancedb"),
+        help="Directory for the local LanceDB ranking index",
+    )
     return parser
 
 
@@ -103,6 +115,8 @@ def run_summarize(args: argparse.Namespace) -> int:
             input_path=args.input,
             output_dir=args.output_dir,
             top=args.top,
+            notes_path=args.notes,
+            lancedb_dir=args.lancedb_dir,
         )
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc

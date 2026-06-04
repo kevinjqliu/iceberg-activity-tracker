@@ -7,11 +7,15 @@ from datetime import datetime
 from pathlib import Path
 
 from .git_client import CSV_FIELDS
+from .vector_ranker import build_java_highlight_index, rank_with_lancedb
 
 SCORED_FIELDS = [
     *CSV_FIELDS,
+    "heuristic_score",
+    "lancedb_score",
     "score",
     "score_reasons",
+    "lancedb_match",
     "summary_bullet",
 ]
 
@@ -39,7 +43,7 @@ STRATEGIC_TERMS = {
 FEATURE_RE = re.compile(r"\b(add|support|implement|introduce|enable|allow|expose|promote)\b", re.I)
 FIX_RE = re.compile(r"\b(fix|avoid|prevent|correct|resolve)\b", re.I)
 ROUTINE_RE = re.compile(
-    r"\b(build|dependency|dependencies|deps|maven|gradle|bump|format|formatting)\b",
+    r"\b(build|dependency|dependencies|deps|maven|gradle|bump|upgrade|format|formatting)\b",
     re.I,
 )
 IMPORTANT_INFRA_RE = re.compile(r"\b(cve|security|release|license|notice|blocking|block)\b", re.I)
@@ -168,7 +172,7 @@ def contributor_names(row: dict[str, str]) -> list[str]:
     seen: set[str] = set()
     for name in [row.get("author_name", ""), *split_values(row.get("co_authors", ""))]:
         for clean in expand_contributor_name(name):
-            if not clean or clean.lower() == "github" or clean in seen:
+            if not clean or clean.lower() in {"github", "codex"} or clean in seen:
                 continue
             seen.add(clean)
             names.append(clean)
@@ -232,14 +236,40 @@ def summarize_month(
     input_path: Path,
     output_dir: Path,
     top: int = 10,
+    notes_path: Path | None = None,
+    lancedb_dir: Path | None = None,
 ) -> SummaryResult:
     target = parse_month(month)
+    use_lancedb = bool(notes_path and notes_path.exists() and lancedb_dir)
+    indexed_examples = 0
+    if use_lancedb:
+        indexed_examples = build_java_highlight_index(notes_path, lancedb_dir)
+        use_lancedb = indexed_examples > 0
+
     rows = [row for row in read_commit_rows(input_path) if row_month(row) == target]
     scored_rows: list[dict[str, str]] = []
     for row in rows:
         row = {field: row.get(field, "") for field in CSV_FIELDS} | row
-        score, reasons = score_commit(row)
-        row["score"] = str(score)
+        heuristic_score, reasons = score_commit(row)
+        lancedb_score = 0
+        lancedb_match = ""
+        if use_lancedb and lancedb_dir:
+            match = rank_with_lancedb(row, lancedb_dir)
+            lancedb_score = match.score
+            lancedb_match = match.matched_example
+            reasons = f"{reasons}; {match.reason}"
+            if is_low_signal_for_semantic_boost(row):
+                lancedb_score = min(lancedb_score, 3)
+                reasons = f"{reasons}; capped LanceDB boost for routine/low-signal commit"
+        elif notes_path and not notes_path.exists():
+            reasons = f"{reasons}; no notes file for LanceDB ranking"
+        elif notes_path and indexed_examples == 0:
+            reasons = f"{reasons}; no Java highlights indexed for LanceDB ranking"
+
+        row["heuristic_score"] = str(heuristic_score)
+        row["lancedb_score"] = str(lancedb_score)
+        row["score"] = str(heuristic_score + lancedb_score)
+        row["lancedb_match"] = lancedb_match
         row["score_reasons"] = reasons
         row["summary_bullet"] = summary_bullet(row)
         scored_rows.append(row)
@@ -258,3 +288,11 @@ def summarize_month(
         candidate_count=len(scored_rows),
         selected_count=len(selected_rows),
     )
+
+
+def is_low_signal_for_semantic_boost(row: dict[str, str]) -> bool:
+    subject = row.get("subject", "")
+    text = f"{subject}\n{row.get('body', '')}"
+    if IMPORTANT_INFRA_RE.search(text):
+        return False
+    return bool(LOW_SIGNAL_RE.search(subject) or ROUTINE_RE.search(subject))

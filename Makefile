@@ -10,6 +10,8 @@ MONTH ?=
 TOP ?= 10
 SUMMARY_OUTPUT_DIR ?= data/summaries
 SUMMARY_INPUT ?= data/commits/apache_iceberg.csv
+NOTES ?= Iceberg Community Sync Notes.md
+LANCEDB_DIR ?= .cache/lancedb
 
 all: collect
 
@@ -23,7 +25,7 @@ collect:
 
 summarize:
 	@test -n "$(MONTH)" || (echo "MONTH is required, for example: make summarize MONTH=2026-06" && exit 1)
-	UV_CACHE_DIR=$(UV_CACHE_DIR) $(UV) run --python $(PYTHON_VERSION) iceberg-activity summarize --month $(MONTH) --input $(SUMMARY_INPUT) --output-dir $(SUMMARY_OUTPUT_DIR) --top $(TOP)
+	UV_CACHE_DIR=$(UV_CACHE_DIR) $(UV) run --python $(PYTHON_VERSION) iceberg-activity summarize --month $(MONTH) --input $(SUMMARY_INPUT) --output-dir $(SUMMARY_OUTPUT_DIR) --top $(TOP) --notes "$(NOTES)" --lancedb-dir $(LANCEDB_DIR)
 
 monthly: collect summarize
 
@@ -31,4 +33,4 @@ test:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) $(UV) run --python $(PYTHON_VERSION) --group dev pytest
 
 clean:
-	rm -rf $(CACHE_DIR) $(UV_CACHE_DIR) .venv
+	rm -rf $(CACHE_DIR) $(UV_CACHE_DIR) $(LANCEDB_DIR) .venv

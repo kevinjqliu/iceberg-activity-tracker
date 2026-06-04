@@ -75,6 +75,16 @@ def test_contributor_names_splits_compound_author_names() -> None:
 def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
     input_path = tmp_path / "apache_iceberg.csv"
     output_dir = tmp_path / "summaries"
+    notes_path = tmp_path / "notes.md"
+    lancedb_dir = tmp_path / "lancedb"
+    notes_path.write_text(
+        """2026-05-01
+● Highlights
+○ Java
+■ Core: Add V4 location relativization utilities (#16174) <Thanks A!>
+""",
+        encoding="utf-8",
+    )
     rows = [
         commit_row(
             commit_sha="1",
@@ -108,7 +118,14 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
     ]
     write_rows(input_path, rows)
 
-    result = summarize_month(month="2026-06", input_path=input_path, output_dir=output_dir, top=1)
+    result = summarize_month(
+        month="2026-06",
+        input_path=input_path,
+        output_dir=output_dir,
+        top=1,
+        notes_path=notes_path,
+        lancedb_dir=lancedb_dir,
+    )
 
     assert result.candidate_count == 2
     assert result.selected_count == 1
@@ -116,6 +133,9 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
         scored = list(csv.DictReader(csv_file))
     assert len(scored) == 2
     assert scored[0]["score"]
+    assert scored[0]["heuristic_score"]
+    assert scored[0]["lancedb_score"]
+    assert scored[0]["lancedb_match"]
     assert scored[0]["score_reasons"]
 
     markdown = result.markdown_path.read_text(encoding="utf-8")
