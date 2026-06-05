@@ -158,6 +158,15 @@ class SummaryResult:
         return self.theme_csv_paths[0]
 
 
+@dataclass(frozen=True)
+class MarkdownSection:
+    repo: RepoConfig
+    selected_rows: list[dict[str, str]]
+    unmentioned_rows: list[dict[str, str]]
+    suppressed_rows: list[dict[str, str]]
+    candidate_count: int
+
+
 def parse_month(value: str) -> tuple[int, int]:
     if not re.fullmatch(r"\d{4}-\d{2}", value):
         raise ValueError("--month must use YYYY-MM")
@@ -530,6 +539,38 @@ def select_theme_rows(theme_rows: list[dict[str, str]], top: int) -> list[dict[s
     ][:top]
 
 
+def selected_commit_shas(rows: list[dict[str, str]]) -> set[str]:
+    return {
+        sha
+        for row in rows
+        for sha in split_values(row.get("commit_shas", ""))
+    }
+
+
+def unmentioned_reviewable_commit_rows(
+    scored_rows: list[dict[str, str]],
+    selected_rows: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    mentioned_shas = selected_commit_shas(selected_rows)
+    return [
+        row
+        for row in scored_rows
+        if row.get("commit_sha", "") not in mentioned_shas and not is_render_suppressed(row)
+    ]
+
+
+def suppressed_commit_rows(
+    scored_rows: list[dict[str, str]],
+    selected_rows: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    mentioned_shas = selected_commit_shas(selected_rows)
+    return [
+        row
+        for row in scored_rows
+        if row.get("commit_sha", "") not in mentioned_shas and is_render_suppressed(row)
+    ]
+
+
 def read_commit_rows(input_path: Path) -> list[dict[str, str]]:
     with input_path.open(newline="", encoding="utf-8") as csv_file:
         return list(csv.DictReader(csv_file))
@@ -576,14 +617,14 @@ def write_theme_csv(rows: list[dict[str, str]], output_path: Path) -> None:
 
 
 def write_markdown(
-    sections: list[tuple[RepoConfig, list[dict[str, str]], int]],
+    sections: list[MarkdownSection],
     output_path: Path,
     *,
     since: date,
     until: date,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    total_candidates = sum(candidate_count for _, _, candidate_count in sections)
+    total_candidates = sum(section.candidate_count for section in sections)
     lines: list[str] = [
         "# Iceberg Community Sync Summary",
         "",
@@ -591,25 +632,50 @@ def write_markdown(
         f"- Review candidates: `{total_candidates}`",
         "",
     ]
-    for repo, rows, candidate_count in sections:
-        renderable_count = sum(1 for row in rows if row.get("_render", "true") == "true")
+    for section in sections:
+        lines.extend(markdown_section_lines(section))
+    output_path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def markdown_section_lines(section: MarkdownSection) -> list[str]:
+    renderable_rows = [
+        row for row in section.selected_rows if row.get("_render", "true") == "true"
+    ]
+    covered_commit_count = len(selected_commit_shas(renderable_rows))
+    lines = [
+        f"## {section.repo.full_name}",
+        "",
+        f"### {section.repo.summary_heading}",
+        "",
+        f"_Top {len(renderable_rows)} themes from {section.candidate_count} scored commits._",
+        "",
+        f"- Top themes: `{len(renderable_rows)}`",
+        f"- Commits covered by top themes: `{covered_commit_count}`",
+        f"- Other reviewable commits: `{len(section.unmentioned_rows)}`",
+        f"- Suppressed commits: `{len(section.suppressed_rows)}`",
+        "",
+        *[row["summary_bullet"] for row in renderable_rows],
+        "",
+    ]
+    if section.unmentioned_rows:
         lines.extend(
             [
-                f"## {repo.full_name}",
+                "### Other Reviewable Commits",
                 "",
-                f"### {repo.summary_heading}",
-                "",
-                f"_Top {renderable_count} themes from {candidate_count} scored commits._",
-                "",
-                *[
-                    row["summary_bullet"]
-                    for row in rows
-                    if row.get("_render", "true") == "true"
-                ],
+                *[row["summary_bullet"] for row in section.unmentioned_rows],
                 "",
             ]
         )
-    output_path.write_text("\n".join(lines), encoding="utf-8")
+    if section.suppressed_rows:
+        lines.extend(
+            [
+                "### Suppressed Commits",
+                "",
+                *[row["summary_bullet"] for row in section.suppressed_rows],
+                "",
+            ]
+        )
+    return lines
 
 
 def score_rows(
@@ -664,30 +730,20 @@ def rows_for_period(input_path: Path, *, since: date, until: date) -> list[dict[
 
 
 def write_single_repo_markdown(
-    rows: list[dict[str, str]],
+    section: MarkdownSection,
     output_path: Path,
     *,
     since: date,
     until: date,
-    repo: RepoConfig,
-    candidate_count: int,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    renderable_rows = [row for row in rows if row.get("_render", "true") == "true"]
     lines = [
         "# Iceberg Community Sync Summary",
         "",
         f"- Period: `{since.isoformat()}` to before `{until.isoformat()}`",
-        f"- Review candidates: `{candidate_count}`",
+        f"- Review candidates: `{section.candidate_count}`",
         "",
-        f"## {repo.full_name}",
-        "",
-        f"### {repo.summary_heading}",
-        "",
-        f"_Top {len(renderable_rows)} themes from {candidate_count} scored commits._",
-        "",
-        *[row["summary_bullet"] for row in renderable_rows],
-        "",
+        *markdown_section_lines(section),
     ]
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
@@ -730,7 +786,7 @@ def summarize_period(
     review_data_dir = period_dir / "review-data"
     scored_csv_paths: list[Path] = []
     theme_csv_paths: list[Path] = []
-    sections: list[tuple[RepoConfig, list[dict[str, str]], int]] = []
+    sections: list[MarkdownSection] = []
 
     if input_path:
         repo = repositories[0]
@@ -738,21 +794,26 @@ def summarize_period(
         scored_rows = score_rows(rows, notes_path=notes_path, lancedb_dir=lancedb_dir)
         theme_rows = build_theme_rows(scored_rows)
         selected_rows = select_theme_rows(theme_rows, top)
+        section = MarkdownSection(
+            repo=repo,
+            selected_rows=selected_rows,
+            unmentioned_rows=unmentioned_reviewable_commit_rows(scored_rows, selected_rows),
+            suppressed_rows=suppressed_commit_rows(scored_rows, selected_rows),
+            candidate_count=len(scored_rows),
+        )
         scored_csv_path = review_data_dir / f"{repo.cache_name}_scored.csv"
         theme_csv_path = review_data_dir / f"{repo.cache_name}_themes.csv"
         write_scored_csv(scored_rows, scored_csv_path)
         write_theme_csv(theme_rows, theme_csv_path)
         write_single_repo_markdown(
-            selected_rows,
+            section,
             markdown_path,
             since=since,
             until=until,
-            repo=repo,
-            candidate_count=len(scored_rows),
         )
         scored_csv_paths.append(scored_csv_path)
         theme_csv_paths.append(theme_csv_path)
-        sections.append((repo, selected_rows, len(scored_rows)))
+        sections.append(section)
     else:
         for repo in repositories:
             repo_input_path = input_dir / repo.csv_name
@@ -763,13 +824,20 @@ def summarize_period(
             scored_rows = score_rows(rows, notes_path=notes_path, lancedb_dir=repo_lancedb_dir)
             theme_rows = build_theme_rows(scored_rows)
             selected_rows = select_theme_rows(theme_rows, top)
+            section = MarkdownSection(
+                repo=repo,
+                selected_rows=selected_rows,
+                unmentioned_rows=unmentioned_reviewable_commit_rows(scored_rows, selected_rows),
+                suppressed_rows=suppressed_commit_rows(scored_rows, selected_rows),
+                candidate_count=len(scored_rows),
+            )
             scored_csv_path = review_data_dir / f"{repo.cache_name}_scored.csv"
             theme_csv_path = review_data_dir / f"{repo.cache_name}_themes.csv"
             write_scored_csv(scored_rows, scored_csv_path)
             write_theme_csv(theme_rows, theme_csv_path)
             scored_csv_paths.append(scored_csv_path)
             theme_csv_paths.append(theme_csv_path)
-            sections.append((repo, selected_rows, len(scored_rows)))
+            sections.append(section)
         write_markdown(sections, markdown_path, since=since, until=until)
 
     write_summary_index(output_dir)
@@ -777,8 +845,8 @@ def summarize_period(
         scored_csv_paths=tuple(scored_csv_paths),
         theme_csv_paths=tuple(theme_csv_paths),
         markdown_path=markdown_path,
-        candidate_count=sum(candidate_count for _, _, candidate_count in sections),
-        selected_count=sum(len(rows) for _, rows, _ in sections),
+        candidate_count=sum(section.candidate_count for section in sections),
+        selected_count=sum(len(section.selected_rows) for section in sections),
         since=since,
         until=until,
     )

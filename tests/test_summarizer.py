@@ -16,9 +16,11 @@ from iceberg_activity.summarizer import (
     parse_month,
     score_commit,
     select_theme_rows,
+    suppressed_commit_rows,
     summarize_month,
     summarize_period,
     summary_bullet,
+    unmentioned_reviewable_commit_rows,
 )
 
 
@@ -455,6 +457,50 @@ def test_select_theme_rows_hides_routine_items_without_removing_review_data() ->
     assert not is_render_suppressed(rows[3])
 
 
+def test_unmentioned_reviewable_commit_rows_excludes_selected_theme_commits_and_noise() -> None:
+    rows = [
+        scored_commit_row(
+            commit_sha="3347",
+            subject="REST: Add pagination support for list_namespaces (#3347)",
+            author_name="Yuya Ebihara",
+            pr_number="3347",
+            score="88",
+        ),
+        scored_commit_row(
+            commit_sha="3348",
+            subject="REST: Add pagination support for list_tables (#3348)",
+            author_name="Yuya Ebihara",
+            pr_number="3348",
+            score="87",
+        ),
+        scored_commit_row(
+            commit_sha="3335",
+            subject="Support `pa.RecordBatchReader` in Table.`{append,overwrite}` (#3335)",
+            author_name="Paul Mathew",
+            pr_number="3335",
+            score="80",
+        ),
+        scored_commit_row(
+            commit_sha="docs",
+            subject="Docs: Fix typo in README (#16000)",
+            author_name="Doc Writer",
+            top_level_paths="docs",
+            pr_number="16000",
+            score="70",
+        ),
+    ]
+
+    themes = build_theme_rows(rows)
+    selected = select_theme_rows(themes, top=1)
+    unmentioned = unmentioned_reviewable_commit_rows(rows, selected)
+    suppressed = suppressed_commit_rows(rows, selected)
+
+    assert selected[0]["theme_key"] == "rest-pagination"
+    assert selected[0]["commit_shas"] == "3347; 3348"
+    assert [row["commit_sha"] for row in unmentioned] == ["3335"]
+    assert [row["commit_sha"] for row in suppressed] == ["docs"]
+
+
 def test_contributor_names_splits_compound_author_names() -> None:
     row = commit_row(author_name="Hongyue/Steve Zhang", co_authors="Gang & emkornfield")
 
@@ -499,7 +545,7 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
             commit_sha="3",
             short_sha="3",
             subject="Spark: Implement row lineage support (#16100)",
-            committer_date="2026-05-30T12:00:00+00:00",
+            committer_date="2026-06-04T12:00:00+00:00",
             author_name="Spark Dev",
             top_level_paths="spark",
             pr_number="16100",
@@ -516,7 +562,7 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
         lancedb_dir=lancedb_dir,
     )
 
-    assert result.candidate_count == 2
+    assert result.candidate_count == 3
     assert result.selected_count == 1
     assert result.since == date(2026, 6, 1)
     assert result.until == date(2026, 7, 1)
@@ -525,7 +571,7 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
     )
     with result.scored_csv_path.open(newline="", encoding="utf-8") as csv_file:
         scored = list(csv.DictReader(csv_file))
-    assert len(scored) == 2
+    assert len(scored) == 3
     assert scored[0]["score"]
     assert scored[0]["heuristic_score"]
     assert scored[0]["lancedb_score"]
@@ -535,7 +581,7 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
         theme_reader = csv.DictReader(csv_file)
         themes = list(theme_reader)
     assert theme_reader.fieldnames == THEME_FIELDS
-    assert len(themes) == 2
+    assert len(themes) == 3
     assert themes[0]["summary_bullet"]
 
     markdown = result.markdown_path.read_text(encoding="utf-8")
@@ -543,15 +589,28 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
         "# Iceberg Community Sync Summary\n"
         "\n"
         "- Period: `2026-06-01` to before `2026-07-01`\n"
-        "- Review candidates: `2`\n"
+        "- Review candidates: `3`\n"
         "\n"
         "## apache/iceberg\n"
         "\n"
         "### Java\n"
         "\n"
-        "_Top 1 themes from 2 scored commits._\n"
+        "_Top 1 themes from 3 scored commits._\n"
+        "\n"
+        "- Top themes: `1`\n"
+        "- Commits covered by top themes: `1`\n"
+        "- Other reviewable commits: `1`\n"
+        "- Suppressed commits: `1`\n"
         "\n"
         "- Core: Add V4 location relativization utilities (#16174) (Thanks Anoop Johnson!)\n"
+        "\n"
+        "### Other Reviewable Commits\n"
+        "\n"
+        "- Spark: Implement row lineage support (#16100) (Thanks Spark Dev!)\n"
+        "\n"
+        "### Suppressed Commits\n"
+        "\n"
+        "- Docs: Fix typo (#16000) (Thanks Doc Writer!)\n"
     )
 
 
@@ -620,7 +679,12 @@ def test_summarize_period_uses_meeting_window_output_dir(tmp_path: Path) -> None
     assert commit_shas == {"1", "3"}
     markdown = result.markdown_path.read_text(encoding="utf-8")
     assert "- Spark: Implement row lineage support (#16100) (Thanks Spark Dev!)" in markdown
-    assert "Docs: Fix typo" not in markdown
+    assert "- Top themes: `1`" in markdown
+    assert "- Commits covered by top themes: `1`" in markdown
+    assert "- Other reviewable commits: `0`" in markdown
+    assert "- Suppressed commits: `1`" in markdown
+    assert "### Suppressed Commits" in markdown
+    assert "- Docs: Fix typo (#16000) (Thanks Doc Writer!)" in markdown
 
 
 def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
@@ -664,6 +728,16 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
                 top_level_paths="core",
                 pr_number="101",
             ),
+            commit_row(
+                commit_sha="java2",
+                short_sha="java2",
+                subject="Spark: Fix scan planning (#102)",
+                committer_date="2026-05-20T13:00:00+00:00",
+                repository="apache/iceberg",
+                author_name="Spark Dev",
+                top_level_paths="spark",
+                pr_number="102",
+            ),
         ],
     )
     write_rows(
@@ -678,6 +752,16 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
                 author_name="Python Dev",
                 top_level_paths="pyiceberg",
                 pr_number="202",
+            ),
+            commit_row(
+                commit_sha="py2",
+                short_sha="py2",
+                subject="IO: Fix FileIO config (#203)",
+                committer_date="2026-05-21T13:00:00+00:00",
+                repository="apache/iceberg-python",
+                author_name="Python IO Dev",
+                top_level_paths="pyiceberg",
+                pr_number="203",
             ),
         ],
     )
@@ -694,6 +778,16 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
                 top_level_paths="crates",
                 pr_number="303",
             ),
+            commit_row(
+                commit_sha="rust2",
+                short_sha="rust2",
+                subject="Transaction: Fix manifest cleanup (#304)",
+                committer_date="2026-05-22T13:00:00+00:00",
+                repository="apache/iceberg-rust",
+                author_name="Rust Tx Dev",
+                top_level_paths="crates",
+                pr_number="304",
+            ),
         ],
     )
     write_rows(
@@ -708,6 +802,16 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
                 author_name="Go Dev",
                 top_level_paths="cmd; catalog",
                 pr_number="404",
+            ),
+            commit_row(
+                commit_sha="go2",
+                short_sha="go2",
+                subject="Table: Fix commit retries (#405)",
+                committer_date="2026-05-23T13:00:00+00:00",
+                repository="apache/iceberg-go",
+                author_name="Go Table Dev",
+                top_level_paths="table",
+                pr_number="405",
             ),
         ],
     )
@@ -724,6 +828,16 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
                 top_level_paths="src; include",
                 pr_number="505",
             ),
+            commit_row(
+                commit_sha="cpp2",
+                short_sha="cpp2",
+                subject="Schema: Fix projection (#506)",
+                committer_date="2026-05-24T13:00:00+00:00",
+                repository="apache/iceberg-cpp",
+                author_name="Cpp Schema Dev",
+                top_level_paths="src; include",
+                pr_number="506",
+            ),
         ],
     )
 
@@ -732,11 +846,11 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
         until=date(2026, 6, 3),
         input_dir=input_dir,
         output_dir=output_dir,
-        top=20,
+        top=1,
         repositories=(java_repo, python_repo, rust_repo, go_repo, cpp_repo),
     )
 
-    assert result.candidate_count == 5
+    assert result.candidate_count == 10
     assert result.selected_count == 5
     review_data_dir = output_dir / "2026-05-13_to_2026-06-03" / "review-data"
     assert result.scored_csv_paths == (
@@ -755,15 +869,26 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
     )
     markdown = result.markdown_path.read_text(encoding="utf-8")
     assert "## apache/iceberg\n\n### Java" in markdown
+    assert "- Top themes: `1`" in markdown
+    assert "- Commits covered by top themes: `1`" in markdown
+    assert "- Other reviewable commits: `1`" in markdown
+    assert "- Suppressed commits: `0`" in markdown
     assert "- Core: Add REST feature (#101) (Thanks Java Dev!)" in markdown
+    assert "- Spark: Fix scan planning (#102) (Thanks Spark Dev!)" in markdown
     assert "## apache/iceberg-python\n\n### Python" in markdown
     assert "- Catalog: Add namespace support (#202) (Thanks Python Dev!)" in markdown
+    assert "- IO: Fix FileIO config (#203) (Thanks Python IO Dev!)" in markdown
     assert "## apache/iceberg-rust\n\n### Rust" in markdown
     assert "- REST: Add catalog auth support (#303) (Thanks Rust Dev!)" in markdown
+    assert "- Transaction: Fix manifest cleanup (#304) (Thanks Rust Tx Dev!)" in markdown
     assert "## apache/iceberg-go\n\n### Go" in markdown
     assert "- Catalog: Add maintenance CLI support (#404) (Thanks Go Dev!)" in markdown
+    assert "- Table: Fix commit retries (#405) (Thanks Go Table Dev!)" in markdown
     assert "## apache/iceberg-cpp\n\n### C++" in markdown
     assert "- REST: Add namespace separator support (#505) (Thanks Cpp Dev!)" in markdown
+    assert "- Schema: Fix projection (#506) (Thanks Cpp Schema Dev!)" in markdown
+    assert markdown.count("### Other Reviewable Commits") == 5
+    assert "### Suppressed Commits" not in markdown
 
 
 def commit_row(**overrides: str) -> dict[str, str]:
