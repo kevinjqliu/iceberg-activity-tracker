@@ -14636,3 +14636,66 @@ Specify what test covers (unit test, integration test, etc.).
 If tests are not included in your PR, please explain why (for example,
 are they covered by existing tests)?
 -->",f064f2bd26bf31f2563075b563d2bf7befe377fb,2564,false,,7,111,69,crates
+apache/iceberg-rust,e5383074989574a8dfcca857720f971735f0ade5,e538307,Krisztián Szűcs,szucs.krisztian@gmail.com,2026-06-04T23:23:36+02:00,GitHub,noreply@github.com,2026-06-04T14:23:36-07:00,chore(deps): bump opendal from 0.56 to 0.57 (#2588),"## Which issue does this PR close?
+
+- N/A (dependency bump)
+
+## What changes are included in this PR?
+
+Bumps `opendal` from 0.56 to 0.57. opendal backs the opendal `FileIO`
+storage backends (S3, GCS, OSS, Azure, HuggingFace, fs, memory), so this
+keeps that layer current.
+
+The only source change required by the upgrade is migrating the
+deprecated `allow_anonymous` field on `GcsConfig`/`S3Config` to its
+replacement `skip_signature` (three call sites across the GCS and S3
+backends), which keeps `clippy -D warnings` clean. `skip_signature` is
+the direct replacement for the anonymous-access path, so there is no
+behavior change.
+
+One other 0.57 change worth noting: the HuggingFace service now requires
+`repo_type` to be set explicitly (no implicit `model` default). Our
+`hf://` URI handling already passes it, so no change was needed there.
+
+## Are these changes tested?
+
+Covered by the existing opendal storage tests. Verified locally with
+`cargo check --workspace --all-features --all-targets` and `cargo clippy
+-p iceberg-storage-opendal --all-targets --all-features -- -D warnings`
+(both clean).
+
+---
+
+This PR was prepared with help from Claude Code.",d32c234f3f7a83661d0e94e0424b21e2f1ce23c7,2588,false,,4,158,91,Cargo.lock; Cargo.toml; crates
+apache/iceberg-rust,97711b95a90826c39cc32b378c0e91d5c978ffe9,97711b9,Krisztián Szűcs,szucs.krisztian@gmail.com,2026-06-04T23:25:48+02:00,GitHub,noreply@github.com,2026-06-04T14:25:48-07:00,ci: consolidate HF/CDC integration tests into existing CI jobs (#2587),"## Which issue does this PR close?
+
+- N/A (CI-only cleanup)
+
+## What changes are included in this PR?
+
+`ci_hf_cdc.yml` mostly duplicated the main CI jobs; its only real
+purpose was injecting the HuggingFace secrets. The tests it ran are
+already collected by the existing jobs and already self-skip when
+secrets are absent (the Rust `require_env!` macro and the Python
+`@requires_hf` skipif). So:
+
+- **`ci.yml`** — expose `HF_TOKEN` / `HF_BUCKET` / `HF_DATASET` to the
+existing `tests` job.
+- **`bindings_python_ci.yml`** — expose `HF_TOKEN` / `HF_DATASET` to the
+existing `test` job.
+- **`ci_hf_cdc.yml`** — deleted.
+
+This matches how the S3/GCS/Glue/HMS integration tests already run
+inside the main job. Forks skip cleanly via the in-test guards.
+
+## Are these changes tested?
+
+Covered by the existing HF/CDC integration tests, now driven by the main
+CI jobs. No test logic changed — only where the secrets are injected.
+Rust HF tests now run under parallel `nextest` (previously pinned to
+`--test-threads=1`); if collisions surface, a nextest test-group can
+serialize `file_io_hf_test`.
+
+---
+
+This PR was prepared with help from Claude Code.",e5383074989574a8dfcca857720f971735f0ade5,2587,false,,4,13,112,.github; crates
