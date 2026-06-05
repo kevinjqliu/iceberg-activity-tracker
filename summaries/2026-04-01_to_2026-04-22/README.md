@@ -5,14 +5,9 @@
 
 ## apache/iceberg
 
+_From 71 scored commits, the top 20 themes cover 20 commits; 16 other reviewable commits and 35 suppressed commits are listed below._
+
 ### Java
-
-_Top 20 themes from 71 scored commits._
-
-- Top themes: `20`
-- Commits covered by top themes: `20`
-- Other reviewable commits: `16`
-- Suppressed commits: `35`
 
 - Core: Add fromId to EntryStatus and ManifestEntry.Status (#15983) (Thanks Anoop Johnson!)
 - Core: Introduce default values in RESTCatalogProperties (#15873) (Thanks gaborkaszab!)
@@ -94,14 +89,9 @@ _Top 20 themes from 71 scored commits._
 
 ## apache/iceberg-python
 
+_From 24 scored commits, the top 3 themes cover 3 commits; 0 other reviewable commits and 21 suppressed commits are listed below._
+
 ### Python
-
-_Top 3 themes from 24 scored commits._
-
-- Top themes: `3`
-- Commits covered by top themes: `3`
-- Other reviewable commits: `0`
-- Suppressed commits: `21`
 
 - Fix ManifestEntry.snapshot_id setter writing to wrong index (#3257) (Thanks Sotaro Hikita!)
 - fix: Handle optional properties in load namespace properties response (#3169) (Thanks geruh!)
@@ -133,14 +123,9 @@ _Top 3 themes from 24 scored commits._
 
 ## apache/iceberg-rust
 
+_From 23 scored commits, the top 8 themes cover 8 commits; 0 other reviewable commits and 15 suppressed commits are listed below._
+
 ### Rust
-
-_Top 8 themes from 23 scored commits._
-
-- Top themes: `8`
-- Commits covered by top themes: `8`
-- Other reviewable commits: `0`
-- Suppressed commits: `15`
 
 - feat(encryption) [2/N] Support encryption: Add streaming encryption/decryption (#2286) (Thanks Xander!)
 - fix(storage/s3): default to virtual-host-style addressing (#2330) (Thanks Jiajia Li!)
@@ -171,14 +156,9 @@ _Top 8 themes from 23 scored commits._
 
 ## apache/iceberg-go
 
+_From 58 scored commits, the top 20 themes cover 27 commits; 15 other reviewable commits and 16 suppressed commits are listed below._
+
 ### Go
-
-_Top 20 themes from 58 scored commits._
-
-- Top themes: `20`
-- Commits covered by top themes: `27`
-- Other reviewable commits: `15`
-- Suppressed commits: `16`
 
 - Compaction and rewrite data files: expand rewrite planning and execution (#850, #851, #852, #892, #893, #901, #903) (Thanks Andrei Tserakhau and Abhi Rathod!)
 - Row lineage: expand support for lineage-aware reads and writes (#735, #821) (Thanks Dao Thanh Tung and Andrei Tserakhau!)
@@ -240,14 +220,9 @@ _Top 20 themes from 58 scored commits._
 
 ## apache/iceberg-cpp
 
+_From 10 scored commits, the top 6 themes cover 6 commits; 0 other reviewable commits and 4 suppressed commits are listed below._
+
 ### C++
-
-_Top 6 themes from 10 scored commits._
-
-- Top themes: `6`
-- Commits covered by top themes: `6`
-- Other reviewable commits: `0`
-- Suppressed commits: `4`
 
 - feat: add s3 file io integration (#548) (Thanks liuxiaoyu!)
 - feat(puffin): add format constants, utilities, and JSON serde (#603) (Thanks ZhaoXuan!)

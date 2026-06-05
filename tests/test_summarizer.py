@@ -593,14 +593,10 @@ def test_summarize_month_writes_scored_csv_and_markdown(tmp_path: Path) -> None:
         "\n"
         "## apache/iceberg\n"
         "\n"
+        "_From 3 scored commits, the top 1 theme covers 1 commit; "
+        "1 other reviewable commit and 1 suppressed commit are listed below._\n"
+        "\n"
         "### Java\n"
-        "\n"
-        "_Top 1 themes from 3 scored commits._\n"
-        "\n"
-        "- Top themes: `1`\n"
-        "- Commits covered by top themes: `1`\n"
-        "- Other reviewable commits: `1`\n"
-        "- Suppressed commits: `1`\n"
         "\n"
         "- Core: Add V4 location relativization utilities (#16174) (Thanks Anoop Johnson!)\n"
         "\n"
@@ -679,10 +675,10 @@ def test_summarize_period_uses_meeting_window_output_dir(tmp_path: Path) -> None
     assert commit_shas == {"1", "3"}
     markdown = result.markdown_path.read_text(encoding="utf-8")
     assert "- Spark: Implement row lineage support (#16100) (Thanks Spark Dev!)" in markdown
-    assert "- Top themes: `1`" in markdown
-    assert "- Commits covered by top themes: `1`" in markdown
-    assert "- Other reviewable commits: `0`" in markdown
-    assert "- Suppressed commits: `1`" in markdown
+    assert (
+        "_From 2 scored commits, the top 1 theme covers 1 commit; "
+        "0 other reviewable commits and 1 suppressed commit are listed below._"
+    ) in markdown
     assert "### Suppressed Commits" in markdown
     assert "- Docs: Fix typo (#16000) (Thanks Doc Writer!)" in markdown
 
@@ -868,23 +864,28 @@ def test_summarize_period_writes_multiple_repo_sections(tmp_path: Path) -> None:
         review_data_dir / "apache_iceberg_cpp_themes.csv",
     )
     markdown = result.markdown_path.read_text(encoding="utf-8")
-    assert "## apache/iceberg\n\n### Java" in markdown
-    assert "- Top themes: `1`" in markdown
-    assert "- Commits covered by top themes: `1`" in markdown
-    assert "- Other reviewable commits: `1`" in markdown
-    assert "- Suppressed commits: `0`" in markdown
+    assert "## apache/iceberg\n\n_From 2 scored commits" in markdown
+    assert "\n\n### Java" in markdown
+    assert (
+        "_From 2 scored commits, the top 1 theme covers 1 commit; "
+        "1 other reviewable commit and 0 suppressed commits are listed below._"
+    ) in markdown
     assert "- Core: Add REST feature (#101) (Thanks Java Dev!)" in markdown
     assert "- Spark: Fix scan planning (#102) (Thanks Spark Dev!)" in markdown
-    assert "## apache/iceberg-python\n\n### Python" in markdown
+    assert "## apache/iceberg-python\n\n_From 2 scored commits" in markdown
+    assert "\n\n### Python" in markdown
     assert "- Catalog: Add namespace support (#202) (Thanks Python Dev!)" in markdown
     assert "- IO: Fix FileIO config (#203) (Thanks Python IO Dev!)" in markdown
-    assert "## apache/iceberg-rust\n\n### Rust" in markdown
+    assert "## apache/iceberg-rust\n\n_From 2 scored commits" in markdown
+    assert "\n\n### Rust" in markdown
     assert "- REST: Add catalog auth support (#303) (Thanks Rust Dev!)" in markdown
     assert "- Transaction: Fix manifest cleanup (#304) (Thanks Rust Tx Dev!)" in markdown
-    assert "## apache/iceberg-go\n\n### Go" in markdown
+    assert "## apache/iceberg-go\n\n_From 2 scored commits" in markdown
+    assert "\n\n### Go" in markdown
     assert "- Catalog: Add maintenance CLI support (#404) (Thanks Go Dev!)" in markdown
     assert "- Table: Fix commit retries (#405) (Thanks Go Table Dev!)" in markdown
-    assert "## apache/iceberg-cpp\n\n### C++" in markdown
+    assert "## apache/iceberg-cpp\n\n_From 2 scored commits" in markdown
+    assert "\n\n### C++" in markdown
     assert "- REST: Add namespace separator support (#505) (Thanks Cpp Dev!)" in markdown
     assert "- Schema: Fix projection (#506) (Thanks Cpp Schema Dev!)" in markdown
     assert markdown.count("### Other Reviewable Commits") == 5

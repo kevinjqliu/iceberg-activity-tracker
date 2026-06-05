@@ -209,6 +209,16 @@ def split_values(value: str) -> list[str]:
     return [part.strip() for part in value.split(";") if part.strip()]
 
 
+def pluralize(count: int, singular: str, plural: str | None = None) -> str:
+    if count == 1:
+        return singular
+    return plural or f"{singular}s"
+
+
+def count_phrase(count: int, singular: str, plural: str | None = None) -> str:
+    return f"{count} {pluralize(count, singular, plural)}"
+
+
 def prefix_parts(subject: str) -> set[str]:
     if ":" not in subject:
         return set()
@@ -641,18 +651,22 @@ def markdown_section_lines(section: MarkdownSection) -> list[str]:
     renderable_rows = [
         row for row in section.selected_rows if row.get("_render", "true") == "true"
     ]
+    theme_count = len(renderable_rows)
     covered_commit_count = len(selected_commit_shas(renderable_rows))
+    cover_verb = "covers" if theme_count == 1 else "cover"
     lines = [
         f"## {section.repo.full_name}",
         "",
+        (
+            f"_From {section.candidate_count} scored commits, the top "
+            f"{count_phrase(theme_count, 'theme')} {cover_verb} "
+            f"{count_phrase(covered_commit_count, 'commit')}; "
+            f"{count_phrase(len(section.unmentioned_rows), 'other reviewable commit')} "
+            f"and {count_phrase(len(section.suppressed_rows), 'suppressed commit')} "
+            "are listed below._"
+        ),
+        "",
         f"### {section.repo.summary_heading}",
-        "",
-        f"_Top {len(renderable_rows)} themes from {section.candidate_count} scored commits._",
-        "",
-        f"- Top themes: `{len(renderable_rows)}`",
-        f"- Commits covered by top themes: `{covered_commit_count}`",
-        f"- Other reviewable commits: `{len(section.unmentioned_rows)}`",
-        f"- Suppressed commits: `{len(section.suppressed_rows)}`",
         "",
         *[row["summary_bullet"] for row in renderable_rows],
         "",

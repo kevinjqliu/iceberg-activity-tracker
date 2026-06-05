@@ -5,14 +5,9 @@
 
 ## apache/iceberg
 
+_From 119 scored commits, the top 20 themes cover 21 commits; 54 other reviewable commits and 44 suppressed commits are listed below._
+
 ### Java
-
-_Top 20 themes from 119 scored commits._
-
-- Top themes: `20`
-- Commits covered by top themes: `21`
-- Other reviewable commits: `54`
-- Suppressed commits: `44`
 
 - Core, Parquet: Allow for Writing Parquet/Avro Manifests in V4 (#15634) (Thanks Russell Spitzer!)
 - Flink: Support writing shredded variant (#15596) (Thanks GuoYu!)
@@ -141,14 +136,9 @@ _Top 20 themes from 119 scored commits._
 
 ## apache/iceberg-python
 
+_From 58 scored commits, the top 17 themes cover 21 commits; 0 other reviewable commits and 37 suppressed commits are listed below._
+
 ### Python
-
-_Top 17 themes from 58 scored commits._
-
-- Top themes: `17`
-- Commits covered by top themes: `21`
-- Other reviewable commits: `0`
-- Suppressed commits: `37`
 
 - REST pagination: add pagination and page-size support for namespaces, tables, and views (#3347, #3348, #3349, #3377) (Thanks Yuya Ebihara and Kevin Liu!)
 - Support `pa.RecordBatchReader` in Table.`{append,overwrite}` (#3335) (Thanks Paul Mathew!)
@@ -210,14 +200,9 @@ _Top 17 themes from 58 scored commits._
 
 ## apache/iceberg-rust
 
+_From 58 scored commits, the top 19 themes cover 20 commits; 0 other reviewable commits and 38 suppressed commits are listed below._
+
 ### Rust
-
-_Top 19 themes from 58 scored commits._
-
-- Top themes: `19`
-- Commits covered by top themes: `20`
-- Other reviewable commits: `0`
-- Suppressed commits: `38`
 
 - fix(puffin): add missing magic number validation for puffins (#2416) (Thanks dentiny!)
 - feat!(runtime): Support custom Runtime in Catalog (#2308) (Thanks Shawn Chang and blackmwk!)
@@ -282,14 +267,9 @@ _Top 19 themes from 58 scored commits._
 
 ## apache/iceberg-go
 
+_From 54 scored commits, the top 20 themes cover 26 commits; 16 other reviewable commits and 12 suppressed commits are listed below._
+
 ### Go
-
-_Top 20 themes from 54 scored commits._
-
-- Top themes: `20`
-- Commits covered by top themes: `26`
-- Other reviewable commits: `16`
-- Suppressed commits: `12`
 
 - Deletion vectors: add read, write, and validation support (#1053, #1055, #1060, #1100, #1134) (Thanks Tanmay Rauth and Andrei Tserakhau!)
 - feat(catalog): add PurgeTable as optional interface for physical file deletion (#1104) (Thanks Mithil Girish!)
@@ -348,14 +328,9 @@ _Top 20 themes from 54 scored commits._
 
 ## apache/iceberg-cpp
 
+_From 27 scored commits, the top 16 themes cover 16 commits; 0 other reviewable commits and 11 suppressed commits are listed below._
+
 ### C++
-
-_Top 16 themes from 27 scored commits._
-
-- Top themes: `16`
-- Commits covered by top themes: `16`
-- Other reviewable commits: `0`
-- Suppressed commits: `11`
 
 - feat(io): add bulk delete API to FileIO. (#659) (Thanks slfan1989!)
 - feat: Add v3 timestamp nanosecond primitive types (#653) (Thanks Junwang Zhao!)

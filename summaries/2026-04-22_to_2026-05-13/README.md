@@ -5,14 +5,9 @@
 
 ## apache/iceberg
 
+_From 131 scored commits, the top 20 themes cover 20 commits; 75 other reviewable commits and 36 suppressed commits are listed below._
+
 ### Java
-
-_Top 20 themes from 131 scored commits._
-
-- Top themes: `20`
-- Commits covered by top themes: `20`
-- Other reviewable commits: `75`
-- Suppressed commits: `36`
 
 - Spark: Support writing shredded variant in Iceberg-Spark (#14297) (Thanks Aihua Xu and Neelesh Salian!)
 - Core: Add implementations of v4 TrackedFile interfaces (#15854) (Thanks Anoop Johnson!)
@@ -154,14 +149,9 @@ _Top 20 themes from 131 scored commits._
 
 ## apache/iceberg-python
 
+_From 51 scored commits, the top 16 themes cover 17 commits; 0 other reviewable commits and 34 suppressed commits are listed below._
+
 ### Python
-
-_Top 16 themes from 51 scored commits._
-
-- Top themes: `16`
-- Commits covered by top themes: `17`
-- Other reviewable commits: `0`
-- Suppressed commits: `34`
 
 - Catalog views: add and expand view support (#3224, #3288) (Thanks Yuya Ebihara and spr0els!)
 - Add support for 'overwrite' option in register_table (#3290) (Thanks Yuya Ebihara!)
@@ -219,14 +209,9 @@ _Top 16 themes from 51 scored commits._
 
 ## apache/iceberg-rust
 
+_From 37 scored commits, the top 14 themes cover 15 commits; 0 other reviewable commits and 22 suppressed commits are listed below._
+
 ### Rust
-
-_Top 14 themes from 37 scored commits._
-
-- Top themes: `14`
-- Commits covered by top themes: `15`
-- Other reviewable commits: `0`
-- Suppressed commits: `22`
 
 - feat(reader): Add read_with_metrics() for scan I/O metrics (#2349) (Thanks Matt Butrovich, Claude Opus 4.6 (1M context), and blackmwk!)
 - Encryption: add key management and encrypted IO support (#2339, #2340) (Thanks Xander and Claude Opus 4.6 (1M context)!)
@@ -270,14 +255,9 @@ _Top 14 themes from 37 scored commits._
 
 ## apache/iceberg-go
 
+_From 65 scored commits, the top 20 themes cover 25 commits; 27 other reviewable commits and 13 suppressed commits are listed below._
+
 ### Go
-
-_Top 20 themes from 65 scored commits._
-
-- Top themes: `20`
-- Commits covered by top themes: `25`
-- Other reviewable commits: `27`
-- Suppressed commits: `13`
 
 - Compaction and rewrite data files: expand rewrite planning and execution (#928, #934, #947, #948, #1033) (Thanks Tobias Pütz and Andrei Tserakhau!)
 - feat(io): add BulkRemovableIO interface(#914) (#916) (Thanks Tanmay Rauth!)
@@ -348,14 +328,9 @@ _Top 20 themes from 65 scored commits._
 
 ## apache/iceberg-cpp
 
+_From 19 scored commits, the top 9 themes cover 9 commits; 0 other reviewable commits and 10 suppressed commits are listed below._
+
 ### C++
-
-_Top 9 themes from 19 scored commits._
-
-- Top themes: `9`
-- Commits covered by top themes: `9`
-- Other reviewable commits: `0`
-- Suppressed commits: `10`
 
 - feat(io): add streaming FileIO support (#641) (Thanks Gang Wu!)
 - feat: add iceberg_data library alongside iceberg (#631) (Thanks Junwang Zhao!)
