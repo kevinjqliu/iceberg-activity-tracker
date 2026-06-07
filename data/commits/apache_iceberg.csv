@@ -2067,3 +2067,48 @@ apache/iceberg,bead8dfab3249cbc6ba7713e862ff2698fd2122c,bead8df,drexler-sky,evan
 apache/iceberg,9bbde2536a7da5ddbeed7561eb275087350a5f18,9bbde25,Vladislav Sidorovich,vsidorovich@google.com,2026-06-06T01:41:32+02:00,GitHub,noreply@github.com,2026-06-05T16:41:32-07:00,"GCS, S3, ADLS: Handle EOF in inputStreams (#16055)","* Handle EOF in GCS, S3, ADLS inputStream",bead8dfab3249cbc6ba7713e862ff2698fd2122c,16055,false,,7,169,9,aws; azure; gcp
 apache/iceberg,4918866c08787521b131920ae94c76106afc24d5,4918866,Jiwon Park,jpark92@outlook.kr,2026-06-06T08:48:16+09:00,GitHub,noreply@github.com,2026-06-05T16:48:16-07:00,Spark 4.1: Bind parameters in IcebergSparkSqlExtensionsParser (#16626),,9bbde2536a7da5ddbeed7561eb275087350a5f18,16626,false,,2,72,2,spark
 apache/iceberg,4057f59dbee6878b3986f7cc39b1f30a59ee9ee3,4057f59,sanshi,43472713+lilei1128@users.noreply.github.com,2026-06-06T07:56:12+08:00,GitHub,noreply@github.com,2026-06-05T16:56:12-07:00,Spark: Fix time-travel filter on renamed columns in distributed planning mode (#16523),,4918866c08787521b131920ae94c76106afc24d5,16523,false,,7,268,22,core; spark
+apache/iceberg,95540ca160b99aef8ad6fd2e8d613f2cde3ee897,95540ca,Huaxin Gao,huaxin.gao11@gmail.com,2026-06-06T18:01:11-07:00,GitHub,noreply@github.com,2026-06-06T18:01:11-07:00,REST spec: add list/load function endpoints to OpenAPI spec (#15180),"* OpenAPI: add list/load function endpoints
+
+* address comments
+
+* address comments",4057f59dbee6878b3986f7cc39b1f30a59ee9ee3,15180,false,,2,627,0,open-api
+apache/iceberg,13182abb185220787d2ce13dd9ea025905f83800,13182ab,Yujiang Zhong,42907416+zhongyujiang@users.noreply.github.com,2026-06-07T09:14:39+08:00,GitHub,noreply@github.com,2026-06-06T18:14:39-07:00,Core: Skip unnecessary manifest scans during expire snapshots metadata cleanup (#16691),"* Core: Skip manifest scan in expire snapshots when only the current spec exists
+
+When cleanExpiredMetadata is enabled, avoid scanning all snapshot manifest
+lists to collect reachable partition spec IDs if the table has only a single
+spec that is the current default spec. This eliminates unnecessary I/O for
+the common single-spec table case.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+* Core: Skip manifest scan once all specs are confirmed reachable
+
+When collecting reachable partition specs during expire snapshots, skip
+scanning remaining snapshot manifests once all known specs have been found.
+This avoids unnecessary I/O for tables with few spec evolutions.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+* Core: Simplify mayHaveExpiredSpecs check to specs size only
+
+The default spec is always present in the specs list, so when
+specs().size() == 1 the sole spec is guaranteed to be the default.
+The additional anyMatch check was unreachable.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+---------
+
+Co-authored-by: zhongyujiang <zhongyujiang@xiaomi.com>
+Co-authored-by: Claude Opus 4.6 (1M context) <noreply@anthropic.com>",95540ca160b99aef8ad6fd2e8d613f2cde3ee897,16691,false,Claude Opus 4.6 (1M context); zhongyujiang,1,7,3,core
+apache/iceberg,e829aaf8e254b4a2fd85f693f86d40566965473e,e829aaf,Neelesh Salian,nssalian@users.noreply.github.com,2026-06-06T21:58:50-07:00,GitHub,noreply@github.com,2026-06-06T21:58:50-07:00,Parquet: Add opt-in uncompressed row group size tracking (#16327),"* Parquet: Add opt-in uncompressed row group size tracking
+
+* Adding test and rename checkSize method
+
+* PR comments
+
+* test fix
+
+* PR comments
+
+* Add back the gate outside evaluateRowGroupSize",13182abb185220787d2ce13dd9ea025905f83800,16327,false,,5,136,19,core; docs; parquet
