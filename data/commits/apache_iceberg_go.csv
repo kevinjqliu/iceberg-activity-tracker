@@ -9925,3 +9925,914 @@ proxy+timeout composition test.
 ## Release note
 S3 now supports the `s3.connect-timeout` property, accepting numeric
 seconds like `60`/`60.0` and Go duration strings like `5s`.",6bfe862cbc1c0512dc7a28388470d8c797e50f9e,1141,false,,3,160,24,io
+apache/iceberg-go,18bb41b1f766b270a1af987403674421cd5deef9,18bb41b,Neelesh Salian,nssalian@users.noreply.github.com,2026-06-08T11:11:39-07:00,GitHub,noreply@github.com,2026-06-08T14:11:39-04:00,feat(test): add Spark 4.0 integration test infrastructure (#1140),"First part of #1139
+
+## Summary
+
+Adds Spark 4.0 alongside Spark 3.5 in the integration test matrix so v3
+features can be validated cross-engine in CI.
+
+## What's in
+
+- `Dockerfile.spark4` (apache/spark:4.0.2 + iceberg-spark-runtime-4.0 +
+aws-bundle), with companion `spark-defaults.conf` and `entrypoint.sh`
+- docker-compose parameterized via `SPARK_IMAGE` and `SPARK_DOCKERFILE`;
+defaults preserve 3.5 behavior
+- `make integration-setup-spark4`
+- Workflow matrix entry for 4.0 (`fail-fast: false`)
+- 3 CTAS statements in `provision.py` rewritten as `CREATE TABLE` +
+`INSERT INTO` so the same provisioning runs on both versions
+
+## What's not in
+
+No new tests, no cross-engine v3 feature validation. Follow-up PR.
+
+## Validation
+
+Locally ran on both Spark versions:
+- `make integration-setup && make integration-test`
+- `make integration-setup-spark4 && make integration-test`
+
+---------
+
+Signed-off-by: Neelesh Salian <n_salian@apple.com>",e5f4a11744004f5a0a86549bbe8f6e6dd5f2a272,1140,false,,8,187,25,.github; Makefile; README.md; internal
+apache/iceberg-go,fa69ddee8079e48548d361cbe5c5d9fc1b08df33,fa69dde,Blue Li,101687749+xixipi-lining@users.noreply.github.com,2026-06-09T02:26:28+08:00,GitHub,noreply@github.com,2026-06-08T14:26:28-04:00,refactor(table): clean up unused concurrentDataFileWriter in partitioned write paths  (#1150),"#### What changed:
+This PR removes the `concurrentDataFileWriter` parameter from
+`PartitionedFanoutWriter`, `PositionDeletePartitionedFanoutWriter` , and
+`RollingDataWriter` .
+
+#### Why:
+The concurrentDataFileWriter parameter is currently passed into these
+partitioned writers but is not used within their implementations.
+Removing it simplifies the constructor signatures and reduces
+unnecessary parameter passing.
+
+The concurrentDataFileWriter struct itself is preserved, as it is still
+used by unpartitioned delete operations.",18bb41b1f766b270a1af987403674421cd5deef9,1150,false,,10,52,74,table
+apache/iceberg-go,8d50afb18d123d0050a85b8a80ae1eca5b92e5c7,8d50afb,Ondřej Pavela,pavela.ondrej@gmail.com,2026-06-08T20:28:05+02:00,GitHub,noreply@github.com,2026-06-08T14:28:05-04:00,perf(manifest): lazy per-group init for dataFile maps and preallocate avroColMapToMap (#1143),"## Summary
+  - Split `dataFile.initializeMapData()` into `initPartitionData()` and
+    `initColumnStatsData()`, each with its own `sync.Once`, so that
+    partition-only callers (compaction, conflict validation, snapshots)
+    no longer allocate column-stats maps they never read.
+- Preallocate the map in `avroColMapToMap` with `make(map[K]V, len(*c))`
+    to avoid incremental rehashing.
+
+  Fixes [#1142](https://github.com/apache/iceberg-go/issues/1142)
+
+  ## Test plan
+  - Existing tests cover both init paths — column stats are verified in
+    `manifest_test.go` (v1, v2, round-trip) and partition data in
+`table_test.go`, `codec/data_file_test.go`, `dv_writer_test.go`, etc.
+  - `go test ./...` passes with no regressions.",fa69ddee8079e48548d361cbe5c5d9fc1b08df33,1143,false,,1,26,21,manifest.go
+apache/iceberg-go,a286d19ceefbb9ace29119a63eeea985e0403a10,a286d19,Raul-Mircea Crivineanu,gfxsraul@gmail.com,2026-06-09T02:32:51+08:00,GitHub,noreply@github.com,2026-06-08T14:32:51-04:00,Avoid carrying empty overwrite manifests (#1154),"Fixes #1153.
+
+Overwrite commits read existing manifest entries with deleted entries
+filtered out. If no live entries remain, carrying that manifest forward
+keeps stale deletion history reachable in the current snapshot and
+causes repeated replace operations to grow the manifest list.
+
+This change skips existing overwrite manifests that have no live entries
+after `discardDeleted=true` filtering. It does not rely on
+manifest-level count metadata, so zero-count inherited manifests that
+still contain live entries are still preserved.
+
+A regression test covers repeated `ReplaceDataFilesWithDataFiles` calls
+and verifies the current snapshot keeps a bounded manifest list instead
+of accumulating old delete-only manifests.
+
+Signed-off-by: Raul <gfxsraul@gmail.com>",8d50afb18d123d0050a85b8a80ae1eca5b92e5c7,1154,false,,2,53,4,table
+apache/iceberg-go,8d85415a5f2ec0b7ee992cb663dfe56724b47b62,8d85415,Tanmay Rauth,t_rauth@apple.com,2026-06-09T00:36:16+05:30,GitHub,noreply@github.com,2026-06-08T15:06:16-04:00,fix(table): reject time64[ns] in partition literal extraction (#1115) (#1159),"`getArrowValueAsIcebergLiteral` previously assumed every `*array.Time64`
+already held microseconds and ignored the Arrow `Time64Type.Unit`. This
+is unreachable today because the schema-conversion path in
+`arrow_utils.go` only accepts `time64[us]`, but the helper was still
+silently producing wrong partition keys if `time64[ns]` ever reached it.
+
+Inspect `Time64Type.Unit` and return `iceberg.ErrInvalidSchema` for any
+unit other than microseconds, mirroring the schema-conversion error. Add
+a focused unit test covering both the success and rejection paths.
+
+Closes https://github.com/apache/iceberg-go/issues/1115",a286d19ceefbb9ace29119a63eeea985e0403a10,1159,false,,2,28,0,table
+apache/iceberg-go,5cf9eb5b5edb031ffff24571ca901ede68ac6232,5cf9eb5,Revanth,revanthcse1@gmail.com,2026-06-08T14:08:21-05:00,GitHub,noreply@github.com,2026-06-08T15:08:21-04:00,fix(io/s3): preserve tuned transport options when configuring HTTP client (#1163),"Fixes #1148.
+
+## Summary
+- Factor S3 HTTP client transport tuning into a shared helper.
+- Use the tuned buildable client when `s3.proxy-uri` configures an HTTP
+client.
+- Use the tuned buildable client when `s3.connect-timeout` configures an
+HTTP client.
+- Preserve the existing S3 transport tuning values for all configured S3
+HTTP clients.
+
+## Testing
+- `env GOCACHE=/private/tmp/iceberg-go-gocache go test ./io/gocloud -run
+'TestParseAWSConfig' -count=1`
+- `env GOCACHE=/private/tmp/iceberg-go-gocache go vet ./io/gocloud/...`
+- `git diff --check`",8d85415a5f2ec0b7ee992cb663dfe56724b47b62,1163,false,,2,62,14,io
+apache/iceberg-go,f880bde798f49e4ace17db3b5601bfac2c86f558,f880bde,Artem Alperin,75543763+hdnpth@users.noreply.github.com,2026-06-08T21:09:48+02:00,GitHub,noreply@github.com,2026-06-08T15:09:48-04:00,fix(table): serialize name mapping as JSON in UpdateSchema build updates (#1156),"`UpdateSchema.BuildUpdates` was storing the updated name mapping under
+`schema.name-mapping.default` by calling `NameMapping.String()`. That
+method is a pretty-printer ((`[\n\t([foo] -> 1)\n]`) and not JSON. The
+reader on the other side (`MetadataBuilder.NameMapping`) parses the
+property with `json.Unmarshal` and silently returns `nil` on error, so
+any mapping written through `UpdateSchema` was effectively lost on the
+next read",5cf9eb5b5edb031ffff24571ca901ede68ac6232,1156,false,,2,78,1,table
+apache/iceberg-go,adc88e6819c9f38a6dcf3384597b81c5dc0475c3,adc88e6,Artem Alperin,75543763+hdnpth@users.noreply.github.com,2026-06-08T21:12:31+02:00,GitHub,noreply@github.com,2026-06-08T15:12:31-04:00,fix(table): preserve InitialDefault and WriteDefault in AssignFreshSchemaIDs (#1164),"`AssignFreshSchemaIDs` silently drops `InitialDefault` and
+`WriteDefault` on every field. This corrupts the
+behaviour`UpdateSchema.AddColumn(..., defaultValue)`, which constructs
+the new field with defaults and calls `AssignFreshSchemaIDs`.",f880bde798f49e4ace17db3b5601bfac2c86f558,1164,false,,3,95,11,schema.go; schema_test.go; table
+apache/iceberg-go,8f4faf40adee28a63eb282378146e41df193dc6e,8f4faf4,Blue Li,101687749+xixipi-lining@users.noreply.github.com,2026-06-09T03:13:49+08:00,GitHub,noreply@github.com,2026-06-08T15:13:49-04:00,fix: preserve nested field IDs when filling missing columns (#1168),"Fixes a bug where generating a null array for a completely missing
+nested column (e.g., during schema evolution) accidentally drops the
+inner `PARQUET:field_id` metadata due to a hardcoded `false` flag. This
+correctly propagates `includeFieldIDs` and resolves the `record schema
+does not match writer's` error when writing to `pqarrow`.",adc88e6819c9f38a6dcf3384597b81c5dc0475c3,1168,false,,2,61,1,table
+apache/iceberg-go,2c11a4662151d460c35078906a201e2f88ff8a4a,2c11a46,Revanth,revanthcse1@gmail.com,2026-06-08T14:20:20-05:00,GitHub,noreply@github.com,2026-06-08T15:20:20-04:00,feat(cli): support rollback by timestamp (#1170),"Fixes #1166.
+
+## Summary
+- Add `iceberg rollback <table-id> --timestamp <RFC3339>` to roll back
+to the snapshot current as of a given time.
+- Make `--snapshot-id` and `--timestamp` mutually exclusive, exactly one
+required(`--snapshot-id` goes from required to optional; existing usage
+is unchanged).
+- Resolve the timestamp via the existing
+`Table.SnapshotAsOf(timestampMs, true)` and feed the resolved ID into
+the existing rollback flow, preserving the ancestor check,
+`AssertRefSnapshotID` guard, and confirmation prompt.
+- Validate the selector before catalog init, so invalid usage returns a
+clear message instead of a catalog connection error.
+
+Timestamp resolution follows the snapshot **log** (main lineage),
+matching PyIceberg/Spark semantics, so a snapshot never on the main
+lineage isn't selectable by timestamp (intentional), and no snapshot
+at/before `t` errors clearly rather than rolling back to nothing.
+
+## Testing
+- `env GOCACHE=/private/tmp/iceberg-go-gocache go test ./cmd/iceberg
+-count=1`
+- `env GOCACHE=/private/tmp/iceberg-go-gocache go vet ./cmd/iceberg`
+- `gofmt -l cmd/iceberg`
+- `git diff --check`",8f4faf40adee28a63eb282378146e41df193dc6e,1170,false,,5,494,10,cmd
+apache/iceberg-go,0a50c9698d3969750ce1da15c4aa2f3d41f5767b,0a50c96,Colton Loftus,70598503+C-Loftus@users.noreply.github.com,2026-06-08T15:20:58-04:00,GitHub,noreply@github.com,2026-06-08T15:20:58-04:00,refactor(catalog/hadoop): Change Hadoop Catalog to Use IO Interface (#1158),"First step of addressing
+https://github.com/apache/iceberg-go/issues/1096 This just changes the
+hadoop catalog implementation to support an interface but still requires
+a local filesystem.
+
+- All `os.` calls have been swapped to using an interface
+`HadoopCatalogFS`.
+- `HadoopCatalogFS` implements the same exact calls as `os.`
+- There were a few calls to `os.remove` that didn't handle the `err`
+value. I made these `_` to explicitly discard the err value.
+- In a follow up PR I can condense the number of methods to reduce
+interface size. However as a first pass, I wanted to keep the interface
+and thus the behavior very easy to review.
+- The `localfs` struct was extended to support the additional methods.
+- There were a few places where `mkdir` used `0o777` for a permission. I
+didn't see any reason to allow for execution by other users so I changed
+these to `0o755`
+
+---------
+
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>
+Co-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>",2c11a4662151d460c35078906a201e2f88ff8a4a,1158,false,Matt Topol; Copilot Autofix powered by AI,4,183,55,catalog; io
+apache/iceberg-go,70732b4507807da61f88cb05b497074786470364,70732b4,Revanth,revanthcse1@gmail.com,2026-06-08T14:23:06-05:00,GitHub,noreply@github.com,2026-06-08T15:23:06-04:00,feat(cli): add branch and tag delete commands (#1169),"Fixes #1165.
+
+## Summary
+- Add `iceberg branch delete <table-id> <branch-name> [--yes]`.
+- Add `iceberg tag delete <table-id> <tag-name> [--yes]`.
+- Reject deletion of the `main` branch before any catalog commit, so the
+table can't be left headless (`RemoveSnapshotRef` clears
+`currentSnapshotID` for `main`).
+- Validate that the requested ref exists and matches the expected ref
+type (`branch delete` refuses a tag, `tag delete` refuses a branch).
+- Commit a `RemoveSnapshotRef` update guarded by `AssertTableUUID` +
+`AssertRefSnapshotID(ref, observedSnapshot)`. Pinning the observed
+snapshot is intentional: a concurrent move/delete of the ref between
+load and commit fails the requirement instead of silently removing a
+different ref state.
+- Add structured delete output (`RefDeletedResult`) for both text and
+JSON modes, so `--output json` keeps working.
+
+## Implementation notes
+- The delete handlers mirror the existing `branch create` / `tag create`
+paths in `cmd/iceberg/branch_tag.go`, sharing `loadTable`,
+`confirmAction`, and the `Output` interface.
+- The shared `osExit` test hook moved from `upgrade_rollback.go` into a
+dedicated `cmd/iceberg/exit.go`, and the create handlers were migrated
+onto it so the whole file uses one exit convention and the error paths
+are testable.
+
+## Testing
+- `env GOCACHE=/private/tmp/iceberg-go-gocache go test ./cmd/iceberg
+-count=1`
+- `env GOCACHE=/private/tmp/iceberg-go-gocache go vet ./cmd/iceberg`
+- `gofmt -l cmd/iceberg`
+- `git diff --check`",0a50c9698d3969750ce1da15c4aa2f3d41f5767b,1169,false,,7,518,24,cmd
+apache/iceberg-go,a72afa53627e6ef25e68e204cde2e532f54bd180,a72afa5,Dao Thanh Tung,ttdao.2015@accountancy.smu.edu.sg,2026-06-08T20:32:41+01:00,GitHub,noreply@github.com,2026-06-08T15:32:41-04:00,fix(table): propagate manifest evaluator errors during scan planning (#1172),"## Summary
+Fix `fetchPartitionSpecFilteredManifests` so manifest partition
+evaluator failures propagate as errors instead of silently dropping
+manifests. Adds a regression test ensuring PlanFiles fails when manifest
+filtering errors occur.
+
+## Issue
+During scan planning, fetchPartitionSpecFilteredManifests used
+slices.DeleteFunc with:
+
+https://github.com/apache/iceberg-go/blob/e5f4a11744004f5a0a86549bbe8f6e6dd5f2a272/table/scanner.go#L559-L567
+
+When eval(mf) returned an error (e.g. corrupt or incompatible partition
+summary bounds), the manifest was treated as excluded and removed from
+the scan. The function still returned nil error, so PlanFiles could
+return incomplete file tasks with no indication anything went wrong —
+potentially hiding data that should have been read.
+
+`classifyFilesForFilteredDeletions` in transaction.go already propagates
+this class of error correctly; scan planning did not.
+
+https://github.com/apache/iceberg-go/blob/e5f4a11744004f5a0a86549bbe8f6e6dd5f2a272/table/transaction.go#L1420
+
+Signed-off-by: dttung2905 <ttdao.2015@accountancy.smu.edu.sg>",70732b4507807da61f88cb05b497074786470364,1172,false,,2,59,5,table
+apache/iceberg-go,69a882d36e7fb990c9f7aefe7228fb04352b475a,69a882d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-08T15:44:34-04:00,GitHub,noreply@github.com,2026-06-08T15:44:34-04:00,build(deps): bump the gomod_updates group with 8 updates (#1171),"Bumps the gomod_updates group with 8 updates:
+
+| Package | From | To |
+| --- | --- | --- |
+|
+[github.com/RoaringBitmap/roaring/v2](https://github.com/RoaringBitmap/roaring)
+| `2.18.1` | `2.18.2` |
+| [github.com/aws/aws-sdk-go-v2](https://github.com/aws/aws-sdk-go-v2) |
+`1.41.7` | `1.41.9` |
+|
+[github.com/aws/aws-sdk-go-v2/config](https://github.com/aws/aws-sdk-go-v2)
+| `1.32.18` | `1.32.20` |
+|
+[github.com/aws/aws-sdk-go-v2/credentials](https://github.com/aws/aws-sdk-go-v2)
+| `1.19.17` | `1.19.19` |
+|
+[github.com/aws/aws-sdk-go-v2/service/glue](https://github.com/aws/aws-sdk-go-v2)
+| `1.142.0` | `1.142.2` |
+|
+[github.com/aws/aws-sdk-go-v2/service/s3](https://github.com/aws/aws-sdk-go-v2)
+| `1.101.0` | `1.102.2` |
+| [github.com/aws/smithy-go](https://github.com/aws/smithy-go) |
+`1.25.1` | `1.26.0` |
+|
+[google.golang.org/api](https://github.com/googleapis/google-api-go-client)
+| `0.280.0` | `0.282.0` |
+
+Updates `github.com/RoaringBitmap/roaring/v2` from 2.18.1 to 2.18.2
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/RoaringBitmap/roaring/releases"">github.com/RoaringBitmap/roaring/v2's
+releases</a>.</em></p>
+<blockquote>
+<h2>Version 2.18.2</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>fix(bsi): sign-extend existing negatives when bA grows in
+NewDefaultBSI by <a
+href=""https://github.com/SAY-5""><code>@​SAY-5</code></a> in <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/pull/526"">RoaringBitmap/roaring#526</a></li>
+<li>fastaggregation: avoid runContainer16.lazyIOR slow path in FastOr by
+<a href=""https://github.com/tamirms""><code>@​tamirms</code></a> in <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/pull/527"">RoaringBitmap/roaring#527</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a href=""https://github.com/SAY-5""><code>@​SAY-5</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/pull/526"">RoaringBitmap/roaring#526</a></li>
+<li><a href=""https://github.com/tamirms""><code>@​tamirms</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/pull/527"">RoaringBitmap/roaring#527</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/RoaringBitmap/roaring/compare/v2.18.1...v2.18.2"">https://github.com/RoaringBitmap/roaring/compare/v2.18.1...v2.18.2</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/f3ceb59736b0acafd993fd6c622b9ac7cb105bd8""><code>f3ceb59</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/issues/527"">#527</a>
+from tamirms/master</li>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/482ea719feb65f4d7b3722bbbb0e8cc50bdaf5d7""><code>482ea71</code></a>
+fastaggregation: avoid runContainer16.lazyIOR slow path in FastOr</li>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/8a91e8f6b785baad38aa03827c21a2668ad4dbed""><code>8a91e8f</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/RoaringBitmap/roaring/issues/526"">#526</a>
+from SAY-5/fix/bsi-sign-bit-growth</li>
+<li><a
+href=""https://github.com/RoaringBitmap/roaring/commit/0895c487aea0dddedb1b84c784189a8b06aafcb2""><code>0895c48</code></a>
+fix(bsi): sign-extend existing negatives when bA grows in
+NewDefaultBSI</li>
+<li>See full diff in <a
+href=""https://github.com/RoaringBitmap/roaring/compare/v2.18.1...v2.18.2"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2` from 1.41.7 to 1.41.9
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/5841d3ae2cfd6e6113ca61b71d69131b84932f4c""><code>5841d3a</code></a>
+Release 2026-05-29</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/16ac80d79c282366cae312281b3df925af4e9bf1""><code>16ac80d</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/167926f8aca7228f2dd1bed73707505875aafef4""><code>167926f</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/a0fce13e18c6bff397ad77fac4cde4ab3f3b93e0""><code>a0fce13</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/223c0057211950899e0117dc027cc299a1dac664""><code>223c005</code></a>
+update to smithy-go v1.26.0 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3426"">#3426</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/74c501189a40c9b937432a1b2a4cacffc851ea76""><code>74c5011</code></a>
+Release 2026-05-28</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7d82651329a86064a9026f6219cff72921fa74da""><code>7d82651</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/79c63d9289784de4914143b7bff67157aa6a2a90""><code>79c63d9</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/b15b3b873ad5c294d0c010fb1cc56ecb583d1618""><code>b15b3b8</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/090e46936630944917cfd6a0990ea3fd6391475b""><code>090e469</code></a>
+Feat tmv2 parity (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3424"">#3424</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/v1.41.7...v1.41.9"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/config` from 1.32.18 to 1.32.20
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/5841d3ae2cfd6e6113ca61b71d69131b84932f4c""><code>5841d3a</code></a>
+Release 2026-05-29</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/16ac80d79c282366cae312281b3df925af4e9bf1""><code>16ac80d</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/167926f8aca7228f2dd1bed73707505875aafef4""><code>167926f</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/a0fce13e18c6bff397ad77fac4cde4ab3f3b93e0""><code>a0fce13</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/223c0057211950899e0117dc027cc299a1dac664""><code>223c005</code></a>
+update to smithy-go v1.26.0 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3426"">#3426</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/74c501189a40c9b937432a1b2a4cacffc851ea76""><code>74c5011</code></a>
+Release 2026-05-28</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7d82651329a86064a9026f6219cff72921fa74da""><code>7d82651</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/79c63d9289784de4914143b7bff67157aa6a2a90""><code>79c63d9</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/b15b3b873ad5c294d0c010fb1cc56ecb583d1618""><code>b15b3b8</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/090e46936630944917cfd6a0990ea3fd6391475b""><code>090e469</code></a>
+Feat tmv2 parity (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3424"">#3424</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/config/v1.32.18...config/v1.32.20"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/credentials` from 1.19.17 to
+1.19.19
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/5841d3ae2cfd6e6113ca61b71d69131b84932f4c""><code>5841d3a</code></a>
+Release 2026-05-29</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/16ac80d79c282366cae312281b3df925af4e9bf1""><code>16ac80d</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/167926f8aca7228f2dd1bed73707505875aafef4""><code>167926f</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/a0fce13e18c6bff397ad77fac4cde4ab3f3b93e0""><code>a0fce13</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/223c0057211950899e0117dc027cc299a1dac664""><code>223c005</code></a>
+update to smithy-go v1.26.0 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3426"">#3426</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/74c501189a40c9b937432a1b2a4cacffc851ea76""><code>74c5011</code></a>
+Release 2026-05-28</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7d82651329a86064a9026f6219cff72921fa74da""><code>7d82651</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/79c63d9289784de4914143b7bff67157aa6a2a90""><code>79c63d9</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/b15b3b873ad5c294d0c010fb1cc56ecb583d1618""><code>b15b3b8</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/090e46936630944917cfd6a0990ea3fd6391475b""><code>090e469</code></a>
+Feat tmv2 parity (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3424"">#3424</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/credentials/v1.19.17...credentials/v1.19.19"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/service/glue` from 1.142.0 to
+1.142.2
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/5841d3ae2cfd6e6113ca61b71d69131b84932f4c""><code>5841d3a</code></a>
+Release 2026-05-29</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/16ac80d79c282366cae312281b3df925af4e9bf1""><code>16ac80d</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/167926f8aca7228f2dd1bed73707505875aafef4""><code>167926f</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/a0fce13e18c6bff397ad77fac4cde4ab3f3b93e0""><code>a0fce13</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/223c0057211950899e0117dc027cc299a1dac664""><code>223c005</code></a>
+update to smithy-go v1.26.0 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3426"">#3426</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/74c501189a40c9b937432a1b2a4cacffc851ea76""><code>74c5011</code></a>
+Release 2026-05-28</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7d82651329a86064a9026f6219cff72921fa74da""><code>7d82651</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/79c63d9289784de4914143b7bff67157aa6a2a90""><code>79c63d9</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/b15b3b873ad5c294d0c010fb1cc56ecb583d1618""><code>b15b3b8</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/090e46936630944917cfd6a0990ea3fd6391475b""><code>090e469</code></a>
+Feat tmv2 parity (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3424"">#3424</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/service/ec2/v1.142.0...service/glue/v1.142.2"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/service/s3` from 1.101.0 to
+1.102.2
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/5841d3ae2cfd6e6113ca61b71d69131b84932f4c""><code>5841d3a</code></a>
+Release 2026-05-29</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/16ac80d79c282366cae312281b3df925af4e9bf1""><code>16ac80d</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/167926f8aca7228f2dd1bed73707505875aafef4""><code>167926f</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/a0fce13e18c6bff397ad77fac4cde4ab3f3b93e0""><code>a0fce13</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/223c0057211950899e0117dc027cc299a1dac664""><code>223c005</code></a>
+update to smithy-go v1.26.0 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3426"">#3426</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/74c501189a40c9b937432a1b2a4cacffc851ea76""><code>74c5011</code></a>
+Release 2026-05-28</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7d82651329a86064a9026f6219cff72921fa74da""><code>7d82651</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/79c63d9289784de4914143b7bff67157aa6a2a90""><code>79c63d9</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/b15b3b873ad5c294d0c010fb1cc56ecb583d1618""><code>b15b3b8</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/090e46936630944917cfd6a0990ea3fd6391475b""><code>090e469</code></a>
+Feat tmv2 parity (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3424"">#3424</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/service/s3/v1.101.0...service/s3/v1.102.2"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/smithy-go` from 1.25.1 to 1.26.0
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/aws/smithy-go/blob/main/CHANGELOG.md"">github.com/aws/smithy-go's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Release (2026-06-05)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.27.2
+<ul>
+<li><strong>Bug Fix</strong>: Fix incorrect serialization of unions in
+CBOR-based protocols.</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-06-04)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.27.1
+<ul>
+<li><strong>Bug Fix</strong>: Fixed a deserialization failure in all
+protocols when encountering a union with explicit null members.</li>
+<li><strong>Bug Fix</strong>: Fixed a panic when deserializing nested
+unions in JSON- and CBOR-based protocols.</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-06-02)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.27.0
+<ul>
+<li><strong>Feature</strong>: Add APIs for schema-based
+serialization.</li>
+<li><strong>Feature</strong>: Add support for all current AWS and Smithy
+protocols.</li>
+<li><strong>Bug Fix</strong>: Enforce max nesting depth of 128 on CBOR
+payloads.</li>
+</ul>
+</li>
+<li><code>github.com/aws/smithy-go/aws-http-auth</code>: <a
+href=""https://github.com/aws/smithy-go/blob/main/aws-http-auth/CHANGELOG.md#v120-2026-06-02"">v1.2.0</a>
+<ul>
+<li><strong>Feature</strong>: Add event stream signer.</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-05-27)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.26.0
+<ul>
+<li><strong>Feature</strong>: Add StringSlice to endpoint rulesfn.</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-04-23)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.25.1
+<ul>
+<li><strong>Bug Fix</strong>: Fixed a memory leak in the LRU cache
+implementation used by some AWS services.</li>
+</ul>
+</li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/45ed8311108fa4d204aa8ad3f5264442568c6b01""><code>45ed831</code></a>
+Release 2026-05-27</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/36699a9ad5bb1f4054d69de11e573003ec6c2865""><code>36699a9</code></a>
+handle vars in auth scheme id tmpl (<a
+href=""https://redirect.github.com/aws/smithy-go/issues/667"">#667</a>)</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/b81ddf73b3738ec93447b59aa920666f7154ae36""><code>b81ddf7</code></a>
+Use GoDependency to add SDK dependencies on codegen instead of relying
+on go ...</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/999a54bb7359cf5740b9c23ca52220c5777b486d""><code>999a54b</code></a>
+add event stream test generator (<a
+href=""https://redirect.github.com/aws/smithy-go/issues/661"">#661</a>)</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/22e6cf7f8d19a35512b84cfb3f72e4e77ab29592""><code>22e6cf7</code></a>
+Expand JMESPath truthy check by allowing bare collections to be
+evaluated (<a
+href=""https://redirect.github.com/aws/smithy-go/issues/654"">#654</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/aws/smithy-go/compare/v1.25.1...v1.26.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `google.golang.org/api` from 0.280.0 to 0.282.0
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/googleapis/google-api-go-client/releases"">google.golang.org/api's
+releases</a>.</em></p>
+<blockquote>
+<h2>v0.282.0</h2>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.281.0...v0.282.0"">0.282.0</a>
+(2026-05-27)</h2>
+<h3>Features</h3>
+<ul>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3607"">#3607</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/3c139a07f71096667d5a623591ddb37dacd38d55"">3c139a0</a>)</li>
+</ul>
+<h2>v0.281.0</h2>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.280.0...v0.281.0"">0.281.0</a>
+(2026-05-26)</h2>
+<h3>Features</h3>
+<ul>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3600"">#3600</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/bcaee85f93824a21f5441c2ccd3b4d4811d97de7"">bcaee85</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3602"">#3602</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/f0071d379f4443ffdae9994fe141b1b5e0c18a62"">f0071d3</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3603"">#3603</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/b1aa9dea8c3c0e539c8d9687c99c55ec3679c996"">b1aa9de</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3604"">#3604</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/711e008d9caf16e6fb68c860f83a28fd0a8c0f98"">711e008</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3606"">#3606</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/3ad8e8e2ab4ae50862c0fc5b17efa2d3cda33d9a"">3ad8e8e</a>)</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/googleapis/google-api-go-client/blob/main/CHANGES.md"">google.golang.org/api's
+changelog</a>.</em></p>
+<blockquote>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.281.0...v0.282.0"">0.282.0</a>
+(2026-05-27)</h2>
+<h3>Features</h3>
+<ul>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3607"">#3607</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/3c139a07f71096667d5a623591ddb37dacd38d55"">3c139a0</a>)</li>
+</ul>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.280.0...v0.281.0"">0.281.0</a>
+(2026-05-26)</h2>
+<h3>Features</h3>
+<ul>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3600"">#3600</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/bcaee85f93824a21f5441c2ccd3b4d4811d97de7"">bcaee85</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3602"">#3602</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/f0071d379f4443ffdae9994fe141b1b5e0c18a62"">f0071d3</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3603"">#3603</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/b1aa9dea8c3c0e539c8d9687c99c55ec3679c996"">b1aa9de</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3604"">#3604</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/711e008d9caf16e6fb68c860f83a28fd0a8c0f98"">711e008</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3606"">#3606</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/3ad8e8e2ab4ae50862c0fc5b17efa2d3cda33d9a"">3ad8e8e</a>)</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/60aebbd7406af09eb63866ff79f0dbd40cccecbb""><code>60aebbd</code></a>
+chore(main): release 0.282.0 (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3608"">#3608</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/3c139a07f71096667d5a623591ddb37dacd38d55""><code>3c139a0</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3607"">#3607</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/8f434ff91fe8dc299942ecd7c87ebab151ff38e5""><code>8f434ff</code></a>
+chore(main): release 0.281.0 (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3601"">#3601</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/57f4b28d8c80b464f7f0b486a555de528fb89c4e""><code>57f4b28</code></a>
+chore(all): update all (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3605"">#3605</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/3ad8e8e2ab4ae50862c0fc5b17efa2d3cda33d9a""><code>3ad8e8e</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3606"">#3606</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/711e008d9caf16e6fb68c860f83a28fd0a8c0f98""><code>711e008</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3604"">#3604</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/b1aa9dea8c3c0e539c8d9687c99c55ec3679c996""><code>b1aa9de</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3603"">#3603</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/f0071d379f4443ffdae9994fe141b1b5e0c18a62""><code>f0071d3</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3602"">#3602</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/bcaee85f93824a21f5441c2ccd3b4d4811d97de7""><code>bcaee85</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3600"">#3600</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.280.0...v0.282.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore <dependency name> major version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's major version (unless you unignore this specific
+dependency's major version or upgrade to it yourself)
+- `@dependabot ignore <dependency name> minor version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's minor version (unless you unignore this specific
+dependency's minor version or upgrade to it yourself)
+- `@dependabot ignore <dependency name>` will close this group update PR
+and stop Dependabot creating any more for the specific dependency
+(unless you unignore this specific dependency or upgrade to it yourself)
+- `@dependabot unignore <dependency name>` will remove all of the ignore
+conditions of the specified dependency
+- `@dependabot unignore <dependency name> <ignore condition>` will
+remove the ignore condition of the specified dependency and ignore
+conditions
+
+
+</details>
+
+---------
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",a72afa53627e6ef25e68e204cde2e532f54bd180,1171,false,dependabot[bot]; Matt Topol,3,77,77,.github; go.mod; go.sum
+apache/iceberg-go,914dd635527f595207b0c9081f2d1a6b55932633,914dd63,Blue Li,101687749+xixipi-lining@users.noreply.github.com,2026-06-09T03:58:37+08:00,GitHub,noreply@github.com,2026-06-08T15:58:37-04:00,refactor(catalog): unify metadata IO operations by passing Table instances directly (#1167),"**What changes were proposed in this pull request?**
+This PR fixes an authentication issue when updating tables.
+
+Currently, `internal.UpdateAndStageTable` and `internal.WriteMetadata`
+only use table properties. This causes IO failures for remote storage
+(like S3) because catalog-level credentials (e.g., `s3.access-key-id`)
+are lost.
+
+**Fix:**
+- Updated `UpdateAndStageTable` to accept `catprops` and merge it with
+table properties before initializing the filesystem.
+- Applied the same property merge to `internal.WriteMetadata`.
+- Note: This aligns the update logic with how `CreateStagedTable`
+already works. `nsprops` is intentionally omitted here since table
+locations are already fixed during updates.
+
+**How was this patch tested?**
+- `make test` passes successfully.
+- *No specific unit test was added for this fix, as our mock filesystems
+do not validate remote credentials, making it hard to test credential
+merging effectively. Relying on alignment with `CreateStagedTable`
+instead.*",69a882d36e7fb990c9f7aefe7228fb04352b475a,1167,false,,4,24,45,catalog
+apache/iceberg-go,38e98b009f19c784c4ae8a0a762d6c424560f171,38e98b0,Tanmay Rauth,t_rauth@apple.com,2026-06-09T01:30:22+05:30,GitHub,noreply@github.com,2026-06-08T16:00:22-04:00,fix(table): preserve table props when building partition location provider (#1155) (#1162),"writerFactory.partitionLocProvider was passing only WriteDataPathKey to
+LoadLocationProvider, dropping write.object-storage.enabled and other
+table props. As a result, partitioned writes always fell back to the
+simple Hadoop-style layout, ignoring the object-storage entropy prefix.
+
+Store the table props on the factory and copy them when constructing
+partition props, overlaying only the partition-specific data path.
+
+Fixes: #1155",914dd635527f595207b0c9081f2d1a6b55932633,1162,false,,2,59,2,table
+apache/iceberg-go,e4bee1e0d6c0040846168b117aa3073b1bea2b5d,e4bee1e,Tanmay Rauth,t_rauth@apple.com,2026-06-09T04:09:32+05:30,GitHub,noreply@github.com,2026-06-08T18:39:32-04:00,feat(table): enforce sort order on write #833 (#1157),"Resolve the table's default sort order to Arrow compute SortKeys and
+apply compute.SortRecordBatch to each batch before flushing to a data
+file. Skip for unsorted tables (sort_order_id 0) and for delete files,
+where the table-level order does not apply.
+
+All data write paths route through writerFactory + RollingDataWriter
+(unpartitioned, clustered, and hash-fanout), so Append, Overwrite,
+Delete data writes, WriteRecords, and compaction (which calls
+WriteRecords) all pick up the sort.
+
+Limitations:
+- Per-batch, not per-file: each Add() is sorted internally; rows are not
+merged across batches. Matches PyIceberg.
+- Bucket transform falls back to source-column order (the manifest still
+records sort_order_id verbatim).
+- Multi-arg transform sort fields use only the first source column.
+- Nested-field sort sources are rejected with a clear error.
+
+Closes #833 (https://github.com/apache/iceberg-go/issues/833).",38e98b009f19c784c4ae8a0a762d6c424560f171,1157,false,,5,646,0,table
+apache/iceberg-go,fec08f86ee1237323918a8a33e93f95283f9dd04,fec08f8,Tanmay Rauth,t_rauth@apple.com,2026-06-09T04:09:47+05:30,GitHub,noreply@github.com,2026-06-08T18:39:47-04:00,docs(website): document CLI maintenance commands (#1161),"Expand cli.md with reference-style sections for the table maintenance
+surface added under #957: info, snapshots, refs, partition-stats, schema
+--show-defaults, expire-snapshots, clean-orphan-files, rollback,
+upgrade, and branch/tag create. Adds output-format, automation, and
+safety-feature notes alongside the existing catalog/namespace/table
+examples.
+
+Closes: #1160",e4bee1e0d6c0040846168b117aa3073b1bea2b5d,1161,false,,1,246,27,website
+apache/iceberg-go,91f446e95cb3fcef4c27347e1180f4b2b84aab41,91f446e,Ondřej Pavela,pavela.ondrej@gmail.com,2026-06-09T13:57:56+02:00,GitHub,noreply@github.com,2026-06-09T13:57:56+02:00,perf(table): dedupe shared manifest reads in orphan cleanup (#1133),"Fixes [#1132](https://github.com/apache/iceberg-go/issues/1132)
+
+### Summary
+- Deduplicate manifest reads in `getReferencedFiles` using a two-pass
+approach: collect unique manifests from manifest lists (pass 1), then
+read entries in parallel via `errgroup.SetLimit` (pass 2)
+- Run S3 walk and referenced-file collection concurrently via errgroup
+- Fix `time.Now()` being evaluated per-file inside walk callback instead
+of once before the walk
+
+Reduces `getReferencedFiles` I/O from O(snapshots ×
+manifests-per-snapshot) to O(unique manifests).",fec08f86ee1237323918a8a33e93f95283f9dd04,1133,false,,2,263,104,table
+apache/iceberg-go,0bec2e7847c784d5e8c8584556ee2bbe54eb0b86,0bec2e7,Tanmay Rauth,t_rauth@apple.com,2026-06-09T17:35:14+05:30,GitHub,noreply@github.com,2026-06-09T14:05:14+02:00,feat(cli): expose REST catalog page size as --page-size flag (#1173),"Adds --page-size to the list subcommand. When the catalog is REST and
+the value is > 0, applies it via Catalog.SetPageSize on the request
+context. Other catalog types ignore the flag.
+
+Closes #665",91f446e95cb3fcef4c27347e1180f4b2b84aab41,1173,false,,2,32,3,cmd

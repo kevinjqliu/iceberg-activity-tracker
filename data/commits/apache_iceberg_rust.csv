@@ -15555,3 +15555,337 @@ PR or upgrade to it yourself)
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",6a2c7c12eee2740f396f3f722210b8900a040707,2600,false,dependabot[bot],1,13,13,Cargo.lock
+apache/iceberg-rust,f73fc3084f199a30593f1c700c77f7480b6a0949,f73fc30,Krisztián Szűcs,szucs.krisztian@gmail.com,2026-06-08T20:22:30+02:00,GitHub,noreply@github.com,2026-06-08T11:22:30-07:00,fix(catalog-sql): forward catalog props to FileIO (#2528),"## Which issue does this PR close?
+
+<!-- No tracking issue; surfaced while wiring an
+`iceberg-storage-opendal::OpenDalStorageFactory::Hf` storage backend
+behind `SqlCatalog`. Happy to file a follow-up issue if preferred. -->
+
+- Closes #.
+
+## What changes are included in this PR?
+
+Storage-backend keys set on `SqlCatalog` (e.g. authentication tokens,
+region overrides) were not reaching the `FileIO`, because
+`SqlCatalog::new` built the `FileIO` from the `StorageFactory` alone,
+dropping the props on the floor. Authenticated storage backends then saw
+empty config and rejected writes with 401s.
+
+The fix forwards the catalog props into the `FileIO`:
+
+```rust
+let fileio = FileIOBuilder::new(factory)
+    .with_props(config.props.clone())
+    .build();
+```
+
+This brings `SqlCatalog` into parity with the `RestCatalog`, which
+already forwards props through `FileIOBuilder::with_props`. Storage
+backends ignore keys they don't recognize, so catalog-only props
+(`pool.*` etc.) remain harmless.
+
+## Are these changes tested?
+
+Yes — added unit test `test_storage_props_propagate_to_file_io` in
+`crates/catalog/sql/src/catalog.rs` which:
+
+- Builds a `SqlCatalog` with two storage-backend props (one S3-shaped,
+one HF-shaped) in the load map.
+- Asserts both keys are present in `catalog.fileio.config().props()`.
+
+The test fails on `main` (the props lookup returns `None`) and passes
+with this change. Verified locally by reverting the one-line change in
+the source, observing the assertion failure, then restoring.",47eaef7185916eb86add59d913eb872a06810465,2528,false,,1,37,6,crates
+apache/iceberg-rust,315a0eb5a101e686710d25812fc152803d36a3c7,315a0eb,Al Johri,al.johri@gmail.com,2026-06-09T04:54:21-04:00,GitHub,noreply@github.com,2026-06-09T16:54:21+08:00,fix(storage-opendal): add TimeoutLayer inside RetryLayer to bound hangs (#2455),"## Which issue does this PR close?
+
+- Closes #1288 (the prior user report; auto-closed by stale bot in Nov
+2025 without engagement)
+
+## What changes are included in this PR?
+
+`iceberg-storage-opendal::OpenDalStorage::create_operator` currently
+wraps the built operator with `RetryLayer::new()`. That layer retries
+when its inner future returns `Err`, which is what was needed for the
+fast-failing transient errors that #788 set out to fix — and it works
+correctly for that case.
+
+It does not bound futures that park indefinitely without producing an
+`Err`. The canonical example is an S3 Range-GET whose underlying TCP
+connection is silently dropped (NAT/conntrack eviction, route flap,
+server-side disconnect with no RST received). The response future stays
+`Pending` forever; `RetryLayer` has nothing to retry against because no
+error is ever produced.
+
+This PR adds `TimeoutLayer::new()` inside `RetryLayer` to close that
+gap. Per [opendal's
+docs](https://opendal.apache.org/docs/rust/opendal/layers/struct.TimeoutLayer.html):
+
+> While using `TimeoutLayer` with `RetryLayer` at the same time, please
+make sure timeout layer showed up before retry layer. Since timeout
+layer will drop future, leaving retry layer in a bad state.
+
+[opendal's
+defaults](https://opendal.apache.org/docs/rust/opendal/layers/struct.TimeoutLayer.html#default)
+(60 s for non-IO ops like `stat`/`list`/`delete`, 10 s per IO chunk for
+`read`/`write`) are used; each retry attempt is now independently
+bounded, hung connections surface as a timeout error which `RetryLayer`
+then retries with backoff, and unrecoverable hangs propagate a clean
+error to the caller in seconds rather than the inner future parking
+forever.
+
+The diff is two lines in `crates/storage/opendal/src/lib.rs` (the import
+and the layer composition) plus an updated comment explaining the
+ordering invariant.
+
+### How we hit this
+
+In production: a Rust application using
+`iceberg-storage-opendal::OpenDalStorageFactory::S3` to read iceberg
+tables on AWS hung for 24 hours when iceberg `try_next()` returned a
+`Pending` future whose underlying opendal Range-GET against S3 never
+completed. Core-dump analysis showed:
+
+- Two in-flight HTTP/1.1 Range-GETs in heap (one for ~723 KB, one for
+~367 KB), both signed with valid temporary credentials.
+- No active TCP connection to any S3 IP at the time of the dump
+(`/proc/<pid>/net/tcp` had only the OTel collector socket).
+- gdb backtraces of all 35 threads showed the tokio runtime fully idle:
+workers parked in `Condvar::wait_until_internal`, main thread in
+`Runtime::block_on`.
+
+So the response future was permanently `Pending` after the TCP
+connection silently died, with no error to propagate. The `RetryLayer`
+was in the chain but dormant because there was no error to react to.
+Adding `TimeoutLayer` would have produced a timeout `Err` within
+seconds, `RetryLayer` would have retried with backoff, and the operation
+would have surfaced cleanly within ~90 s instead of hanging until the
+pod's `activeDeadlineSeconds` killed it 24 h later.
+
+### Context on the original composition
+
+`RetryLayer::new()` was added in #788 (Dec 2024) to bound transient
+`""connection closed before message completed""` errors. That PR's
+description explicitly noted that configurability could be a follow-up.
+It correctly addressed the fast-failing transient case; the silent-hang
+case wasn't in scope. This PR extends the layer composition to also
+cover that second class.
+
+A user filed #1288 in May 2025 asking for IO-operation timeout support;
+it received no maintainer engagement and was auto-closed by the stale
+bot. This PR closes that issue with the minimal change: add a
+per-attempt bound so `RetryLayer` has a timeout error to retry against.
+opendal's docs explicitly document the ordering rule that applies when
+both layers are used together, which this PR follows.
+
+## Are these changes tested?
+
+### Upstream CI on this PR (already running)
+
+The full project CI ran on this draft and the codebase-internal tests
+pass — including the S3 integration suite against MinIO that I couldn't
+run locally:
+
+- `Tests (default)` — full `cargo nextest` ✅ pass (7m55s)
+- `Tests (doc)` ✅ pass
+- `check_standalone` (every crate builds in isolation) ✅ pass
+- `check`, `build` on Linux + macOS ✅ pass
+- `build_with_no_default_features` on Linux + macOS + Windows ✅ pass
+- MSRV ✅ pass
+- CodeQL ✅ pass
+- Windows test job still pending at the time of writing
+
+So healthy-path reads/writes/stats/deletes against MinIO still work with
+the new layer composition — opendal's defaults (60 s non-IO, 10 s per IO
+chunk) are not tight enough to false-positive on normal test traffic.
+
+### Local validation that the fix actually fixes the bug
+
+The existing test suite doesn't have a ""hung-connection"" harness, so it
+can't directly validate the new behaviour. I wrote a small standalone
+reproducer that does: it spawns a TCP tarpit (accepts connections, never
+replies — exactly mimicking a silently-dropped TCP session), points
+opendal at it, and measures time-to-error under three layer stacks.
+
+**Result:**
+
+```
+[                               NO LAYERS] reading... ABORTED by harness after 20.00s — still hanging
+[        RetryLayer ONLY (upstream today)] reading... ABORTED by harness after 20.00s — still hanging
+[      TimeoutLayer + RetryLayer (PR fix)] errored in 15.02s:
+                                            Unexpected (persistent) at read,
+                                            context: { timeout: 2 } => io timeout reached
+```
+
+- **NO LAYERS** — operation hangs forever; harness aborts at 20 s.
+- **RetryLayer only** (this crate today) — also hangs forever, because
+`RetryLayer` has nothing to retry against when the inner future never
+produces an `Err`. This is the gap the PR closes.
+- **TimeoutLayer + RetryLayer** (this PR) — errors cleanly in 15.02 s
+with a structured `io timeout reached` error naming the timeout
+duration. Math checks out: 2 s `io_timeout` × 3 retry attempts + default
+exponential backoff between attempts (≈ 1+2+4 s) ≈ 13–15 s.
+
+This is reproducible in ~5 minutes by anyone with a Rust toolchain.
+Happy to upstream this as an integration test in
+`crates/storage/opendal/tests/` if maintainers want — the harness is ~70
+lines and depends only on `opendal` + `tokio` + `anyhow`.
+
+<details>
+<summary><b>Click to expand: full tarpit harness source</b></summary>
+
+`Cargo.toml`:
+
+```toml
+[package]
+name = ""opendal-timeout-test""
+version = ""0.0.0""
+edition = ""2024""
+
+[[bin]]
+name = ""tarpit""
+path = ""src/main.rs""
+
+[dependencies]
+opendal = { version = ""0.56"", features = [""services-s3""] }
+tokio = { version = ""1"", features = [""full""] }
+anyhow = ""1""
+```
+
+`src/main.rs`:
+
+```rust
+//! Spawns a TCP tarpit (accepts connections, never responds) and tests
+//! whether an opendal S3 operator hangs forever vs times out cleanly
+//! depending on whether TimeoutLayer is in the layer stack.
+
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+
+use opendal::Operator;
+use opendal::layers::{RetryLayer, TimeoutLayer};
+use opendal::services::S3;
+use tokio::net::TcpListener;
+
+async fn run_tarpit(listener: Arc<TcpListener>) {
+    // Accept connections, hold them open, never read or write.
+    loop {
+        match listener.accept().await {
+            Ok((stream, _)) => {
+                tokio::spawn(async move {
+                    let _hold = stream;
+                    tokio::time::sleep(Duration::from_secs(3600)).await;
+                });
+            }
+            Err(_) => return,
+        }
+    }
+}
+
+fn make_s3_builder(endpoint: &str) -> S3 {
+    let mut b = S3::default();
+    b = b.endpoint(endpoint);
+    b = b.region(""us-east-1"");
+    b = b.bucket(""test-bucket"");
+    b = b.access_key_id(""AKIATEST"");
+    b = b.secret_access_key(""secrettest"");
+    b = b.allow_anonymous();
+    b
+}
+
+async fn try_read(op: Operator, label: &str, abort_after: Duration) {
+    print!(""[{label:>40}] reading... "");
+    let start = Instant::now();
+    let result = tokio::time::timeout(abort_after, op.read(""does-not-exist"")).await;
+    let elapsed = start.elapsed();
+    match result {
+        Ok(Ok(_))  => println!(""succeeded?! elapsed={elapsed:.2?}""),
+        Ok(Err(e)) => println!(""errored in {elapsed:.2?}: {e}""),
+        Err(_)     => println!(""ABORTED by harness after {abort_after:.2?} — still hanging""),
+    }
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let listener = TcpListener::bind(""127.0.0.1:0"").await?;
+    let addr = listener.local_addr()?;
+    let endpoint = format!(""http://{addr}"");
+    println!(""tarpit listening on {endpoint}"");
+
+    let listener = Arc::new(listener);
+    tokio::spawn(run_tarpit(listener.clone()));
+
+    let harness_abort = Duration::from_secs(20);
+
+    // Case A: no layers.
+    {
+        let op = Operator::new(make_s3_builder(&endpoint))?.finish();
+        try_read(op, ""NO LAYERS"", harness_abort).await;
+    }
+    // Case B: today's upstream composition (RetryLayer only).
+    {
+        let op = Operator::new(make_s3_builder(&endpoint))?
+            .layer(RetryLayer::new())
+            .finish();
+        try_read(op, ""RetryLayer ONLY (upstream today)"", harness_abort).await;
+    }
+    // Case C: this PR (TimeoutLayer inside RetryLayer).
+    {
+        let op = Operator::new(make_s3_builder(&endpoint))?
+            .layer(
+                TimeoutLayer::new()
+                    .with_timeout(Duration::from_secs(2))
+                    .with_io_timeout(Duration::from_secs(2)),
+            )
+            .layer(RetryLayer::new().with_max_times(3))
+            .finish();
+        try_read(op, ""TimeoutLayer + RetryLayer (PR fix)"", harness_abort).await;
+    }
+
+    Ok(())
+}
+```
+
+</details>
+
+## Notes
+
+- No API change. No new builder methods, no new fields, no breaking
+changes for current users.
+- The same one-line composition runs for all storage variants (Memory,
+Fs, S3, Gcs, Oss, Azdls). `TimeoutLayer` applies uniformly. For
+in-memory/fs backends the timeout is effectively never hit; the cost is
+negligible. For network backends it is the actual fix.
+- If a user genuinely needs longer-than-default bounds (e.g. fetching
+very large files over a slow link), the post-#1885 approach is to
+implement `iceberg::Storage` themselves and inject their preferred layer
+stack — but the default path should not hang silently, which is what
+this PR addresses. Happy to expand into a configurable form (e.g. accept
+a `TimeoutLayer` on the `OpenDalStorageFactory::S3` variant) in review
+if maintainers prefer.",f73fc3084f199a30593f1c700c77f7480b6a0949,2455,false,,1,12,4,crates
+apache/iceberg-rust,5d9d0f56200f0adc57662a3cc42aedcc10f1bede,5d9d0f5,Shawn Chang,schang@apache.org,2026-06-09T05:05:58-07:00,GitHub,noreply@github.com,2026-06-09T20:05:58+08:00,fix(catalog): Only list iceberg tables for Glue (#2570),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Closes #2571
+
+## What changes are included in this PR?
+- filter Glue's table list to only return Iceberg tables for
+`GlueCatalog::list_tables`
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+Yes
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",315a0eb5a101e686710d25812fc152803d36a3c7,2570,false,,2,63,5,crates
