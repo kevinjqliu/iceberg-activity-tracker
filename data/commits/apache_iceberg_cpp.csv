@@ -2132,3 +2132,39 @@ object and return a response object
 deserialize request response json objects
 * Added unit tests for all the above helper methods and handler methods
 * Added integration tests for the handlers",ad9b8fcf8e8717cc2a0296b70d33d786ea5a6cc4,614,false,,17,2395,10,src
+apache/iceberg-cpp,c0e6e86dd2614fdb1cb0d19dbaed324c3868930f,c0e6e86,Junwang Zhao,zhjwpku@gmail.com,2026-06-09T22:54:55+08:00,GitHub,noreply@github.com,2026-06-09T22:54:55+08:00,chore: disable installing googletest libs (#711),,b6508226cb944e36267685d29c3a23c8422d8cad,711,false,,1,4,0,src
+apache/iceberg-cpp,f9949ac2445d836a61d45d5cdaf07395c7665b7c,f9949ac,Gang Wu,ustcwg@gmail.com,2026-06-10T09:40:37+08:00,GitHub,noreply@github.com,2026-06-10T09:40:37+08:00,fix: avoid stale gh run watch in RC release script (#712),"Allow release_rc.sh to resume from an existing GitHub Actions run by
+setting RELEASE_RUN_ID, and add RELEASE_WATCH=0 to poll run/job status
+with plain gh run view output instead of gh run watch.
+
+This avoids getting stuck on stale gh run watch terminal output while
+keeping the default release flow unchanged.",c0e6e86dd2614fdb1cb0d19dbaed324c3868930f,712,false,,1,30,2,dev
+apache/iceberg-cpp,50aee7e3fd3ef2aa82dcb930b8ad60c2fa872e8a,50aee7e,Gang Wu,ustcwg@gmail.com,2026-06-10T09:41:28+08:00,GitHub,noreply@github.com,2026-06-10T09:41:28+08:00,fix: align manifest partition reads with reassigned IDs (#700),"Use unknown types for missing partition source fields when building
+manifest partition schemas. Add Java-style schema ID reassignment maps
+and use them to map raw manifest partition field IDs back to their
+original IDs.
+
+Also add transform result type support so unbound partition specs can
+derive partition field types consistently with Java.",f9949ac2445d836a61d45d5cdaf07395c7665b7c,700,false,,13,328,35,src
+apache/iceberg-cpp,701d39ca6b4f077039b37417b4ad992a24f1d4d6,701d39c,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-06-10T10:16:29+08:00,GitHub,noreply@github.com,2026-06-10T10:16:29+08:00,"fix(rest): use ""ref"" field name for AssertRefSnapshotId requirement (#702)","The `AssertRefSnapshotId` table requirement was serialized and
+deserialized with the JSON field name `ref-name`. Per the Iceberg REST
+OpenAPI spec (`rest-catalog-open-api.yaml`), this requirement's field is
+named `ref`. Only the `SetSnapshotRef` / `RemoveSnapshotRef` *updates*
+use `ref-name`",50aee7e3fd3ef2aa82dcb930b8ad60c2fa872e8a,702,false,,2,14,4,src
+apache/iceberg-cpp,30c312083cd9a8a073e22c981fe3adafc6dc1307,30c3120,wzhuo,wngzhuo@gmail.com,2026-06-10T10:16:52+08:00,GitHub,noreply@github.com,2026-06-10T10:16:52+08:00,fix: Assign UUID when creating table metadata (#713),,701d39ca6b4f077039b37417b4ad992a24f1d4d6,713,false,,2,4,1,src
+apache/iceberg-cpp,3fd8a49ee5cbc2afdcb243275f1915e4fe9a6aef,3fd8a49,wzhuo,wngzhuo@gmail.com,2026-06-10T14:04:25+08:00,GitHub,noreply@github.com,2026-06-10T14:04:25+08:00,fix: YearTransform passes wrong TransformType kTruncate instead of kYear (#715),"## Summary
+
+**Bug:** YearTransform constructor passed TransformType::kTruncate to
+the TransformFunction base class instead of TransformType::kYear. This
+caused transform_type() to return kTruncate on a bound YearTransform,
+affecting code paths that dispatch based on transform_type() (e.g.,
+Transform::Project, Transform::ProjectStrict,
+Transform::SatisfiesOrderOf).
+
+**Fix:** Changed kTruncate to kYear in the YearTransform constructor.
+
+**Tests:** Added TransformFunctionTest cases for Year, Month, Day, Hour,
+and Void transforms to verify transform_type() after Bind(). The
+existing suite only tested Identity, Bucket, and Truncate.",30c312083cd9a8a073e22c981fe3adafc6dc1307,715,false,,2,51,1,src
+apache/iceberg-cpp,0284683f7e1dd5742913d5f0a7c4b48e445df7a4,0284683,Gang Wu,ustcwg@gmail.com,2026-06-10T16:51:54+08:00,GitHub,noreply@github.com,2026-06-10T16:51:54+08:00,fix: make release script more robust (#717),,3fd8a49ee5cbc2afdcb243275f1915e4fe9a6aef,717,false,,5,80,30,ci; cmake_modules; dev
+apache/iceberg-cpp,c0c6b01393070b0813f49b0d6220c98256379cef,c0c6b01,Gang Wu,ustcwg@gmail.com,2026-06-10T20:55:07+08:00,GitHub,noreply@github.com,2026-06-10T20:55:07+08:00,fix: make git run watch optional in release_rc.sh (#720),,0284683f7e1dd5742913d5f0a7c4b48e445df7a4,720,false,,1,28,23,dev

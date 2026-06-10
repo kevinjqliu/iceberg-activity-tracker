@@ -15889,3 +15889,26 @@ Specify what test covers (unit test, integration test, etc.).
 If tests are not included in your PR, please explain why (for example,
 are they covered by existing tests)?
 -->",315a0eb5a101e686710d25812fc152803d36a3c7,2570,false,,2,63,5,crates
+apache/iceberg-rust,9394028b4a1fded15fb581c1d5a984b5abe6135e,9394028,Daniel Carl Jones,djonesoa@amazon.com,2026-06-10T05:30:26+01:00,GitHub,noreply@github.com,2026-06-09T21:30:26-07:00,fix(spec): Fix incorrect totals when previous is omitted or invalid (#2589),"## Which issue does this PR close?
+
+- Closes #2576.
+
+## What changes are included in this PR?
+
+This change prevents totals being incorrectly calculated where the total
+is omitted, or if any of the values associated with the calculation are
+not valid positive integers. Additionally, a warning trace will be
+emitted when invalid values are found for the previous total.
+
+Of note: we will still calculate some of the statistics where we can,
+while others may be omitted.
+
+This change also removes the table truncation metrics path which is
+currently unused / dead code. I do not believe that it was implemented
+correctly for partial overwrites, and so I've removed it for now. I
+think we'd be better suited letting the snapshot collector handle this
+behavior (which is yet to be implemented).
+
+## Are these changes tested?
+
+New unit tests are added to cover these cases.",5d9d0f56200f0adc57662a3cc42aedcc10f1bede,2589,false,,1,155,17,crates
