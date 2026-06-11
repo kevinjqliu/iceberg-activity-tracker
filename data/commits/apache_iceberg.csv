@@ -2260,3 +2260,28 @@ Co-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",56cae82545
 apache/iceberg,b299ebdab02a1e14c4f7798d2a3542588d47b798,b299ebd,Ryan Blue,blue@apache.org,2026-06-09T14:43:50-07:00,GitHub,noreply@github.com,2026-06-09T14:43:50-07:00,Mumbling: Add draft Mumbling Bitmap spec (#16518),Co-authored-by: Fokko Driesprong <fokko@apache.org>,ca53688270fa4f23bf23ca6676b4f9cb13d025b3,16518,false,Fokko Driesprong,1,316,0,format
 apache/iceberg,8d0aab70028a83f96e5034a4804e18d8c51b96a7,8d0aab7,Neelesh Salian,nssalian@users.noreply.github.com,2026-06-09T18:42:00-07:00,GitHub,noreply@github.com,2026-06-09T18:42:00-07:00,Build: Bump Netty pin to 4.2.15.Final (#16749),,b299ebdab02a1e14c4f7798d2a3542588d47b798,16749,false,,2,4,3,build.gradle; gradle
 apache/iceberg,491fc36ad439d8eb31a5cd0cb043bec4e25d3b0c,491fc36,Joy Haldar,joyno.23@gmail.com,2026-06-10T18:32:28+05:30,GitHub,noreply@github.com,2026-06-10T15:02:28+02:00,Data: Add TCK coverage for reader default values (#16638),,8d0aab70028a83f96e5034a4804e18d8c51b96a7,16638,false,,2,462,26,data
+apache/iceberg,0440aa6837337a8109b892d81b27d42cf75348c9,0440aa6,Chase Zhang,yun.er.run@gmail.com,2026-06-10T23:26:37+09:00,GitHub,noreply@github.com,2026-06-10T16:26:37+02:00,Flink: Backport implement wakeup method to fix thread/memory leak (#16745),backports #16545,491fc36ad439d8eb31a5cd0cb043bec4e25d3b0c,16745,false,,14,1008,28,flink
+apache/iceberg,9cc46bb5411d4530a2e10912e7ea2d9c0411e09a,9cc46bb,Steven Zhen Wu,stevenz3wu@gmail.com,2026-06-10T17:17:56-07:00,GitHub,noreply@github.com,2026-06-10T18:17:56-06:00,Docs: Add Javadoc guidance to AGENTS.md (#16764),"Capture rdblue's instruction from PR #16689: Javadoc should describe a
+class or method's purpose as if it were defined by an interface, not
+restate or leak implementation details that create churn when the
+implementation changes.
+
+Co-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>",0440aa6837337a8109b892d81b27d42cf75348c9,16764,false,Claude Opus 4.7 (1M context),1,1,0,AGENTS.md
+apache/iceberg,d7d3bd5c3788b882f52fa79c44cf09a11459deab,d7d3bd5,Fei Wang,cn.feiwang@gmail.com,2026-06-10T23:47:50-07:00,GitHub,noreply@github.com,2026-06-11T08:47:50+02:00,Core: Fix RESTMetricsReporter.report() blocking the calling thread (#16695),"Tasks.range(1).executeWith(METRICS_EXECUTOR).run() was used to submit
+the HTTP call to the single-thread METRICS_EXECUTOR, but the calling
+thread was then blocked inside Tasks.waitFor() — a sleep(10ms) poll loop
+that waits until the submitted future is done. This made report()
+synchronous from the caller's perspective despite appearing to use an
+executor.
+
+Any code that wraps report() in its own executor pool to achieve async
+behaviour (e.g. fire-and-forget metrics publishing) would see all its
+pool threads permanently blocked waiting for METRICS_EXECUTOR, causing
+thread pile-up at the rate metrics are produced.
+
+Replace the Tasks pattern with a direct executor.execute(lambda)
+so that report() enqueues the HTTP call and returns immediately. Use
+daemon threads and an unbounded LinkedBlockingQueue (metrics are
+best-effort; no reports should be silently dropped when the endpoint is
+temporarily slow).",9cc46bb5411d4530a2e10912e7ea2d9c0411e09a,16695,false,,3,41,19,core
+apache/iceberg,b471a1a0b18fd9d9e7007d0effb111b4bf0f2754,b471a1a,jackylee,qcsd2011@gmail.com,2026-06-11T22:12:20+08:00,GitHub,noreply@github.com,2026-06-11T16:12:20+02:00,Flink: Validate missing watermark column in column stats watermark extractor (#16774),,d7d3bd5c3788b882f52fa79c44cf09a11459deab,16774,false,,6,30,0,flink

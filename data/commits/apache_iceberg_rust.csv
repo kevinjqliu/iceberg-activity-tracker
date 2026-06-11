@@ -15912,3 +15912,56 @@ behavior (which is yet to be implemented).
 ## Are these changes tested?
 
 New unit tests are added to cover these cases.",5d9d0f56200f0adc57662a3cc42aedcc10f1bede,2589,false,,1,155,17,crates
+apache/iceberg-rust,c527d7fbf49831fab4555794c365003ac107e1b8,c527d7f,Daniel Carl Jones,djonesoa@amazon.com,2026-06-10T18:14:36+01:00,GitHub,noreply@github.com,2026-06-10T10:14:36-07:00,fix(s3tables): add TableNotFound error handling (#2595),"## Which issue does this PR close?
+
+- Closes #2594.
+
+## What changes are included in this PR?
+
+This PR updates table loading in the S3 Tables catalog to first check
+for a table not found error from the S3 Tables service, before allowing
+the fallback mapping of SDK error into an Iceberg `Unexpected` error.
+
+## Are these changes tested?
+
+Yes, I've added and run new integration tests.",9394028b4a1fded15fb581c1d5a984b5abe6135e,2595,false,,1,33,5,crates
+apache/iceberg-rust,80a30d3440928e1456fd116db934d829844a1a42,80a30d3,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-06-11T09:02:14-04:00,GitHub,noreply@github.com,2026-06-11T21:02:14+08:00,fix(reader): `filter_row_groups_by_byte_range` duplicates rows for sub-row-group file splits (#2615),"## Which issue does this PR close?
+
+- Closes #2614.
+
+## What changes are included in this PR?
+
+`ArrowReader::filter_row_groups_by_byte_range` (added in #1779) selected
+a row group for every `FileScanTask` byte range that *overlapped* it.
+When a data file is split into byte ranges smaller than a row group,
+multiple tasks overlap the same row group, so each reads it and the rows
+are duplicated. This surfaced in Apache DataFusion Comet
+([apache/datafusion-comet#4590](https://github.com/apache/datafusion-comet/issues/4590)),
+where Spark tiles a file by `split-size` regardless of row-group layout.
+
+This PR switches selection to *midpoint ownership*, matching
+parquet-java's
+[`ParquetMetadataConverter.filterFileMetaDataByMidpoint`](https://github.com/apache/parquet-java/blob/master/parquet-hadoop/src/main/java/org/apache/parquet/format/converter/ParquetMetadataConverter.java#L1287-L1290):
+a split owns a row group only if its `[start, start+length)` range
+contains the row group's midpoint. Because the splits tile the file
+contiguously and disjointly, exactly one split contains a given
+midpoint, so each row group is read once. The comparison is half-open
+(`start <= midpoint < end`) so a midpoint landing on a split boundary
+belongs to the upper split.
+
+This is a no-op for whole-file tasks (`start=0, length=file_size`, all
+iceberg-rust's own planner emits), since every midpoint lies in range
+and all row groups are selected. It only changes the externally-planned
+sub-row-group split case, completing the byte-range work from #1779.
+
+## Are these changes tested?
+
+Yes. A new test `test_sub_row_group_splits_do_not_duplicate_rows` writes
+a 3-row-group file, tiles it into 64-byte splits, reads every split
+through `ArrowReader`, and asserts each row appears exactly once. It
+returns ~2800 rows before the fix and exactly 300 after. The existing
+`test_file_splits_respect_byte_ranges` (boundary-aligned splits)
+continues to pass.
+
+Running Iceberg Java tests via Comet against this change in
+https://github.com/apache/datafusion-comet/pull/4621.",c527d7fbf49831fab4555794c365003ac107e1b8,2615,false,,1,226,5,crates

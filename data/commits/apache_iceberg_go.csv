@@ -10836,3 +10836,22 @@ the value is > 0, applies it via Catalog.SetPageSize on the request
 context. Other catalog types ignore the flag.
 
 Closes #665",91f446e95cb3fcef4c27347e1180f4b2b84aab41,1173,false,,2,32,3,cmd
+apache/iceberg-go,ab2ee07e5fbcffe8a35dcbf996820a3924fe8353,ab2ee07,Tobias Pütz,tobias@minio.io,2026-06-10T17:40:54+02:00,GitHub,noreply@github.com,2026-06-10T17:40:54+02:00,fix(manifest): allow NewManifestReader to read lower-version manifests (#1180),"currently, a manifest-list with version 2 referencing a manifest with
+version 1 fails to be read",0bec2e7847c784d5e8c8584556ee2bbe54eb0b86,1180,false,,2,46,2,manifest.go; manifest_test.go
+apache/iceberg-go,09d943bb16de09df39749fb309963987d454fd87,09d943b,Neelesh Salian,nssalian@users.noreply.github.com,2026-06-10T09:15:45-07:00,GitHub,noreply@github.com,2026-06-10T18:15:45+02:00,"deps: bump arrow-go to 88561cf (variant fixes arrow-go 840, 841) (#1177)","## Changes
+
+Bumps arrow-go to
+[88561cf](https://github.com/apache/arrow-go/commit/88561cf0d192b75f3852eae8049816b21ec46c83)
+to pick up apache/arrow-go#840 and
+[#841](https://github.com/apache/arrow-go/pull/841) (variant fixes;
+neither reachable via iceberg-go's public API).
+
+The bump window includes unrelated Parquet encoder changes (arrow-go
+#779/#786/#807) that produce different output bytes; tests asserting
+exact file/column sizes are updated accordingly.
+
+Adds defensive coverage at the variant boundary in literals_test.go and
+table/arrow_utils_test.go.
+
+Will follow up to swap the pseudo-version for a tagged release when
+arrow-go cuts one. Refs #929",ab2ee07e5fbcffe8a35dcbf996820a3924fe8353,1177,false,,6,130,30,go.mod; go.sum; literals_test.go; table
