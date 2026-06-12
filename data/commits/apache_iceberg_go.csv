@@ -10855,3 +10855,105 @@ table/arrow_utils_test.go.
 
 Will follow up to swap the pseudo-version for a tagged release when
 arrow-go cuts one. Refs #929",ab2ee07e5fbcffe8a35dcbf996820a3924fe8353,1177,false,,6,130,30,go.mod; go.sum; literals_test.go; table
+apache/iceberg-go,f9b7e68bcc3ec6442b95c2d47802bafb865f1d21,f9b7e68,Tanmay Rauth,t_rauth@apple.com,2026-06-11T23:25:57+05:30,GitHub,noreply@github.com,2026-06-11T19:55:57+02:00,feat(table): write deletion vectors for partitioned v3 tables (#1151),"Lifts the IsUnpartitioned() gate in positionDeleteRecordsToDataFiles so
+all v3+ writes go through the DV path, and threads
+partitionContextByFilePath into positionDeleteRecordsToDataFilesDV: each
+row's (specID, partitionData) is looked up per data file and passed to
+DVWriter.Add (groundwork: #1136), so output DataFile manifest entries
+carry the source data file's partition record.
+
+A missing partition context is treated as a programming error rather
+than silently producing a default-partition entry, matching Java's
+BaseDVFileWriter contract.
+
+The now-unreachable v3 ""prefer deletion vectors"" slog.Warn is removed.
+
+Closes #1135.",09d943bb16de09df39749fb309963987d454fd87,1151,false,,4,219,224,table
+apache/iceberg-go,9af9dc524a438fd12adff6fe31d7f1127514f09c,9af9dc5,Neelesh Salian,nssalian@users.noreply.github.com,2026-06-11T11:34:27-07:00,GitHub,noreply@github.com,2026-06-11T20:34:27+02:00,"docs(website): expand site with tutorial, API recipes, and V1/V2/V3 status (#1181)","## Summary
+
+Restructure go.iceberg.apache.org from a 6-page feature listing into a
+complete documentation site modeled on py.iceberg.apache.org.
+
+**New pages** :
+
+- `getting-started.md` - runnable SQLite-catalog tutorial with an Arrow
+round-trip
+- `configuration.md` - YAML config, per-catalog options, S3 / GCS /
+Azure credentials, table properties, pluggability
+- `api.md` (rewritten) - recipe book for catalogs, namespaces, tables,
+scans, writes, schema and partition evolution, snapshots, maintenance,
+views, type mapping
+- `row-filter-syntax.md`, `expression-dsl.md` - predicate DSL sub-pages
+under API
+- `feature-status.md` - capability matrix and a new V1 / V2 / V3 spec
+coverage section
+- `ecosystem.md` - cross-links to Iceberg Java, PyIceberg, iceberg-rust,
+iceberg-cpp
+- `releases.md`, `verify-release.md`, `how-to-release.md` - sourced from
+`dev/release/`
+- `community.md`, `contributing.md` (mdbook-includes the root
+`CONTRIBUTING.md`)
+
+**Updated:** `introduction.md` is now a thin landing page. `SUMMARY.md`
+is rewired for the new sections.
+
+Current docs: https://go.iceberg.apache.org
+
+Updated docs look like this:
+
+<img width=""1510"" height=""748"" alt=""Screenshot 2026-06-10 at 1 46 18 PM""
+src=""https://github.com/user-attachments/assets/eccccd83-fd17-4aaf-befa-03a3b14aaa5b""
+/>
+
+## Test plan
+- `cd website && mdbook serve`",f9b7e68bcc3ec6442b95c2d47802bafb865f1d21,1181,false,,15,1769,454,README.md; website
+apache/iceberg-go,32cda283f3747f4e90b57b8f210bf46c700bd92b,32cda28,artbcf,artem@cloudflare.com,2026-06-11T15:28:32-04:00,GitHub,noreply@github.com,2026-06-11T15:28:32-04:00,fix(manifest): encode day-transform partition fields with Avro date logical type (#915),"`DayTransform.Apply()` returns an `int32` value representing days since
+the epoch. For manifest partition data, Iceberg implementations commonly
+write `day(...)` partition fields as Avro `int` with the `date` logical
+type, while readers should be able to accept both plain Avro `int` and
+Avro `date`.
+
+Previously, `DayTransform.ResultType()` returned `Int32`, which caused
+`PartitionSpec.PartitionType()` to model day-transform partition fields
+as plain `Int32`. As a result, Iceberg Go wrote day-partition fields as
+plain Avro `int`, instead of Avro `date`, diverging from the writer
+behavior of other Iceberg implementations.
+
+This PR changes `DayTransform.ResultType()` to return `DateType`. That
+lets the existing partition type and Avro schema conversion paths
+naturally emit Avro `date` for day-transform partition fields.
+
+Tests added:
+
+- Verify that `day(ts)` partition fields are encoded with the Avro
+`date` logical type.
+- Verify that non-day `Int32` partition fields still use plain Avro
+`int` encoding.
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",9af9dc524a438fd12adff6fe31d7f1127514f09c,915,false,Kevin Liu,2,70,1,schema_conversions_test.go; transforms.go
+apache/iceberg-go,f2ee651214f8d185c3acfbe0c3c6e1cb3feabe88,f2ee651,Gerin Sena Pratama,50170593+gerinsp@users.noreply.github.com,2026-06-12T02:48:44+07:00,GitHub,noreply@github.com,2026-06-11T15:48:44-04:00,Core: Handle nil logical partition values in manifests (#1179),"### Summary
+
+Fixes a panic when reading manifest partition data where avro returns a
+nil value for a logical partition field.
+
+Previously, `convertAvroValueToIcebergType` could reach the `atype.Date`
+branch with a nil value and panic with:
+
+interface conversion: interface {} is nil, not in32
+
+This change return nil immediately when the Avro partition value is nil.
+
+### Testing
+
+Added a regresion test that builds a data file with a nil `dt` partition
+value mapped to field ID 1000 using Avro logical type `date` then calls
+`ValueCounts()` to exercise the same inilization path.
+
+Verified with:
+
+go test -run
+TestDataFileInitializeMapDataHandlesNilLogicalPartitionValue .
+go test ./...
+git diff --check",32cda283f3747f4e90b57b8f210bf46c700bd92b,1179,false,,4,114,1,manifest.go; manifest_test.go; table

@@ -15965,3 +15965,170 @@ continues to pass.
 
 Running Iceberg Java tests via Comet against this change in
 https://github.com/apache/datafusion-comet/pull/4621.",c527d7fbf49831fab4555794c365003ac107e1b8,2615,false,,1,226,5,crates
+apache/iceberg-rust,41b23e1166e781ca08770ef3bb74f3fdeb968db5,41b23e1,Liang-Chi Hsieh,viirya@gmail.com,2026-06-12T06:00:22+08:00,GitHub,noreply@github.com,2026-06-11T15:00:22-07:00,fix: use name-mapped field IDs for projection and predicate pushdown (#2612),"## Which issue does this PR close?
+
+- Closes #2403.
+
+## What changes are included in this PR?
+
+When a Parquet file lacks embedded field IDs but a name mapping
+(`schema.name-mapping.default`) is available, the reader applies the
+mapping to the Arrow schema — but it still planned **column projection**
+and **predicate pushdown** with the position-based fallback (field id
+`N` → column `N-1`). As a result:
+
+- Projected columns whose mapped field IDs don't line up with their
+physical positions were silently read as all-NULL.
+- Predicates were evaluated against the wrong physical columns, silently
+returning wrong rows (this also makes row-group pruning and row
+selection prune incorrectly).
+
+This contradicts Java's `ReadConf`, which uses a three-branch strategy:
+embedded IDs → field-id projection; name mapping → apply mapping, then
+field-id projection; neither → position fallback. Our code applied the
+name mapping to the Arrow schema but then took the fallback branch
+anyway.
+
+Changes:
+
+- `pipeline.rs`: compute `use_position_fallback = missing_field_ids &&
+task.name_mapping.is_none()` and pass it (instead of
+`missing_field_ids`) to both `get_arrow_projection_mask` and
+`build_field_id_set_and_map`, so position fallback only applies when
+there are no embedded field IDs **and** no name mapping.
+- `projection.rs`: `build_field_id_set_and_map` now distinguishes the
+name-mapping case. When the Parquet descriptor has no embedded field IDs
+but a name mapping assigned IDs to the Arrow schema, it builds the
+field-id → leaf-column map from the Arrow schema's `PARQUET:field_id`
+metadata (new `build_field_id_map_from_arrow_schema`). Arrow leaf
+ordering matches Parquet leaf column ordering (both depth-first), the
+same invariant `get_arrow_projection_mask` already relies on for
+`ProjectionMask::leaves`.
+
+## Are these changes tested?
+
+Two new regression tests in `projection.rs`, covering both broken paths:
+
+- `test_read_parquet_with_name_mapping_uses_mapped_field_ids`: a file
+without field IDs whose columns `[name, subdept]` map to non-contiguous
+field IDs (2, 4). On main, projection NULL-fills both columns; with this
+fix, the values are read correctly.
+- `test_predicate_on_name_mapped_file_uses_mapped_field_ids`: a
+predicate `name = ""Alice""` on the same file shape, with row-group
+filtering and row selection enabled. On main, the predicate is evaluated
+against the wrong physical column and returns 2 rows; with this fix, it
+returns the single correct row.
+
+Both tests fail on main (verified by reverting the `pipeline.rs`
+strategy line) and pass with the fix. The full `arrow::` unit-test suite
+(97 tests) passes.",80a30d3440928e1456fd116db934d829844a1a42,2612,false,,2,255,9,crates
+apache/iceberg-rust,7726e13a9747360b3dd03bf03c79cb8583b08e29,7726e13,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-06-11T23:40:21+01:00,GitHub,noreply@github.com,2026-06-11T15:40:21-07:00,refactor!(writer): borrow TableMetadata in DefaultLocationGenerator::new (#2604),"`DefaultLocationGenerator::new` took `TableMetadata` by value but only
+ever reads `.location()` and `.properties()` (both `&self` accessors).
+
+Taking it by value forced every caller to deep-clone the whole
+`TableMetadata` just to satisfy the signature,.
+
+
+## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Closes #2605.
+
+## What changes are included in this PR?
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+Change the parameter to `&TableMetadata` and drop the `.clone()` at each
+call site, eliminating an unnecessary deep clone on the write path.
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->
+
+N/A
+
+---------
+
+Co-authored-by: Sreesh Maheshwar <smaheshwar@palantir.com>",41b23e1166e781ca08770ef3bb74f3fdeb968db5,2604,false,Sreesh Maheshwar,6,15,19,crates
+apache/iceberg-rust,6974eb230e6a364d86aebe4d24512863f748bbeb,6974eb2,Xander,zander181@googlemail.com,2026-06-12T02:09:32+01:00,GitHub,noreply@github.com,2026-06-12T09:09:32+08:00,feat(encryption) [7/N] Read encrypted manifest list (#2453),"## Which issue does this PR close?
+
+- Working towards https://github.com/apache/iceberg-rust/issues/2034
+
+## What changes are included in this PR?
+
+Wires encryption support into the `Table` type so that encrypted
+manifest lists can be read. Adds an `EncryptionManager` accessor on
+`Table` and ensures it is supplied wherever manifest lists are loaded
+from snapshots.
+
+Also threads the `EncryptionManager` through `purge_table` /
+`drop_table_data` so that dropping an encrypted table can read its
+manifest lists and clean up referenced files correctly.
+
+A design decision was made whilst [reviewing the RFC
+](https://github.com/apache/iceberg-rust/pull/2183#discussion_r3129970059)
+to keep the EM out of `FileIo` and pass it around separately which turns
+out to be much cleaner.
+
+Note that we aren't exposing any sort of configuration for the KMS when
+building the tables in the catalogs. That will come later. That PR is
+deliberately coming later to minimise the public surface area whilst
+this feature is under development.
+
+Also note that `StaticTable` doesn't have the KMS wired in yet since
+we'd need to merge the KmsFactory to make that code path valid. Similar
+story is true for wiring this through the catalogs.
+
+## Are these changes tested?
+
+Yes
+
+---------
+
+Co-authored-by: Claude Opus 4.6 <noreply@anthropic.com>",7726e13a9747360b3dd03bf03c79cb8583b08e29,2453,false,Claude Opus 4.6,9,487,15,crates
+apache/iceberg-rust,427670d5d1132136480b91a1264b22c865bfa353,427670d,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-06-11T18:37:17-07:00,GitHub,noreply@github.com,2026-06-12T09:37:17+08:00,cleanup: remove stale #[allow(dead_code)] from expr visitors and spec (#2616),"## Which issue does this PR close?
+
+Part of #2559.
+
+## What changes are included in this PR?
+
+Removes `#[allow(dead_code)]` attributes that are no longer needed, plus
+one truly dead helper:
+
+- **`delete_file_index.rs`**: removed the stale `#[allow(dead_code)]` on
+`PopulatedDeleteFileIndex::global_equality_deletes` — the field is now
+read by live code, so the attribute is no longer needed.
+- **`spec/snapshot.rs`**: removed the unused `Snapshot::log()` helper
+(zero callers; the `.log()` call elsewhere is `ViewVersion::log`) and
+its now-unused `SnapshotLog` import.
+
+Per review feedback, code that is still unused (the strict visitors,
+manifest writer entries, `decimal_new`) keeps its `#[allow(dead_code)]`
+— the earlier `#[cfg(test)]` gating has been reverted. An audit of all
+15 remaining occurrences in the crate (removing each attribute and
+running `cargo check --all-features`) confirmed the rest still trigger
+dead_code warnings, so they are left as-is.
+
+## Are these changes tested?
+
+Existing tests cover them:
+- `cargo check -p iceberg --all-features` is warning-free
+- `cargo test -p iceberg --lib`: 1302 passed, 0 failed
+- `cargo clippy -p iceberg --all-targets --all-features -- -D warnings`
+is clean
+
+This pull request and its description were written by Isaac.",6974eb230e6a364d86aebe4d24512863f748bbeb,2616,false,,2,0,10,crates
