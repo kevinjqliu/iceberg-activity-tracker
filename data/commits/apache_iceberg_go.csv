@@ -10957,3 +10957,127 @@ go test -run
 TestDataFileInitializeMapDataHandlesNilLogicalPartitionValue .
 go test ./...
 git diff --check",32cda283f3747f4e90b57b8f210bf46c700bd92b,1179,false,,4,114,1,manifest.go; manifest_test.go; table
+apache/iceberg-go,35de815b13408cf9f77bb66eee62e8c0116810df,35de815,Minh Vu,vuhoangminh97@gmail.com,2026-06-12T20:54:46+02:00,GitHub,noreply@github.com,2026-06-12T14:54:46-04:00,fix(exprs): support nanosecond timestamp predicates (#1195),"## Summary
+
+- bind `timestamp_ns` and `timestamptz_ns` references as `TimestampNano`
+in expression factories
+- evaluate bound nanosecond timestamp comparisons through `doCmp`
+- cover binding, `IS NULL`, `EQ`, multi-value `IN`, and evaluator
+comparisons for both nanosecond timestamp types
+
+## Why
+
+V3 nanosecond timestamp columns are valid primitive and literal types,
+but expression binding and comparison evaluation still missed those type
+cases. Filters against these columns could panic while binding or fail
+when evaluating bound comparison predicates.
+
+## Testing
+
+- `go test . -run ""TestRefTypes|TestEvaluatorCmpTypes"" -count=1`
+- `go test ./... -count=1`
+- `git diff --check`",f2ee651214f8d185c3acfbe0c3c6e1cb3feabe88,1195,false,,4,66,3,exprs.go; exprs_test.go; visitors.go; visitors_test.go
+apache/iceberg-go,f4b75e954d122eb299b83242a0df6da4e94c332f,f4b75e9,jeremybarner,jeremyba@monday.com,2026-06-12T20:05:33+01:00,GitHub,noreply@github.com,2026-06-12T15:05:33-04:00,fix(table): apply positional deletes with batch-local Take indices (#1183),"## Problem
+
+`processPositionalDeletes` applies positional (merge-on-read) deletes
+one Arrow record batch at a time, but `combinePositionalDeletes` builds
+the surviving-row indices in **global, file-relative** coordinates
+`[start, end)` and passes them straight into `compute.Take` against the
+**current batch**, whose valid index range is `[0, NumRows)`.
+
+For the first batch of a data file `start == 0`, so it works. For the
+second and later batches `start > 0`, every index is `>= NumRows` and
+the scan fails:
+
+```
+index error: <N> out of bounds
+```
+
+where `<N>` is a multiple of the parquet read batch size
+(`read.parquet.batch-size`, default `1<<17 == 131072`). So any data file
+larger than one batch that also has positional delete files fails to
+scan at its second batch.
+
+## Fix
+
+Rebase the Take indices to batch-local coordinates (`i - start`). The
+`deletes` set stays in global coordinates because it is matched against
+the global position `i`.
+
+```go
+for i := start; i < end; i++ {
+    if _, ok := deletes[i]; !ok {
+        bldr.Append(i - start)
+    }
+}
+```
+
+## Test
+
+Adds `TestProcessPositionalDeletesAcrossBatches`, which feeds two
+consecutive batches with a delete located in the **second** batch — the
+case the previous code got wrong. The test fails with `index error: 4
+out of bounds` before the fix and passes after.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Signed-off-by: Jeremy Barneron <jeremyba@monday.com>",35de815b13408cf9f77bb66eee62e8c0116810df,1183,false,,2,83,1,table
+apache/iceberg-go,7166f89c49b933780a7c9c194d54a568621039d0,7166f89,Neelesh Salian,nssalian@users.noreply.github.com,2026-06-12T13:09:43-07:00,GitHub,noreply@github.com,2026-06-12T22:09:43+02:00,test(table): validate variant and unknown types against Spark 4 (#1182),"Closes [#1139](https://github.com/apache/iceberg-go/issues/1139)
+Follow-up to [#1140](https://github.com/apache/iceberg-go/pull/1140)
+
+### Summary
+
+- New `recipe.SparkMajorVersion` helper - extracts the running
+container's pyspark version inline (`python -c`)
+- New `requireSpark4()` test-suite helper - skips for Spark 3.5.
+- `TestVariantWriteAndScan` now also asserts Spark 4 reads the rows via
+`to_json` after the existing Go-side scan.
+- New `TestUnknownTypeWriteAndScan` - Go writes an `UnknownType` column,
+Spark 4 confirms via `DESCRIBE` that the column lands as `void` (Spark's
+`NullType`).
+
+### Test plan
+
+Ran the following locally:
+
+- `make integration-setup && make integration-spark` (Spark 3.5): 10
+PASS, 2 SKIP (variant + unknown with the message).
+- `make integration-setup-spark4 && make integration-spark` (Spark 4.0):
+12 PASS.",f4b75e954d122eb299b83242a0df6da4e94c332f,1182,false,,3,128,10,README.md; internal; table
+apache/iceberg-go,85b71c030bf58861e27160a21f67b5ace4c586d5,85b71c0,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-06-12T13:12:43-07:00,GitHub,noreply@github.com,2026-06-12T22:12:43+02:00,feat(catalog/rest): endpoint negotiation (#1174),"The REST Catalog sends out a list of supported endpoints via
+`/v1/config`. This is important for features like views + server-side
+planning, where the client has to understand if the catalog supports
+certain features.
+
+I've created a list of endpoints and a mechanism for iceberg-go to error
+out if a particular method isn't supported by the server.
+
+Note: This was created with the help of GenAI, since creating all of the
+endpoint objects is really duplicative work.",7166f89c49b933780a7c9c194d54a568621039d0,1174,false,,5,790,28,catalog
+apache/iceberg-go,1e4916f7a79462d193ed65d672545ff71fa6f556,1e4916f,Minh Vu,vuhoangminh97@gmail.com,2026-06-12T23:48:43+02:00,GitHub,noreply@github.com,2026-06-12T23:48:43+02:00,fix(transforms): support timestamp nanos in year and month (#1196),"## Summary
+
+- add `timestamp_ns` and `timestamptz_ns` support to
+`YearTransform.Transformer` and `MonthTransform.Transformer`
+- make `YearTransform.Apply` and `MonthTransform.Apply` handle
+`TimestampNsLiteral`
+- make transform projection handle `TimestampNsLiteral` through
+`transformLiteral`
+- add regression coverage for Apply, Transformer, and Project paths,
+including a pre-epoch ns value
+
+## Why
+
+`YearTransform` and `MonthTransform` already report that they can
+transform nanosecond timestamp types through `canTransformTime`, but
+their implementation only handled date and microsecond timestamp values.
+That meant accepted partition transforms could produce invalid/null
+transform results for timestamp-ns inputs, and projection needed the
+same literal support once the transformer path succeeded.
+
+## Testing
+
+- `go test . -run
+""TestYearMonthTransformNanoseconds|TestCanTransform|TestManifestPartitionVals""
+-count=1`
+- `go test ./... -count=1`
+- `git diff --check`",85b71c030bf58861e27160a21f67b5ace4c586d5,1196,false,,2,111,0,transforms.go; transforms_test.go

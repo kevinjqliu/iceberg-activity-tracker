@@ -16132,3 +16132,71 @@ Existing tests cover them:
 is clean
 
 This pull request and its description were written by Isaac.",6974eb230e6a364d86aebe4d24512863f748bbeb,2616,false,,2,0,10,crates
+apache/iceberg-rust,4e930d58568dd6d572444dfea48002d6f29c3033,4e930d5,Kurtis Wright,Kurtiscwright@users.noreply.github.com,2026-06-12T14:31:41-07:00,GitHub,noreply@github.com,2026-06-12T14:31:41-07:00,fix(catalog/s3tables): stop dropping endpoint_url for empty properties (#2623),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Closes #2622
+
+## What changes are included in this PR?
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+This PR removes the `properties.is_empty()` check from the s3tables
+`create_sdk_config`. This check was causing an empty properties to be
+return even when an endpoint_url was provided because the endpoint
+wasn't passed into properties before this check ran.
+
+Dropping the check seemed like the best approach because it only saved
+three (credentials, profile, region, and endpoint) checks at Catalog
+start up. If performance testing shows this skip is needed in the future
+than it can be added back in.
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->
+
+Added new unit test to prevent any regressions on future PRs.
+
+Co-authored-by: Kurtis Wright <kurwrigh@amazon.com>",427670d5d1132136480b91a1264b22c865bfa353,2623,false,Kurtis Wright,1,17,4,crates
+apache/iceberg-rust,a89252abe3deb6e179a4157343ba1d9090ed98e6,a89252a,Xander,zander181@googlemail.com,2026-06-12T22:54:16+01:00,GitHub,noreply@github.com,2026-06-12T14:54:16-07:00,chore(ci) cargo lock taplo cli (#2627),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Closes #.
+
+Flake on https://github.com/apache/iceberg-rust/pull/2626 caused by not
+locking the cargo install for taplo
+## What changes are included in this PR?
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",4e930d58568dd6d572444dfea48002d6f29c3033,2627,false,,1,1,1,Makefile
