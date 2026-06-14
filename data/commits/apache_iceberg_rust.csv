@@ -16200,3 +16200,48 @@ Specify what test covers (unit test, integration test, etc.).
 If tests are not included in your PR, please explain why (for example,
 are they covered by existing tests)?
 -->",4e930d58568dd6d572444dfea48002d6f29c3033,2627,false,,1,1,1,Makefile
+apache/iceberg-rust,1fa14715687cbd20293ee60e7ba4e3f90bc0de7b,1fa1471,Abanoub Doss,abanoubdoss@gmail.com,2026-06-13T13:18:06-05:00,GitHub,noreply@github.com,2026-06-13T11:18:06-07:00,ci(python): avoid duplicate bindings build (#2636),"## What changes are included in this PR?
+
+This updates the Python bindings CI workflow to sync Python dev
+dependencies directly instead of running `make install`.
+
+The workflow already builds the wheel with `PyO3/maturin-action`, then
+installs that built wheel with `uv pip install --no-build --reinstall
+--find-links dist/ pyiceberg-core`.
+
+This looks like an accidental interaction between earlier changes: CI
+originally ran `uv sync --group dev --no-install-project` directly, then
+switched to `make install` when that target only performed the same
+sync. Later, `make install` was updated for local development to also
+run `maturin develop`, and CI gained an explicit `--no-build` wheel
+install step.
+
+That meant CI was doing a second full Rust/PyO3 build whose output was
+immediately replaced by the wheel from the earlier `maturin build` step.
+
+Local development behavior is unchanged: `make install && make test`
+still installs the editable binding build.
+
+Measured over the past 7 days of this workflow's runs (207 job
+executions), the duplicate build cost per job:
+
+| OS | Median duration |
+|---|---|
+| ubuntu-latest | 8.4 min |
+| macos-latest | 12.1 min |
+| windows-latest | 15.3 min |
+
+In total about 2,400 runner-minutes per week. With this change the `Sync
+dependencies` step takes a few seconds.
+
+## Are these changes tested?
+
+No new tests are included. This is a CI workflow-only change.
+
+Validation is through the existing Python bindings CI on this PR: the
+`Sync dependencies` step now completes in seconds instead of running
+`maturin develop` (the Windows test job dropped from ~31 to ~16
+minutes), while the later wheel install and test steps continue to
+verify the built wheel.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",a89252abe3deb6e179a4157343ba1d9090ed98e6,2636,false,Abanoub Doss,1,1,1,.github

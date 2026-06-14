@@ -2168,3 +2168,759 @@ and Void transforms to verify transform_type() after Bind(). The
 existing suite only tested Identity, Bucket, and Truncate.",30c312083cd9a8a073e22c981fe3adafc6dc1307,715,false,,2,51,1,src
 apache/iceberg-cpp,0284683f7e1dd5742913d5f0a7c4b48e445df7a4,0284683,Gang Wu,ustcwg@gmail.com,2026-06-10T16:51:54+08:00,GitHub,noreply@github.com,2026-06-10T16:51:54+08:00,fix: make release script more robust (#717),,3fd8a49ee5cbc2afdcb243275f1915e4fe9a6aef,717,false,,5,80,30,ci; cmake_modules; dev
 apache/iceberg-cpp,c0c6b01393070b0813f49b0d6220c98256379cef,c0c6b01,Gang Wu,ustcwg@gmail.com,2026-06-10T20:55:07+08:00,GitHub,noreply@github.com,2026-06-10T20:55:07+08:00,fix: make git run watch optional in release_rc.sh (#720),,0284683f7e1dd5742913d5f0a7c4b48e445df7a4,720,false,,1,28,23,dev
+apache/iceberg-cpp,577c8e4e3fdcf02a55cfe89faaec8641cc950889,577c8e4,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-06-14T12:02:35+08:00,GitHub,noreply@github.com,2026-06-14T12:02:35+08:00,feat(auth): implement SigV4 authentication for REST catalog (#616),"Implement AWS SigV4 authentication for the REST catalog client,
+following Java's `RESTSigV4AuthManager` and `RESTSigV4AuthSession`.
+
+- Extend `AuthSession::Authenticate()` with `HTTPRequest`
+(method, url, body) for SigV4 request signing
+- Add `SigV4AuthSession`: delegate-first auth → relocate conflicting
+Authorization header → sign with AWS SDK
+- Add `SigV4AuthManager`: wraps delegate AuthManager (default OAuth2),
+resolves credentials from properties or default chain
+- Body hash matches Java's `SignerChecksumParams` output: empty body →
+hex `EMPTY_BODY_SHA256`; non-empty body → `Base64(SHA256(body))`
+
+---------
+
+Co-authored-by: Gang Wu <ustcwg@gmail.com>",c0c6b01393070b0813f49b0d6220c98256379cef,616,false,Gang Wu,25,1774,201,.github; CMakeLists.txt; ci; cmake_modules; meson.options; src
+apache/iceberg-cpp,d3b02bbbed0790d0bfa153549c077e831e2b1b8f,d3b02bb,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-06-13T21:03:38-07:00,GitHub,noreply@github.com,2026-06-14T12:03:38+08:00,"Revert ""chore: remove spdlog dependency (#459)"" (#718)","## What
+Re-adds spdlog (v1.15.3, configured with SPDLOG_USE_STD_FORMAT) as a
+build dependency, reverting #459.
+
+## Why
+#459 removed spdlog because nothing used it at the time, with the note
+that it could be added back ""when it is actually needed."" It is now
+needed: this is the foundation for the upcoming logging system for
+iceberg-cpp. Restoring the dependency wiring in its own change keeps
+that follow-up focused purely on the logger itself.",577c8e4e3fdcf02a55cfe89faaec8641cc950889,718,false,,5,94,3,README.md; cmake_modules; src; subprojects
+apache/iceberg-cpp,ca392061f463a51b9ff08f3c3b54f85d4d99ea4d,ca39206,Junwang Zhao,zhjwpku@gmail.com,2026-06-14T17:01:04+08:00,GitHub,noreply@github.com,2026-06-14T17:01:04+08:00,chore: bump version to 0.4.0-SNAPSHOT (#733),,d3b02bbbed0790d0bfa153549c077e831e2b1b8f,733,false,,3,5,4,CMakeLists.txt; meson.build; src
+apache/iceberg-cpp,399af1bfb007d254ada9d1c4c4b9a5540878e95c,399af1b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-14T17:01:48+08:00,GitHub,noreply@github.com,2026-06-14T17:01:48+08:00,chore(deps): bump actions/checkout from 6.0.2 to 6.0.3 (#734),"Bumps [actions/checkout](https://github.com/actions/checkout) from 6.0.2
+to 6.0.3.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/checkout/releases"">actions/checkout's
+releases</a>.</em></p>
+<blockquote>
+<h2>v6.0.3</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Update changelog by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2357"">actions/checkout#2357</a></li>
+<li>fix: expand merge commit SHA regex and add SHA-256 test cases by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2414"">actions/checkout#2414</a></li>
+<li>Fix checkout init for SHA-256 repositories by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2439"">actions/checkout#2439</a></li>
+<li>Update changelog for v6.0.3 by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2446"">actions/checkout#2446</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a href=""https://github.com/yaananth""><code>@​yaananth</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/actions/checkout/pull/2414"">actions/checkout#2414</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/checkout/compare/v6...v6.0.3"">https://github.com/actions/checkout/compare/v6...v6.0.3</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/checkout/blob/main/CHANGELOG.md"">actions/checkout's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Changelog</h1>
+<h2>v6.0.3</h2>
+<ul>
+<li>Fix checkout init for SHA-256 repositories by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2439"">actions/checkout#2439</a></li>
+<li>fix: expand merge commit SHA regex and add SHA-256 test cases by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2414"">actions/checkout#2414</a></li>
+</ul>
+<h2>v6.0.2</h2>
+<ul>
+<li>Fix tag handling: preserve annotations and explicit fetch-tags by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2356"">actions/checkout#2356</a></li>
+</ul>
+<h2>v6.0.1</h2>
+<ul>
+<li>Add worktree support for persist-credentials includeIf by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2327"">actions/checkout#2327</a></li>
+</ul>
+<h2>v6.0.0</h2>
+<ul>
+<li>Persist creds to a separate file by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2286"">actions/checkout#2286</a></li>
+<li>Update README to include Node.js 24 support details and requirements
+by <a href=""https://github.com/salmanmkc""><code>@​salmanmkc</code></a>
+in <a
+href=""https://redirect.github.com/actions/checkout/pull/2248"">actions/checkout#2248</a></li>
+</ul>
+<h2>v5.0.1</h2>
+<ul>
+<li>Port v6 cleanup to v5 by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2301"">actions/checkout#2301</a></li>
+</ul>
+<h2>v5.0.0</h2>
+<ul>
+<li>Update actions checkout to use node 24 by <a
+href=""https://github.com/salmanmkc""><code>@​salmanmkc</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2226"">actions/checkout#2226</a></li>
+</ul>
+<h2>v4.3.1</h2>
+<ul>
+<li>Port v6 cleanup to v4 by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2305"">actions/checkout#2305</a></li>
+</ul>
+<h2>v4.3.0</h2>
+<ul>
+<li>docs: update README.md by <a
+href=""https://github.com/motss""><code>@​motss</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1971"">actions/checkout#1971</a></li>
+<li>Add internal repos for checking out multiple repositories by <a
+href=""https://github.com/mouismail""><code>@​mouismail</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1977"">actions/checkout#1977</a></li>
+<li>Documentation update - add recommended permissions to Readme by <a
+href=""https://github.com/benwells""><code>@​benwells</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2043"">actions/checkout#2043</a></li>
+<li>Adjust positioning of user email note and permissions heading by <a
+href=""https://github.com/joshmgross""><code>@​joshmgross</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2044"">actions/checkout#2044</a></li>
+<li>Update README.md by <a
+href=""https://github.com/nebuk89""><code>@​nebuk89</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2194"">actions/checkout#2194</a></li>
+<li>Update CODEOWNERS for actions by <a
+href=""https://github.com/TingluoHuang""><code>@​TingluoHuang</code></a>
+in <a
+href=""https://redirect.github.com/actions/checkout/pull/2224"">actions/checkout#2224</a></li>
+<li>Update package dependencies by <a
+href=""https://github.com/salmanmkc""><code>@​salmanmkc</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2236"">actions/checkout#2236</a></li>
+</ul>
+<h2>v4.2.2</h2>
+<ul>
+<li><code>url-helper.ts</code> now leverages well-known environment
+variables by <a href=""https://github.com/jww3""><code>@​jww3</code></a>
+in <a
+href=""https://redirect.github.com/actions/checkout/pull/1941"">actions/checkout#1941</a></li>
+<li>Expand unit test coverage for <code>isGhes</code> by <a
+href=""https://github.com/jww3""><code>@​jww3</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1946"">actions/checkout#1946</a></li>
+</ul>
+<h2>v4.2.1</h2>
+<ul>
+<li>Check out other refs/* by commit if provided, fall back to ref by <a
+href=""https://github.com/orhantoy""><code>@​orhantoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1924"">actions/checkout#1924</a></li>
+</ul>
+<h2>v4.2.0</h2>
+<ul>
+<li>Add Ref and Commit outputs by <a
+href=""https://github.com/lucacome""><code>@​lucacome</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1180"">actions/checkout#1180</a></li>
+<li>Dependency updates by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a>- <a
+href=""https://redirect.github.com/actions/checkout/pull/1777"">actions/checkout#1777</a>,
+<a
+href=""https://redirect.github.com/actions/checkout/pull/1872"">actions/checkout#1872</a></li>
+</ul>
+<h2>v4.1.7</h2>
+<ul>
+<li>Bump the minor-npm-dependencies group across 1 directory with 4
+updates by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1739"">actions/checkout#1739</a></li>
+<li>Bump actions/checkout from 3 to 4 by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1697"">actions/checkout#1697</a></li>
+<li>Check out other refs/* by commit by <a
+href=""https://github.com/orhantoy""><code>@​orhantoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1774"">actions/checkout#1774</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/actions/checkout/commit/df4cb1c069e1874edd31b4311f1884172cec0e10""><code>df4cb1c</code></a>
+Update changelog for v6.0.3 (<a
+href=""https://redirect.github.com/actions/checkout/issues/2446"">#2446</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/1cce3390c2bfda521930d01229c073c7ff920824""><code>1cce339</code></a>
+Fix checkout init for SHA-256 repositories (<a
+href=""https://redirect.github.com/actions/checkout/issues/2439"">#2439</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/900f2210b1d28bbbd0bd22d17926b9e224e8f231""><code>900f221</code></a>
+fix: expand merge commit SHA regex and add SHA-256 test cases (<a
+href=""https://redirect.github.com/actions/checkout/issues/2414"">#2414</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/0c366fd6a839edf440554fa01a7085ccba70ac98""><code>0c366fd</code></a>
+Update changelog (<a
+href=""https://redirect.github.com/actions/checkout/issues/2357"">#2357</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/actions/checkout/compare/de0fac2e4500dabe0009e67214ff5f5447ce83dd...df4cb1c069e1874edd31b4311f1884172cec0e10"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=actions/checkout&package-manager=github_actions&previous-version=6.0.2&new-version=6.0.3)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",ca392061f463a51b9ff08f3c3b54f85d4d99ea4d,734,false,dependabot[bot],12,18,18,.github
+apache/iceberg-cpp,04e0ce3565c52b0ad97c9a08e5f040950c901686,04e0ce3,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-14T17:02:10+08:00,GitHub,noreply@github.com,2026-06-14T17:02:10+08:00,chore(deps): bump actions/cache from 4.3.0 to 5.0.5 (#735),"Bumps [actions/cache](https://github.com/actions/cache) from 4.3.0 to
+5.0.5.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/cache/releases"">actions/cache's
+releases</a>.</em></p>
+<blockquote>
+<h2>v5.0.5</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Update ts-http-runtime dependency by <a
+href=""https://github.com/yacaovsnc""><code>@​yacaovsnc</code></a> in <a
+href=""https://redirect.github.com/actions/cache/pull/1747"">actions/cache#1747</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/cache/compare/v5...v5.0.5"">https://github.com/actions/cache/compare/v5...v5.0.5</a></p>
+<h2>v5.0.4</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Add release instructions and update maintainer docs by <a
+href=""https://github.com/Link""><code>@​Link</code></a>- in <a
+href=""https://redirect.github.com/actions/cache/pull/1696"">actions/cache#1696</a></li>
+<li>Potential fix for code scanning alert no. 52: Workflow does not
+contain permissions by <a
+href=""https://github.com/Link""><code>@​Link</code></a>- in <a
+href=""https://redirect.github.com/actions/cache/pull/1697"">actions/cache#1697</a></li>
+<li>Fix workflow permissions and cleanup workflow names / formatting by
+<a href=""https://github.com/Link""><code>@​Link</code></a>- in <a
+href=""https://redirect.github.com/actions/cache/pull/1699"">actions/cache#1699</a></li>
+<li>docs: Update examples to use the latest version by <a
+href=""https://github.com/XZTDean""><code>@​XZTDean</code></a> in <a
+href=""https://redirect.github.com/actions/cache/pull/1690"">actions/cache#1690</a></li>
+<li>Fix proxy integration tests by <a
+href=""https://github.com/Link""><code>@​Link</code></a>- in <a
+href=""https://redirect.github.com/actions/cache/pull/1701"">actions/cache#1701</a></li>
+<li>Fix cache key in examples.md for bun.lock by <a
+href=""https://github.com/RyPeck""><code>@​RyPeck</code></a> in <a
+href=""https://redirect.github.com/actions/cache/pull/1722"">actions/cache#1722</a></li>
+<li>Update dependencies &amp; patch security vulnerabilities by <a
+href=""https://github.com/Link""><code>@​Link</code></a>- in <a
+href=""https://redirect.github.com/actions/cache/pull/1738"">actions/cache#1738</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a href=""https://github.com/XZTDean""><code>@​XZTDean</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/actions/cache/pull/1690"">actions/cache#1690</a></li>
+<li><a href=""https://github.com/RyPeck""><code>@​RyPeck</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/actions/cache/pull/1722"">actions/cache#1722</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/cache/compare/v5...v5.0.4"">https://github.com/actions/cache/compare/v5...v5.0.4</a></p>
+<h2>v5.0.3</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Bump <code>@actions/cache</code> to v5.0.5 (Resolves: <a
+href=""https://github.com/actions/cache/security/dependabot/33"">https://github.com/actions/cache/security/dependabot/33</a>)</li>
+<li>Bump <code>@actions/core</code> to v2.0.3</li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/cache/compare/v5...v5.0.3"">https://github.com/actions/cache/compare/v5...v5.0.3</a></p>
+<h2>v.5.0.2</h2>
+<h1>v5.0.2</h1>
+<h2>What's Changed</h2>
+<p>When creating cache entries, 429s returned from the cache service
+will not be retried.</p>
+<h2>v5.0.1</h2>
+<blockquote>
+<p>[!IMPORTANT]
+<strong><code>actions/cache@v5</code> runs on the Node.js 24 runtime and
+requires a minimum Actions Runner version of
+<code>2.327.1</code>.</strong></p>
+<p>If you are using self-hosted runners, ensure they are updated before
+upgrading.</p>
+</blockquote>
+<hr />
+<h1>v5.0.1</h1>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/cache/blob/main/RELEASES.md"">actions/cache's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Releases</h1>
+<h2>How to prepare a release</h2>
+<blockquote>
+<p>[!NOTE]<br />
+Relevant for maintainers with write access only.</p>
+</blockquote>
+<ol>
+<li>Switch to a new branch from <code>main</code>.</li>
+<li>Run <code>npm test</code> to ensure all tests are passing.</li>
+<li>Update the version in <a
+href=""https://github.com/actions/cache/blob/main/package.json""><code>https://github.com/actions/cache/blob/main/package.json</code></a>.</li>
+<li>Run <code>npm run build</code> to update the compiled files.</li>
+<li>Update this <a
+href=""https://github.com/actions/cache/blob/main/RELEASES.md""><code>https://github.com/actions/cache/blob/main/RELEASES.md</code></a>
+with the new version and changes in the <code>## Changelog</code>
+section.</li>
+<li>Run <code>licensed cache</code> to update the license report.</li>
+<li>Run <code>licensed status</code> and resolve any warnings by
+updating the <a
+href=""https://github.com/actions/cache/blob/main/.licensed.yml""><code>https://github.com/actions/cache/blob/main/.licensed.yml</code></a>
+file with the exceptions.</li>
+<li>Commit your changes and push your branch upstream.</li>
+<li>Open a pull request against <code>main</code> and get it reviewed
+and merged.</li>
+<li>Draft a new release <a
+href=""https://github.com/actions/cache/releases"">https://github.com/actions/cache/releases</a>
+use the same version number used in <code>package.json</code>
+<ol>
+<li>Create a new tag with the version number.</li>
+<li>Auto generate release notes and update them to match the changes you
+made in <code>RELEASES.md</code>.</li>
+<li>Toggle the set as the latest release option.</li>
+<li>Publish the release.</li>
+</ol>
+</li>
+<li>Navigate to <a
+href=""https://github.com/actions/cache/actions/workflows/release-new-action-version.yml"">https://github.com/actions/cache/actions/workflows/release-new-action-version.yml</a>
+<ol>
+<li>There should be a workflow run queued with the same version
+number.</li>
+<li>Approve the run to publish the new version and update the major tags
+for this action.</li>
+</ol>
+</li>
+</ol>
+<h2>Changelog</h2>
+<h3>5.0.4</h3>
+<ul>
+<li>Bump <code>minimatch</code> to v3.1.5 (fixes ReDoS via globstar
+patterns)</li>
+<li>Bump <code>undici</code> to v6.24.1 (WebSocket decompression bomb
+protection, header validation fixes)</li>
+<li>Bump <code>fast-xml-parser</code> to v5.5.6</li>
+</ul>
+<h3>5.0.3</h3>
+<ul>
+<li>Bump <code>@actions/cache</code> to v5.0.5 (Resolves: <a
+href=""https://github.com/actions/cache/security/dependabot/33"">https://github.com/actions/cache/security/dependabot/33</a>)</li>
+<li>Bump <code>@actions/core</code> to v2.0.3</li>
+</ul>
+<h3>5.0.2</h3>
+<ul>
+<li>Bump <code>@actions/cache</code> to v5.0.3 <a
+href=""https://redirect.github.com/actions/cache/pull/1692"">#1692</a></li>
+</ul>
+<h3>5.0.1</h3>
+<ul>
+<li>Update <code>@azure/storage-blob</code> to <code>^12.29.1</code> via
+<code>@actions/cache@5.0.1</code> <a
+href=""https://redirect.github.com/actions/cache/pull/1685"">#1685</a></li>
+</ul>
+<h3>5.0.0</h3>
+<blockquote>
+<p>[!IMPORTANT]
+<code>actions/cache@v5</code> runs on the Node.js 24 runtime and
+requires a minimum Actions Runner version of <code>2.327.1</code>.</p>
+</blockquote>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/actions/cache/commit/27d5ce7f107fe9357f9df03efb73ab90386fccae""><code>27d5ce7</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/actions/cache/issues/1747"">#1747</a>
+from actions/yacaovsnc/update-dependency</li>
+<li><a
+href=""https://github.com/actions/cache/commit/f280785d7b6e1884c7d12b9136eb0f4a1574fcfd""><code>f280785</code></a>
+licensed changes</li>
+<li><a
+href=""https://github.com/actions/cache/commit/619aeb1606e195be0b36fd0ff68dcf1aff6b65a7""><code>619aeb1</code></a>
+npm run build generated dist files</li>
+<li><a
+href=""https://github.com/actions/cache/commit/bcf16c2893940a4899761e55c7ac3c1cf88a04f6""><code>bcf16c2</code></a>
+Update ts-http-runtime to 0.3.5</li>
+<li><a
+href=""https://github.com/actions/cache/commit/668228422ae6a00e4ad889ee87cd7109ec5666a7""><code>6682284</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/actions/cache/issues/1738"">#1738</a>
+from actions/prepare-v5.0.4</li>
+<li><a
+href=""https://github.com/actions/cache/commit/e34039626f957d3e3e50843d15c1b20547fc90e2""><code>e340396</code></a>
+Update RELEASES</li>
+<li><a
+href=""https://github.com/actions/cache/commit/8a671105293e81530f1af99863cdf94550aba1a6""><code>8a67110</code></a>
+Add licenses</li>
+<li><a
+href=""https://github.com/actions/cache/commit/1865903e1b0cb750dda9bc5c58be03424cc62830""><code>1865903</code></a>
+Update dependencies &amp; patch security vulnerabilities</li>
+<li><a
+href=""https://github.com/actions/cache/commit/565629816435f6c0b50676926c9b05c254113c0c""><code>5656298</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/actions/cache/issues/1722"">#1722</a>
+from RyPeck/patch-1</li>
+<li><a
+href=""https://github.com/actions/cache/commit/4e380d19e192ace8e86f23f32ca6fdec98a673c6""><code>4e380d1</code></a>
+Fix cache key in examples.md for bun.lock</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/actions/cache/compare/0057852bfaa89a56745cba8c7296529d2fc39830...27d5ce7f107fe9357f9df03efb73ab90386fccae"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=actions/cache&package-manager=github_actions&previous-version=4.3.0&new-version=5.0.5)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",399af1bfb007d254ada9d1c4c4b9a5540878e95c,735,false,dependabot[bot],1,2,2,.github
+apache/iceberg-cpp,cf50b12ba4df2e6540a652e1e4343dbbb6beb791,cf50b12,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-14T17:02:40+08:00,GitHub,noreply@github.com,2026-06-14T17:02:40+08:00,chore(deps): bump github/codeql-action from 4.36.0 to 4.36.2 (#736),"Bumps [github/codeql-action](https://github.com/github/codeql-action)
+from 4.36.0 to 4.36.2.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.36.2</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>v4.36.1</h2>
+<p>No user facing changes.</p>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<p>No user facing changes.</p>
+<h2>4.36.2 - 04 Jun 2026</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>4.36.1 - 02 Jun 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.0 - 22 May 2026</h2>
+<ul>
+<li><em>Breaking change</em>: Bump the minimum required CodeQL bundle
+version to 2.19.4. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3894"">#3894</a></li>
+<li>Add support for SHA-256 Git object IDs. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3893"">#3893</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.5"">2.25.5</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3926"">#3926</a></li>
+</ul>
+<h2>4.35.5 - 15 May 2026</h2>
+<ul>
+<li>We have improved how the JavaScript bundles for the CodeQL Action
+are generated to avoid duplication across bundles and reduce the size of
+the repository by around 70%. This should have no effect on the runtime
+behaviour of the CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3899"">#3899</a></li>
+<li>For performance and accuracy reasons, <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> will now only be enabled on a pull request when
+diff-informed analysis is also enabled for that run. If diff-informed
+analysis is unavailable (for example, because the PR diff ranges could
+not be computed), the action will fall back to a full analysis. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3791"">#3791</a></li>
+<li>If multiple inputs are provided for the GitHub-internal
+<code>analysis-kinds</code> input, only <code>code-scanning</code> will
+be enabled. The <code>analysis-kinds</code> input is experimental, for
+GitHub-internal use only, and may change without notice at any time. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3892"">#3892</a></li>
+<li>Added an experimental change which, when running a Code Scanning
+analysis for a PR with <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> enabled, prefers CodeQL CLI versions that have
+a cached overlay-base database for the configured languages. This speeds
+up analysis for a repository when there is not yet a cached overlay-base
+database for the latest CLI version. We expect to roll this change out
+to everyone in May. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3880"">#3880</a></li>
+</ul>
+<h2>4.35.4 - 07 May 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.4"">2.25.4</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3881"">#3881</a></li>
+</ul>
+<h2>4.35.3 - 01 May 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.19.3 and earlier. These versions of
+CodeQL were discontinued on 9 April 2026 alongside GitHub Enterprise
+Server 3.15, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3837"">#3837</a></li>
+<li>Configurations for private registries that use Cloudsmith or GCP
+OIDC are now accepted. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3850"">#3850</a></li>
+<li>Best-effort connection tests for private registries now use
+<code>GET</code> requests instead of <code>HEAD</code> for better
+compatibility with various registry implementations. For NuGet feeds,
+the test is now always performed against the service index. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3853"">#3853</a></li>
+<li>Fixed a bug where two diagnostics produced within the same
+millisecond could overwrite each other on disk, causing one of them to
+be lost. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3852"">#3852</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.3"">2.25.3</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3865"">#3865</a></li>
+</ul>
+<h2>4.35.2 - 15 Apr 2026</h2>
+<ul>
+<li>The undocumented TRAP cache cleanup feature that could be enabled
+using the <code>CODEQL_ACTION_CLEANUP_TRAP_CACHES</code> environment
+variable is deprecated and will be removed in May 2026. If you are
+affected by this, we recommend disabling TRAP caching by passing the
+<code>trap-caching: false</code> input to the <code>init</code> Action.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3795"">#3795</a></li>
+<li>The Git version 2.36.0 requirement for improved incremental analysis
+now only applies to repositories that contain submodules. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3789"">#3789</a></li>
+<li>Python analysis on GHES no longer extracts the standard library,
+relying instead on models of the standard library. This should result in
+significantly faster extraction and analysis times, while the effect on
+alerts should be minimal. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3794"">#3794</a></li>
+<li>Fixed a bug in the validation of OIDC configurations for private
+registries that was added in CodeQL Action 4.33.0 / 3.33.0. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3807"">#3807</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.2"">2.25.2</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3823"">#3823</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/8aad20d150bbac5944a9f9d289da16a4b0d87c1e""><code>8aad20d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3949"">#3949</a>
+from github/update-v4.36.2-dcb947ce1</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/f521b08cd8f468ab193ea950a589cb2e9c869c6a""><code>f521b08</code></a>
+Add additional changelog notes</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/8aeff0ffb7b78582ee0d0e6eebb8140684400d08""><code>8aeff0f</code></a>
+Update changelog for v4.36.2</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/dcb947ce15976d40ea82935510b2db4872ec124c""><code>dcb947c</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3948"">#3948</a>
+from github/update-bundle/codeql-bundle-v2.25.6</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/c251bcefa178f7780f62f150002acffe3d07fde9""><code>c251bce</code></a>
+Add changelog note</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/62953c18b35f59e28351d2f1e806925aef8b1e3c""><code>62953c1</code></a>
+Update default bundle to codeql-bundle-v2.25.6</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/423b570baf1976cd7a3daeba5d6e9f9b76432f37""><code>423b570</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3946"">#3946</a>
+from github/dependabot/npm_and_yarn/npm-minor-5d507a...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/c35d1b164463ee62a100735382aaaa525c5d3496""><code>c35d1b1</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3947"">#3947</a>
+from github/dependabot/github_actions/dot-github/wor...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/cb1a588b02755b176e7b9d033ed4b69312f0e1bd""><code>cb1a588</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3937"">#3937</a>
+from github/robertbrignull/waitForProcessing_backoff</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/ba47406412c54532b5b4fcfbaf877c9e2382b206""><code>ba47406</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3943"">#3943</a>
+from github/henrymercer/cache-cli-version-info</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/7211b7c8077ea37d8641b6271f6a365a22a5fbfa...8aad20d150bbac5944a9f9d289da16a4b0d87c1e"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=github/codeql-action&package-manager=github_actions&previous-version=4.36.0&new-version=4.36.2)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",04e0ce3565c52b0ad97c9a08e5f040950c901686,736,false,dependabot[bot],1,2,2,.github
+apache/iceberg-cpp,a68602cfe49e45ae252450d4bc09fe83cbf3dd34,a68602c,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-06-14T17:39:34+08:00,GitHub,noreply@github.com,2026-06-14T17:39:34+08:00,feat(arrow): resolve S3-compatible schemes in ArrowFileSystemFileIO (#703),"`ArrowFileSystemFileIO::ResolvePath` passed the full URI to the wrapped
+FileSystem's `PathFromUri`, which only accepts that FileSystem's native
+scheme(`s3://` for `S3FileSystem`). S3-compatible object stores are
+commonly addressed with other schemes — `s3a`/`s3n`, or vendor schemes
+such as `gs://` (GCS) and`oss://` (Alibaba OSS) — served by an
+`arrow::fs::S3FileSystem` configured with an `endpoint_override`. Every
+read and write of such a location failed with:
+```
+expected a URI with one of the schemes (s3) but received <scheme>://...
+```",cf50b12ba4df2e6540a652e1e4343dbbb6beb791,703,false,,4,59,5,src
