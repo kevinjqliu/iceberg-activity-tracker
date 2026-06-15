@@ -11081,3 +11081,1245 @@ same literal support once the transformer path succeeded.
 -count=1`
 - `go test ./... -count=1`
 - `git diff --check`",85b71c030bf58861e27160a21f67b5ace4c586d5,1196,false,,2,111,0,transforms.go; transforms_test.go
+apache/iceberg-go,846e395c4ae149a085e1a19909bfdcca2b1567be,846e395,Neelesh Salian,nssalian@users.noreply.github.com,2026-06-15T03:36:50-07:00,GitHub,noreply@github.com,2026-06-15T12:36:50+02:00,feat(table): reject Variant in IdentityTransform and bound literal predicates (#1206),"First part of [#1016](https://github.com/apache/iceberg-go/issues/1016).
+
+## Changes
+
+- Adds `VariantType` to `IdentityTransform`'s deny-list (matches Java's
+`Identity.UNSUPPORTED_TYPES`), the other transforms already reject via
+their allow-list defaults. Adds explicit `case VariantType` in
+`createBoundLiteralPredicate` returning `ErrInvalidArgument` with a
+clear message.
+
+- Added a test `TestVariantBoundLiteralRejectionMessage`
+
+This is a precursor to adding the `variant_get` expression and
+stats-based pruning of #1016. Will address those after the shredding
+fixes.
+
+Signed-off-by: Neelesh Salian <n_salian@apple.com>",1e4916f7a79462d193ed65d672545ff71fa6f556,1206,false,,3,21,1,exprs.go; exprs_test.go; transforms.go
+apache/iceberg-go,b68699b3ff33050a3ce69bf82998fdaef1a5d6fc,b68699b,Leon White,32928115+strophy@users.noreply.github.com,2026-06-15T13:00:11+02:00,GitHub,noreply@github.com,2026-06-15T13:00:11+02:00,fix: runtime.staticuint64s+42100384 is not 2-byte aligned on big-endian (#1194),"https://github.com/minio/warp recently added iceberg-go as a dependency.
+iceberg-go encounters the following compiler error on s390x architecture
+(big-endian) during packaging for Alpine Linux:
+```
+# github.com/minio/warp
+github.com/apache/iceberg-go/table/internal.newStatAgg[go.shape.bool]: runtime.staticuint64s+42100384 is not 2-byte aligned
+github.com/apache/iceberg-go/table/internal.newStatAgg[go.shape.bool]: runtime.staticuint64s+42100384 is not 2-byte aligned
+github.com/apache/iceberg-go.getComparator[go.shape.bool]: runtime.staticuint64s+42100384 is not 2-byte aligned
+github.com/apache/iceberg-go.getComparator[go.shape.bool]: runtime.staticuint64s+42100384 is not 2-byte aligned
+>>> ERROR: warp-s3: build failed
+```
+The issue here is instantiating the generic bool comparator on a generic
+zero value, resulting in an alignment bug on big-endian architecture.
+This fix replaces the generic zero-value comparator initialization with
+explicit typed comparators, allowing compilation on s390x.
+
+Co-authored-by: Matt Topol <matt@columnar.tech>",846e395c4ae149a085e1a19909bfdcca2b1567be,1194,false,Matt Topol,2,61,30,.github; literals.go
+apache/iceberg-go,65ecf9871e807687423fa5da29e03cdfdd722166,65ecf98,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-15T13:07:35+02:00,GitHub,noreply@github.com,2026-06-15T13:07:35+02:00,build(deps): bump github/codeql-action from 4.36.0 to 4.36.2 (#1203),"Bumps [github/codeql-action](https://github.com/github/codeql-action)
+from 4.36.0 to 4.36.2.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.36.2</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>v4.36.1</h2>
+<p>No user facing changes.</p>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<p>No user facing changes.</p>
+<h2>4.36.2 - 04 Jun 2026</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>4.36.1 - 02 Jun 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.0 - 22 May 2026</h2>
+<ul>
+<li><em>Breaking change</em>: Bump the minimum required CodeQL bundle
+version to 2.19.4. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3894"">#3894</a></li>
+<li>Add support for SHA-256 Git object IDs. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3893"">#3893</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.5"">2.25.5</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3926"">#3926</a></li>
+</ul>
+<h2>4.35.5 - 15 May 2026</h2>
+<ul>
+<li>We have improved how the JavaScript bundles for the CodeQL Action
+are generated to avoid duplication across bundles and reduce the size of
+the repository by around 70%. This should have no effect on the runtime
+behaviour of the CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3899"">#3899</a></li>
+<li>For performance and accuracy reasons, <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> will now only be enabled on a pull request when
+diff-informed analysis is also enabled for that run. If diff-informed
+analysis is unavailable (for example, because the PR diff ranges could
+not be computed), the action will fall back to a full analysis. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3791"">#3791</a></li>
+<li>If multiple inputs are provided for the GitHub-internal
+<code>analysis-kinds</code> input, only <code>code-scanning</code> will
+be enabled. The <code>analysis-kinds</code> input is experimental, for
+GitHub-internal use only, and may change without notice at any time. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3892"">#3892</a></li>
+<li>Added an experimental change which, when running a Code Scanning
+analysis for a PR with <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> enabled, prefers CodeQL CLI versions that have
+a cached overlay-base database for the configured languages. This speeds
+up analysis for a repository when there is not yet a cached overlay-base
+database for the latest CLI version. We expect to roll this change out
+to everyone in May. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3880"">#3880</a></li>
+</ul>
+<h2>4.35.4 - 07 May 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.4"">2.25.4</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3881"">#3881</a></li>
+</ul>
+<h2>4.35.3 - 01 May 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.19.3 and earlier. These versions of
+CodeQL were discontinued on 9 April 2026 alongside GitHub Enterprise
+Server 3.15, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3837"">#3837</a></li>
+<li>Configurations for private registries that use Cloudsmith or GCP
+OIDC are now accepted. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3850"">#3850</a></li>
+<li>Best-effort connection tests for private registries now use
+<code>GET</code> requests instead of <code>HEAD</code> for better
+compatibility with various registry implementations. For NuGet feeds,
+the test is now always performed against the service index. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3853"">#3853</a></li>
+<li>Fixed a bug where two diagnostics produced within the same
+millisecond could overwrite each other on disk, causing one of them to
+be lost. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3852"">#3852</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.3"">2.25.3</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3865"">#3865</a></li>
+</ul>
+<h2>4.35.2 - 15 Apr 2026</h2>
+<ul>
+<li>The undocumented TRAP cache cleanup feature that could be enabled
+using the <code>CODEQL_ACTION_CLEANUP_TRAP_CACHES</code> environment
+variable is deprecated and will be removed in May 2026. If you are
+affected by this, we recommend disabling TRAP caching by passing the
+<code>trap-caching: false</code> input to the <code>init</code> Action.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3795"">#3795</a></li>
+<li>The Git version 2.36.0 requirement for improved incremental analysis
+now only applies to repositories that contain submodules. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3789"">#3789</a></li>
+<li>Python analysis on GHES no longer extracts the standard library,
+relying instead on models of the standard library. This should result in
+significantly faster extraction and analysis times, while the effect on
+alerts should be minimal. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3794"">#3794</a></li>
+<li>Fixed a bug in the validation of OIDC configurations for private
+registries that was added in CodeQL Action 4.33.0 / 3.33.0. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3807"">#3807</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.2"">2.25.2</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3823"">#3823</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/8aad20d150bbac5944a9f9d289da16a4b0d87c1e""><code>8aad20d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3949"">#3949</a>
+from github/update-v4.36.2-dcb947ce1</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/f521b08cd8f468ab193ea950a589cb2e9c869c6a""><code>f521b08</code></a>
+Add additional changelog notes</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/8aeff0ffb7b78582ee0d0e6eebb8140684400d08""><code>8aeff0f</code></a>
+Update changelog for v4.36.2</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/dcb947ce15976d40ea82935510b2db4872ec124c""><code>dcb947c</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3948"">#3948</a>
+from github/update-bundle/codeql-bundle-v2.25.6</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/c251bcefa178f7780f62f150002acffe3d07fde9""><code>c251bce</code></a>
+Add changelog note</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/62953c18b35f59e28351d2f1e806925aef8b1e3c""><code>62953c1</code></a>
+Update default bundle to codeql-bundle-v2.25.6</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/423b570baf1976cd7a3daeba5d6e9f9b76432f37""><code>423b570</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3946"">#3946</a>
+from github/dependabot/npm_and_yarn/npm-minor-5d507a...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/c35d1b164463ee62a100735382aaaa525c5d3496""><code>c35d1b1</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3947"">#3947</a>
+from github/dependabot/github_actions/dot-github/wor...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/cb1a588b02755b176e7b9d033ed4b69312f0e1bd""><code>cb1a588</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3937"">#3937</a>
+from github/robertbrignull/waitForProcessing_backoff</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/ba47406412c54532b5b4fcfbaf877c9e2382b206""><code>ba47406</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3943"">#3943</a>
+from github/henrymercer/cache-cli-version-info</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/7211b7c8077ea37d8641b6271f6a365a22a5fbfa...8aad20d150bbac5944a9f9d289da16a4b0d87c1e"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=github/codeql-action&package-manager=github_actions&previous-version=4.36.0&new-version=4.36.2)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",b68699b3ff33050a3ce69bf82998fdaef1a5d6fc,1203,false,dependabot[bot],1,2,2,.github
+apache/iceberg-go,9563b91e98594a09fd16279be2a1e37d2472ccc2,9563b91,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-15T13:10:53+02:00,GitHub,noreply@github.com,2026-06-15T13:10:53+02:00,build(deps): bump actions/checkout from 6.0.2 to 6.0.3 (#1202),"Bumps [actions/checkout](https://github.com/actions/checkout) from 6.0.2
+to 6.0.3.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/checkout/releases"">actions/checkout's
+releases</a>.</em></p>
+<blockquote>
+<h2>v6.0.3</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Update changelog by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2357"">actions/checkout#2357</a></li>
+<li>fix: expand merge commit SHA regex and add SHA-256 test cases by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2414"">actions/checkout#2414</a></li>
+<li>Fix checkout init for SHA-256 repositories by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2439"">actions/checkout#2439</a></li>
+<li>Update changelog for v6.0.3 by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2446"">actions/checkout#2446</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a href=""https://github.com/yaananth""><code>@​yaananth</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/actions/checkout/pull/2414"">actions/checkout#2414</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/checkout/compare/v6...v6.0.3"">https://github.com/actions/checkout/compare/v6...v6.0.3</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/checkout/blob/main/CHANGELOG.md"">actions/checkout's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Changelog</h1>
+<h2>v6.0.3</h2>
+<ul>
+<li>Fix checkout init for SHA-256 repositories by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2439"">actions/checkout#2439</a></li>
+<li>fix: expand merge commit SHA regex and add SHA-256 test cases by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2414"">actions/checkout#2414</a></li>
+</ul>
+<h2>v6.0.2</h2>
+<ul>
+<li>Fix tag handling: preserve annotations and explicit fetch-tags by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2356"">actions/checkout#2356</a></li>
+</ul>
+<h2>v6.0.1</h2>
+<ul>
+<li>Add worktree support for persist-credentials includeIf by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2327"">actions/checkout#2327</a></li>
+</ul>
+<h2>v6.0.0</h2>
+<ul>
+<li>Persist creds to a separate file by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2286"">actions/checkout#2286</a></li>
+<li>Update README to include Node.js 24 support details and requirements
+by <a href=""https://github.com/salmanmkc""><code>@​salmanmkc</code></a>
+in <a
+href=""https://redirect.github.com/actions/checkout/pull/2248"">actions/checkout#2248</a></li>
+</ul>
+<h2>v5.0.1</h2>
+<ul>
+<li>Port v6 cleanup to v5 by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2301"">actions/checkout#2301</a></li>
+</ul>
+<h2>v5.0.0</h2>
+<ul>
+<li>Update actions checkout to use node 24 by <a
+href=""https://github.com/salmanmkc""><code>@​salmanmkc</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2226"">actions/checkout#2226</a></li>
+</ul>
+<h2>v4.3.1</h2>
+<ul>
+<li>Port v6 cleanup to v4 by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2305"">actions/checkout#2305</a></li>
+</ul>
+<h2>v4.3.0</h2>
+<ul>
+<li>docs: update README.md by <a
+href=""https://github.com/motss""><code>@​motss</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1971"">actions/checkout#1971</a></li>
+<li>Add internal repos for checking out multiple repositories by <a
+href=""https://github.com/mouismail""><code>@​mouismail</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1977"">actions/checkout#1977</a></li>
+<li>Documentation update - add recommended permissions to Readme by <a
+href=""https://github.com/benwells""><code>@​benwells</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2043"">actions/checkout#2043</a></li>
+<li>Adjust positioning of user email note and permissions heading by <a
+href=""https://github.com/joshmgross""><code>@​joshmgross</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2044"">actions/checkout#2044</a></li>
+<li>Update README.md by <a
+href=""https://github.com/nebuk89""><code>@​nebuk89</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2194"">actions/checkout#2194</a></li>
+<li>Update CODEOWNERS for actions by <a
+href=""https://github.com/TingluoHuang""><code>@​TingluoHuang</code></a>
+in <a
+href=""https://redirect.github.com/actions/checkout/pull/2224"">actions/checkout#2224</a></li>
+<li>Update package dependencies by <a
+href=""https://github.com/salmanmkc""><code>@​salmanmkc</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2236"">actions/checkout#2236</a></li>
+</ul>
+<h2>v4.2.2</h2>
+<ul>
+<li><code>url-helper.ts</code> now leverages well-known environment
+variables by <a href=""https://github.com/jww3""><code>@​jww3</code></a>
+in <a
+href=""https://redirect.github.com/actions/checkout/pull/1941"">actions/checkout#1941</a></li>
+<li>Expand unit test coverage for <code>isGhes</code> by <a
+href=""https://github.com/jww3""><code>@​jww3</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1946"">actions/checkout#1946</a></li>
+</ul>
+<h2>v4.2.1</h2>
+<ul>
+<li>Check out other refs/* by commit if provided, fall back to ref by <a
+href=""https://github.com/orhantoy""><code>@​orhantoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1924"">actions/checkout#1924</a></li>
+</ul>
+<h2>v4.2.0</h2>
+<ul>
+<li>Add Ref and Commit outputs by <a
+href=""https://github.com/lucacome""><code>@​lucacome</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1180"">actions/checkout#1180</a></li>
+<li>Dependency updates by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a>- <a
+href=""https://redirect.github.com/actions/checkout/pull/1777"">actions/checkout#1777</a>,
+<a
+href=""https://redirect.github.com/actions/checkout/pull/1872"">actions/checkout#1872</a></li>
+</ul>
+<h2>v4.1.7</h2>
+<ul>
+<li>Bump the minor-npm-dependencies group across 1 directory with 4
+updates by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1739"">actions/checkout#1739</a></li>
+<li>Bump actions/checkout from 3 to 4 by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1697"">actions/checkout#1697</a></li>
+<li>Check out other refs/* by commit by <a
+href=""https://github.com/orhantoy""><code>@​orhantoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1774"">actions/checkout#1774</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/actions/checkout/commit/df4cb1c069e1874edd31b4311f1884172cec0e10""><code>df4cb1c</code></a>
+Update changelog for v6.0.3 (<a
+href=""https://redirect.github.com/actions/checkout/issues/2446"">#2446</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/1cce3390c2bfda521930d01229c073c7ff920824""><code>1cce339</code></a>
+Fix checkout init for SHA-256 repositories (<a
+href=""https://redirect.github.com/actions/checkout/issues/2439"">#2439</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/900f2210b1d28bbbd0bd22d17926b9e224e8f231""><code>900f221</code></a>
+fix: expand merge commit SHA regex and add SHA-256 test cases (<a
+href=""https://redirect.github.com/actions/checkout/issues/2414"">#2414</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/0c366fd6a839edf440554fa01a7085ccba70ac98""><code>0c366fd</code></a>
+Update changelog (<a
+href=""https://redirect.github.com/actions/checkout/issues/2357"">#2357</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/actions/checkout/compare/de0fac2e4500dabe0009e67214ff5f5447ce83dd...df4cb1c069e1874edd31b4311f1884172cec0e10"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",65ecf9871e807687423fa5da29e03cdfdd722166,1202,false,dependabot[bot],9,11,11,.github
+apache/iceberg-go,131c322fcc26cdd11f6068130e75da6bbc304fc5,131c322,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-15T13:18:53+02:00,GitHub,noreply@github.com,2026-06-15T13:18:53+02:00,build(deps): bump the gomod_updates group with 10 updates (#1204),"Bumps the gomod_updates group with 10 updates:
+
+| Package | From | To |
+| --- | --- | --- |
+|
+[cloud.google.com/go/storage](https://github.com/googleapis/google-cloud-go)
+| `1.62.2` | `1.62.3` |
+| [github.com/aws/aws-sdk-go-v2](https://github.com/aws/aws-sdk-go-v2) |
+`1.41.9` | `1.41.12` |
+|
+[github.com/aws/aws-sdk-go-v2/config](https://github.com/aws/aws-sdk-go-v2)
+| `1.32.20` | `1.32.23` |
+|
+[github.com/aws/aws-sdk-go-v2/credentials](https://github.com/aws/aws-sdk-go-v2)
+| `1.19.19` | `1.19.22` |
+|
+[github.com/aws/aws-sdk-go-v2/service/glue](https://github.com/aws/aws-sdk-go-v2)
+| `1.142.2` | `1.143.0` |
+|
+[github.com/aws/aws-sdk-go-v2/service/s3](https://github.com/aws/aws-sdk-go-v2)
+| `1.102.2` | `1.103.2` |
+| [github.com/aws/smithy-go](https://github.com/aws/smithy-go) |
+`1.26.0` | `1.27.1` |
+| [gocloud.dev](https://github.com/google/go-cloud) | `0.45.0` |
+`0.46.0` |
+| [golang.org/x/sync](https://github.com/golang/sync) | `0.20.0` |
+`0.21.0` |
+|
+[google.golang.org/api](https://github.com/googleapis/google-api-go-client)
+| `0.282.0` | `0.283.0` |
+
+Updates `cloud.google.com/go/storage` from 1.62.2 to 1.62.3
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/googleapis/google-cloud-go/releases"">cloud.google.com/go/storage's
+releases</a>.</em></p>
+<blockquote>
+<h2>storage: v1.62.3</h2>
+<h2><a
+href=""https://github.com/googleapis/google-cloud-go/compare/storage/v1.62.2...storage/v1.62.3"">v1.62.3</a>
+(2026-06-03)</h2>
+<h3>Bug Fixes</h3>
+<ul>
+<li>
+<p>fix race condition during retries in gRPC writer (<a
+href=""https://redirect.github.com/googleapis/google-cloud-go/issues/14649"">#14649</a>)
+(<a
+href=""https://github.com/googleapis/google-cloud-go/commit/04b6c635"">04b6c635</a>)</p>
+</li>
+<li>
+<p>add server closed idle connection to retriable errors (<a
+href=""https://redirect.github.com/googleapis/google-cloud-go/issues/14594"">#14594</a>)
+(<a
+href=""https://github.com/googleapis/google-cloud-go/commit/20b37d65"">20b37d65</a>)</p>
+</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/googleapis/google-cloud-go/commit/8afd6a0bc8822cdcd6b0f90d64522a44459c39a2""><code>8afd6a0</code></a>
+chore: librarian release pull request: 20260603T093646Z (<a
+href=""https://redirect.github.com/googleapis/google-cloud-go/issues/14699"">#14699</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-cloud-go/commit/04b6c635c09de1772fcefd8a7fd5e4ffdd370b79""><code>04b6c63</code></a>
+fix(storage): fix race condition during retries in gRPC writer (<a
+href=""https://redirect.github.com/googleapis/google-cloud-go/issues/14649"">#14649</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-cloud-go/commit/20b37d65d56d4b5e7b8d43b1f6b2ddefcd8944be""><code>20b37d6</code></a>
+fix(storage): add server closed idle connection to retriable errors (<a
+href=""https://redirect.github.com/googleapis/google-cloud-go/issues/14594"">#14594</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/googleapis/google-cloud-go/compare/storage/v1.62.2...storage/v1.62.3"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2` from 1.41.9 to 1.41.12
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7146c2b4007293f0acc9b2e8b92ffa7a30841df0""><code>7146c2b</code></a>
+Release 2026-06-04</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/5aef2fd8a4027ecf34eb5e32a28ff4a955b353d6""><code>5aef2fd</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/f94c04478d36a4ffb777221761459fb4b1d20cba""><code>f94c044</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/f00b205128286d6431115dd078da3c36197999f4""><code>f00b205</code></a>
+bump to smithy-go v1.27.1 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3434"">#3434</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/c4ad7dee6ebd9a3e1c7ee208f77e4ac8532b17c9""><code>c4ad7de</code></a>
+drop service/internal/benchmark (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3433"">#3433</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/91eca463daf932474778dc4a984c41ecfcd9dc3c""><code>91eca46</code></a>
+Release 2026-06-03.2</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/e9d9e156c352b4956ed0b3d57614467d1f79c62b""><code>e9d9e15</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/def6a3a4bb06c199a4843c501d84730d8235cab4""><code>def6a3a</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/fa369bd7bb9576e85ac094a43a15e8372a3d0129""><code>fa369bd</code></a>
+Release 2026-06-03</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/960ee4dc8380a46ded94f3976e073242d42bf8ed""><code>960ee4d</code></a>
+Regenerated Clients</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/v1.41.9...v1.41.12"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/config` from 1.32.20 to 1.32.23
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7146c2b4007293f0acc9b2e8b92ffa7a30841df0""><code>7146c2b</code></a>
+Release 2026-06-04</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/5aef2fd8a4027ecf34eb5e32a28ff4a955b353d6""><code>5aef2fd</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/f94c04478d36a4ffb777221761459fb4b1d20cba""><code>f94c044</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/f00b205128286d6431115dd078da3c36197999f4""><code>f00b205</code></a>
+bump to smithy-go v1.27.1 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3434"">#3434</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/c4ad7dee6ebd9a3e1c7ee208f77e4ac8532b17c9""><code>c4ad7de</code></a>
+drop service/internal/benchmark (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3433"">#3433</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/91eca463daf932474778dc4a984c41ecfcd9dc3c""><code>91eca46</code></a>
+Release 2026-06-03.2</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/e9d9e156c352b4956ed0b3d57614467d1f79c62b""><code>e9d9e15</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/def6a3a4bb06c199a4843c501d84730d8235cab4""><code>def6a3a</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/fa369bd7bb9576e85ac094a43a15e8372a3d0129""><code>fa369bd</code></a>
+Release 2026-06-03</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/960ee4dc8380a46ded94f3976e073242d42bf8ed""><code>960ee4d</code></a>
+Regenerated Clients</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/config/v1.32.20...config/v1.32.23"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/credentials` from 1.19.19 to
+1.19.22
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7146c2b4007293f0acc9b2e8b92ffa7a30841df0""><code>7146c2b</code></a>
+Release 2026-06-04</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/5aef2fd8a4027ecf34eb5e32a28ff4a955b353d6""><code>5aef2fd</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/f94c04478d36a4ffb777221761459fb4b1d20cba""><code>f94c044</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/f00b205128286d6431115dd078da3c36197999f4""><code>f00b205</code></a>
+bump to smithy-go v1.27.1 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3434"">#3434</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/c4ad7dee6ebd9a3e1c7ee208f77e4ac8532b17c9""><code>c4ad7de</code></a>
+drop service/internal/benchmark (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3433"">#3433</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/91eca463daf932474778dc4a984c41ecfcd9dc3c""><code>91eca46</code></a>
+Release 2026-06-03.2</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/e9d9e156c352b4956ed0b3d57614467d1f79c62b""><code>e9d9e15</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/def6a3a4bb06c199a4843c501d84730d8235cab4""><code>def6a3a</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/fa369bd7bb9576e85ac094a43a15e8372a3d0129""><code>fa369bd</code></a>
+Release 2026-06-03</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/960ee4dc8380a46ded94f3976e073242d42bf8ed""><code>960ee4d</code></a>
+Regenerated Clients</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/credentials/v1.19.19...credentials/v1.19.22"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/service/glue` from 1.142.2 to
+1.143.0
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/0c7b7e4e24c2e52b6beec87e928196f04af937bd""><code>0c7b7e4</code></a>
+Release 2024-01-08</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2b1dd931cce8e0e8093a04e0f93c6f32a9e449b2""><code>2b1dd93</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/175f9d14488c8a9268e3e6b8f9baaf5a1ac7929a""><code>175f9d1</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/4ba37053fff9055b216a303ab591f6fa5e4c80c1""><code>4ba3705</code></a>
+Release 2024-01-05</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/c49b1531db5ba4a8e2a42d5fd31c8b10641adca6""><code>c49b153</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/80508f5111049f7f13295423d8fa8dcb3d26bd90""><code>80508f5</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/686a64c6d4ae0bb6e8139e4761034a0cc25caf47""><code>686a64c</code></a>
+codegen: track upstream sigv4a trait changes (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/2442"">#2442</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/47dd1b1bcbde244357a82ef00fa6a61a9bfb9b39""><code>47dd1b1</code></a>
+Release 2024-01-04</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/23145e3e605a93582020facfe13350b4153714e1""><code>23145e3</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/00e57bb7feb2d104387103aa4fbcd55dfff3a6a7""><code>00e57bb</code></a>
+Update API model</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/service/glue/v1.142.2...service/ec2/v1.143.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/service/s3` from 1.102.2 to
+1.103.2
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7146c2b4007293f0acc9b2e8b92ffa7a30841df0""><code>7146c2b</code></a>
+Release 2026-06-04</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/5aef2fd8a4027ecf34eb5e32a28ff4a955b353d6""><code>5aef2fd</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/f94c04478d36a4ffb777221761459fb4b1d20cba""><code>f94c044</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/f00b205128286d6431115dd078da3c36197999f4""><code>f00b205</code></a>
+bump to smithy-go v1.27.1 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3434"">#3434</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/c4ad7dee6ebd9a3e1c7ee208f77e4ac8532b17c9""><code>c4ad7de</code></a>
+drop service/internal/benchmark (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3433"">#3433</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/91eca463daf932474778dc4a984c41ecfcd9dc3c""><code>91eca46</code></a>
+Release 2026-06-03.2</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/e9d9e156c352b4956ed0b3d57614467d1f79c62b""><code>e9d9e15</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/def6a3a4bb06c199a4843c501d84730d8235cab4""><code>def6a3a</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/fa369bd7bb9576e85ac094a43a15e8372a3d0129""><code>fa369bd</code></a>
+Release 2026-06-03</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/960ee4dc8380a46ded94f3976e073242d42bf8ed""><code>960ee4d</code></a>
+Regenerated Clients</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/service/s3/v1.102.2...service/s3/v1.103.2"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/smithy-go` from 1.26.0 to 1.27.1
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/aws/smithy-go/blob/main/CHANGELOG.md"">github.com/aws/smithy-go's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Release (2026-06-05)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.27.2
+<ul>
+<li><strong>Bug Fix</strong>: Fix incorrect serialization of unions in
+CBOR-based protocols.</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-06-04)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.27.1
+<ul>
+<li><strong>Bug Fix</strong>: Fixed a deserialization failure in all
+protocols when encountering a union with explicit null members.</li>
+<li><strong>Bug Fix</strong>: Fixed a panic when deserializing nested
+unions in JSON- and CBOR-based protocols.</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-06-02)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.27.0
+<ul>
+<li><strong>Feature</strong>: Add APIs for schema-based
+serialization.</li>
+<li><strong>Feature</strong>: Add support for all current AWS and Smithy
+protocols.</li>
+<li><strong>Bug Fix</strong>: Enforce max nesting depth of 128 on CBOR
+payloads.</li>
+</ul>
+</li>
+<li><code>github.com/aws/smithy-go/aws-http-auth</code>: <a
+href=""https://github.com/aws/smithy-go/blob/main/aws-http-auth/CHANGELOG.md#v120-2026-06-02"">v1.2.0</a>
+<ul>
+<li><strong>Feature</strong>: Add event stream signer.</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-05-27)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.26.0
+<ul>
+<li><strong>Feature</strong>: Add StringSlice to endpoint rulesfn.</li>
+</ul>
+</li>
+</ul>
+<h1>Release (2026-04-23)</h1>
+<h2>General Highlights</h2>
+<ul>
+<li><strong>Dependency Update</strong>: Updated to the latest SDK module
+versions</li>
+</ul>
+<h2>Module Highlights</h2>
+<ul>
+<li><code>github.com/aws/smithy-go</code>: v1.25.1
+<ul>
+<li><strong>Bug Fix</strong>: Fixed a memory leak in the LRU cache
+implementation used by some AWS services.</li>
+</ul>
+</li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/6a1dd2f1ba8ed55c8832cffad5f6c1e0a5c05756""><code>6a1dd2f</code></a>
+Release 2026-06-04</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/ec2641588efcd68d49df912d82de76c6df9cbbce""><code>ec26415</code></a>
+fix nested union json ctx break/smithy.ReadUnion contract issue (<a
+href=""https://redirect.github.com/aws/smithy-go/issues/673"">#673</a>)</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/3f6ece24dd0646e1f43ce05d980bcb4880a6e7fe""><code>3f6ece2</code></a>
+Release 2026-06-02</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/3432807d26fd8d74013bd20d7d4c56ff379e2e16""><code>3432807</code></a>
+Revert &quot;changelog&quot;</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/9663ed6253396a37d3cca9e37a9410118a370bc1""><code>9663ed6</code></a>
+changelog</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/bcd9f540477b856423b2a8f679574df8026a5dbe""><code>bcd9f54</code></a>
+enforce a max nesting depth of 128 on cbor payloads (<a
+href=""https://redirect.github.com/aws/smithy-go/issues/670"">#670</a>)</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/ff093e96647027be14e7079a03359bc8c80d6b6f""><code>ff093e9</code></a>
+changelog</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/1db7cb38af94cbdbf000a31a56f5a1d20191fa68""><code>1db7cb3</code></a>
+hold off on unsafe string for now</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/473b1947c03deea1898ffd01fbba8de765d5eed7""><code>473b194</code></a>
+update README again</li>
+<li><a
+href=""https://github.com/aws/smithy-go/commit/6620de4fc429f2553f793bb170a997e6c9d2e439""><code>6620de4</code></a>
+update README</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/smithy-go/compare/v1.26.0...v1.27.1"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `gocloud.dev` from 0.45.0 to 0.46.0
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/google/go-cloud/releases"">gocloud.dev's
+releases</a>.</em></p>
+<blockquote>
+<h2>v0.46.0</h2>
+<p><strong>BREAKING_CHANGE</strong>:</p>
+<ul>
+<li>blob/s3blob: migrate from deprecated s3/manager to
+s3/transfermanager by <a
+href=""https://github.com/vangent""><code>@​vangent</code></a> in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3717"">google/go-cloud#3717</a>
+<ul>
+<li>Only breaking if you're using <code>As</code> to access specific AWS
+types from the old manager.</li>
+</ul>
+</li>
+</ul>
+<h2>What's Changed</h2>
+<p><strong>all</strong></p>
+<ul>
+<li>all: support typed errors and errors.Is for error codes by <a
+href=""https://github.com/vangent""><code>@​vangent</code></a> in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3708"">google/go-cloud#3708</a></li>
+<li>aws/aws: add AWS IAM Role assumption support by <a
+href=""https://github.com/troyready""><code>@​troyready</code></a> in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3716"">google/go-cloud#3716</a></li>
+</ul>
+<p><strong>blob</strong>:</p>
+<ul>
+<li>blob/fileblob: Prevent escaping bucket root by <a
+href=""https://github.com/vangent""><code>@​vangent</code></a> in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3669"">google/go-cloud#3669</a></li>
+<li>blob/fileblob: Close the file in case of BeforeRead or Seek error by
+<a
+href=""https://github.com/ganigeorgiev""><code>@​ganigeorgiev</code></a>
+in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3696"">google/go-cloud#3696</a></li>
+<li>blob/azureblob: eliminate Azure Autorest dependency and replace
+usage by <a
+href=""https://github.com/gaganhr94""><code>@​gaganhr94</code></a> in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3672"">google/go-cloud#3672</a></li>
+<li>blob/gcsblob: Handle grpc errors on gcsblob by <a
+href=""https://github.com/dpulpeiro""><code>@​dpulpeiro</code></a> in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3697"">google/go-cloud#3697</a></li>
+</ul>
+<p><strong>runtimevar</strong>:</p>
+<ul>
+<li>runtimevar/filevar: Support relative paths in URL openers via a host
+of &quot;.&quot; by <a
+href=""https://github.com/vangent""><code>@​vangent</code></a> in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3666"">google/go-cloud#3666</a></li>
+<li>runtimevar/etcdvar: Replace
+go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes by <a
+href=""https://github.com/aaronjheng""><code>@​aaronjheng</code></a> in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3676"">google/go-cloud#3676</a></li>
+</ul>
+<p><strong>pubsub</strong></p>
+<ul>
+<li>pubsub/gcppubsub: decrease max batch buffer size from 9MB to 8MB by
+<a href=""https://github.com/vangent""><code>@​vangent</code></a> in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3698"">google/go-cloud#3698</a></li>
+</ul>
+<p><strong>docstore</strong></p>
+<ul>
+<li>docstore: Support unwrapping action list errors by <a
+href=""https://github.com/Megakuul""><code>@​Megakuul</code></a> in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3705"">google/go-cloud#3705</a></li>
+</ul>
+<p><strong>secrets</strong></p>
+<ul>
+<li>secrets/azurekeyvault: migrate from beta keyvault/azkeys to stable
+security/keyvault/azkeys by <a
+href=""https://github.com/vangent""><code>@​vangent</code></a> in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3689"">google/go-cloud#3689</a></li>
+</ul>
+<p><strong>postgres</strong></p>
+<ul>
+<li>postgres/awspostgres: add IAM authentication support by <a
+href=""https://github.com/giautm""><code>@​giautm</code></a> in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3713"">google/go-cloud#3713</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a href=""https://github.com/gaganhr94""><code>@​gaganhr94</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3672"">google/go-cloud#3672</a></li>
+<li><a
+href=""https://github.com/aaronjheng""><code>@​aaronjheng</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3676"">google/go-cloud#3676</a></li>
+<li><a
+href=""https://github.com/kchoy-sfdc""><code>@​kchoy-sfdc</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3681"">google/go-cloud#3681</a></li>
+<li><a href=""https://github.com/dpulpeiro""><code>@​dpulpeiro</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3697"">google/go-cloud#3697</a></li>
+<li><a
+href=""https://github.com/ganigeorgiev""><code>@​ganigeorgiev</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3696"">google/go-cloud#3696</a></li>
+<li><a href=""https://github.com/Megakuul""><code>@​Megakuul</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3705"">google/go-cloud#3705</a></li>
+<li><a href=""https://github.com/XananasX7""><code>@​XananasX7</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3711"">google/go-cloud#3711</a></li>
+<li><a href=""https://github.com/LeSingh1""><code>@​LeSingh1</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3714"">google/go-cloud#3714</a></li>
+<li><a href=""https://github.com/troyready""><code>@​troyready</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3716"">google/go-cloud#3716</a></li>
+<li><a href=""https://github.com/peczenyj""><code>@​peczenyj</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/google/go-cloud/pull/3717"">google/go-cloud#3717</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/google/go-cloud/compare/v0.45.0...v0.46.0"">https://github.com/google/go-cloud/compare/v0.45.0...v0.46.0</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/google/go-cloud/commit/60f0d749b071334179a08aa9b6c13d2fe239d120""><code>60f0d74</code></a>
+all: prerelease</li>
+<li><a
+href=""https://github.com/google/go-cloud/commit/a1725f0045c37bf8c09bead9e6fa766de0e63ae9""><code>a1725f0</code></a>
+blob/s3blob: migrate from deprecated s3/manager to s3/transfermanager
+(<a
+href=""https://redirect.github.com/google/go-cloud/issues/3717"">#3717</a>)</li>
+<li><a
+href=""https://github.com/google/go-cloud/commit/7eadd65be3cf297188f2781d99823bb135fec385""><code>7eadd65</code></a>
+aws: add AWS IAM Role assumption support (<a
+href=""https://redirect.github.com/google/go-cloud/issues/3716"">#3716</a>)</li>
+<li><a
+href=""https://github.com/google/go-cloud/commit/054c82ee5e1a2fc308b82bbe0e3d7aced4686849""><code>054c82e</code></a>
+postgres/awspostgres: add IAM authentication support (<a
+href=""https://redirect.github.com/google/go-cloud/issues/3713"">#3713</a>)</li>
+<li><a
+href=""https://github.com/google/go-cloud/commit/2b85c8596b78ef156552a63b00b1b200d79e5040""><code>2b85c85</code></a>
+docs: fix Pub/Sub subscribe wording (<a
+href=""https://redirect.github.com/google/go-cloud/issues/3714"">#3714</a>)</li>
+<li><a
+href=""https://github.com/google/go-cloud/commit/b9dee8d148ae0845a80dae4a88afe8abf3ed96f4""><code>b9dee8d</code></a>
+build: add top-level permissions restriction to tests workflow (<a
+href=""https://redirect.github.com/google/go-cloud/issues/3711"">#3711</a>)</li>
+<li><a
+href=""https://github.com/google/go-cloud/commit/45a8cfcde0ab499bae643ae0fd5d67c709905f54""><code>45a8cfc</code></a>
+docstore: support unwrapping ActionListError for use with errors.Is (<a
+href=""https://redirect.github.com/google/go-cloud/issues/3705"">#3705</a>)</li>
+<li><a
+href=""https://github.com/google/go-cloud/commit/78b59762fe5eb36407d2462399954d0d6e88ada9""><code>78b5976</code></a>
+all: support typed errors and errors.Is for error codes (<a
+href=""https://redirect.github.com/google/go-cloud/issues/3708"">#3708</a>)</li>
+<li><a
+href=""https://github.com/google/go-cloud/commit/595f8b60336588551dac6041130593109761eaa0""><code>595f8b6</code></a>
+all: update another otel dep (<a
+href=""https://redirect.github.com/google/go-cloud/issues/3701"">#3701</a>)</li>
+<li><a
+href=""https://github.com/google/go-cloud/commit/c903aef93959a3778f64de14e39245d3d5507aab""><code>c903aef</code></a>
+all: update otel deps (<a
+href=""https://redirect.github.com/google/go-cloud/issues/3699"">#3699</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/google/go-cloud/compare/v0.45.0...v0.46.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `golang.org/x/sync` from 0.20.0 to 0.21.0
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/golang/sync/commit/5071ed6a9f1617117556b66384f765c934de3698""><code>5071ed6</code></a>
+all: fix some comments to improve readability</li>
+<li>See full diff in <a
+href=""https://github.com/golang/sync/compare/v0.20.0...v0.21.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `google.golang.org/api` from 0.282.0 to 0.283.0
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/googleapis/google-api-go-client/releases"">google.golang.org/api's
+releases</a>.</em></p>
+<blockquote>
+<h2>v0.283.0</h2>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.282.0...v0.283.0"">0.283.0</a>
+(2026-06-01)</h2>
+<h3>Features</h3>
+<ul>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3609"">#3609</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/ed84bb800c56d3f7fee4c11f96673114e94a8cc2"">ed84bb8</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3611"">#3611</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/3855346eda7f4ba6c844d86de5de493d3e395f00"">3855346</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3612"">#3612</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/32624d32240ec8e5997810fb9cb54f8000b6c7f8"">32624d3</a>)</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/googleapis/google-api-go-client/blob/main/CHANGES.md"">google.golang.org/api's
+changelog</a>.</em></p>
+<blockquote>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.282.0...v0.283.0"">0.283.0</a>
+(2026-06-01)</h2>
+<h3>Features</h3>
+<ul>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3609"">#3609</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/ed84bb800c56d3f7fee4c11f96673114e94a8cc2"">ed84bb8</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3611"">#3611</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/3855346eda7f4ba6c844d86de5de493d3e395f00"">3855346</a>)</li>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3612"">#3612</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/32624d32240ec8e5997810fb9cb54f8000b6c7f8"">32624d3</a>)</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/f6726366ff2f0b8fc82cec6f063dc9beb3ab1377""><code>f672636</code></a>
+chore(main): release 0.283.0 (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3610"">#3610</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/32624d32240ec8e5997810fb9cb54f8000b6c7f8""><code>32624d3</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3612"">#3612</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/3855346eda7f4ba6c844d86de5de493d3e395f00""><code>3855346</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3611"">#3611</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/ed84bb800c56d3f7fee4c11f96673114e94a8cc2""><code>ed84bb8</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3609"">#3609</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.282.0...v0.283.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore <dependency name> major version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's major version (unless you unignore this specific
+dependency's major version or upgrade to it yourself)
+- `@dependabot ignore <dependency name> minor version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's minor version (unless you unignore this specific
+dependency's minor version or upgrade to it yourself)
+- `@dependabot ignore <dependency name>` will close this group update PR
+and stop Dependabot creating any more for the specific dependency
+(unless you unignore this specific dependency or upgrade to it yourself)
+- `@dependabot unignore <dependency name>` will remove all of the ignore
+conditions of the specified dependency
+- `@dependabot unignore <dependency name> <ignore condition>` will
+remove the ignore condition of the specified dependency and ignore
+conditions
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",9563b91e98594a09fd16279be2a1e37d2472ccc2,1204,false,dependabot[bot],2,74,80,go.mod; go.sum
+apache/iceberg-go,0c5552bfd34937e07bcb22f9bf9a3b5c4e33b27c,0c5552b,Tobias Pütz,tobias@minio.io,2026-06-15T15:23:03+02:00,GitHub,noreply@github.com,2026-06-15T15:23:03+02:00,fix(table): do not claim sort_order_id on files the writer did not fully sort (#1184),"The per-file sort_order_id declares that a file's rows are *fully*
+sorted by that order; a missing id means unsorted
+(https://iceberg.apache.org/spec/#sorting). Since #875 every writer
+stamped the table's default sort order id unconditionally, but #1157's
+sort-on-write only sorts each record batch individually, so the claim
+was false for any multi-batch file. Position delete files were stamped
+too, which the spec forbids outright, their order is (file_path, pos)
+and writers must set the field to null
+(https://iceberg.apache.org/spec/#data-file-fields). This contradicts
+the community consensus: Spark stamps the id *only* when its
+distribution+ordering globally sorted the whole task input, never
+inferring it from the table default
+(https://github.com/apache/iceberg/pull/15150).
+
+This change makes writers claim nothing by default: data files,
+eq-delete files, pos-delete files, and registered files (add_files)
+leave sort_order_id absent, matching PyIceberg and iceberg-rust. The
+per-batch sort is kept as a pure layout optimization (tighter page
+statistics, better encodings). WriteTask.SortOrderID remains as an
+explicit caller claim for producers that guarantee fully sorted batches,
+mirroring how Java/Spark stamps the id only when the engine enforced the
+ordering. Leaving the field absent is fully spec-compliant, it was
+always advisory and never assumed applied to all files
+(https://github.com/apache/iceberg/issues/317). The only incorrect
+behavior is stamping a claim that isn't true, which a reader could trust
+to wrongly skip a re-sort.
+
+References: https://github.com/apache/iceberg/issues/13634,
+https://github.com/apache/iceberg/pull/15150,
+https://github.com/apache/iceberg/issues/317,
+https://iceberg.apache.org/spec/#sorting",131c322fcc26cdd11f6068130e75da6bbc304fc5,1184,false,,10,168,61,table

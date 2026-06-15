@@ -2924,3 +2924,64 @@ read and write of such a location failed with:
 ```
 expected a URI with one of the schemes (s3) but received <scheme>://...
 ```",cf50b12ba4df2e6540a652e1e4343dbbb6beb791,703,false,,4,59,5,src
+apache/iceberg-cpp,5eb32df030fdd0fe735fcf824046c66e0ddb1f0e,5eb32df,Minh Vu,vuhoangminh97@gmail.com,2026-06-15T05:23:45+02:00,GitHub,noreply@github.com,2026-06-15T11:23:45+08:00,Fix URL encoding for non-ASCII bytes (#738),"## Summary
+
+- Treat URL encoder input bytes as unsigned before splitting them into
+hex nibbles.
+- Add UTF-8 regression coverage for `café` encoding to `caf%C3%A9`.
+
+## Why
+
+On platforms where `char` is signed, bytes >= 0x80 can become negative
+before the hex lookup. That can lead to undefined behavior or incorrect
+percent encoding for non-ASCII strings.
+
+## Testing
+
+- `cmake -S . -B build -G Ninja -DICEBERG_BUILD_BUNDLE=OFF
+-DICEBERG_BUILD_REST=OFF -DICEBERG_BUILD_HIVE=OFF
+-DICEBERG_BUILD_SQL_CATALOG=OFF`
+- `cmake --build build --target util_test`
+- `ctest --test-dir build -R util_test --output-on-failure`",a68602cfe49e45ae252450d4bc09fe83cbf3dd34,738,false,,2,6,3,src
+apache/iceberg-cpp,8d88bef10676c052afe0b171df697deaf420ac16,8d88bef,Junwang Zhao,zhjwpku@gmail.com,2026-06-15T11:26:03+08:00,GitHub,noreply@github.com,2026-06-15T11:26:03+08:00,fix: allow avro date reads from plain int (#728),per https://github.com/apache/iceberg/pull/16446/changes,5eb32df030fdd0fe735fcf824046c66e0ddb1f0e,728,false,,5,45,8,src
+apache/iceberg-cpp,cc4d35f25d7f3f6d7eab9a432a337cb6886ee9f2,cc4d35f,Junwang Zhao,zhjwpku@gmail.com,2026-06-15T12:50:23+08:00,GitHub,noreply@github.com,2026-06-15T12:50:23+08:00,doc: add release history for release v0.3.0 (#743),Co-authored-by: Gang Wu <ustcwg@gmail.com>,8d88bef10676c052afe0b171df697deaf420ac16,743,false,Gang Wu,1,16,0,mkdocs
+apache/iceberg-cpp,7324142d373d836ab068d94eb52fae7ff948dda1,7324142,Huangshi Tian,All-less@users.noreply.github.com,2026-06-15T00:55:29-04:00,GitHub,noreply@github.com,2026-06-15T12:55:29+08:00,feat(inspect): add base metadata table interface (#607),"This PR kicks off the implementation of table inspection support.
+
+- Add `MetadataTable` class (without scan support for now).
+- Add `SnapshotsTable` and `HistoryTable` as example impl.",cc4d35f25d7f3f6d7eab9a432a337cb6886ee9f2,607,false,,17,575,1,src
+apache/iceberg-cpp,8d576ed93afccf5a7334d01f814ce56c5acc4273,8d576ed,Xinli Shang,shangx@uber.com,2026-06-15T02:36:23-07:00,GitHub,noreply@github.com,2026-06-15T17:36:23+08:00,refactor: harden FileCleanupStrategy with retry and parallel deletes (#649),"### What
+
+* `FileCleanupStrategy` now takes an `OptionalExecutor` in its
+constructor. When `DeleteWith()` is configured, per-path deletes fan out
+through `TaskGroup<>` -- uses the supplied executor when set, otherwise
+runs the callbacks serially on the calling thread via
+`RunTasksSingleThreaded`. Preserves prior single-threaded behavior by
+default.
+* The `FileIO::DeleteFiles` bulk path is wrapped in
+`RetryRunner<retry::StopRetryOn<ErrorKind::kNotFound>>` with a tight
+budget (2 retries, 100ms-1s backoff, 5s total). Mirrors Java's
+`Tasks.foreach(...).stopRetryOn(NotFoundException.class).retry(N)`. The
+retry primarily helps atomic-bulk FileIO impls (e.g. an S3
+`DeleteObjects`-backed FileIO) ride out transient throttles --
+best-effort, see code comment for the fail-fast-iterative caveat.
+* New public builder
+`ExpireSnapshots::ExecuteDeleteWith(OptionalExecutor)` (named after
+Java's `executeDeleteWith(ExecutorService)`) so callers opt in to
+parallel deletion; threaded through both `IncrementalFileCleanup` and
+`ReachableFileCleanup`.
+* `DeleteWith()` doc note clarifies that the user-supplied callback may
+be invoked concurrently from worker threads and must be thread-safe.
+* Drops the `std::async` / `std::thread` / `std::span` machinery and the
+ad-hoc retry loop -- replaced by `util/task_group.h` and
+`util/retry_util.h` from #687.
+
+### Test coverage
+
+Existing 25 `ExpireSnapshots*` tests continue to pass unchanged (they
+hit the default no-executor path).
+
+Adds `ExpireSnapshotsCleanupTest.ExecutorDispatchesDeletesConcurrently`
+-- wires a `test::ThreadExecutor` through `ExecuteDeleteWith()`, runs an
+`ExpireSnapshotId` cleanup with a custom `DeleteWith` callback, and
+asserts the executor received one submission per file (data + manifest +
+manifest-list = 3) and that all paths show up in the mutex-guarded sink.",7324142d373d836ab068d94eb52fae7ff948dda1,649,false,,3,182,16,src
