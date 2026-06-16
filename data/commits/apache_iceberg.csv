@@ -2570,3 +2570,28 @@ Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",ded7266156aafcea295db23209abd7f3ab8e6f21,16816,false,dependabot[bot],3,89,84,aws-bundle; gradle; kafka-connect
 apache/iceberg,12b7f7de01511c3e008545903269a88548afa050,12b7f7d,Junwang Zhao,zhjwpku@gmail.com,2026-06-15T11:06:52+08:00,GitHub,noreply@github.com,2026-06-15T11:06:52+08:00,Docs: add blog post for C++ 0.3.0 release (#16817),,ce4d7d8973cbe57306ef4927fbafa6ca53b5982c,16817,false,,1,102,0,site
 apache/iceberg,6ee0a3be308037e280ff17172a5bbd67a2a4131a,6ee0a3b,Yuya Ebihara,ebyhry@gmail.com,2026-06-15T19:00:04+09:00,GitHub,noreply@github.com,2026-06-15T12:00:04+02:00,Docs: Add guidelines for tests (#16784),,12b7f7de01511c3e008545903269a88548afa050,16784,false,,1,6,0,site
+apache/iceberg,2f244c0bc597f64e283452b3378894e35370ffbd,2f244c0,Sebastian Baunsgaard,baunsgaard@apache.org,2026-06-15T18:38:42+02:00,GitHub,noreply@github.com,2026-06-15T09:38:42-07:00,Spark: Cap RandomData collection size to speed up nested tests (#16696),"RandomData sized every generated list and map with random.nextInt(20),
+applied at each nesting level. For deeply-nested schemas this multiplies
+into well over a million leaf values per run, so the cost is dominated by
+data volume rather than the read/write code paths being exercised.
+
+Replace the hard-coded bound with a named constant COLLECTION_SIZE_BOUND
+in the Spark 3.5, 4.0, and 4.1 test copies. The name and comment make the
+exclusive bound and the legal zero-length case explicit. Schemas, types,
+and nesting structures under test are unchanged, so coverage is preserved
+while the nested round-trip tests run several times faster.",6ee0a3be308037e280ff17172a5bbd67a2a4131a,16696,false,,3,30,12,spark
+apache/iceberg,f5b206167d2ff174cd38f2ec21c5336d333b6fb1,f5b2061,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-06-15T20:41:50-07:00,GitHub,noreply@github.com,2026-06-15T20:41:50-07:00,Core: extract parallel manifest write logic out of SnapshotProducer (#16730),"* Core: extract parallel manifest write logic out of SnapshotProducer
+
+* Rename to ManifestFiles.divide
+
+* Reword javadoc",2f244c0bc597f64e283452b3378894e35370ffbd,16730,false,,2,67,46,core
+apache/iceberg,69063fb162e835c3dc1ff7bbcf5526029771c6d0,69063fb,Sebastian Baunsgaard,baunsgaard@apache.org,2026-06-16T13:51:39+02:00,GitHub,noreply@github.com,2026-06-16T13:51:39+02:00,Spark: Reduce TestSparkDataFile row count to speed up partitioned cases (#16821),"TestSparkDataFile writes random rows through a 14-field partition spec, so
+nearly every row lands in its own partition and produces a separate data file
+(plus a position-delete file per data file). The cost scales with the row
+count, not with coverage: every generated row already exercises all column
+types and all 14 partition transforms, and both delete-file types still
+round-trip.
+
+Reduce the generated row count from 200 to 40 in the v3.5/v4.0/v4.1 test
+copies. The suite drops ~58% (27.4s -> 11.5s locally on Spark 4.1) with
+identical pass/skip counts.",f5b206167d2ff174cd38f2ec21c5336d333b6fb1,16821,false,,3,3,3,spark

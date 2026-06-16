@@ -2985,3 +2985,118 @@ Adds `ExpireSnapshotsCleanupTest.ExecutorDispatchesDeletesConcurrently`
 `ExpireSnapshotId` cleanup with a custom `DeleteWith` callback, and
 asserts the executor received one submission per file (data + manifest +
 manifest-list = 3) and that all paths show up in the mutex-guarded sink.",7324142d373d836ab068d94eb52fae7ff948dda1,649,false,,3,182,16,src
+apache/iceberg-cpp,cb79f2983575c1ea7f4526b1926a81ac0d7b5826,cb79f29,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-06-15T19:02:04-07:00,GitHub,noreply@github.com,2026-06-16T10:02:04+08:00,feat(logging): add LogLevel severity enum (#722),"## What
+
+First of PR that adds a logging system to iceberg-cpp.
+
+This PR adds LogLevel — the severity scale every later piece builds on —
+and nothing else.
+
+- enum class LogLevel { kTrace, kDebug, kInfo, kWarn, kError, kCritical,
+kFatal, kOff }, ordered most-to-least verbose so ""should this log?"" is a
+plain level >= threshold check. kOff is the max sentinel for disabling
+logging.
+- constexpr ToString(LogLevel) and a case-insensitive LogLevelFromString
+returning Result<LogLevel> — same idiom as CounterUnit in
+metrics/counter.h.
+
+Header-only: this PR adds src/iceberg/logging/log_level.h, wires the new
+src/iceberg/logging/ directory into CMake, and adds log_level_test.cc
+(ToString/FromString round-trip, case-insensitivity, unknown-input
+error, ordering).
+
+## Why
+
+iceberg-cpp has no logging today — only error-as-value Result. This
+stack introduces a pluggable logger; levels are the foundational
+vocabulary, landed on their own so the
+rest reviews cleanly.
+
+
+## Testing
+
+compiled and run with clang++ -std=c++23 -stdlib=libc++ (clang 18).
+
+The logging module builds clean and a behavior driver passes (levels
+round-trip, macro formatting + source location, gate filtering,
+disabled-arg elision, never-throws fallback, FATAL emit-then-abort,
+compile-time stripping).
+
+Full ctest -R logging_test + the spdlog-ON build still want a C++23
+toolchain with network (gtest/spdlog via FetchContent) in CI.",8d576ed93afccf5a7334d01f814ce56c5acc4273,722,false,,9,210,0,src
+apache/iceberg-cpp,bb83edec9cb766be750e2191ec5cc8152cb44314,bb83ede,wzhuo,wngzhuo@gmail.com,2026-06-16T13:13:18+08:00,GitHub,noreply@github.com,2026-06-16T13:13:18+08:00,feat: Collect Parquet NaN metrics during writes (#727),"Collects NaN value counts for float and double columns during Parquet
+writes, since the Parquet footer statistics do not track NaN counts.
+
+## Changes
+
+- **Write-side NaN metric collection** (`FieldMetricsCollector`): A
+visitor that walks each record batch before writing, accumulating value
+counts, null counts, NaN counts, and NaN-excluding lower/upper bounds
+for float/double fields.
+- **MetricsConfig-aware skipping**: Fields whose `MetricsMode` is
+`kNone` are skipped entirely, avoiding wasted work.
+- **Integration with existing footer metrics**: Write-side
+`FieldMetrics` take precedence over footer statistics in
+`ParquetMetrics::GetMetrics`, so NaN counts are populated while
+counts/bounds still fall back to footer stats when write-side data isn't
+available.
+- **Tests**: `ParquetMetricsTest` now overrides `ReportsNanCounts()` to
+`true`, and existing NaN test cases verify NaN counts alongside existing
+value/null count assertions.
+
+## Behavior alignment with Java
+
+- Fields nested inside lists/maps do not get NaN metrics (both Java and
+C++ agree — Java collects then discards; C++ skips collection entirely).
+- NaN values are excluded from lower/upper bounds in both
+implementations.
+- Float/double fields with all-NaN values correctly set
+`nan_value_count` without setting bounds.",cb79f2983575c1ea7f4526b1926a81ac0d7b5826,727,false,,4,171,10,src
+apache/iceberg-cpp,796efb35dbb5036689d6bae91d18aaa5a8c4daf0,796efb3,Gang Wu,ustcwg@gmail.com,2026-06-16T13:13:48+08:00,GitHub,noreply@github.com,2026-06-16T13:13:48+08:00,fix: align rest table update serde with java/spec (#716),,bb83edec9cb766be750e2191ec5cc8152cb44314,716,false,,17,549,38,src
+apache/iceberg-cpp,f71f485394caf75b7f3db2f705882c3e8341d825,f71f485,Rahul Goel,goel.rahul4200@gmail.com,2026-06-16T02:13:14-04:00,GitHub,noreply@github.com,2026-06-16T14:13:14+08:00,fix: Handle unknown record_count better (#747),"Fixes #732  Only special-case ```record_count == 0;```
+Let negative/unknown counts fall through
+to normal strict metrics evaluation.",796efb35dbb5036689d6bae91d18aaa5a8c4daf0,747,false,,2,43,1,src
+apache/iceberg-cpp,64691e4bf408fc1161b09a4d551ed29cfb5e06f4,64691e4,Junwang Zhao,zhjwpku@gmail.com,2026-06-16T14:41:19+08:00,GitHub,noreply@github.com,2026-06-16T14:41:19+08:00,fix: reject tag refs for main snapshot ref (#745),"Validate that the reserved main snapshot ref is always a branch, and
+preserve snapshot log timestamps for newly added snapshots without
+overwriting table metadata update time.
+
+This behavior is aligned with Java's TableMetadata.Builder.setRef",f71f485394caf75b7f3db2f705882c3e8341d825,745,false,,5,98,11,src
+apache/iceberg-cpp,1777794fc01dfcaf45c932b6aa2d1c5c8e0e9175,1777794,wzhuo,wngzhuo@gmail.com,2026-06-16T14:45:27+08:00,GitHub,noreply@github.com,2026-06-16T14:45:27+08:00,feat: implement RenameTable in InMemoryCatalog (#742),"Replace the NotImplemented stub with a full implementation that:
+- Returns early as a no-op when renaming a table to itself
+- Returns NoSuchTable when the source table does not exist
+- Returns AlreadyExists when the destination table already exists
+- Moves the metadata location from source to destination identifier
+
+Add unit test covering rename to self, nonexistent source, destination
+conflict, and full rename + load verification.",64691e4bf408fc1161b09a4d551ed29cfb5e06f4,742,false,,2,72,1,src
+apache/iceberg-cpp,40cc9922bb17d70df1de5044b6f2b5a17d808080,40cc992,liuxiaoyu,45345701+MisterRaindrop@users.noreply.github.com,2026-06-16T14:50:11+08:00,GitHub,noreply@github.com,2026-06-16T14:50:11+08:00,feat(hive): vendor Hive Metastore IDL and generated bindings (#749),"- Update vendored Hive Metastore IDL to Hive 4.0.1.
+- Check in generated HMS/fb303 C++ bindings.
+- Add a regeneration script plus lint/license exclusions for generated sources.",1777794fc01dfcaf45c932b6aa2d1c5c8e0e9175,749,false,,16,248184,140,.github; .pre-commit-config.yaml; dev; src; thirdparty
+apache/iceberg-cpp,2169e31616617f38d3d160f7bf09825f711a05d5,2169e31,Gang Wu,ustcwg@gmail.com,2026-06-16T16:30:17+08:00,GitHub,noreply@github.com,2026-06-16T16:30:17+08:00,feat(rest): add session-aware REST catalog (#750),"Add SessionContext and SessionCatalog APIs, make RestCatalog a
+session-aware root, and bind REST catalog operations through default,
+contextual, and table-scoped catalog views.
+
+Route contextual and table auth through AuthManager, preserve table
+response config for scoped catalogs, and fail closed on unsupported
+table FileIO config.",40cc9922bb17d70df1de5044b6f2b5a17d808080,750,false,,19,911,164,src
+apache/iceberg-cpp,fc9781f4b3ed168e4eed701d4f6074bfc909d789,fc9781f,Minh Vu,vuhoangminh97@gmail.com,2026-06-16T10:40:12+02:00,GitHub,noreply@github.com,2026-06-16T16:40:12+08:00,fix(rest): reject empty namespace separators (#740),"## Summary
+
+- Reject empty REST namespace separators in namespace encode/decode
+helpers.
+- Reject empty namespace separators when constructing `ResourcePaths`.
+- Add regression coverage for direct helper calls and the resource path
+config boundary.
+
+## Why
+
+`DecodeNamespace` advances by `separator.size()` after each match. An
+empty separator never advances the cursor, so a misconfigured separator
+can hang namespace parsing.
+
+## Testing
+
+- `cmake -S . -B build-rest -G Ninja -DICEBERG_BUILD_BUNDLE=OFF
+-DICEBERG_BUILD_REST=ON -DICEBERG_BUILD_HIVE=OFF
+-DICEBERG_BUILD_SQL_CATALOG=OFF`
+- `cmake --build build-rest --target rest_catalog_test`
+- `ctest --test-dir build-rest -R rest_catalog_test --output-on-failure`",2169e31616617f38d3d160f7bf09825f711a05d5,740,false,,3,35,0,src

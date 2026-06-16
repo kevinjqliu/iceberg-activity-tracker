@@ -12323,3 +12323,52 @@ References: https://github.com/apache/iceberg/issues/13634,
 https://github.com/apache/iceberg/pull/15150,
 https://github.com/apache/iceberg/issues/317,
 https://iceberg.apache.org/spec/#sorting",131c322fcc26cdd11f6068130e75da6bbc304fc5,1184,false,,10,168,61,table
+apache/iceberg-go,ba4f3fa42acc777fa7c901a219605c2843199c11,ba4f3fa,Raul-Mircea Crivineanu,gfxsraul@gmail.com,2026-06-16T19:43:11+08:00,GitHub,noreply@github.com,2026-06-16T13:43:11+02:00,fix: manifest pruning when partition source columns are dropped (#1191),"## Summary
+
+Closes https://github.com/apache/iceberg-go/issues/1190.
+
+Fix manifest-level pruning when a partition source column has been
+dropped from the current schema.
+
+Manifest partition summaries are positional and correspond to the full
+partition field list in the manifest's partition spec. Before this
+change, `newManifestEvaluator` used
+`PartitionSpec.PartitionType(schema)`, which drops partition fields
+whose source column is missing from the provided schema. That can shift
+later partition fields to the wrong position.
+
+For example, if the manifest was written with partition fields `[q_part,
+p_part]`, and the current schema has dropped `q`, then `p_part` could be
+evaluated against `q_part`'s summary slot. This can incorrectly prune a
+manifest and return incomplete results.
+
+This change keeps all partition fields when building the manifest
+evaluator schema. Dropped-source fields are represented as `UnknownType`
+placeholders so later fields remain positionally aligned.
+
+This matches Java Iceberg's partition type behavior, where dropped
+partition-source fields are represented with UnknownType in the
+partition type.
+
+## Tests
+
+Added `TestManifestEvaluatorWithDroppedPartitionSource`, covering:
+
+- partition spec: `identity(q), identity(p)`
+- current schema: `q` dropped, `p` retained
+- row filter: `p = 2`, projected to `p_part`
+- manifest summaries: `q_part` at slot 0, `p_part` at slot 1
+
+Before the fix, the manifest can be incorrectly pruned. After the fix,
+it remains eligible.
+
+## Validation
+
+- `go test ./table -run TestManifestEvaluatorWithDroppedPartitionSource
+-count=1`
+- `go test ./table`
+- `go test ./...`
+
+---------
+
+Signed-off-by: Raul <gfxsraul@gmail.com>",0c5552bfd34937e07bcb22f9bf9a3b5c4e33b27c,1191,false,,3,114,2,partitions.go; table
