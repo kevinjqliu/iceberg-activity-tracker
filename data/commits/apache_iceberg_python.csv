@@ -1755,3 +1755,679 @@ apache/iceberg-python,df46961090bb3f851f65e10fcd9493a0c5b40017,df46961,dependabo
 apache/iceberg-python,bbdd77c479cae7a41a49e0cc1d4729d4760f0308,bbdd77c,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-13T08:29:28+02:00,GitHub,noreply@github.com,2026-06-13T08:29:28+02:00,Build: Bump tornado from 6.5.5 to 6.5.6 (#3480),,df46961090bb3f851f65e10fcd9493a0c5b40017,3480,false,,1,13,13,uv.lock
 apache/iceberg-python,d101879eb8f4790c253eb1e68234c2d17842d882,d101879,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-13T08:29:40+02:00,GitHub,noreply@github.com,2026-06-13T08:29:40+02:00,Build: Bump gcsfs from 2026.4.0 to 2026.5.0 (#3479),,bbdd77c479cae7a41a49e0cc1d4729d4760f0308,3479,false,,1,9,9,uv.lock
 apache/iceberg-python,f66d1b3b17fea01d6c3716539df50de21f1e51d8,f66d1b3,Yuya Ebihara,ebyhry@gmail.com,2026-06-16T16:52:25+09:00,GitHub,noreply@github.com,2026-06-16T00:52:25-07:00,Update astral-sh/setup-uv to v8.2.0 (#3510),,d101879eb8f4790c253eb1e68234c2d17842d882,3510,false,,7,13,13,.github
+apache/iceberg-python,ef96d3a31ccd62c1615eb7929b11d8c40ac5bd07,ef96d3a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-16T19:04:42+02:00,GitHub,noreply@github.com,2026-06-16T19:04:42+02:00,Build: Bump pyjwt from 2.12.0 to 2.13.0 (#3513),,f66d1b3b17fea01d6c3716539df50de21f1e51d8,3513,false,,1,6,3,uv.lock
+apache/iceberg-python,cf78ac7bd8cb7fd984b46f2ca2b9116364646756,cf78ac7,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-16T19:04:54+02:00,GitHub,noreply@github.com,2026-06-16T19:04:54+02:00,Build: Bump tornado from 6.5.6 to 6.5.7 (#3514),,ef96d3a31ccd62c1615eb7929b11d8c40ac5bd07,3514,false,,1,13,13,uv.lock
+apache/iceberg-python,9d2a5e77e6d06622d59b0570425e55aab98e5fc7,9d2a5e7,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-16T19:05:04+02:00,GitHub,noreply@github.com,2026-06-16T19:05:04+02:00,Build: Bump cryptography from 46.0.7 to 48.0.1 (#3515),,cf78ac7bd8cb7fd984b46f2ca2b9116364646756,3515,false,,1,51,51,uv.lock
+apache/iceberg-python,a1e12ad7d9ac253e9c134fc53feb2c7cd1031079,a1e12ad,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-16T19:05:13+02:00,GitHub,noreply@github.com,2026-06-16T19:05:13+02:00,Build: Bump aiohttp from 3.14.0 to 3.14.1 (#3516),,9d2a5e77e6d06622d59b0570425e55aab98e5fc7,3516,false,,1,121,121,uv.lock
+apache/iceberg-python,6da06adfa82eda8d647060632115e75a35634b87,6da06ad,GayathriSrividya,gayathrirajavarapu7@gmail.com,2026-06-18T12:24:10+05:30,GitHub,noreply@github.com,2026-06-18T08:54:10+02:00,feat: add `dictionary_columns` to Arrow scans (#3461),"Closes #3170
+
+## Rationale
+
+Columns that contain large or frequently repeated string values (e.g.
+JSON blobs, low-cardinality categoricals) can exhaust memory when
+PyArrow loads them as plain string arrays. PyArrow's Parquet reader
+natively supports dictionary-encoded reads via its `dictionary_columns`
+kwarg, which deduplicates values and can dramatically reduce peak memory
+usage.
+
+This was previously discussed in #3168 and a prior implementation
+(#3234) was closed as stale.
+
+## Changes
+
+- Added `dictionary_columns: tuple[str, ...] = ()` to `Table.scan()`,
+`TableScan.__init__`, and `StagedTable.scan()`.
+- Forwarded through `DataScan.to_arrow()` and `to_arrow_batch_reader()`
+→ `ArrowScan.__init__` → `_task_to_record_batches` →
+`_get_file_format()`.
+- Only applied when `task.file.file_format == FileFormat.PARQUET`;
+silently ignored for ORC (which does not support this kwarg).
+
+## Usage
+
+```python
+# Read the ""payload"" column as dictionary-encoded to save memory
+df = table.scan(dictionary_columns=(""payload"",)).to_arrow()
+```
+
+## Verification
+
+- Added `test_dictionary_columns_produces_dict_encoded_output` —
+confirms the requested column is dict-encoded, non-requested columns are
+plain, and values are identical.
+- `make lint` ✓
+- `pytest tests/table/ tests/io/test_pyarrow.py` ✓
+
+---------
+
+Co-authored-by: Gayathri Srividya Rajavarapu <gayathrir@Gayathris-MacBook-Air.local>
+Co-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>",a1e12ad7d9ac253e9c134fc53feb2c7cd1031079,3461,false,Gayathri Srividya Rajavarapu; Claude Sonnet 4.6,3,118,12,pyiceberg; tests
+apache/iceberg-python,aa39484a5f1614e2bf910d00234b2ad5aa1bb2b8,aa39484,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-06-20T19:34:39+01:00,GitHub,noreply@github.com,2026-06-20T11:34:39-07:00,Refactor: extract `BaseScan` and `ManifestGroupPlanner` (#3511),"# Rationale for this change
+
+Split out of #3364 at the reviewers' request (to @rambleraptor's and
+@kevinjqliu's point that the architecture refactor and the new feature
+are easier to review separately).
+
+This PR will be followed by
+https://github.com/apache/iceberg-python/pull/3512 that makes use of
+this refactor to implement append scans more cleanly.
+
+**This PR is a pure refactor with no behavioural change.** The diff
+looks large, but it is almost entirely code being moved, not changed.
+
+# Changes
+
+- Introduce `BaseScan(ABC)` as a superclass of `TableScan`, holding the
+snapshot-independent surface: `table_metadata`, `io`, `row_filter`,
+`selected_fields`, `case_sensitive`, `options`, `limit`, the chaining
+helpers (`select` / `filter` / `with_case_sensitive` / `update`), and
+the format-converter sinks (`to_pandas` / `to_polars` / `to_duckdb` /
+`to_ray`) built on an abstract `to_arrow()`.
+- `TableScan` keeps everything snapshot-specific — `snapshot_id`,
+`catalog`, `table_identifier`, `snapshot()`, the snapshot-aware
+`projection()`, `use_ref()`, and abstract `count()` — so its existing
+public surface is unchanged.
+- Extract `ManifestGroupPlanner` from `DataScan` (the `_build_*`
+evaluators, `_check_sequence_number`, and the manifest-entry /
+file-scan-task planning) and route all of `DataScan`'s local planning —
+`scan_plan_helper()` and `_plan_files_local()` — through it, so the
+partition / metrics / residual pipeline lives in exactly one place.
+
+# Back-compatibility
+
+- `to_arrow_batch_reader` stays concrete on `DataScan` and is **not**
+made abstract on `BaseScan`, so external `TableScan` subclasses that
+were valid before still instantiate.
+- `to_pandas` / `to_polars` become concrete defaults on `BaseScan`, and
+`to_duckdb` / `to_ray` move up to `BaseScan` too. This **loosens**
+`TableScan`'s abstract contract (they were abstract on `TableScan`
+before) without breaking existing subclasses.
+- All docstrings and explanatory comments are preserved.
+
+# Are these changes tested?
+
+The existing `DataScan` unit and integration tests exercise the
+refactored planning path unchanged. A regression test is added for the
+no-current-snapshot planning path, which now flows through
+`ManifestGroupPlanner`.
+
+# Are there any user-facing changes?
+
+No. Some previously-`DataScan`-only converters (`to_duckdb` / `to_ray`)
+are now inherited by `TableScan` as well, which is purely additive.
+
+---------
+
+Co-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",6da06adfa82eda8d647060632115e75a35634b87,3511,false,Claude Opus 4.8 (1M context); Kevin Liu,2,311,215,pyiceberg; tests
+apache/iceberg-python,3a3bc626657a4497d8d0011c564b0f902e3b9e84,3a3bc62,Yong Zheng,yongzheng0809@gmail.com,2026-06-20T16:21:35-05:00,GitHub,noreply@github.com,2026-06-20T14:21:35-07:00,Add more examples for pyiceberg view (#3414),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+Closes #3413
+
+# Rationale for this change
+
+Adds more examples around view support.
+
+## Are these changes tested?
+
+Yes. Those had been tested locally with local Polaris.
+
+## Are there any user-facing changes?
+
+No.
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->
+
+---------
+
+Co-authored-by: Yuya Ebihara <ebyhry@gmail.com>",aa39484a5f1614e2bf910d00234b2ad5aa1bb2b8,3414,false,Yuya Ebihara,2,100,3,mkdocs
+apache/iceberg-python,a38bbe35ebb6105e4e353460fed57cb3d7fb8991,a38bbe3,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-06-20T19:11:51-04:00,GitHub,noreply@github.com,2026-06-20T16:11:51-07:00,feat: Add REST loadCredentials support (#3499),"## Summary
+
+- add REST `loadCredentials` endpoint support
+- parse `LoadCredentialsResponse`
+- expose `RestCatalog.load_credentials(...)` with longest-prefix
+resolution for a target location
+
+Contributes to #3495.
+
+## Notes
+
+The pinned `apache/iceberg-rest-fixture:1.10.1` used by integration
+tests does not serve the `/credentials` route, so this is covered with
+REST catalog unit tests rather than fixture-backed integration tests.
+
+## Testing
+
+- `PYTHONPATH=. pytest tests/catalog/test_rest.py -k 'load_credentials
+or storage_credentials'`
+- `ruff check pyiceberg/catalog/rest/__init__.py
+tests/catalog/test_rest.py`
+- `ruff format --check pyiceberg/catalog/rest/__init__.py
+tests/catalog/test_rest.py`",3a3bc626657a4497d8d0011c564b0f902e3b9e84,3499,false,,2,65,0,pyiceberg; tests
+apache/iceberg-python,fe7c749229be6a439a13371348ab741bba6fc940,fe7c749,GayathriSrividya,gayathrirajavarapu7@gmail.com,2026-06-22T01:10:46+05:30,GitHub,noreply@github.com,2026-06-21T12:40:46-07:00,fix: correct NOT STARTS WITH projection for truncated partitions (#3528),"closes #3493
+
+## Summary
+
+Fixes incorrect projection of `NOT STARTS WITH` predicates for truncated
+string/binary partition fields. The current implementation unsafely
+truncates the filter literal without checking its length relative to the
+truncate width.
+
+## Root Cause
+
+The `TruncateTransform.project` method calls `_truncate_array` which
+blindly truncates the literal for both `STARTS WITH` and `NOT STARTS
+WITH` predicates:
+
+```python
+elif isinstance(pred, BoundNotStartsWith):
+    return NotStartsWith(Reference(name), _transform_literal(transform, boundary))
+```
+
+For `NOT STARTS WITH ""hello""` with `truncate[2]`, this produces:
+- Current (unsafe): `NOT STARTS WITH ""he""`
+- Problem: The truncated partition contains all values starting with
+""he"" (from ""hello"", ""heat"", ""hear"", etc.), so we cannot safely exclude
+all non-""hello"" rows
+
+## Solution
+
+Add special handling for `BoundNotStartsWith` in the `project` method
+following the Java/Go reference behavior:
+
+- **prefix_length < truncate_width**: Keep original `NOT STARTS WITH`
+literal (safe)
+- **prefix_length == truncate_width**: Project to `!=` instead (safe
+equality check)
+- **prefix_length > truncate_width**: Return `None` (no inclusive
+projection possible)
+
+### pyiceberg/transforms.py
+- Add explicit `NOT STARTS WITH` handling before calling
+`_truncate_array`
+- Check literal length vs truncate width and apply correct projection
+rules
+
+### tests/test_transforms.py
+- Update `test_projection_truncate_string_not_starts_with` to expect
+`None` (prefix_length > width is unsafe)
+- Add `test_projection_truncate_string_not_starts_with_shorter_literal`
+(prefix_length == width → `!=`)
+- Add `test_projection_truncate_string_not_starts_with_original_literal`
+(prefix_length < width → original)
+
+## Validation
+- `make lint` ✓ (all pre-commit hooks pass)
+- `pytest tests/test_transforms.py` → 280 passed ✓
+- All 13 string truncate projection tests pass
+
+---------
+
+Co-authored-by: Gayathri Srividya Rajavarapu <gayathrir@Gayathris-MacBook-Air.local>
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",a38bbe35ebb6105e4e353460fed57cb3d7fb8991,3528,false,Gayathri Srividya Rajavarapu; Kevin Liu,2,27,4,pyiceberg; tests
+apache/iceberg-python,b9185ec1d031005c03f944c9bece6e3a5a725116,b9185ec,Yuya Ebihara,ebyhry@gmail.com,2026-06-22T05:48:07+09:00,GitHub,noreply@github.com,2026-06-21T13:48:07-07:00,Fix NotStartsWith residual evaluation to return correct result (#3503),"# Rationale for this change
+
+- Fixes #3496
+
+## Are these changes tested?
+
+Yes - the added test fails if we revert this PR's change.
+
+## Are there any user-facing changes?
+
+Yes - this PR fixes a correctness issue of `NotStartsWith`.
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>",fe7c749229be6a439a13371348ab741bba6fc940,3503,false,Kevin Liu,3,28,6,pyiceberg; tests
+apache/iceberg-python,58969e620b056a8c2dcfecd331689e6d965e7126,58969e6,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-21T13:49:23-07:00,GitHub,noreply@github.com,2026-06-21T13:49:23-07:00,Build: Bump jupyter-server from 2.18.0 to 2.20.0 (#3539),"Bumps [jupyter-server](https://github.com/jupyter-server/jupyter_server)
+from 2.18.0 to 2.20.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/jupyter-server/jupyter_server/releases"">jupyter-server's
+releases</a>.</em></p>
+<blockquote>
+<h2>v2.20.0</h2>
+<h2>2.20.0</h2>
+<p>(<a
+href=""https://github.com/jupyter-server/jupyter_server/compare/v2.19.0...333e700119ee0bcc0b5fcd4c158213d7c275c778"">Full
+Changelog</a>)</p>
+<h3>Security fixes</h3>
+<ul>
+<li>CVE-2026-44727 <a
+href=""https://github.com/jupyter-server/jupyter_server/security/advisories/GHSA-fcw5-x6j4-ccmp"">GHSA-fcw5-x6j4-ccmp</a></li>
+</ul>
+<h3>Enhancements made</h3>
+<ul>
+<li>Fix confusing terminal output when using ServerApp.ip=0.0.0.0 <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1643"">#1643</a>
+(<a href=""https://github.com/Yann-P""><code>@​Yann-P</code></a>, <a
+href=""https://github.com/minrk""><code>@​minrk</code></a>)</li>
+<li>Add a toggle to enable curve encryption for all kernels that support
+it <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1638"">#1638</a>
+(<a href=""https://github.com/krassowski""><code>@​krassowski</code></a>,
+<a href=""https://github.com/Carreau""><code>@​Carreau</code></a>, <a
+href=""https://github.com/ianthomas23""><code>@​ianthomas23</code></a>, <a
+href=""https://github.com/minrk""><code>@​minrk</code></a>)</li>
+</ul>
+<h3>Bugs fixed</h3>
+<ul>
+<li>Grab the port from <code>bind_sockets</code> in case its different
+<a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1651"">#1651</a>
+(<a href=""https://github.com/choldgraf""><code>@​choldgraf</code></a>, <a
+href=""https://github.com/krassowski""><code>@​krassowski</code></a>)</li>
+</ul>
+<h3>Maintenance and upkeep improvements</h3>
+<ul>
+<li>Fix <code>test_authorizer</code> having a spurious comma in params
+<a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1664"">#1664</a>
+(<a
+href=""https://github.com/krassowski""><code>@​krassowski</code></a>)</li>
+<li>Add a reminder to merge GHSA before release <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1659"">#1659</a>
+(<a href=""https://github.com/Yann-P""><code>@​Yann-P</code></a>, <a
+href=""https://github.com/Carreau""><code>@​Carreau</code></a>)</li>
+<li>Exclude problematic <code>pywinpty</code> 3.0.4 version <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1658"">#1658</a>
+(<a
+href=""https://github.com/krassowski""><code>@​krassowski</code></a>)</li>
+<li>ci: explicitly pass base-setup inputs to fix strict validation
+failures <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1626"">#1626</a>
+(<a href=""https://github.com/Carreau""><code>@​Carreau</code></a>, <a
+href=""https://github.com/Copilot""><code>@​Copilot</code></a>)</li>
+</ul>
+<h3>Documentation improvements</h3>
+<ul>
+<li>Align docs for curve encryption with latest JEP version <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1660"">#1660</a>
+(<a href=""https://github.com/krassowski""><code>@​krassowski</code></a>,
+<a href=""https://github.com/Carreau""><code>@​Carreau</code></a>)</li>
+<li>Remove PGP key from docs <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1653"">#1653</a>
+(<a href=""https://github.com/Yann-P""><code>@​Yann-P</code></a>, <a
+href=""https://github.com/krassowski""><code>@​krassowski</code></a>)</li>
+</ul>
+<h3>Contributors to this release</h3>
+<p>The following people contributed discussions, new ideas, code and
+documentation contributions, and review.
+See <a
+href=""https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports"">our
+definition of contributors</a>.</p>
+<p>(<a
+href=""https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2026-05-29&amp;to=2026-06-17&amp;type=c"">GitHub
+contributors page for this release</a>)</p>
+<p><a href=""https://github.com/Carreau""><code>@​Carreau</code></a> (<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)
+| <a href=""https://github.com/choldgraf""><code>@​choldgraf</code></a>
+(<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acholdgraf+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)
+| <a href=""https://github.com/Copilot""><code>@​Copilot</code></a> (<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACopilot+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)
+| <a
+href=""https://github.com/ianthomas23""><code>@​ianthomas23</code></a> (<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aianthomas23+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)
+| <a href=""https://github.com/krassowski""><code>@​krassowski</code></a>
+(<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)
+| <a href=""https://github.com/minrk""><code>@​minrk</code></a> (<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)
+| <a href=""https://github.com/Yann-P""><code>@​Yann-P</code></a> (<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AYann-P+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)</p>
+<h2>v2.19.0</h2>
+<h2>2.19.0</h2>
+<p>(<a
+href=""https://github.com/jupyter-server/jupyter_server/compare/v2.18.2...664e2255c71efe963f397b9f803dbcf503b5a920"">Full
+Changelog</a>)</p>
+<h3>Enhancements made</h3>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/jupyter-server/jupyter_server/blob/main/CHANGELOG.md"">jupyter-server's
+changelog</a>.</em></p>
+<blockquote>
+<h2>2.20.0</h2>
+<p>(<a
+href=""https://github.com/jupyter-server/jupyter_server/compare/v2.19.0...333e700119ee0bcc0b5fcd4c158213d7c275c778"">Full
+Changelog</a>)</p>
+<h3>Enhancements made</h3>
+<ul>
+<li>Fix confusing terminal output when using ServerApp.ip=0.0.0.0 <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1643"">#1643</a>
+(<a href=""https://github.com/Yann-P""><code>@​Yann-P</code></a>, <a
+href=""https://github.com/minrk""><code>@​minrk</code></a>)</li>
+<li>Add a toggle to enable curve encryption for all kernels that support
+it <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1638"">#1638</a>
+(<a href=""https://github.com/krassowski""><code>@​krassowski</code></a>,
+<a href=""https://github.com/Carreau""><code>@​Carreau</code></a>, <a
+href=""https://github.com/ianthomas23""><code>@​ianthomas23</code></a>, <a
+href=""https://github.com/minrk""><code>@​minrk</code></a>)</li>
+</ul>
+<h3>Bugs fixed</h3>
+<ul>
+<li>Grab the port from <code>bind_sockets</code> in case its different
+<a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1651"">#1651</a>
+(<a href=""https://github.com/choldgraf""><code>@​choldgraf</code></a>, <a
+href=""https://github.com/krassowski""><code>@​krassowski</code></a>)</li>
+</ul>
+<h3>Maintenance and upkeep improvements</h3>
+<ul>
+<li>Fix <code>test_authorizer</code> having a spurious comma in params
+<a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1664"">#1664</a>
+(<a
+href=""https://github.com/krassowski""><code>@​krassowski</code></a>)</li>
+<li>Add a reminder to merge GHSA before release <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1659"">#1659</a>
+(<a href=""https://github.com/Yann-P""><code>@​Yann-P</code></a>, <a
+href=""https://github.com/Carreau""><code>@​Carreau</code></a>)</li>
+<li>Exclude problematic <code>pywinpty</code> 3.0.4 version <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1658"">#1658</a>
+(<a
+href=""https://github.com/krassowski""><code>@​krassowski</code></a>)</li>
+<li>ci: explicitly pass base-setup inputs to fix strict validation
+failures <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1626"">#1626</a>
+(<a href=""https://github.com/Carreau""><code>@​Carreau</code></a>, <a
+href=""https://github.com/Copilot""><code>@​Copilot</code></a>)</li>
+</ul>
+<h3>Documentation improvements</h3>
+<ul>
+<li>Align docs for curve encryption with latest JEP version <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1660"">#1660</a>
+(<a href=""https://github.com/krassowski""><code>@​krassowski</code></a>,
+<a href=""https://github.com/Carreau""><code>@​Carreau</code></a>)</li>
+<li>Remove PGP key from docs <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1653"">#1653</a>
+(<a href=""https://github.com/Yann-P""><code>@​Yann-P</code></a>, <a
+href=""https://github.com/krassowski""><code>@​krassowski</code></a>)</li>
+</ul>
+<h3>Contributors to this release</h3>
+<p>The following people contributed discussions, new ideas, code and
+documentation contributions, and review.
+See <a
+href=""https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports"">our
+definition of contributors</a>.</p>
+<p>(<a
+href=""https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2026-05-29&amp;to=2026-06-17&amp;type=c"">GitHub
+contributors page for this release</a>)</p>
+<p><a href=""https://github.com/Carreau""><code>@​Carreau</code></a> (<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)
+| <a href=""https://github.com/choldgraf""><code>@​choldgraf</code></a>
+(<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acholdgraf+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)
+| <a href=""https://github.com/Copilot""><code>@​Copilot</code></a> (<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACopilot+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)
+| <a
+href=""https://github.com/ianthomas23""><code>@​ianthomas23</code></a> (<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aianthomas23+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)
+| <a href=""https://github.com/krassowski""><code>@​krassowski</code></a>
+(<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)
+| <a href=""https://github.com/minrk""><code>@​minrk</code></a> (<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)
+| <a href=""https://github.com/Yann-P""><code>@​Yann-P</code></a> (<a
+href=""https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AYann-P+updated%3A2026-05-29..2026-06-17&amp;type=Issues"">activity</a>)</p>
+<!-- raw HTML omitted -->
+<h2>2.19.0</h2>
+<p>(<a
+href=""https://github.com/jupyter-server/jupyter_server/compare/v2.18.2...664e2255c71efe963f397b9f803dbcf503b5a920"">Full
+Changelog</a>)</p>
+<h3>Enhancements made</h3>
+<ul>
+<li>Return <code>unresolved</code> stanza when kernel scope is
+unavailable for <code>resolvePath</code> (instead of failing with 404)
+<a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1641"">#1641</a>
+(<a href=""https://github.com/MUFFANUJ""><code>@​MUFFANUJ</code></a>, <a
+href=""https://github.com/Carreau""><code>@​Carreau</code></a>, <a
+href=""https://github.com/krassowski""><code>@​krassowski</code></a>)</li>
+</ul>
+<h3>Bugs fixed</h3>
+<ul>
+<li>Recreate notary store on failure to prevent save deadlock and data
+loss <a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/pull/1640"">#1640</a>
+(<a href=""https://github.com/krassowski""><code>@​krassowski</code></a>,
+<a href=""https://github.com/Carreau""><code>@​Carreau</code></a>)</li>
+</ul>
+<h3>Maintenance and upkeep improvements</h3>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/jupyter-server/jupyter_server/commit/05a78ad879e69ef87e91b2714a8ebeb5ff9628a7""><code>05a78ad</code></a>
+Publish 2.20.0</li>
+<li><a
+href=""https://github.com/jupyter-server/jupyter_server/commit/6cbee8d65e71abac851c4492fea987ad080580bd""><code>6cbee8d</code></a>
+Merge commit from fork</li>
+<li><a
+href=""https://github.com/jupyter-server/jupyter_server/commit/333e700119ee0bcc0b5fcd4c158213d7c275c778""><code>333e700</code></a>
+Fix <code>test_authorizer</code> having a spurious comma in params (<a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/issues/1664"">#1664</a>)</li>
+<li><a
+href=""https://github.com/jupyter-server/jupyter_server/commit/cccd543352d9be0365de56627b671cc8aa9cab0c""><code>cccd543</code></a>
+Fix CI: explicitly pass base-setup inputs to avoid strict validation
+failures</li>
+<li><a
+href=""https://github.com/jupyter-server/jupyter_server/commit/cd16d715dfb1f84b2e5056317927fc930b811842""><code>cd16d71</code></a>
+Align docs for curve encryption with latest JEP version (<a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/issues/1660"">#1660</a>)</li>
+<li><a
+href=""https://github.com/jupyter-server/jupyter_server/commit/e458061e6ee50368bbdb74153092fc8400704ee0""><code>e458061</code></a>
+Add a toggle to enable curve encryption for all kernels that support it
+(<a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/issues/1638"">#1638</a>)</li>
+<li><a
+href=""https://github.com/jupyter-server/jupyter_server/commit/0ceeb4fb61be1deaaa7c1ff01325f7dd47db1c46""><code>0ceeb4f</code></a>
+Add note in RELEASE.md</li>
+<li><a
+href=""https://github.com/jupyter-server/jupyter_server/commit/b13f8a241b1111e402457e1d0b1cce252d8e1e5e""><code>b13f8a2</code></a>
+Markdown does not work.</li>
+<li><a
+href=""https://github.com/jupyter-server/jupyter_server/commit/e885b10a26c11caf109007a901153d1ac373c14d""><code>e885b10</code></a>
+Add GHSA reminder in prep-release</li>
+<li><a
+href=""https://github.com/jupyter-server/jupyter_server/commit/0e28c901e8bc0953d61611fe8cb018460433288f""><code>0e28c90</code></a>
+Exclude problematic <code>pywinpty</code> 3.0.4 version (<a
+href=""https://redirect.github.com/jupyter-server/jupyter_server/issues/1658"">#1658</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/jupyter-server/jupyter_server/compare/v2.18.0...v2.20.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=jupyter-server&package-manager=uv&previous-version=2.18.0&new-version=2.20.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+You can disable automated security fix PRs for this repo from the
+[Security Alerts
+page](https://github.com/apache/iceberg-python/network/alerts).
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",b9185ec1d031005c03f944c9bece6e3a5a725116,3539,false,dependabot[bot],1,3,3,uv.lock
+apache/iceberg-python,43b27e4f59c7d25210c5cf1d95c09ccaba14f15a,43b27e4,Yuya Ebihara,ebyhry@gmail.com,2026-06-22T06:14:10+09:00,GitHub,noreply@github.com,2026-06-21T14:14:10-07:00,Return overflow sentinel in LongLiteral.to(FloatType) (#3502),"# Rationale for this change
+
+- Fixes #3494
+
+## Are these changes tested?
+
+Yes, added assertions fail if we revert this PR's change.
+
+## Are there any user-facing changes?
+
+Yes, users receive an overflow sentinel instead of OverflowError.
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",58969e620b056a8c2dcfecd331689e6d965e7126,3502,false,Kevin Liu,2,14,0,pyiceberg; tests
+apache/iceberg-python,7fff821199bfc111c9b8b1667b80c846d260c6c5,7fff821,Yuya Ebihara,ebyhry@gmail.com,2026-06-22T06:24:33+09:00,GitHub,noreply@github.com,2026-06-21T14:24:33-07:00,Fix string-based `starts_with` and `not_starts_with` methods (#3501),"# Rationale for this change
+
+- Fixes #3497
+
+## Are these changes tested?
+
+Yes, the added test fails if we revert this PR's change.
+
+## Are there any user-facing changes?
+
+Yes, this PR fixes a correctness issue.
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",43b27e4f59c7d25210c5cf1d95c09ccaba14f15a,3501,false,,2,29,10,pyiceberg; tests
+apache/iceberg-python,fb96df117677a47cf75e8e86f7b88bf47dc0e674,fb96df1,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-06-21T19:47:43-04:00,GitHub,noreply@github.com,2026-06-21T16:47:43-07:00,Return bounds sentinels for long date literals (#3546),,7fff821199bfc111c9b8b1667b80c846d260c6c5,3546,false,,3,35,0,pyiceberg; tests
+apache/iceberg-python,df71d2ae60e52c191eb85ff87931d7a0801c597c,df71d2a,GayathriSrividya,gayathrirajavarapu7@gmail.com,2026-06-22T05:55:05+05:30,GitHub,noreply@github.com,2026-06-21T17:25:05-07:00,Fix duplicate filtering path in Arrow task batches (#3448),"Closes #3272
+
+## What this changes
+
+This PR updates the Arrow scan path in `_task_to_record_batches` to
+avoid redundant filtering when there are no positional deletes.
+
+- Keeps predicate pushdown in `Scanner.from_fragment` as the only filter
+path when `positional_deletes` is absent.
+- Applies `current_batch.filter(pyarrow_filter)` only in the
+positional-delete path, after deletes are applied.
+- Preserves empty-batch handling after both delete application and
+conditional filtering.
+
+## Why
+
+The previous flow could perform an extra table-level refilter even when
+the scanner already applied the predicate. This change removes that
+stale workaround path while keeping correct behavior for positional
+delete scenarios.
+
+## Tests
+
+Added regression coverage in `tests/io/test_pyarrow.py`:
+
+-
+`test_task_to_record_batches_filter_without_positional_deletes_avoids_table_refilter`
+-
+`test_task_to_record_batches_filter_with_positional_deletes_handles_empty_batch`
+
+Validated locally:
+
+- `python -m pytest tests/io/test_pyarrow.py -q -k
+""task_to_record_batches_nanos or
+filter_without_positional_deletes_avoids_table_refilter or
+filter_with_positional_deletes_handles_empty_batch""`
+- `make lint`
+
+---------
+
+Co-authored-by: Gayathri Srividya Rajavarapu <gayathrir@Gayathris-MacBook-Air.local>
+Co-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>
+Co-authored-by: Fokko Driesprong <fokko@apache.org>",fb96df117677a47cf75e8e86f7b88bf47dc0e674,3448,false,Gayathri Srividya Rajavarapu; Claude Sonnet 4.6; Fokko Driesprong,2,134,11,pyiceberg; tests
+apache/iceberg-python,c66d8b5f6c122d3bdedbad1a39d4ef213e19d50d,c66d8b5,Sidra,sidrasaqlain11@gmail.com,2026-06-22T05:50:38+05:00,GitHub,noreply@github.com,2026-06-21T17:50:38-07:00,docs: clean OSS and COS configuration tables (#3452),"## summary
+fixed formatting issues in OSS and Tencent COS configuration
+documentation
+
+## changes
+- fixed broken markdown table alignment in OSS section
+- cleaned and standardized OSS configuration table
+- separated Tencent COS into its own properly formatted section
+- ensured all configuration keys remain unchanged
+- improved readability of documentation
+
+## testing
+- pre-commit checks passed
+- markdown linting passed
+- documentation-only change (no code behavior impact)",df71d2ae60e52c191eb85ff87931d7a0801c597c,3452,false,,1,23,8,mkdocs
+apache/iceberg-python,d0a9b91eb59a5bef8a7d1603cd20ae7a4fc33895,d0a9b91,Tanmay Rauth,tanmayrauth@gmail.com,2026-06-21T21:10:07-07:00,GitHub,noreply@github.com,2026-06-21T21:10:07-07:00,Fix strict NotEqualTo/NotIn pruning with partial nulls or NaNs (#3521),"## Summary
+
+Related to #3498
+
+Fix strict metrics evaluation for `NotEqualTo` and `NotIn` so files are
+only proven to match when a column contains only nulls or only NaNs.
+Mixed null/NaN files now continue through the existing bounds checks
+instead of being treated as `ROWS_MUST_MATCH`.
+
+## Root Cause
+
+The strict evaluator used `_can_contain_nulls` / `_can_contain_nans` for
+negative predicates. That is too broad: a file with values like `[null,
+5]` and bounds `5..5` cannot be proven to match `x != 5` or `x not in
+{5}` because the non-null row may still fail the predicate.
+
+## Java Parity
+
+This matches Java's `StrictMetricsEvaluator`, which only short-circuits
+negative predicates when the column contains only nulls or only NaNs:
+
+-
+[`notEq`](https://github.com/apache/iceberg/blob/0b30919372df34afb632f037df88c05cdba0b134/api/src/main/java/org/apache/iceberg/expressions/StrictMetricsEvaluator.java#L341-L375)
+-
+[`notIn`](https://github.com/apache/iceberg/blob/0b30919372df34afb632f037df88c05cdba0b134/api/src/main/java/org/apache/iceberg/expressions/StrictMetricsEvaluator.java#L418-L462)
+
+## Validation
+
+- `UV_CACHE_DIR=.cache/uv PYTHON_GIL=1 PYTHONPATH=. uv run pytest
+tests/expressions/test_evaluator.py -k ""mixed_nulls_and_matching_bounds
+or mixed_nans_and_matching_bounds or all_nulls or all_nans or
+strict_integer_not_in""`
+- `UV_CACHE_DIR=.cache/uv PYTHON_GIL=1 PYTHONPATH=. uv run pytest
+tests/expressions/test_evaluator.py`
+- `UV_CACHE_DIR=.cache/uv PYTHON_GIL=1 PYTHONPATH=. uv run ruff check
+pyiceberg/expressions/visitors.py tests/expressions/test_evaluator.py`
+- `git diff --check`
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",c66d8b5f6c122d3bdedbad1a39d4ef213e19d50d,3521,false,Kevin Liu,2,47,3,pyiceberg; tests
+apache/iceberg-python,8c7912fe61fb73e722d4e8b354763fcc29683a60,8c7912f,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-06-22T02:59:11-04:00,GitHub,noreply@github.com,2026-06-21T23:59:11-07:00,Add strict NotEqualTo/NotIn null and NaN tests (#3547),,d0a9b91eb59a5bef8a7d1603cd20ae7a4fc33895,3547,false,,1,86,36,tests

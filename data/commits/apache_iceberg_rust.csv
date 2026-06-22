@@ -17839,3 +17839,368 @@ New Clippy warnings are addressed in this PR.
 ## Are these changes tested?
 
 No additional checks beyond CI.",8f1c41685ac0c2a817d7d8730da4b1ed7e4f713e,2652,false,,8,22,28,Cargo.toml; crates; rust-toolchain.toml
+apache/iceberg-rust,38df596d82257a24c29c361247e7376aede55ec1,38df596,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-06-16T14:48:21-07:00,GitHub,noreply@github.com,2026-06-16T14:48:21-07:00,feat(datafusion): push down isnan over NaN-preserving numeric expressions (#2592),"## Which issue does this PR close?
+
+Part of #2154.
+
+## What changes are included in this PR?
+
+Previously, scalar-function pushdown only handled `isnan(...)` when the
+argument was a bare column reference; complex numeric arguments such as
+`isnan(qux + 1)` were silently dropped.
+
+This PR adds `resolve_nan_preserving_reference`, which resolves an
+`isnan` argument down to a single column `Reference` through
+transformations that preserve NaN-ness, so `isnan(<expr>)` can be pushed
+down as `<col> IS NAN`:
+
+- negation `-x`
+- numeric casts (date casts still rejected)
+- `x + c`, `c + x`, `x - c`, `c - x` for a finite literal `c`
+- `x * c`, `c * x`, `x / c` for a finite, non-zero literal `c`
+- arbitrary nesting of the above (e.g. `isnan(-(qux + 1) * 3)`)
+
+Resolving **scalar-function arguments** (e.g. `abs(x)`) is intentionally
+left for a follow-up PR to keep this change small; `isnan(abs(x))` is
+not pushed down here.
+
+### Why is this sound?
+
+Filter pushdown is reported as `Inexact`, so DataFusion re-applies the
+original predicate after scanning. The pushed-down predicate therefore
+only needs to be implied by the original filter (it may match extra
+rows, but must never drop a matching one). Every supported
+transformation keeps NaN-ness *exactly* equivalent — the result is NaN
+iff the wrapped column is NaN — so both `isnan(...)` and `NOT
+isnan(...)` remain correct.
+
+Cases that do **not** preserve NaN-ness are intentionally rejected (and
+covered by tests): `x * 0` / `x / 0` (`±inf * 0` is NaN), `c / x` (`0 /
+0` is NaN), and multi-column expressions.
+
+## Are these changes tested?
+
+Yes. Updated the existing `isnan(qux + 1)` ""unsupported"" test and added
+unit tests covering negation, additive and multiplicative forms, nested
+expressions, combination with other predicates, and the
+rejected/deferred cases. All unit tests in `expr_to_predicate` pass,
+along with `clippy` and `rustfmt`.",662ac7bddb0a906f4c97b0b65ad7ef5dde32557a,2592,false,,1,196,14,crates
+apache/iceberg-rust,7998fc40bf46ce3b39aba18caf1727e86daa3f8a,7998fc4,Shawn Chang,schang@apache.org,2026-06-16T17:48:01-07:00,GitHub,noreply@github.com,2026-06-17T02:48:01+02:00,ci: Update version tag in publish.yml (#2662),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Closes #.
+
+## What changes are included in this PR?
+- Update comment tag to fix zizmor ci failure:
+https://github.com/apache/iceberg-rust/actions/runs/27650373749/job/81772646349
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",38df596d82257a24c29c361247e7376aede55ec1,2662,false,,1,1,1,.github
+apache/iceberg-rust,904f30c664906cbea302d2a77281fabdc8bb093f,904f30c,Dhruv Arya,dhruv.arya@databricks.com,2026-06-16T18:08:47-07:00,GitHub,noreply@github.com,2026-06-17T03:08:47+02:00,feat(transaction): add ExpireSnapshotsAction (#2591),"## Which issue does this PR close?
+
+Revives the effort to close #2145 (originally filed as #1454), which has
+been attempted before but never landed. This is the metadata-only piece;
+physical file cleanup will build on top of it in a follow-up.
+
+## What changes are included in this PR?
+
+Adds an `ExpireSnapshotsAction` to the transaction API, reachable as
+`tx.expire_snapshots()` and following the same convention as the other
+actions. It selects the snapshots to expire and emits the corresponding
+`RemoveSnapshots` (and, for aged-out refs, `RemoveSnapshotRef`) updates.
+It deliberately does not touch any files; that is left to a follow-up so
+this change stays focused on metadata.
+
+Selection follows Java `RemoveSnapshots`:
+
+- Explicit ids (`expire_snapshot_ids`, which accumulates across calls
+like `add_data_files`) and age-based expiry (`expire_older_than_ms`) are
+combined — a snapshot is expired if it is named explicitly or selected
+by age.
+- Age-based expiry is computed per branch along each branch's ancestry:
+a branch keeps its most recent `retain_last` snapshots (a per-ref
+`min_snapshots_to_keep` overrides it) plus any ancestor newer than the
+cutoff (a per-ref `max_snapshot_age_ms` overrides the cutoff for that
+branch). A shared ancestor reachable from a retained branch is therefore
+never expired, while a tag protects only its target, not its ancestry.
+- Refs are aged out first: a non-`main` branch or tag whose head is
+older than its `max_ref_age_ms` is removed, and snapshots that only an
+aged-out ref retained then become expirable.
+- Heads of retained refs, including the current snapshot, are never
+expired, and naming one explicitly is an error (otherwise
+`TableMetadataBuilder::remove_snapshots` would drop the ref silently).
+- The commit asserts `UuidMatch` and `RefSnapshotIdMatch` on `main` to
+guard against a concurrent writer, refuses to run when `gc.enabled` is
+false, and rejects `retain_last(0)`.
+
+The first commit is the original action; the second is the response to
+review feedback (per-branch ancestry retention, ref aging, the stronger
+commit requirement, the accumulating builder, and the `gc.enabled` /
+`retain_last` guards).
+
+Left for follow-ups: the table-level `history.expire.*` defaults
+(defaulting the cutoff to `now - max-snapshot-age-ms`, `retain_last` to
+`min-snapshots-to-keep`, and ref aging to `max-ref-age-ms`) and
+`cleanExpiredMetadata` (removing unreferenced partition specs and
+schemas).
+
+## Are these changes tested?
+
+Yes — 25 unit tests cover explicit-id expiry and ref-head protection,
+the combined explicit + age path, per-branch retention and
+shared-ancestor protection, per-ref `min_snapshots_to_keep` and
+`max_snapshot_age_ms` (including differing windows across branches), the
+tag-vs-branch ancestry distinction, ref aging for both branches and
+tags, the `RefSnapshotIdMatch` requirement, the `gc.enabled` and
+`retain_last(0)` rejections, and unreferenced-but-young retention.
+
+---------
+
+Co-authored-by: Dhruv Arya <aryadhruv@gmail.com>",7998fc40bf46ce3b39aba18caf1727e86daa3f8a,2591,false,Dhruv Arya,3,878,0,crates
+apache/iceberg-rust,1d59930621714102d30f293686ad808df516eea5,1d59930,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-06-16T23:33:41-04:00,GitHub,noreply@github.com,2026-06-17T11:33:41+08:00,Fix: replace --profile py-release with --release in Python release workflows (#2638),"Follow up to #2506, I noticed that ""nightly pypi build"" has been
+failing:
+https://github.com/apache/iceberg-rust/actions/workflows/release_python_nightly.yml
+
+The `py-release` Cargo profile was moved from `Cargo.toml` into
+`pyproject.toml` as inline maturin `config` overrides on the built-in
+`release` profile. Update the workflow `args` to use `--release`
+accordingly.
+
+## Changes
+- `.github/workflows/release_python.yml`: `--profile py-release` →
+`--release`
+- `.github/workflows/release_python_nightly.yml`: `--profile py-release`
+→ `--release`
+
+## Testing
+Verified via nightly workflow run on fork:
+https://github.com/kevinjqliu/iceberg-rust/actions/runs/27474374224",904f30c664906cbea302d2a77281fabdc8bb093f,2638,false,,2,2,2,.github
+apache/iceberg-rust,1311892ccee7f73fc8ad62f946f77654e335ae21,1311892,Dhruv Arya,dhruv.arya@databricks.com,2026-06-17T00:30:56-07:00,GitHub,noreply@github.com,2026-06-17T15:30:56+08:00,feat(transaction): default expiry to history.expire.* table properties (#2664),"## Which issue does this PR close?
+
+- Part of #2145.
+
+## What changes are included in this PR?
+
+Defaults snapshot expiry to the table's `history.expire.*` properties
+when the corresponding knob is not set explicitly, completing the
+default fallback that #2591 deferred (its `plan()` carried two `TODO`s
+for exactly this).
+
+- `TableProperties` gains three fields (and their consts/defaults), in
+the same shape as the existing `commit.retry.*` properties:
+  - `history.expire.max-snapshot-age-ms` (default 5 days)
+  - `history.expire.min-snapshots-to-keep` (default 1)
+  - `history.expire.max-ref-age-ms` (default `i64::MAX`, i.e. never)
+- `ExpireSnapshotsAction::plan()` now mirrors Java `RemoveSnapshots`'
+constructor:
+- the age cutoff defaults to `now - max-snapshot-age-ms`, so age-based
+selection **always runs** even for an explicit-id-only call (only file
+cleanup, out of scope here, keys off an explicit id in Java);
+  - `retain_last` defaults to `min-snapshots-to-keep`;
+- refs without their own `max_ref_age_ms` age out against
+`max-ref-age-ms` (default never).
+
+Defaults and names mirror Java's `TableProperties`
+(`MAX_SNAPSHOT_AGE_MS_DEFAULT = 5 days`, `MIN_SNAPSHOTS_TO_KEEP_DEFAULT
+= 1`, `MAX_REF_AGE_MS_DEFAULT = Long.MAX_VALUE`).
+
+## Are these changes tested?
+
+Yes — unit tests in `expire_snapshots.rs` (27 total, up from 25). Two
+new tests cover the always-on default cutoff (a >5-day-old snapshot is
+expired with no args while a recent one is kept) and the
+`history.expire.min-snapshots-to-keep` floor (the whole chain is
+retained despite age). Explicit-id-only tests pin the cutoff off to
+isolate that behavior now that the default age path always runs.
+`public-api.txt` regenerated for the new public fields/consts; clippy
+and fmt are clean.
+
+Co-authored-by: Dhruv Arya <aryadhruv@gmail.com>",1d59930621714102d30f293686ad808df516eea5,2664,false,Dhruv Arya,3,248,43,crates
+apache/iceberg-rust,f00e64a502ebed0c5c77892d9df4cadce3efdb1a,f00e64a,Abanoub Doss,abanoubdoss@gmail.com,2026-06-17T21:38:45-05:00,GitHub,noreply@github.com,2026-06-17T19:38:45-07:00,ci: save Rust caches only from main (#2669),"## Which issue does this PR close?
+
+- None. This is a CI maintenance change based on observed GitHub Actions
+cache churn.
+
+## What changes are included in this PR?
+
+This keeps Rust cache restores enabled everywhere, but only saves new
+Rust caches from pushes to `main`.
+
+For `pull_request` runs, GitHub creates caches under the PR merge ref
+(`refs/pull/.../merge`). Those caches have a narrow scope: they can help
+reruns of the same PR, but they cannot be restored by `main` or by other
+PRs. PRs can restore caches from their own scope and from the
+base/default branch, so the broadly useful caches are the ones saved
+from `main`.
+
+In a recent cache audit, the repository cache was dominated by PR-scoped
+Rust caches while `main` had no large reusable Rust cache entries:
+
+| Ref | Cache size |
+| --- | ---: |
+| `refs/pull/2667/merge` | ~7.9 GiB |
+| `refs/pull/2668/merge` | ~6.3 GiB |
+| `refs/heads/main` | ~34 KiB |
+
+That churn has two costs:
+
+| Cost | Impact |
+| --- | --- |
+| Cold PR builds after `main` caches are evicted | Keeping reusable
+`main` build caches is estimated to save roughly 2,000-2,500 GitHub
+Actions runner-minutes per week for the `CI / build` matrix alone. |
+| PR cache uploads | In one recent successful PR run, this would have
+saved ~6.6 runner-minutes in the main `CI` workflow and ~10 seconds in
+the Public API workflow by skipping PR cache uploads. |
+
+Concretely, this PR adds `save-if: ${{ github.event_name == 'push' &&
+github.ref == 'refs/heads/main' }}` to the existing
+`swatinem/rust-cache` steps in the main CI and Public API workflows.
+
+## Are these changes tested?
+
+- Not run locally; this is a GitHub Actions workflow-only change.
+- The change uses the existing `swatinem/rust-cache` `save-if` option
+and does not alter the build, check, or test commands.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",1311892ccee7f73fc8ad62f946f77654e335ae21,2669,false,Abanoub Doss,2,9,0,.github
+apache/iceberg-rust,5ea5019629b99a98f535efb459cc348f13b915ff,5ea5019,Prakhar Jain,prakharjain09@gmail.com,2026-06-19T02:20:03-07:00,GitHub,noreply@github.com,2026-06-19T11:20:03+02:00,Extract name mapping from table properties (#2519),"## Which issue does this PR close?
+
+Closes #2518
+
+  ## What changes are included in this PR?
+
+  Parses the `schema.name-mapping.default` table property once during
+  `TableScanBuilder::build` and threads the resulting `Arc<NameMapping>`
+through `PlanContext` → `ManifestFileContext` → `ManifestEntryContext`
+so it
+  lands on `FileScanTask` instead of always being `None`.
+
+This unblocks readers that rely on the name mapping to resolve field IDs
+for Parquet files lacking
+field IDs (or with conflicting IDs). Malformed JSON in the property
+surfaces
+   as `ErrorKind::DataInvalid` from `build()` rather than being silently
+  dropped.
+
+Removes the corresponding TODO in `crates/iceberg/src/scan/context.rs`.
+
+  ## Are these changes tested?
+
+  Three new unit tests in `scan::tests`:
+- `test_table_scan_without_name_mapping_property` — absent property
+leaves
+  `plan_context.name_mapping` as `None`.
+- `test_table_scan_with_name_mapping_property` — valid JSON parses into
+the
+  expected `NameMapping` fields on `PlanContext`.
+- `test_table_scan_with_malformed_name_mapping_property` — invalid JSON
+  returns `ErrorKind::DataInvalid` from `build()`.
+
+  All `scan::` tests (37) pass.",f00e64a502ebed0c5c77892d9df4cadce3efdb1a,2519,false,,2,142,11,crates
+apache/iceberg-rust,6d6427b638ae731e4f45b917d3ea618b4e1c2e7a,6d6427b,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-06-19T13:53:18-07:00,GitHub,noreply@github.com,2026-06-19T13:53:18-07:00,chore(dev): bump iceberg-rest-fixture to 1.10.1 (#2673),"## What changes are included in this PR?
+
+Bumps the integration-test REST catalog fixture in
+`dev/docker-compose.yaml`
+from `1.10.0` to `1.10.1`, the latest published
+`apache/iceberg-rest-fixture`
+release, so the integration tests run against the current patch fixture.
+
+## Are these changes tested?
+
+Covered by the existing Docker-based integration tests in CI.",5ea5019629b99a98f535efb459cc348f13b915ff,2673,false,,1,1,1,dev
+apache/iceberg-rust,68b29381dd51c70803f8ff15be1369d0c95cb04b,68b2938,Daniel Carl Jones,djonesoa@amazon.com,2026-06-19T22:52:11+01:00,GitHub,noreply@github.com,2026-06-19T14:52:11-07:00,chore: Move dependency list generation from a release task to a PR author responsibility (#2676),"## Which issue does this PR close?
+
+- Closes #2675.
+
+## What changes are included in this PR?
+
+This change moves the responsibility for dependency TSV file updates
+from the release manager to the PR author.
+
+CI is updated to enforce this and prompt the PR author on what to
+change.
+
+Note, the check for licenses is already checked by CI and so I am
+removing this from the release runbook also.
+
+## Are these changes tested?
+
+No. I have updated the dependency TSV files based on the instruction,
+however I have not exercised the new CI workflow.",6d6427b638ae731e4f45b917d3ea618b4e1c2e7a,2676,false,,18,5806,4887,.github; bindings; crates; website
+apache/iceberg-rust,b4c73df7e96b00f1956fb0e482d6401430a5aaec,b4c73df,Abanoub Doss,abanoubdoss@gmail.com,2026-06-19T16:54:04-05:00,GitHub,noreply@github.com,2026-06-19T14:54:04-07:00,ci: disable debuginfo and incremental in Rust CI (#2672),"## Which issue does this PR close?
+
+- None. This is a CI maintenance change based on observed Rust build
+artifact size from debug info and incremental state.
+
+## What changes are included in this PR?
+
+This disables dev-profile debuginfo and incremental compilation for the
+Rust CI jobs where those artifacts do not provide practical value:
+
+- `build`
+- `build_with_no_default_features`
+- `tests`
+
+Concretely, this PR adds these job-level env vars:
+
+```yaml
+CARGO_PROFILE_DEV_DEBUG: ""0""
+CARGO_INCREMENTAL: ""0""
+```
+
+It also removes the tests job's existing `RUSTFLAGS: ""-C debuginfo=0""`
+override so debuginfo is disabled through the same Cargo profile
+mechanism across the affected jobs.
+
+The `build` and `build_with_no_default_features` jobs are
+compile-verification jobs. They produce local Cargo outputs under
+`target/`, but those outputs are not uploaded, published, or consumed by
+the release publishing workflow. The `tests` job was already running
+without debuginfo, so this keeps the existing behavior while making the
+mechanism consistent.
+
+In a local Linux A/B build, disabling both settings had the expected
+artifact-size impact:
+
+| Metric | Baseline | With both env vars | Delta |
+| --- | ---: | ---: | ---: |
+| Wall time | 108s | 92s | -14.8% |
+| `target/` size | 31 GiB | 6.5 GiB | -78.9% |
+
+The wall-clock result is from a local Linux run, so it should not be
+read as a direct prediction for GitHub-hosted runners. The size result
+is the main motivation: smaller Rust build artifacts reduce pressure on
+the shared GitHub Actions cache budget.
+
+Disabling incremental also avoids writing incremental state that is not
+useful for cold CI builds and is not cached by `swatinem/rust-cache`.
+
+This also makes room for a follow-up cache improvement in the Python
+bindings CI. The maturin build is one of the largest remaining sources
+of CI runner demand, but caching its Rust artifacts needs enough cache
+budget headroom to be useful. Reducing the core Rust CI cache footprint
+first gives that follow-up a better chance of helping instead of
+immediately competing with oversized existing entries.
+
+## Are these changes tested?
+
+  - Not run locally; this is a GitHub Actions workflow-only change.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",68b29381dd51c70803f8ff15be1369d0c95cb04b,2672,false,Abanoub Doss,1,9,2,.github

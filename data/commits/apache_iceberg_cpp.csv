@@ -3100,3 +3100,193 @@ can hang namespace parsing.
 -DICEBERG_BUILD_SQL_CATALOG=OFF`
 - `cmake --build build-rest --target rest_catalog_test`
 - `ctest --test-dir build-rest -R rest_catalog_test --output-on-failure`",2169e31616617f38d3d160f7bf09825f711a05d5,740,false,,3,35,0,src
+apache/iceberg-cpp,a2bbf180cd0a8ef51ff7510e182a9efe10d25e39,a2bbf18,Minh Vu,vuhoangminh97@gmail.com,2026-06-17T07:26:21+02:00,GitHub,noreply@github.com,2026-06-17T13:26:21+08:00,fix: validate truncate widths in utility entrypoints (#739),"## Summary
+
+- Reject non-positive widths in the `TruncateLiteral` and
+`TruncateLiteralMax` utility entrypoints.
+- Reject zero width in `TruncateUTF8Max`, which returns a `Result` and
+can report invalid input directly.
+- Add regression coverage for zero and negative widths across numeric,
+decimal, string, and binary literal truncation.
+
+## Why
+
+The truncate transform validates its width before creating a transform
+function, but the utility functions can also be called directly. Without
+a guard there, invalid widths can reach modulo operations or iterator
+arithmetic in the type-specific implementations.
+
+## Testing
+
+- `cmake --build build --target util_test`
+- `ctest --test-dir build -R util_test --output-on-failure`",fc9781f4b3ed168e4eed701d4f6074bfc909d789,739,false,,2,63,0,src
+apache/iceberg-cpp,cf0af5b1b8aaf0df971f1c0ee07e83e68b0f6567,cf0af5b,Rahul Goel,goel.rahul4200@gmail.com,2026-06-17T01:27:46-04:00,GitHub,noreply@github.com,2026-06-17T13:27:46+08:00,fix: cast to unsigned char in ASCII case conversion (#748),"fix: cast to unsigned char in ASCII case conversion
+
+`std::tolower`/`toupper` are UB when passed a negative `char`, which is
+what you get for any non-ASCII byte in a signed `char`.
+`StringUtils::ToLower`, `ToUpper`, and `EqualsIgnoreCase`
+  all did this. Cast through `unsigned char`.
+
+Behavior for ASCII is unchanged; this doesn't add Unicode case folding,
+just fixes the UB.
+
+  Related: #613
+
+---------
+
+Co-authored-by: Claude Opus 4.8 <noreply@anthropic.com>",a2bbf180cd0a8ef51ff7510e182a9efe10d25e39,748,false,Claude Opus 4.8,2,48,3,src
+apache/iceberg-cpp,8bbda0ccf54e372f5efcbdb9c0c86e26af413ef6,8bbda0c,wzhuo,wngzhuo@gmail.com,2026-06-17T13:28:43+08:00,GitHub,noreply@github.com,2026-06-17T13:28:43+08:00,feat: implement purge support in DropTable for InMemoryCatalog and SqlCatalog (#744),"When purge=true, delete all metadata files (current + metadata log
+entries) before unregistering the table. Old log files are deleted first
+so the current metadata file remains as an anchor for retries.",cf0af5b1b8aaf0df971f1c0ee07e83e68b0f6567,744,false,,2,35,4,src
+apache/iceberg-cpp,92feae1e06604fcd7a170b973784a245332464dc,92feae1,Zehua Zou,zehuazou2000@gmail.com,2026-06-18T23:45:52+08:00,GitHub,noreply@github.com,2026-06-18T23:45:52+08:00,fix: fast append should not contain deleted file during retry process (#706),,8bbda0ccf54e372f5efcbdb9c0c86e26af413ef6,706,false,,6,139,27,src
+apache/iceberg-cpp,9a2e21da10be52410bfcdb71e836341cb785c98c,9a2e21d,wzhuo,wngzhuo@gmail.com,2026-06-19T05:31:09+08:00,GitHub,noreply@github.com,2026-06-19T05:31:09+08:00,fix: skip only null partition value rows in ParseDataFile (#756),"## Summary
+
+`ParseDataFile()` in `manifest_reader.cc` iterated over rows for each
+partition child field and used `break` to skip null partition values.
+`break` exits the entire inner row loop, so once a null value was
+encountered, **all subsequent rows for that partition column were
+skipped** and never had their partition values parsed.
+
+The fix changes `break` to `continue`, so only the current null row is
+skipped while the remaining rows are still processed.
+
+## Changes
+
+- `src/iceberg/manifest/manifest_reader.cc`: `break` → `continue` in the
+partition-value row loop.
+- `src/iceberg/test/manifest_reader_test.cc`: add regression test
+`NullPartitionValueDoesNotSkipSubsequentRows` that writes a manifest
+with a null partition value before non-null ones and verifies the later
+rows are parsed correctly.
+
+## Testing
+
+- New test passes for manifest versions V1/V2/V3.
+- Confirmed the test fails with the original `break`
+(`partition.num_fields()` is 0 instead of 1 for rows after the null
+one).
+- Full `manifest_test` suite passes (171 tests).",92feae1e06604fcd7a170b973784a245332464dc,756,false,,2,110,33,src
+apache/iceberg-cpp,6f50a39d2680160b19d21e25844b98bf32e0ddd5,6f50a39,wzhuo,wngzhuo@gmail.com,2026-06-19T05:31:30+08:00,GitHub,noreply@github.com,2026-06-19T05:31:30+08:00,feat: add uniqueValue optimization for notEq/notIn in InclusiveMetricsEvaluator (#754),"When a column has a single unique value (no nulls, no NaNs, and lower
+bound == upper bound), notEq(X) and notIn({...X...}) can prune files
+where that unique value matches the predicate, returning
+ROWS_CANNOT_MATCH. Previously these always returned ROWS_MIGHT_MATCH,
+never pruning.
+
+This mirrors the upstream Java InclusiveMetricsEvaluator.uniqueValue()
+logic. The StrictMetricsEvaluator is unchanged: its existing
+bounds-based notEq/notIn logic already covers the single-value case,
+matching upstream Java which has no uniqueValue helper there.
+
+Ports the corresponding
+testNotEqWithSingleValue/testNotInWithSingleValue cases from the Java
+test suite.
+
+---------
+
+Co-authored-by: Junwang Zhao <zhjwpku@gmail.com>",9a2e21da10be52410bfcdb71e836341cb785c98c,754,false,Junwang Zhao,2,196,1,src
+apache/iceberg-cpp,6452715fde84837cdb42707376f025c638f60397,6452715,Zehua Zou,zehuazou2000@gmail.com,2026-06-19T05:31:43+08:00,GitHub,noreply@github.com,2026-06-19T05:31:43+08:00,fix: MergingSnapshotUpdate should not contain deleted file during retry (#707),,6f50a39d2680160b19d21e25844b98bf32e0ddd5,707,false,,3,50,5,src
+apache/iceberg-cpp,950fbfffc5130102a3e3ee10818ff124a218ae1b,950fbff,Junwang Zhao,zhjwpku@gmail.com,2026-06-19T20:25:09+08:00,GitHub,noreply@github.com,2026-06-19T20:25:09+08:00,chore(ci): enable sccache for Meson Windows builds (#761),,6452715fde84837cdb42707376f025c638f60397,761,false,,2,11,0,.github
+apache/iceberg-cpp,255657beae7d142e574acefc17a9e50c56ffca99,255657b,Junwang Zhao,zhjwpku@gmail.com,2026-06-20T19:27:26+08:00,GitHub,noreply@github.com,2026-06-20T19:27:26+08:00,feat: add merge append (#699),,950fbfffc5130102a3e3ee10818ff124a218ae1b,699,false,,13,1675,0,src
+apache/iceberg-cpp,e9a68b7e6b1407785b37fbf90a78044be9bc4166,e9a68b7,lishuxu,lishuxu@gmail.com,2026-06-20T20:10:47+08:00,GitHub,noreply@github.com,2026-06-20T20:10:47+08:00,fix(rest): avoid default catalog reference cycle (#764),"Store the cached default catalog view as a weak_ptr so AsCatalog() can
+reuse a live view without keeping it alive from the RestCatalog root.",255657beae7d142e574acefc17a9e50c56ffca99,764,false,,3,32,5,src
+apache/iceberg-cpp,6f503f9af75978a34b13dfab121a9cbdc9268b6a,6f503f9,Manu Zhang,OwenZhang1990@gmail.com,2026-06-21T23:49:29+08:00,GitHub,noreply@github.com,2026-06-21T23:49:29+08:00,feat: add DeleteFiles update API (#709),"## Summary
+- Add a DeleteFiles snapshot update API and wire it through table and
+transaction update flows.
+- Add DeleteFiles implementation/build integration.
+- Add coverage for path matching, case-insensitive row filters, empty
+delete commits, and strict-projection partial-match rejection.
+
+## Validation
+- `cmake --build build --target table_update_test`
+- `./build/src/iceberg/test/table_update_test
+'--gtest_filter=DeleteFilesTest.*'`
+
+Co-authored-by: Codex <codex@openai.com>",e9a68b7e6b1407785b37fbf90a78044be9bc4166,709,false,Codex,12,380,0,src
+apache/iceberg-cpp,82b0adb1ab8989f8e5df47cb58419a28727ca2a7,82b0adb,Zehua Zou,zehuazou2000@gmail.com,2026-06-22T16:08:12+08:00,GitHub,noreply@github.com,2026-06-22T16:08:12+08:00,chore: make pre-commit and ci clang-format version consistent (#769),,6f503f9af75978a34b13dfab121a9cbdc9268b6a,769,false,,1,1,1,.pre-commit-config.yaml
+apache/iceberg-cpp,28163ce3ff26963b0310dff6dbcf2f6c14f94748,28163ce,Zehua Zou,zehuazou2000@gmail.com,2026-06-22T16:42:41+08:00,GitHub,noreply@github.com,2026-06-22T16:42:41+08:00,feat: parallelize reading manifests (#697),,82b0adb1ab8989f8e5df47cb58419a28727ca2a7,697,false,,7,499,48,src
+apache/iceberg-cpp,a38e0cdef88a2cd3673a78e659cbadb575fa6c2e,a38e0cd,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-06-22T02:14:36-07:00,GitHub,noreply@github.com,2026-06-22T17:14:36+08:00,feat(logging): add Logger interface and default logger (#723),"Part 2 of the logging stack (builds on #722). Adds the logging API and a
+swappable default logger — the foundation the backends and macros plug
+into.
+
+**What's here**
+- `Logger`: the pluggable sink interface (`ShouldLog` / `Log` /
+`SetLevel` / `Flush` / `Initialize`). `ShouldLog()` is the single source
+of truth for runtime filtering.
+- `LogMessage` owns its formatted text so a sink can safely keep a
+record; reserves an attributes field for future structured logging.
+- Process-global default logger: `GetDefaultLogger` / `SetDefaultLogger`
+/ `SetDefaultLevel`, with a lock-free thread-local fast path so logging
+stays cheap.
+- `Initialize` applies the `level` property, so config-driven levels
+actually work. `CurrentLogger()` is safe to call even from a
+`thread_local` destructor during thread shutdown.
+- `logger.h` stays backend-agnostic (never includes the build config
+header), so consumers see one stable API regardless of backend.
+
+**Examples** — using the API directly (the `LOG_*` macros that wrap it
+arrive in #725):
+
+```cpp
+// A custom sink, installed as the process default.
+class MySink : public Logger {
+ public:
+  bool ShouldLog(LogLevel level) const override { return level >= level_; }
+  void Log(LogMessage&& m) noexcept override { write_line(m.message); }
+  void SetLevel(LogLevel level) override { level_ = level; }
+  LogLevel level() const override { return level_; }
+ private:
+  std::atomic<LogLevel> level_{LogLevel::kInfo};
+};
+
+SetDefaultLogger(std::make_shared<MySink>());   // install process-wide
+SetDefaultLevel(LogLevel::kDebug);              // adjust the threshold
+
+auto logger = GetDefaultLogger();               // borrow the current default
+if (logger->ShouldLog(LogLevel::kInfo)) {
+  logger->Log(LogMessage{.level = LogLevel::kInfo, .message = ""scan ready""});
+}
+
+// Or configure from catalog-style properties (applies the ""level"" key):
+auto sink = std::make_shared<MySink>();
+auto status = sink->Initialize({{std::string(kLevelProperty), ""warn""}});  // -> kWarn
+```
+
+The same example is documented inline in `logger.h`.
+
+**Tests** — `logger_test`: default-logger API, level-from-property,
+invalid level rejected, concurrent swap/read, and logging during thread
+teardown. Built and run with clang/libc++ (spdlog ON and OFF).
+
+This pull request and its description were written by Isaac.",28163ce3ff26963b0310dff6dbcf2f6c14f94748,723,false,,9,1129,3,src
+apache/iceberg-cpp,0aff5e99c7f696d476e92face67d1dba34369e84,0aff5e9,Abanoub Doss,abanoubdoss@gmail.com,2026-06-22T04:28:29-05:00,GitHub,noreply@github.com,2026-06-22T17:28:29+08:00,ci: cache vcpkg packages on Windows builds (#766),"## What
+Cache the installed vcpkg packages on the Windows builds in `test` and
+`sql_catalog_test`, and skip the install step when the cache is present.
+
+## Why
+Every Windows run reinstalls the same packages (zlib, nlohmann-json,
+nanoarrow, roaring, plus cpr / sqlite3) from scratch, costing a couple
+of minutes each time. Caching them removes that on every run after the
+first. This matches what `aws_test` already does.
+
+## Validation
+A warm run reused the cached packages and skipped the install. The cache
+only rebuilds when the package list changes.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",a38e0cdef88a2cd3673a78e659cbadb575fa6c2e,766,false,Abanoub Doss,2,15,1,.github
+apache/iceberg-cpp,42b498f60c02314fbca02d3c97ae4f5c787b3fc5,42b498f,Abanoub Doss,abanoubdoss@gmail.com,2026-06-22T04:38:21-05:00,GitHub,noreply@github.com,2026-06-22T17:38:21+08:00,ci: cancel superseded runs in remaining workflows (#767),"## What
+Add a concurrency block to the five workflows that don't have one —
+`cpp-linter`, `pre-commit`, `license_check`, `zizmor`, and `codeql`:
+
+```yaml
+concurrency:
+  group: ${{ github.repository }}-${{ github.head_ref || github.sha }}-${{ github.workflow }}
+  cancel-in-progress: true
+```
+
+## Why
+The heavier workflows already cancel outdated runs, but these five don't
+- so pushing again to a PR leaves the old runs going and tying up
+runners. Grouping on `head_ref || sha` cancels superseded PR runs while
+leaving `main` and scheduled runs untouched.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",0aff5e99c7f696d476e92face67d1dba34369e84,767,false,Abanoub Doss,5,20,0,.github
