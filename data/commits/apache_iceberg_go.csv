@@ -13396,3 +13396,93 @@ page](https://github.com/apache/iceberg-go/network/alerts).
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",88ef46c7a415b02889ee81b4fe3e4a3f28c0b88b,1243,false,dependabot[bot],2,14,14,go.mod; go.sum
+apache/iceberg-go,c92d325bf70feb64ea2e0054c6535963ae0f8898,c92d325,Sicheng Han,133513775+neu-hsc@users.noreply.github.com,2026-06-23T02:28:24+08:00,GitHub,noreply@github.com,2026-06-22T20:28:24+02:00,test: clean up geoarrow conversion coverage (#1235),"Fixes #1233. Summary: correct the WKB marshal error context; add
+default-CRS geometry/geography columns to the Parquet GeoArrow metadata
+round-trip test; replace unchecked GeoArrow type assertions with
+require-based helpers; pin geoarrow.wkb without edges to Geometry; clean
+up comments and EPSG:4326 assertion ordering. Tests: go test
+./table/internal -run TestParquetGeoArrowExtensionMetadataRoundTrip; go
+test ./table/internal -run TestWKTToWKB; go test ./table -run
+TestIcebergGeoTypesToArrowSchema. Also ran go test ./table/internal
+./table: table/internal passed, while table has pre-existing Windows
+path failures around file temp URLs and s3 path separators.",12c683cf93d68477c3932f6d558318a01db59bdf,1235,false,,4,126,43,table
+apache/iceberg-go,0b185fa2f7aa6eeaf07a8ea9096d69a74f338970,0b185fa,Yuya Ebihara,ebyhry@gmail.com,2026-06-23T07:08:14+09:00,GitHub,noreply@github.com,2026-06-22T15:08:14-07:00,CI: Check ASF action allowlist on every PR (#1254),"Relates to:
+* https://github.com/apache/iceberg/issues/16934
+* https://github.com/apache/iceberg/pull/16926",c92d325bf70feb64ea2e0054c6535963ae0f8898,1254,false,,1,0,4,.github
+apache/iceberg-go,9448339625472e0b02928c7d6c92cb904741a184,9448339,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-06-22T15:16:23-07:00,GitHub,noreply@github.com,2026-06-23T00:16:23+02:00,Custom namespace separator (#1253),"We currently don't allow iceberg-go users to change the custom namespace
+separator for multi-part namespaces.
+
+I ran into this as an issue in the Terraform provider, where it appears
+that the namespace separator for the REST Fixture has changed recently.",0b185fa2f7aa6eeaf07a8ea9096d69a74f338970,1253,false,,2,146,25,catalog
+apache/iceberg-go,450d4e8b08563de75682cbdb6aa9cc20f0caf682,450d4e8,Badal Prasad Singh,badal@datazip.io,2026-06-23T03:47:03+05:30,GitHub,noreply@github.com,2026-06-23T00:17:03+02:00,feat(transform): deprecate Transform.ToHumanStr(any) in favor of type-aware ToHumanStrType (#1252),"## Description
+
+Closes #1251
+
+In iceberg-go, the public Transform.ToHumanStr(any) string cannot
+distinguish TimestampType from TimestampTzType (both are
+iceberg.Timestamp in Go), so formatting that depends on source type
+cannot be recovered at the call site.
+
+Following up on the
+[discussion](https://github.com/apache/iceberg-go/pull/1227#issuecomment-4746198642)
+at PR #1227.
+
+## Changelog Note
+This is a **breaking change** for external implementers of the public
+`Transform` interface; all in-tree implementations are updated. The
+deprecated `ToHumanStr` remains for the deprecation window.
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",9448339625472e0b02928c7d6c92cb904741a184,1252,false,,3,71,12,partitions.go; transforms.go; transforms_test.go
+apache/iceberg-go,25b29dcdb480fb1ce234c807b808a9af30e1a8a1,25b29dc,Minh Vu,vuhoangminh97@gmail.com,2026-06-23T00:24:58+02:00,GitHub,noreply@github.com,2026-06-23T00:24:58+02:00,fix(table): abort parquet data file writes after batch write failure (#1241),"Summary
+
+This changes the Parquet `WriteDataFile` error path to abort the open
+writer when a batch write fails, rather than calling `Close` and trying
+to finalize the file. If abort cleanup also fails, the returned error
+now includes both the original write error and the abort error.
+
+The regression test uses a fake file writer to verify the write-failure
+path calls `Abort`, does not call `Close`, preserves the raw write error
+when abort succeeds, and joins both errors when abort also fails.
+
+Testing
+
+- `git diff --check`
+- `go test ./table/internal -run
+'^TestWriteDataFileBatchesAbortsOnWriteError$' -count=1`
+- `go test ./table/internal -count=1`
+- `go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./table/internal/...`
+- `go test ./... -count=1`",450d4e8b08563de75682cbdb6aa9cc20f0caf682,1241,false,,2,97,1,table
+apache/iceberg-go,5605a3f3126d60f4d094549cc6bc4ccc5cd0bb1e,5605a3f,Minh Vu,vuhoangminh97@gmail.com,2026-06-23T00:27:27+02:00,GitHub,noreply@github.com,2026-06-23T00:27:27+02:00,fix(catalog/hadoop): validate table identifiers (#1228),"Summary
+
+- validate Hadoop table identifiers before converting them to filesystem
+paths
+- return table-shaped errors for invalid table identifiers in
+write/load/drop/purge paths
+- keep `CheckTableExists` as a pure existence check that returns `false,
+nil` for invalid identifiers
+- return namespace errors for invalid `ListTables` namespaces
+- add regression coverage for invalid path components and
+parent-traversal-style identifiers
+
+Why
+
+Hadoop namespace operations already rejected empty components, dot
+components, parent traversal, and path separators. Table operations only
+checked identifier length before building paths with `filepath.Join`, so
+path-like components could collapse outside the intended table location.
+
+This keeps table operations on the same component-validation invariant
+as namespace operations while preserving the existing `CheckTableExists`
+behavior.
+
+Testing
+
+- `git diff --check`
+- `go test ./catalog/hadoop -count=1`
+- `go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./catalog/hadoop/...`
+- `go test ./catalog/... -count=1`
+- `go test ./... -count=1`",25b29dcdb480fb1ce234c807b808a9af30e1a8a1,1228,false,,2,194,15,catalog

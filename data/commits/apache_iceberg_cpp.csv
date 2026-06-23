@@ -3290,3 +3290,53 @@ runners. Grouping on `head_ref || sha` cancels superseded PR runs while
 leaving `main` and scheduled runs untouched.
 
 Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",0aff5e99c7f696d476e92face67d1dba34369e84,767,false,Abanoub Doss,5,20,0,.github
+apache/iceberg-cpp,7fe2e93ed1d34a583098ce29e03b4a7851f213cc,7fe2e93,Yuya Ebihara,ebyhry@gmail.com,2026-06-23T07:08:16+09:00,GitHub,noreply@github.com,2026-06-22T15:08:16-07:00,CI: Check ASF action allowlist on every PR (#772),"Relates to:
+* https://github.com/apache/iceberg/issues/16934
+* https://github.com/apache/iceberg/pull/16926",42b498f60c02314fbca02d3c97ae4f5c787b3fc5,772,false,,1,0,4,.github
+apache/iceberg-cpp,5c8c4e5d024ab72c1486a8d5ad32d67431dff894,5c8c4e5,Junwang Zhao,zhjwpku@gmail.com,2026-06-23T11:59:08+08:00,GitHub,noreply@github.com,2026-06-23T11:59:08+08:00,fix(rest): align error handlers with Java implementation (#763),"While reviewing #614, I noticed that `PlanErrorHandler::Accept` does not
+match the behavior of the Java implementation.
+
+A detailed comparison with Java's `ErrorHandlers` revealed several gaps
+between iceberg-cpp and Iceberg Java. Some of these are oversights in
+the original implementation, while others correspond to improvements
+that were made later in Iceberg Java, including:
+
+* https://github.com/apache/iceberg/pull/13143
+* https://github.com/apache/iceberg/pull/14927
+* https://github.com/apache/iceberg/pull/15051
+* https://github.com/apache/iceberg/pull/16059
+
+This PR closes those gaps and brings the error handling behavior in
+iceberg-cpp closer to the Java implementation.",7fe2e93ed1d34a583098ce29e03b4a7851f213cc,763,false,,9,488,57,src
+apache/iceberg-cpp,f38090e0c7b192cdb95bf9c153f135e870c19fa1,f38090e,Abanoub Doss,abanoubdoss@gmail.com,2026-06-22T23:06:08-05:00,GitHub,noreply@github.com,2026-06-23T12:06:08+08:00,ci: cache the sccache directory across C++ test builds (#765),"## What
+Turn on compiler caching (sccache) for the Linux and macOS builds in
+`test`, `aws_test`, `sanitizer_test`, and `sql_catalog_test`, and switch
+the Windows `test` build to the same setup. `main` builds once and saves
+the cache; pull requests reuse it without writing back.
+
+## Why
+Right now only the Windows builds reuse compiled output — every Linux
+and macOS build recompiles the whole bundled Arrow/Parquet/Avro/Boost
+stack from scratch, even though it never changes between PRs. Building
+it once and reusing it removes most of that repeated work. Saving the
+cache as a single file (instead of one upload per compiled file) also
+avoids the upload rate limit that causes ""cache write error"" spam.
+
+## Validation
+On a warm pull-request run, every build reused the cache: 99.6–99.9% of
+files came from cache, zero write errors. The heavy builds drop from
+~10–27 min to ~1.5–5 min.
+
+---------
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",5c8c4e5d024ab72c1486a8d5ad32d67431dff894,765,false,Abanoub Doss,4,171,16,.github
+apache/iceberg-cpp,959fda6703bb74a0268c7038d48e189427a2f67e,959fda6,Junwang Zhao,zhjwpku@gmail.com,2026-06-23T12:47:54+08:00,GitHub,noreply@github.com,2026-06-23T12:47:54+08:00,feat: add Iceberg v3 type definitions (#752),"Introduce the Iceberg v3 types (variant, geometry, geography), including
+their schema/JSON serialization and type-system integration (visitors,
+schema projection, etc.).
+
+Reading and writing data of these types is not implemented yet:
+conversion to/from Arrow, Avro, and Parquet returns an error, as do
+identity transform binding and scalar validation for them.",f38090e0c7b192cdb95bf9c153f135e870c19fa1,752,false,,28,859,126,src
+apache/iceberg-cpp,5ac524624552c37faca652f9412ae89be3aa20ed,5ac5246,Junwang Zhao,zhjwpku@gmail.com,2026-06-23T13:32:46+08:00,GitHub,noreply@github.com,2026-06-23T13:32:46+08:00,fix: allow historical sort orders with dropped fields (#762),This fix is aligned with https://github.com/apache/iceberg/pull/16521,959fda6703bb74a0268c7038d48e189427a2f67e,762,false,,2,94,13,src
+apache/iceberg-cpp,af4b76f2f806f026d921e9a8dea2b8ffbee30dc1,af4b76f,Zehua Zou,zehuazou2000@gmail.com,2026-06-23T17:00:41+08:00,GitHub,noreply@github.com,2026-06-23T17:00:41+08:00,feat: add StoredLength method to PositionOutputStream (#773),,5ac524624552c37faca652f9412ae89be3aa20ed,773,false,,5,44,1,src
+apache/iceberg-cpp,f6f99513980251336ca70a8c6a0059b19332e3a4,f6f9951,Zehua Zou,zehuazou2000@gmail.com,2026-06-23T21:54:02+08:00,GitHub,noreply@github.com,2026-06-23T21:54:02+08:00,ci: upgrade to ubuntu-26.04 image (#771),,af4b76f2f806f026d921e9a8dea2b8ffbee30dc1,771,false,,8,22,22,.github
