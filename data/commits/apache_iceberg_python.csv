@@ -2454,3 +2454,28 @@ No
 
 <!-- In the case of user-facing changes, please add the changelog label.
 -->",8c7912fe61fb73e722d4e8b354763fcc29683a60,3550,false,,1,0,4,.github
+apache/iceberg-python,b8ffdd3059ce5c19b37ac2e5b9918d2fab93f72c,b8ffdd3,vishnu prakash,nvishnuprakash02@gmail.com,2026-06-24T01:18:24+05:30,GitHub,noreply@github.com,2026-06-23T15:48:24-04:00,"fix(datetime): raise specific ""Missing zone offset"" error in  timestamptz_to_nanos (#3505)","# Rationale for this change
+
+  `timestamptz_to_nanos` should raise a clear ""Missing zone
+  offset"" error when it's given a nanosecond timestamp that has no
+  timezone. Today it can't: the check meant to detect a zone-less
+  timestamp accidentally tests the *same* pattern as the success
+  check right above it, so it never matches. The input falls
+  through to the vague ""Invalid timestamp with zone"" error
+  instead.
+
+  The fix is one line check the zone-less pattern
+  (`ISO_TIMESTAMP_NANO`) instead, mirroring
+  `timestamptz_to_micros`, which already does this correctly.
+  (Introduced in #1632.)
+
+  ## Are these changes tested?
+
+  Yes added tests covering the error messages for both
+  `timestamptz_to_nanos` and `timestamp_to_nanos`.
+
+  ## Are there any user-facing changes?
+
+  Only a clearer error message: a zone-less nanosecond timestamp
+  now reports ""Missing zone offset"" instead of ""Invalid timestamp
+  with zone"". No API changes.",c85c9eecb1b79cdc0acd4dc27983802788518aa3,3505,false,,2,11,1,pyiceberg; tests

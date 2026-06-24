@@ -13486,3 +13486,398 @@ Testing
 run --timeout=10m ./catalog/hadoop/...`
 - `go test ./catalog/... -count=1`
 - `go test ./... -count=1`",25b29dcdb480fb1ce234c807b808a9af30e1a8a1,1228,false,,2,194,15,catalog
+apache/iceberg-go,62eafc64c67372a2704f438dc7702397f3d0bd79,62eafc6,Tobias Pütz,tobias@minio.io,2026-06-23T18:42:04+02:00,GitHub,noreply@github.com,2026-06-23T12:42:04-04:00,fix: keep generated position deletes correct under row-group pruning (#1246),"A merge-on-read DELETE binds its filter as the scan's row filter, so
+row-group stats/bloom pruning is active.
+enrichRecordsWithPosDeleteFields stamps each surviving row's position by
+counting emitted rows, so a pruned row group shifts every later position
+by that group's size and the generated position-delete file targets the
+wrong rows. Skip row-group pruning in producePosDeletesFromTask; the
+per-row filter still selects which rows to delete.
+
+Add a v2 merge-on-read regression test deleting a row that lives only in
+a non-leading row group.
+
+Follow-up to the row-lineage row-group pruning fix (#1237) same root
+cause in a separate code path.",5605a3f3126d60f4d094549cc6bc4ccc5cd0bb1e,1246,false,,3,128,18,metadata_columns.go; table
+apache/iceberg-go,30cc631eb24af7db249535af3588a4b789c38ef6,30cc631,Raul-Mircea Crivineanu,gfxsraul@gmail.com,2026-06-23T19:43:12+03:00,GitHub,noreply@github.com,2026-06-23T12:43:12-04:00,Truncate projection counts UTF-8 string prefixes in bytes instead of characters (#1249),"## Summary
+
+Closes https://github.com/apache/iceberg-go/issues/1248.
+
+Fixes UTF-8 handling in truncate projection length checks for string
+`NOT STARTS WITH` predicates.
+
+String `truncate[N]` already truncates by Unicode characters/code
+points, but the projection helper used `len(StringLiteral)`, which
+counts bytes. For multibyte UTF-8 prefixes like `""éé""`, that made the
+projection compare a byte length against a character-based truncate
+width.
+
+This changes string literal length checks to use
+`utf8.RuneCountInString`, while keeping binary/fixed literals
+byte-counted. It also adds regression coverage for Unicode prefixes in
+string truncate projection.
+
+Signed-off-by: Raul <gfxsraul@gmail.com>",62eafc64c67372a2704f438dc7702397f3d0bd79,1249,false,,2,5,1,table; transforms.go
+apache/iceberg-go,a3f22b12b32b9410f51d0a805fcd28cc77b43f29,a3f22b1,Abanoub Doss,abanoubdoss@gmail.com,2026-06-23T12:38:03-05:00,GitHub,noreply@github.com,2026-06-23T13:38:03-04:00,ci: key go and lint caches by version and gate saves to main (#1263),"Closes #1260
+
+## What
+Stop using the golangci-lint action's built-in cache and manage caching
+with `actions/cache` instead. The Go module/build cache and the
+golangci-lint cache are now keyed by os + Go version + lockfile,
+restored on every run, and saved only on `main`. Cache dirs are pinned
+under the workspace via `env:` so the same paths work on every runner,
+and `setup-go`'s own caching is turned off. The cross-compile job and
+the integration workflow get the same restore-always, save-on-main
+treatment.
+
+## Why
+The golangci-lint action builds its cache key from
+`{os}-{workdir}-{interval}-{go.mod hash}`, with no Go version and no
+input to add one, so both Go versions in the matrix share one immutable
+entry. Whichever version loses the weekly save-race restores a cache
+built by the other compiler, throws it out, and re-lints from cold.
+That's roughly 25s vs 203s on the lint step for the same inputs (about
+1m42s vs 6m15s per cell). Adding the Go version to the key gives each
+version its own cache. Gating saves to `main` stops PR branches from
+overwriting the cache that `main` builds.
+
+## Validation
+Tested in a fork: warm runs restored the per-version caches and the
+previously-slow lint step dropped back to ~25s, and PR runs restored
+without saving.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",30cc631eb24af7db249535af3588a4b789c38ef6,1263,false,Abanoub Doss,2,91,6,.github
+apache/iceberg-go,d4d3e2e5c3e7ba372be14958c96e523ba8728448,d4d3e2e,Colton Loftus,70598503+C-Loftus@users.noreply.github.com,2026-06-23T13:48:43-04:00,GitHub,noreply@github.com,2026-06-23T13:48:43-04:00,feat(catalog/hadoop): Allow opt-in for arbitrary schemes for Hadoop Catalog (#1268),"Next step for #1096
+
+This PR allows clients to opt in to use the hadoop catalog with
+arbitrary schemes. However, they have to explicitly set
+`allow-unsafe-commits`. I followed the guidance on this as specified
+here:
+https://github.com/apache/iceberg-go/issues/1096#issuecomment-4656700687
+Note that this allows any arbitrary scheme. It is unclear if this should
+be expand to just add support for blob stores?
+
+Note, I was going to add an integration test for minio with hadoop but
+as far as I can tell, I can't get the integration test runner to work
+for me. Unclear if I am doing something wrong or if we maybe need to
+make a change to this to use relative paths or something analogous? (I
+see the Dockerfile is there)
+
+Note that this is the current integration test file without any changes
+to the runner.
+```
+> make integration-hadoop
+go test -tags=integration -v -run=""^TestHadoopIntegration"" ./catalog/hadoop/...
+=== RUN   TestHadoopIntegration
+2026/06/23 12:18:27 github.com/testcontainers/testcontainers-go - Connected to docker:
+  Server Version: 29.1.3
+  API Version: 1.52
+  Operating System: Docker Desktop
+  Total Memory: 7836 MB
+  Labels:
+    com.docker.desktop.address=unix:///Users/cloftus/Library/Containers/com.docker.docker/Data/docker-cli.sock
+  Testcontainers for Go Version: v0.42.0
+  Resolved Docker Host: unix:///var/run/docker.sock
+  Resolved Docker Socket Path: /var/run/docker.sock
+  Test SessionID: b94c401c54d8169c5101c563021f3b088636ea1765586a79ac332f17f6fff9fc
+  Test ProcessID: 7e1b2a5e-9f59-4ff3-a4bf-7b3afef90979
+#1 [internal] load local bake definitions
+#1 reading from stdin 642B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 2B done
+#2 DONE 0.0s
+    hadoop_integration_test.go:58:
+                Error Trace:    /Users/cloftus/github/iceberg-go/catalog/hadoop/hadoop_integration_test.go:58
+                                                        /Users/cloftus/go/pkg/mod/github.com/stretchr/testify@v1.11.1/suite/suite.go:211
+                                                        /Users/cloftus/github/iceberg-go/catalog/hadoop/hadoop_integration_test.go:315
+                Error:          Received unexpected error:
+                                fail to up compose: compose up: failed to solve: failed to read dockerfile: open Dockerfile: no such file or directory
+
+
+
+                                View build details: docker-desktop://dashboard/build/default/default/n0tmfi552z84ltchd6clbeftd
+                Test:           TestHadoopIntegration
+--- FAIL: TestHadoopIntegration (0.99s)
+FAIL
+FAIL    github.com/apache/iceberg-go/catalog/hadoop     2.042s
+FAIL
+make: *** [integration-hadoop] Error 1
+```",a3f22b12b32b9410f51d0a805fcd28cc77b43f29,1268,false,,2,12,8,catalog
+apache/iceberg-go,a3c589186a4408569c56283ae39f29f983293747,a3c5891,Minh Vu,vuhoangminh97@gmail.com,2026-06-23T20:04:05+02:00,GitHub,noreply@github.com,2026-06-23T14:04:05-04:00,fix(table): remove parquet files on abort (#1257),"Summary
+- remove the incomplete Parquet file when ParquetFileWriter.Abort is
+called
+- return both close and remove failures from Abort with errors.Join
+- cover direct abort cleanup and the rolling writer deferred-abort path
+
+Why
+#1241 switched failed batch writes to Abort instead of Close, but Abort
+still only closed the handle. On object stores that could leave a
+footer-less object behind even though the snapshot never commits it.
+
+Testing
+- go test ./table/internal -run
+'TestParquetFileWriterAbort|TestWriteDataFileBatchesAbortsOnWriteError'
+-count=1\n- go test ./table -run
+'TestRollingDataWriter/TestAbortWithZeroRowsWritten|TestRollingDataWriter/TestStreamErrorPathUsesAbort'
+-count=1\n- go test ./table/internal -count=1\n- go test ./table
+-count=1\n- go run
+github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.8.0 run
+--timeout=10m ./table/...\n- git diff --check\n\nCloses #1247",d4d3e2e5c3e7ba372be14958c96e523ba8728448,1257,false,,5,125,3,io; table
+apache/iceberg-go,89ea11108dc936928e4e7096b417d6740a71ed42,89ea111,Abanoub Doss,abanoubdoss@gmail.com,2026-06-23T17:20:32-05:00,GitHub,noreply@github.com,2026-06-23T18:20:32-04:00,ci: run lint-and-test on the real os matrix (#1264),"Closes #1261
+
+## What
+Set `runs-on: ${{ matrix.os }}` so the matrix actually selects runners,
+and turn on macOS alongside Linux. `windows-latest` stays commented out
+until the path issues in #1262 are sorted. Also add `*.go text eol=lf`
+to `.gitattributes` so gofmt passes when Go files are checked out on a
+non-Linux runner.
+
+## Why
+`runs-on:` was hardcoded to `ubuntu-latest` while `name:` used `${{
+matrix.os }}`, so the `os` axis had no effect and every job ran on
+Linux. macOS was listed but never actually tested. Making the matrix
+real gets macOS covered now. Windows needs filesystem-path fixes first
+(#1262), so it stays off for the moment. The `.gitattributes` rule keeps
+the gofmt linter from failing if a runner checks out Go sources with
+CRLF.
+
+## Validation
+Tested in a fork: the macOS cells ran lint, tests, and the race job
+green.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",a3c589186a4408569c56283ae39f29f983293747,1264,false,Abanoub Doss,2,11,3,.gitattributes; .github
+apache/iceberg-go,9d257270af045a93e951051fe91fa476b6aeb9a0,9d25727,Neelesh Salian,nssalian@users.noreply.github.com,2026-06-23T15:43:00-07:00,GitHub,noreply@github.com,2026-06-23T18:43:00-04:00,feat(table): variant shredded reader + bump arrow-go version (#1238),"Closes [#986](https://github.com/apache/iceberg-go/issues/986).
+
+At scan time, reassembles shredded variant columns (metadata + residual
+value + typed_value) back into the plain unshredded layout, so a
+shredded variant reads the same as a non-shredded one. arrow-go's
+VariantArray does the per-row work. The code change is only in the
+projection visitor's Variant method.
+
+Note: This PR also bumps arrow-go to 4a540f5
+(https://github.com/apache/arrow-go/commit/4a540f5144843a25db8cffe828dd7deeb34260e1)
+(v18.6.1-0.20260623163317-4a540f514484) to pick up `UnshredVariant`
+(https://github.com/apache/arrow-go/pull/859), which does the per-row
+reassembly.
+
+## Fixture based Testing
+
+The fixtures come from
+[apache/parquet-testing](https://github.com/apache/parquet-testing/tree/master/shredded_variant)
+(written by Iceberg Java's TestVariantReaders). I first ran all 137
+upstream cases through arrow-go to see where it stands (128 pass, 4
+reject, 2 lenient, 3 spec-invalid), then committed 17 of them. These
+represent one per distinct reader behaviour instead of all 137:
+
+- 9 success cases checked against the Java golden value (array, empty
+array, scalar, object with a field that falls back to the residual
+value, object with no value column, nested array, null variant,
+unshredded data under a shredded schema, and a multi-row column with
+nulls). Compared as JSON because reassembly is valid but not
+byte-identical for nested objects.
+- 5 cases the reader should reject (value/typed_value conflicts,
+non-object-with-shredded-fields, and a spec-invalid file).
+- 3 cases where arrow-go reads something Java would reject (uint32 and
+fixed_size_binary typed_value, plus one spec-invalid file it reads).
+These pin the current behaviour so we notice if arrow-go changes it.
+
+## Additional Testing
+
+- compute.Take / FilterRecordBatch leave a shredded column alone (they
+run before projection).
+- rows surviving a positional delete still reassemble correctly.
+- a leak check on the reassembly path.
+- a Spark 4 integration test that writes a shredded table and reads it
+back (checks the file is actually shredded first).
+
+---------
+
+Signed-off-by: Neelesh Salian <n_salian@apple.com>",89ea11108dc936928e4e7096b417d6740a71ed42,1238,false,,40,1275,16,go.mod; go.sum; table
+apache/iceberg-go,90def971a742edf78f3a074e895be439aecec171,90def97,Minh Vu,vuhoangminh97@gmail.com,2026-06-24T09:04:35+02:00,GitHub,noreply@github.com,2026-06-24T09:04:35+02:00,fix(table): clean up partial positional deletes on error (#1245),"Summary
+- return partially loaded positional-delete chunks when a concurrent
+delete-file read fails
+- keep successfully read chunks on the result channel even if another
+worker cancels the group
+- add checked-allocator regression coverage for partial failure cleanup
+
+Why
+If one positional-delete file is loaded and a later delete-file read
+fails, the scanner callers already try to release any partial result.
+readAllDeleteFiles was returning nil on error, so those loaded Arrow
+chunks could be lost instead of released.
+
+Testing
+- go test ./table -run
+'TestReadAllDeleteFilesReturnsPartialDeletesOnError|TestReleasePerFilePosDeletes'
+-count=1\n- go test ./table -count=1\n- go run
+github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.8.0 run
+--timeout=10m ./table/...",9d257270af045a93e951051fe91fa476b6aeb9a0,1245,false,,2,143,7,table
+apache/iceberg-go,0267fb85dbe047fc6a84232945db1cbf703bb327,0267fb8,Revanth,revanthcse1@gmail.com,2026-06-24T06:31:11-05:00,GitHub,noreply@github.com,2026-06-24T13:31:11+02:00,fix: drop redundant hadoop namespace stat (#1293),"Fixes #1273.
+
+## Summary
+
+Drops the redundant pre-`Stat` call from Hadoop catalog `DropNamespace`
+and relies on `WalkDir` to surface missing namespace paths. The root
+`WalkDir` entry still preserves the existing behavior for a file at the
+namespace path by returning `ErrNoSuchNamespace`.
+
+## Testing
+
+- `go test ./catalog/hadoop`
+- `go test ./...`
+- `git diff --check`",90def971a742edf78f3a074e895be439aecec171,1293,false,,2,43,9,catalog
+apache/iceberg-go,92e564beb03736d26705c0b2ab47a615ca11fb4d,92e564b,Minh Vu,vuhoangminh97@gmail.com,2026-06-24T13:32:45+02:00,GitHub,noreply@github.com,2026-06-24T13:32:45+02:00,fix(catalog): avoid mutating load properties (#1291),"Summary
+
+Clone caller-provided properties in `catalog.Load` before filling
+defaults from the configured catalog. The merged copy is still passed to
+the catalog registrar, but the caller-owned map is left alone.
+
+This avoids surprising side effects when callers reuse a config map
+across loads, or share one between goroutines.
+
+Testing
+
+- `go test ./catalog -run '^TestCatalogLoadDoesNotMutateProps$'
+-count=1`
+- `go test ./catalog -count=1`
+- `git diff --check`",0267fb85dbe047fc6a84232945db1cbf703bb327,1291,false,,2,35,0,catalog
+apache/iceberg-go,18ff76d2b56dd69e658296abb379df451f36fc2b,18ff76d,Minh Vu,vuhoangminh97@gmail.com,2026-06-24T14:17:07+02:00,GitHub,noreply@github.com,2026-06-24T14:17:07+02:00,fix(table): handle string file_path layouts in position deletes (#1229),"Summary
+
+- collect position-delete `file_path` values from string, large-string,
+and dictionary Arrow chunks
+- return invalid-schema errors for unsupported or null `file_path`
+layouts instead of panicking
+- pass the caller compute context through the `file_path` unique path
+- release per-path filter masks immediately after filtering
+- keep the existing Arrow filter path for position values
+
+Testing
+
+- `go test ./table -run
+'TestGroupPosDeletesByFilePath|TestProcessPositionalDeletesAcrossBatches|TestRowDeltaIntegrationPosDeleteRoundTrip'
+-count=1`
+- `git diff --check`
+- `go test ./table -count=1`
+- `go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./table/...`
+- `go test ./... -count=1`",92e564beb03736d26705c0b2ab47a615ca11fb4d,1229,false,,3,467,28,table
+apache/iceberg-go,ca459f92a6c644c1684cca922bf2e311fd723bd5,ca459f9,Ahmed Dlshad,ahmed.dlshad.m@gmail.com,2026-06-24T15:18:14+03:00,GitHub,noreply@github.com,2026-06-24T14:18:14+02:00,test: cover the case-insensitive branch of splitLineageMetadataFields (#1281),"## What
+
+Adds a table-driven `TestSplitLineageMetadataFields` covering the
+previously-untested `caseSensitive == false` branch of
+`splitLineageMetadataFields` (`table/scanner.go`), as requested in
+#1275.
+
+`splitLineageMetadataFields` matches `_row_id` /
+`_last_updated_sequence_number` via `strings.EqualFold` when
+`caseSensitive` is false, but every existing `Scan` test sets
+`caseSensitive: true`, so that branch was never exercised.
+
+The new test asserts:
+
+- **case-insensitive:** mixed-case `_ROW_ID` and
+`_Last_Updated_Sequence_Number` are routed into the lineage fields;
+- **case-sensitive control:** the same mixed-case names fall through to
+user fields;
+- **case-sensitive:** exact lineage column names still match.
+
+No production code changes; test-only.
+
+Closes #1275
+
+Signed-off-by: Ahmed <ahmed.dlshad.m@gmail.com>",18ff76d2b56dd69e658296abb379df451f36fc2b,1281,false,,1,40,0,table
+apache/iceberg-go,88a427d1e03f254b0b2d7ab6a6138f533a24a10e,88a427d,Raul-Mircea Crivineanu,gfxsraul@gmail.com,2026-06-24T15:32:58+03:00,GitHub,noreply@github.com,2026-06-24T14:32:58+02:00,Table race detector finds shared-state races in partition path and position-delete schema tests (#1266),"# Summary
+
+Closes https://github.com/apache/iceberg-go/issues/1265.
+
+Fixes two table-package races found when running `go test -race
+./table/...`, and expands CI race coverage to include the table package.
+
+The first race was in `PartitionSpec.PartitionToPath()`.
+`PartitionField.EscapedName()` previously populated `escapedName`
+lazily, so the first concurrent calls to `PartitionToPath()` could
+mutate the same shared partition spec fields from multiple writer
+goroutines. This PR moves cache population into
+`PartitionSpec.initialize()` and makes `EscapedName()` read-only at call
+time: it returns the precomputed value when present, and otherwise
+computes `url.QueryEscape(p.Name)` without writing back.
+
+The second race was test-side. Several parallel table tests passed the
+package-level `iceberg.PositionalDeleteSchema` directly into
+`MetadataBuilder.AddSchema`. `AddSchema` assigns the schema ID on the
+schema object it receives, so parallel tests could mutate/read the same
+shared schema pointer at the same time. This PR adds a small test helper
+that clones `PositionalDeleteSchema` before giving it to `AddSchema`,
+then updates the affected tests to use the clone.
+
+With both races fixed, CI now runs the race detector over both
+`./codec/...` and `./table/...`.
+
+# Testing
+
+```text
+go test -race ./table/...
+ok  	github.com/apache/iceberg-go/table	27.394s
+ok  	github.com/apache/iceberg-go/table/compaction	48.721s
+ok  	github.com/apache/iceberg-go/table/dv	(cached)
+ok  	github.com/apache/iceberg-go/table/internal	(cached)
+ok  	github.com/apache/iceberg-go/table/substrait	(cached)
+```
+
+Also verified the updated CI race target locally:
+
+```bash
+go test -race ./codec/... ./table/...
+```
+
+Signed-off-by: Raul <gfxsraul@gmail.com>",ca459f92a6c644c1684cca922bf2e311fd723bd5,1266,false,,5,14,8,.github; partitions.go; table
+apache/iceberg-go,7575580692a81cc9292fe3a19c6ec71fd8bf6992,7575580,Minh Vu,vuhoangminh97@gmail.com,2026-06-24T14:33:23+02:00,GitHub,noreply@github.com,2026-06-24T14:33:23+02:00,fix(table): stop manifest iteration spin (#1258),"Summary
+- stop reading from AllManifests' error channel after it closes cleanly
+- keep the early-exit drain from blocking once that channel has been
+disabled
+- add a regression that drains manifests from several snapshots after
+the clean close path has happened
+
+Why
+A closed error channel is always ready. When it closed without an error,
+the select loop could keep taking the nil error case instead of draining
+ready manifest results.
+
+Testing
+- go test ./table -run
+'^TestAllManifestsCompletesAfterErrorChannelCloses$' -count=1
+- go test ./table -count=1
+- go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.8.0
+run --timeout=10m ./table/...
+- git diff --check
+- go test ./... -count=1",88a427d1e03f254b0b2d7ab6a6138f533a24a10e,1258,false,,2,137,2,table
+apache/iceberg-go,9841548519315ddc9689bc2412359d389264094e,9841548,Tobias Pütz,tobias@minio.io,2026-06-24T14:57:14+02:00,GitHub,noreply@github.com,2026-06-24T14:57:14+02:00,fix(v3): re-enable row-group pruning with correct row lineage tracking (#1250),"Follow-up to #1246 and #1237
+
+Re-enable row-group pruning while correctly tracking row lineage & add
+adequate tests.
+
+---------
+
+Signed-off-by: Tobias Pütz <tobias@minio.io>",7575580692a81cc9292fe3a19c6ec71fd8bf6992,1250,false,,10,597,104,table
+apache/iceberg-go,76f4e950bf50921a6efadc5bf4db361e794dedca,76f4e95,nanookclaw,nanook@agentmail.to,2026-06-24T13:26:47Z,GitHub,noreply@github.com,2026-06-24T15:26:47+02:00,fix: keep ExpireSnapshots retention defaults at int64 on 32-bit builds (#1282),"`Properties.GetInt` parses with `strconv.ParseInt(v, 10, 64)` then
+narrows to platform-width `int`. On 32-bit targets `math.MaxInt` is
+`MaxInt32` (~25 days in ms), so the ""keep everything"" sentinel for
+`MaxSnapshotAgeMsDefault` and `MaxRefAgeMsDefault` collapses before the
+`int64()` widening in `ExpireSnapshots` — snapshots or refs older than
+~25 days get expired even when no retention was configured.
+
+**Fix:** Add `Properties.GetInt64(key string, defVal int64) int64` that
+returns the full `int64` without platform truncation, retype the two age
+defaults to `int64(math.MaxInt64)`, and update `ExpireSnapshots` to use
+`GetInt64` for those properties.
+
+`MinSnapshotsToKeepDefault` remains `math.MaxInt` with `GetInt` because
+its downstream type is `int`, not `int64`.
+
+Closes #1278
+
+---------
+
+Co-authored-by: Nanook <nanookclaw@users.noreply.github.com>",9841548519315ddc9689bc2412359d389264094e,1282,false,Nanook,4,44,5,table; types.go; types_test.go

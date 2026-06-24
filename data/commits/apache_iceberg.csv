@@ -3098,3 +3098,122 @@ Signed-off-by: Thomas Thornton <thomaswilliamthornton@gmail.com>
 
 Signed-off-by: Thomas Thornton <thomaswilliamthornton@gmail.com>",02631cdaecd90ef840da12017c60981469a34b8a,16826,false,,2,514,1,kafka-connect
 apache/iceberg,7c13104c8c20323c895aeb33fe5ca1f3b127889f,7c13104,gaborkaszab,gaborkaszab@gmail.com,2026-06-23T00:17:15+02:00,GitHub,noreply@github.com,2026-06-22T15:17:15-07:00,Core: Introduce builder for TrackedFile (#16769),,ac874e80bd5f411b60578d51fcb9861e2f6d45ce,16769,false,,7,1422,125,core
+apache/iceberg,ef07755dd32b59e62346e8599753f75076e57151,ef07755,Eunbin Son,58901024+thswlsqls@users.noreply.github.com,2026-06-24T00:28:38+09:00,GitHub,noreply@github.com,2026-06-23T17:28:38+02:00,ORC: Fix lower/upper bounds for timestamp_ns columns in OrcMetrics (#16922),,7c13104c8c20323c895aeb33fe5ca1f3b127889f,16922,false,,2,49,6,data; orc
+apache/iceberg,d7612ae7b776ae55fb28a0852a3777317ca7dfba,d7612ae,GuoYu,511955993@qq.com,2026-06-24T00:10:20+08:00,GitHub,noreply@github.com,2026-06-23T18:10:20+02:00,Data: Add TCK for Encrypt in FileFormat API (#16724),,ef07755dd32b59e62346e8599753f75076e57151,16724,false,,1,108,3,data
+apache/iceberg,df6ea0820030d217d5f645469419cdbb3f54a41f,df6ea08,Aleksandr Efimov,horsodilo@gmail.com,2026-06-23T19:24:38+03:00,GitHub,noreply@github.com,2026-06-23T18:24:38+02:00,Data: Add metrics reporter to generic scan builder (#16664),,d7612ae7b776ae55fb28a0852a3777317ca7dfba,16664,false,,2,25,0,data
+apache/iceberg,f07b404b060d2bdf06799161de6c12aa43235e11,f07b404,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-06-23T17:01:21-07:00,GitHub,noreply@github.com,2026-06-23T17:01:21-07:00,Parquet: Skip geo footer bounds (#16850),,df6ea0820030d217d5f645469419cdbb3f54a41f,16850,false,,2,54,1,parquet
+apache/iceberg,47148f380eaf3e806ec0cc628b9661a8f57a8fc3,47148f3,Wyatt H,129568037+Wyatt-Hawes@users.noreply.github.com,2026-06-23T17:43:42-07:00,GitHub,noreply@github.com,2026-06-23T17:43:42-07:00,AWS: Handle duplicate column names in IcebergToGlueConverter comment map (#16853),"* AWS: Tolerate duplicate column names in IcebergToGlueConverter comment map
+
+## What changed
+`IcebergToGlueConverter.setTableInputInformation(TableInput.Builder, TableMetadata, Table)`
+builds an `existingColumnMap` (column name -> comment) from the existing Glue
+table's columns to recover comments for fields whose new Iceberg schema has no
+`doc()`. The current `Collectors.toMap(Column::name, Column::comment)` throws
+`IllegalStateException` on duplicate keys.
+
+This change adds a first-seen-wins merge function so duplicate keys collapse
+instead of throwing.
+
+## Why
+Duplicate `Column.name` entries can legitimately appear in an existing Glue
+table's `Columns[]` after a case-only `RENAME COLUMN` cycle (e.g.
+`id -> id__tmp -> Id`):
+
+1. `RENAME COLUMN` only changes the field name; `field.doc()` is unchanged.
+2. The converter walks `metadata.schemas()` in `toColumns` and emits
+   historical names alongside the current name; case-sensitive dedupe lets
+   `Id` and `id` through as distinct entries with the same comment.
+3. Glue normalizes `Column.name` case-insensitively on persist, collapsing
+   `Id` and `id` into two `name=""id""` rows that both carry a non-null comment.
+4. Next commit: the stream above hits `Collectors.toMap` -> duplicate-key throw.
+5. The throw is swallowed by the outer `catch (RuntimeException e) { LOG.warn(...) }`,
+   leaving `tableInputBuilder.storageDescriptor` unset.
+6. `glue.updateTable()` is then called with `TableInput.storageDescriptor=null`,
+   producing a destructive write -- every subsequent read sees a null storage
+   descriptor.
+
+The case-collision alone is not the bug; without comments the
+`column.comment() != null` filter strips the colliding entries and the throw
+never fires. The failure surfaces only when both colliding columns also have
+non-null comments, because that's what the comment-recovery map keys on.
+
+## Fix
+First-seen-wins is the right semantic here: `toColumns` writes current-schema
+entries before historical ones, so the current entry's comment is preserved on
+the read-back. The converter's emit behavior is unchanged -- Glue still
+receives duplicate-name `Columns[]` after a case-only rename, so time-travel
+and Hive-fallback consumers depending on historical names appearing in
+`Columns[]` are unaffected. `addColumnWithDedupe` is also untouched.
+
+A case-insensitive write-side dedupe was considered and rejected -- it would
+drop historical names from `Columns[]` and change the converter's documented
+projection.
+
+## Properties of this fix
+- Resolves the `IllegalStateException` and the resulting null-storage-descriptor
+  `UpdateTable` calls.
+- Heals already-broken tables on the next commit -- no manual dedupe required.
+- No change to the converter's emit behavior.
+- `addColumnWithDedupe` is untouched.
+
+## Test
+Adds `TestIcebergToGlueConverter.testSetTableInputInformationWithDuplicateExistingColumnComments`,
+which constructs an `existingTable` with the broken `Columns[]` shape (two
+`name=""id""` entries, both with comments) and asserts that
+`setTableInputInformation` produces a non-null `StorageDescriptor` with the
+correct first-seen comment. Pre-fix, the test fails on a null
+`storageDescriptor()` (the destructive bug surfaced in-process); post-fix it
+passes.
+
+All 13 tests in `TestIcebergToGlueConverter` pass; spotless clean.
+
+* AWS: Rename existingColumnMap to existingColumnNameToComment to match variable contents.",f07b404b060d2bdf06799161de6c12aa43235e11,16853,false,,2,70,11,aws
+apache/iceberg,6bef83a6bc24a2ba4af12329395d5162162c1df5,6bef83a,Maximilian Michels,mxm@apache.org,2026-06-24T06:49:30+02:00,GitHub,noreply@github.com,2026-06-23T21:49:30-07:00,Flink: Add equality delete conversion planner (#16889),"* Flink: Add equality delete conversion planner
+
+This adds EqualityConvertPlanner, the operator that drives the equality delete
+conversion pipeline. For every trigger it picks the next unconverted staging
+snapshot and emits the read commands and plan metadata that drive the rest of
+the pipeline.
+
+Equality-delete resolution is only correct against an index that reflects the
+current target branch, so each trigger reconciles the worker index before
+resolving. It builds the index on the first run and rebuilds it when external
+commits (compaction, concurrent writes) have moved the branch, evicting entries
+the rebuild won't overwrite. Read commands are split into watermark-separated
+phases because the readers run in parallel: without an explicit ordering the
+worker could resolve a delete against a stale or half-built index.
+
+Idempotency is ensured by the planner, not the committer. It recognizes
+already-converted snapshots from the committer's marker on the target branch, so
+a restart re-derives its position and never reprocesses a committed snapshot.
+
+The planner fails the cycle on inputs it cannot convert correctly rather than
+dropping them silently: data-file rewrites, V2 positional deletes, and equality
+deletes whose field IDs don't match the configured set. When there is nothing to
+convert it still emits a no-op plan so the maintenance task run completes.
+
+* fixup! Update comments and add test for rolled back table
+
+* fixup! Re-trigger CI to run checks skipped during github.com outage
+
+* fixup! Verify planner conversion metrics in tests
+
+* fixup! Assert timestamps and watermarks",47148f380eaf3e806ec0cc628b9661a8f57a8fc3,16889,false,,2,1877,0,flink
+apache/iceberg,aa4abedd2573b9fec5567213195ce208bd91609e,aa4abed,Yuya Ebihara,ebyhry@gmail.com,2026-06-24T14:12:45+09:00,GitHub,noreply@github.com,2026-06-23T22:12:45-07:00,Build: Bump com.google.cloud:libraries-bom from 26.83.0 to 26.84.0 (#16906),"Bumps [com.google.cloud:libraries-bom](https://github.com/googleapis/java-cloud-bom) from 26.83.0 to 26.84.0.
+- [Release notes](https://github.com/googleapis/java-cloud-bom/releases)
+- [Commits](https://github.com/googleapis/java-cloud-bom/compare/v26.83.0...v26.84.0)
+
+---
+updated-dependencies:
+- dependency-name: com.google.cloud:libraries-bom
+  dependency-version: 26.84.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",6bef83a6bc24a2ba4af12329395d5162162c1df5,16906,false,dependabot[bot],3,51,51,gcp-bundle; gradle; kafka-connect
+apache/iceberg,534c3fd9427b7037b5fa683d51b4dd5fc255c472,534c3fd,Neelesh Salian,nssalian@users.noreply.github.com,2026-06-23T23:54:00-07:00,GitHub,noreply@github.com,2026-06-24T08:54:00+02:00,Core: Migrate switch statements to switch expressions (#16881),"Co-authored-by: Maximilian Michels <mxm@apache.org>
+Co-authored-by: Manu Zhang <OwenZhang1990@gmail.com>",aa4abedd2573b9fec5567213195ce208bd91609e,16881,false,Maximilian Michels; Manu Zhang,84,1766,2636,core
+apache/iceberg,0474d660bf5594a7f87e4e8745f56c83a985ad03,0474d66,Yujiang Zhong,42907416+zhongyujiang@users.noreply.github.com,2026-06-24T19:12:24+08:00,GitHub,noreply@github.com,2026-06-24T13:12:24+02:00,Flink: Fix file offset mismatch in DataIterator.seek() when files are skipped (#16929),,534c3fd9427b7037b5fa683d51b4dd5fc255c472,16929,false,,3,200,4,flink
+apache/iceberg,729aead0f6b92f7432abfb5af1e2ad51de3d829a,729aead,Vova Kolmakov,wombatukun@gmail.com,2026-06-24T18:49:25+07:00,GitHub,noreply@github.com,2026-06-24T13:49:25+02:00,ORC: Remove unused conf field from OrcFileAppender (#16345),,0474d660bf5594a7f87e4e8745f56c83a985ad03,16345,false,,2,34,66,orc

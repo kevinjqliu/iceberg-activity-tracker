@@ -18383,3 +18383,100 @@ Note: I was unable to compile or run tests locally in my environment (no
 crates.io access); relying on CI to verify.
 
 Signed-off-by: rahulsmahadev <rahul.mahadev@databricks.com>",b6a8ae0155d457a2bb684a97fa68c03350858b8b,2610,false,,2,151,0,crates
+apache/iceberg-rust,d811a232ea6afc9f35a20c2c8a38b228d3b847f4,d811a23,Daniel Carl Jones,djonesoa@amazon.com,2026-06-23T22:21:49+01:00,GitHub,noreply@github.com,2026-06-23T14:21:49-07:00,chore: Update release runbook (#2674),"## Which issue does this PR close?
+
+There is no open issue for this PR.
+
+## What changes are included in this PR?
+
+This change updates the release process to try and simplify some steps,
+and clarify what can be owned by non-committers.
+
+I've purposely left the updates of dependency files out of the updates
+as I wish to tackle that in a separate PR.
+
+## Are these changes tested?
+
+I have tested the instructions using a GitHub repository I own however I
+cannot test properly with Iceberg Rust.
+
+I am coordinating with @CTTY for this release and we will review the
+release process and test it.
+
+I have tested building the site to check there's no rendering issues.",911af2eb180a63623210b505d2fc01cad810c72a,2674,false,,1,35,19,website
+apache/iceberg-rust,ac8edbb73711707a9346b41799b7a0a17d3a987e,ac8edbb,Dhruv Arya,dhruv.arya@databricks.com,2026-06-23T16:43:06-07:00,GitHub,noreply@github.com,2026-06-23T17:43:06-06:00,feat(transaction): remove statistics file metadata for expired snapshots (#2667),"## Which issue does this PR close?
+
+Part of #2145. Extends #2591 (the `ExpireSnapshotsAction`) and #2664
+(the `history.expire.*` defaults).
+
+## What changes are included in this PR?
+
+When `ExpireSnapshotsAction` expires snapshots, it now also drops the
+statistics and partition-statistics metadata entries tied to each
+expired snapshot, mirroring Java `RemoveSnapshots`
+(`TableMetadata.Builder.removeSnapshots`, which calls
+`removeStatistics`/`removePartitionStatistics` for each removed
+snapshot). For every expired snapshot that has a statistics entry,
+`commit()` emits a `RemoveStatistics` update; likewise
+`RemovePartitionStatistics` for a partition-statistics entry. Only
+entries that actually exist produce an update, matching Java's behavior
+of recording a change only when an entry is present.
+
+This is metadata-only, physical deletion of the puffin files those
+entries point at is part of the file-cleanup maintenance operation
+(mirroring Java's `FileCleanupStrategy`), not this PR.
+
+## Are these changes tested?
+
+Yes. New unit tests cover: an expired snapshot's statistics and
+partition-statistics entries are removed while a retained snapshot keeps
+its own; an expired snapshot with no statistics emits no removal; and
+only the statistics variant that is actually present is removed.
+
+---------
+
+Co-authored-by: Dhruv Arya <aryadhruv@gmail.com>",d811a232ea6afc9f35a20c2c8a38b228d3b847f4,2667,false,Dhruv Arya,1,199,1,crates
+apache/iceberg-rust,71cef32e8224efc4027247517f0186f20c3a53a5,71cef32,Shawn Chang,schang@apache.org,2026-06-23T22:55:40-07:00,GitHub,noreply@github.com,2026-06-23T22:55:40-07:00,fix: fix RUSTSEC-2026-0185 (#2703),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Closes #.
+
+## What changes are included in this PR?
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",ac8edbb73711707a9346b41799b7a0a17d3a987e,2703,false,,1,2,2,Cargo.lock
+apache/iceberg-rust,148afc50ee950b2cd8d99c0243242ef45f3948c5,148afc5,alexander domenti,141058955+sandugood@users.noreply.github.com,2026-06-24T12:57:26+03:00,GitHub,noreply@github.com,2026-06-24T11:57:26+02:00,fix(reader): graceful handling of missing column index (#2693),"## Which issue does this PR close?
+
+- Closes #2452 . Iterates over opened PR: #2464
+
+## What changes are included in this PR?
+
+Changed the `get_row_selection_for_filter_predicate` to return
+`Ok(None)` on cases where indices were absent instead of throwing an
+error.
+
+## Are these changes tested?
+
+Unit-tested the change in logic. As specified in the
+https://github.com/apache/iceberg-rust/pull/2464#discussion_r3395462759
+
+---------
+
+Co-authored-by: JD Williams <jd@dashlx.com>",71cef32e8224efc4027247517f0186f20c3a53a5,2693,false,JD Williams,2,470,19,crates

@@ -3340,3 +3340,44 @@ identity transform binding and scalar validation for them.",f38090e0c7b192cdb95b
 apache/iceberg-cpp,5ac524624552c37faca652f9412ae89be3aa20ed,5ac5246,Junwang Zhao,zhjwpku@gmail.com,2026-06-23T13:32:46+08:00,GitHub,noreply@github.com,2026-06-23T13:32:46+08:00,fix: allow historical sort orders with dropped fields (#762),This fix is aligned with https://github.com/apache/iceberg/pull/16521,959fda6703bb74a0268c7038d48e189427a2f67e,762,false,,2,94,13,src
 apache/iceberg-cpp,af4b76f2f806f026d921e9a8dea2b8ffbee30dc1,af4b76f,Zehua Zou,zehuazou2000@gmail.com,2026-06-23T17:00:41+08:00,GitHub,noreply@github.com,2026-06-23T17:00:41+08:00,feat: add StoredLength method to PositionOutputStream (#773),,5ac524624552c37faca652f9412ae89be3aa20ed,773,false,,5,44,1,src
 apache/iceberg-cpp,f6f99513980251336ca70a8c6a0059b19332e3a4,f6f9951,Zehua Zou,zehuazou2000@gmail.com,2026-06-23T21:54:02+08:00,GitHub,noreply@github.com,2026-06-23T21:54:02+08:00,ci: upgrade to ubuntu-26.04 image (#771),,af4b76f2f806f026d921e9a8dea2b8ffbee30dc1,771,false,,8,22,22,.github
+apache/iceberg-cpp,ed051a702c940f7a08b3e38e01b7774efe0cc899,ed051a7,Manu Zhang,OwenZhang1990@gmail.com,2026-06-23T23:08:53+08:00,GitHub,noreply@github.com,2026-06-23T23:08:53+08:00,feat: add row delta update (#721),"Implements the RowDelta update builder, table and transaction factory
+methods, and focused tests for row-level add/delete flows.
+
+---------
+
+Co-authored-by: Codex <codex@openai.com>",f6f99513980251336ca70a8c6a0059b19332e3a4,721,false,Codex,14,830,6,src
+apache/iceberg-cpp,3c9d13d4072362b68e00dc246cb3cedf93217a76,3c9d13d,lishuxu,lishuxu@gmail.com,2026-06-24T11:09:20+08:00,GitHub,noreply@github.com,2026-06-24T11:09:20+08:00,feat(update): add OverwriteFiles for overwrite snapshot commits (#741),"Summary:
+Add a production OverwriteFiles builder that brings iceberg-cpp to
+semantic parity with Java's BaseOverwriteFiles. It supports explicit
+file replacement (DeleteFile + AddFile) and range-based replacement
+(OverwriteByRowFilter + AddFile) with the same family of pre-commit
+concurrency validations. The builder is a thin subclass of
+MergingSnapshotUpdate and reuses the existing commit kernel
+(Apply/summary/retry/cleanup) unchanged.
+
+Changes:
+- New OverwriteFiles class (src/iceberg/update/overwrite_files.{h,cc})
+and Table::NewOverwrite() / Transaction::NewOverwrite() entry points.
+- Builder surface: AddFile, DeleteFile, bulk DeleteFiles,
+OverwriteByRowFilter, ValidateFromSnapshot, ConflictDetectionFilter,
+ValidateNoConflictingData, ValidateNoConflictingDeletes,
+ValidateAddedFilesMatchOverwriteFilter, WithCaseSensitivity.
+- Validate(): conflict-filter resolution, concurrent add/delete conflict
+checks, and strict added-file range validation (projection +
+StrictMetricsEvaluator).
+- Tests (overwrite_files_test.cc, 45 cases) and CMake/meson wiring.
+
+Behavior alignment with Java:
+- operation() returns append/delete/overwrite from builder content.
+- Conflict-filter resolution mirrors BaseOverwriteFiles (explicit -> row
+filter -> AlwaysTrue); replaced-file delete checks honor
+ConflictDetectionFilter.
+- Strict added-file validation uses a single DataSpec(), rejecting
+multi-spec and empty added-file sets.
+- Deviations: public WithCaseSensitivity (vs caseSensitive) to avoid a
+protected-name clash; ValidateFromSnapshot rejects negative ids early.
+
+---------
+
+Co-authored-by: shuxu.li <shuxu.li@clickzetta.com>",ed051a702c940f7a08b3e38e01b7774efe0cc899,741,false,shuxu.li,20,1301,75,src
+apache/iceberg-cpp,988f363e7e867c79a147317b3ff1f6c2bb11fea1,988f363,Zehua Zou,zehuazou2000@gmail.com,2026-06-24T17:18:30+08:00,GitHub,noreply@github.com,2026-06-24T17:18:30+08:00,feat: parallelize update and scan processing (#770),,3c9d13d4072362b68e00dc246cb3cedf93217a76,770,false,,14,649,347,src
