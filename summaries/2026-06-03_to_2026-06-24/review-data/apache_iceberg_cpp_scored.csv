@@ -1,0 +1,1279 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-cpp,2169e31616617f38d3d160f7bf09825f711a05d5,2169e31,Gang Wu,ustcwg@gmail.com,2026-06-16T16:30:17+08:00,GitHub,noreply@github.com,2026-06-16T16:30:17+08:00,feat(rest): add session-aware REST catalog (#750),"Add SessionContext and SessionCatalog APIs, make RestCatalog a
+session-aware root, and bind REST catalog operations through default,
+contextual, and table-scoped catalog views.
+
+Route contextual and table auth through AuthManager, preserve table
+response config for scoped catalogs, and fail closed on unsupported
+table FileIO config.",40cc9922bb17d70df1de5044b6f2b5a17d808080,750,false,,19,911,164,src,114,8,122,base; feature/api verb; important area: rest; strategic: catalog; community signal: fileio; medium file count; large churn; correctness signal; has PR number; LanceDB similarity 0.27,Core: Implement register view for REST catalog,- feat(rest): add session-aware REST catalog (#750) (Thanks Gang Wu!)
+apache/iceberg-cpp,7d352f5eca23165db027b4e5140272496e1efd2a,7d352f5,lishuxu,lishuxu@gmail.com,2026-06-04T16:03:45+08:00,GitHub,noreply@github.com,2026-06-04T16:03:45+08:00,feat(rest): implement OAuth2 token auto-refresh for REST catalog (#646),"Replace the MakeOAuth2 stub with a full OAuth2AuthSession that
+automatically refreshes tokens before expiration using the
+client_credentials grant.",17ae1648896419186ae7b8551a5eebfe65f5a57a,646,false,,24,1100,109,.github; src,93,9,102,base; feature/api verb; important area: rest; strategic: catalog; large file count; large churn; multi-area change; has PR number; LanceDB similarity 0.29,Core: Implement register view for REST catalog,- feat(rest): implement OAuth2 token auto-refresh for REST catalog (#646) (Thanks lishuxu!)
+apache/iceberg-cpp,24cbe8444256e8f72c8c3c7f7f51fa5cc02f2aab,24cbe84,Junwang Zhao,zhjwpku@gmail.com,2026-06-05T09:55:28+08:00,GitHub,noreply@github.com,2026-06-05T09:55:28+08:00,feat(catalog): add SQL catalog (#693),"Add a relational database backed SqlCatalog with a CatalogStore
+abstraction, built-in sqlpp23 stores for SQLite, PostgreSQL, and MySQL,
+and Java-compatible catalog tables.",7d352f5eca23165db027b4e5140272496e1efd2a,693,false,,27,3225,3,.github; .gitignore; CMakeLists.txt; README.md; cmake_modules; mkdocs; src,93,6,99,base; feature/api verb; important area: catalog; strategic: catalog; large file count; large churn; multi-area change; has PR number; LanceDB similarity 0.19,"Core, Spark: add the comment table property key",- feat(catalog): add SQL catalog (#693) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,959fda6703bb74a0268c7038d48e189427a2f67e,959fda6,Junwang Zhao,zhjwpku@gmail.com,2026-06-23T12:47:54+08:00,GitHub,noreply@github.com,2026-06-23T12:47:54+08:00,feat: add Iceberg v3 type definitions (#752),"Introduce the Iceberg v3 types (variant, geometry, geography), including
+their schema/JSON serialization and type-system integration (visitors,
+schema projection, etc.).
+
+Reading and writing data of these types is not implemented yet:
+conversion to/from Arrow, Avro, and Parquet returns an error, as do
+identity transform binding and scalar validation for them.",f38090e0c7b192cdb95bf9c153f135e870c19fa1,752,false,,28,859,126,src,87,7,94,"base; feature/api verb; strategic: v3, variant; community signal: geography, geometry; large file count; medium churn; has PR number; LanceDB similarity 0.23",OpenAPI: Add CatalogObjectIdentifier schema,- feat: add Iceberg v3 type definitions (#752) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,577c8e4e3fdcf02a55cfe89faaec8641cc950889,577c8e4,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-06-14T12:02:35+08:00,GitHub,noreply@github.com,2026-06-14T12:02:35+08:00,feat(auth): implement SigV4 authentication for REST catalog (#616),"Implement AWS SigV4 authentication for the REST catalog client,
+following Java's `RESTSigV4AuthManager` and `RESTSigV4AuthSession`.
+
+- Extend `AuthSession::Authenticate()` with `HTTPRequest`
+(method, url, body) for SigV4 request signing
+- Add `SigV4AuthSession`: delegate-first auth → relocate conflicting
+Authorization header → sign with AWS SDK
+- Add `SigV4AuthManager`: wraps delegate AuthManager (default OAuth2),
+resolves credentials from properties or default chain
+- Body hash matches Java's `SignerChecksumParams` output: empty body →
+hex `EMPTY_BODY_SHA256`; non-empty body → `Base64(SHA256(body))`
+
+---------
+
+Co-authored-by: Gang Wu <ustcwg@gmail.com>",c0c6b01393070b0813f49b0d6220c98256379cef,616,false,Gang Wu,25,1774,201,.github; CMakeLists.txt; ci; cmake_modules; meson.options; src,81,10,91,"base; feature/api verb; strategic: catalog, v4; large file count; large churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.32",Core: Implement register view for REST catalog,- feat(auth): implement SigV4 authentication for REST catalog (#616) (Thanks Jiajia Li and Gang Wu!)
+apache/iceberg-cpp,b6508226cb944e36267685d29c3a23c8422d8cad,b650822,Sandeep Gottimukkala,gsandeep.1241@gmail.com,2026-06-09T01:38:29-07:00,GitHub,noreply@github.com,2026-06-09T16:38:29+08:00,feat(rest): add scan plan endpoints to REST catalog client (#614),"* Introduced 4 endpoints: planning table scan, fetching a scan result,
+cancelling a scan plan and fetching scan planning tasks (endpoint.h)
+* Introduced corresponding request and response objects (types.h)
+* Implemented handlers (catalog.h). The handlers construct a request
+object and return a response object
+- Handlers use newly introduced helper methods to serialize and
+deserialize request response json objects
+* Added unit tests for all the above helper methods and handler methods
+* Added integration tests for the handlers",ad9b8fcf8e8717cc2a0296b70d33d786ea5a6cc4,614,false,,17,2395,10,src,84,6,90,base; feature/api verb; important area: rest; strategic: catalog; medium file count; large churn; has PR number; LanceDB similarity 0.20,Flink: Backport Add the possibility to use Coordinator Lock when using Flink SQL to 2.0 and 1.20,- feat(rest): add scan plan endpoints to REST catalog client (#614) (Thanks Sandeep Gottimukkala!)
+apache/iceberg-cpp,cb79f2983575c1ea7f4526b1926a81ac0d7b5826,cb79f29,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-06-15T19:02:04-07:00,GitHub,noreply@github.com,2026-06-16T10:02:04+08:00,feat(logging): add LogLevel severity enum (#722),"## What
+
+First of PR that adds a logging system to iceberg-cpp.
+
+This PR adds LogLevel — the severity scale every later piece builds on —
+and nothing else.
+
+- enum class LogLevel { kTrace, kDebug, kInfo, kWarn, kError, kCritical,
+kFatal, kOff }, ordered most-to-least verbose so ""should this log?"" is a
+plain level >= threshold check. kOff is the max sentinel for disabling
+logging.
+- constexpr ToString(LogLevel) and a case-insensitive LogLevelFromString
+returning Result<LogLevel> — same idiom as CounterUnit in
+metrics/counter.h.
+
+Header-only: this PR adds src/iceberg/logging/log_level.h, wires the new
+src/iceberg/logging/ directory into CMake, and adds log_level_test.cc
+(ToString/FromString round-trip, case-insensitivity, unknown-input
+error, ordering).
+
+## Why
+
+iceberg-cpp has no logging today — only error-as-value Result. This
+stack introduces a pluggable logger; levels are the foundational
+vocabulary, landed on their own so the
+rest reviews cleanly.
+
+
+## Testing
+
+compiled and run with clang++ -std=c++23 -stdlib=libc++ (clang 18).
+
+The logging module builds clean and a behavior driver passes (levels
+round-trip, macro formatting + source location, gate filtering,
+disabled-arg elision, never-throws fallback, FATAL emit-then-abort,
+compile-time stripping).
+
+Full ctest -R logging_test + the spdlog-ON build still want a C++23
+toolchain with network (gtest/spdlog via FetchContent) in CI.",8d576ed93afccf5a7334d01f814ce56c5acc4273,722,false,,9,210,0,src,77,6,83,base; feature/api verb; strategic: round-trip; summary signal: round-trip; medium file count; medium churn; has PR number; LanceDB similarity 0.21,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- feat(logging): add LogLevel severity enum (#722) (Thanks kamcheungting-db!)
+apache/iceberg-cpp,ec2075275019667bd2cb7866ca1a0c615d92c1e4,ec20752,Manu Zhang,OwenZhang1990@gmail.com,2026-06-05T12:39:12+08:00,GitHub,noreply@github.com,2026-06-05T12:39:12+08:00,feat: support Iceberg v3 unknown type (#662),"Closes #665
+
+---
+
+## Summary
+- Add Iceberg v3 unknown primitive type and JSON
+serialization/deserialization support.
+- Support unknown as null-only data across Arrow, Avro, Parquet, schema
+projection, and nested fields.
+- Enforce required-field invariants for unknown/null-only projections
+and Arrow null imports.
+
+## Validation
+- ctest --test-dir build --output-on-failure
+
+---------
+
+Co-authored-by: Codex <codex@openai.com>",24cbe8444256e8f72c8c3c7f7f51fa5cc02f2aab,662,false,Codex,36,1727,102,src,76,7,83,"base; feature/api verb; strategic: v3, variant; large file count; large churn; co-authored; has PR number; LanceDB similarity 0.23",Flink: TableMaintenance Support Coordinator Lock,- feat: support Iceberg v3 unknown type (#662) (Thanks Manu Zhang!)
+apache/iceberg-cpp,a38e0cdef88a2cd3673a78e659cbadb575fa6c2e,a38e0cd,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-06-22T02:14:36-07:00,GitHub,noreply@github.com,2026-06-22T17:14:36+08:00,feat(logging): add Logger interface and default logger (#723),"Part 2 of the logging stack (builds on #722). Adds the logging API and a
+swappable default logger — the foundation the backends and macros plug
+into.
+
+**What's here**
+- `Logger`: the pluggable sink interface (`ShouldLog` / `Log` /
+`SetLevel` / `Flush` / `Initialize`). `ShouldLog()` is the single source
+of truth for runtime filtering.
+- `LogMessage` owns its formatted text so a sink can safely keep a
+record; reserves an attributes field for future structured logging.
+- Process-global default logger: `GetDefaultLogger` / `SetDefaultLogger`
+/ `SetDefaultLevel`, with a lock-free thread-local fast path so logging
+stays cheap.
+- `Initialize` applies the `level` property, so config-driven levels
+actually work. `CurrentLogger()` is safe to call even from a
+`thread_local` destructor during thread shutdown.
+- `logger.h` stays backend-agnostic (never includes the build config
+header), so consumers see one stable API regardless of backend.
+
+**Examples** — using the API directly (the `LOG_*` macros that wrap it
+arrive in #725):
+
+```cpp
+// A custom sink, installed as the process default.
+class MySink : public Logger {
+ public:
+  bool ShouldLog(LogLevel level) const override { return level >= level_; }
+  void Log(LogMessage&& m) noexcept override { write_line(m.message); }
+  void SetLevel(LogLevel level) override { level_ = level; }
+  LogLevel level() const override { return level_; }
+ private:
+  std::atomic<LogLevel> level_{LogLevel::kInfo};
+};
+
+SetDefaultLogger(std::make_shared<MySink>());   // install process-wide
+SetDefaultLevel(LogLevel::kDebug);              // adjust the threshold
+
+auto logger = GetDefaultLogger();               // borrow the current default
+if (logger->ShouldLog(LogLevel::kInfo)) {
+  logger->Log(LogMessage{.level = LogLevel::kInfo, .message = ""scan ready""});
+}
+
+// Or configure from catalog-style properties (applies the ""level"" key):
+auto sink = std::make_shared<MySink>();
+auto status = sink->Initialize({{std::string(kLevelProperty), ""warn""}});  // -> kWarn
+```
+
+The same example is documented inline in `logger.h`.
+
+**Tests** — `logger_test`: default-logger API, level-from-property,
+invalid level rejected, concurrent swap/read, and logging during thread
+teardown. Built and run with clang/libc++ (spdlog ON and OFF).
+
+This pull request and its description were written by Isaac.",28163ce3ff26963b0310dff6dbcf2f6c14f94748,723,false,,9,1129,3,src,69,6,75,base; feature/api verb; strategic: catalog; medium file count; large churn; has PR number; LanceDB similarity 0.19,OpenAPI: Promote the S3 signing endpoint to the main spec,- feat(logging): add Logger interface and default logger (#723) (Thanks kamcheungting-db!)
+apache/iceberg-cpp,1777794fc01dfcaf45c932b6aa2d1c5c8e0e9175,1777794,wzhuo,wngzhuo@gmail.com,2026-06-16T14:45:27+08:00,GitHub,noreply@github.com,2026-06-16T14:45:27+08:00,feat: implement RenameTable in InMemoryCatalog (#742),"Replace the NotImplemented stub with a full implementation that:
+- Returns early as a no-op when renaming a table to itself
+- Returns NoSuchTable when the source table does not exist
+- Returns AlreadyExists when the destination table already exists
+- Moves the metadata location from source to destination identifier
+
+Add unit test covering rename to self, nonexistent source, destination
+conflict, and full rename + load verification.",64691e4bf408fc1161b09a4d551ed29cfb5e06f4,742,false,,2,72,1,src,57,9,66,base; feature/api verb; strategic: catalog; has PR number; LanceDB similarity 0.31,"Core, Hive: Detect if a view already exists when registering a table",- feat: implement RenameTable in InMemoryCatalog (#742) (Thanks wzhuo!)
+apache/iceberg-cpp,8d576ed93afccf5a7334d01f814ce56c5acc4273,8d576ed,Xinli Shang,shangx@uber.com,2026-06-15T02:36:23-07:00,GitHub,noreply@github.com,2026-06-15T17:36:23+08:00,refactor: harden FileCleanupStrategy with retry and parallel deletes (#649),"### What
+
+* `FileCleanupStrategy` now takes an `OptionalExecutor` in its
+constructor. When `DeleteWith()` is configured, per-path deletes fan out
+through `TaskGroup<>` -- uses the supplied executor when set, otherwise
+runs the callbacks serially on the calling thread via
+`RunTasksSingleThreaded`. Preserves prior single-threaded behavior by
+default.
+* The `FileIO::DeleteFiles` bulk path is wrapped in
+`RetryRunner<retry::StopRetryOn<ErrorKind::kNotFound>>` with a tight
+budget (2 retries, 100ms-1s backoff, 5s total). Mirrors Java's
+`Tasks.foreach(...).stopRetryOn(NotFoundException.class).retry(N)`. The
+retry primarily helps atomic-bulk FileIO impls (e.g. an S3
+`DeleteObjects`-backed FileIO) ride out transient throttles --
+best-effort, see code comment for the fail-fast-iterative caveat.
+* New public builder
+`ExpireSnapshots::ExecuteDeleteWith(OptionalExecutor)` (named after
+Java's `executeDeleteWith(ExecutorService)`) so callers opt in to
+parallel deletion; threaded through both `IncrementalFileCleanup` and
+`ReachableFileCleanup`.
+* `DeleteWith()` doc note clarifies that the user-supplied callback may
+be invoked concurrently from worker threads and must be thread-safe.
+* Drops the `std::async` / `std::thread` / `std::span` machinery and the
+ad-hoc retry loop -- replaced by `util/task_group.h` and
+`util/retry_util.h` from #687.
+
+### Test coverage
+
+Existing 25 `ExpireSnapshots*` tests continue to pass unchanged (they
+hit the default no-executor path).
+
+Adds `ExpireSnapshotsCleanupTest.ExecutorDispatchesDeletesConcurrently`
+-- wires a `test::ThreadExecutor` through `ExecuteDeleteWith()`, runs an
+`ExpireSnapshotId` cleanup with a custom `DeleteWith` callback, and
+asserts the executor received one submission per file (data + manifest +
+manifest-list = 3) and that all paths show up in the mutex-guarded sink.",7324142d373d836ab068d94eb52fae7ff948dda1,649,false,,3,182,16,src,58,6,64,base; fix; strategic: manifest; community signal: fileio; has PR number; LanceDB similarity 0.19,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- refactor: harden FileCleanupStrategy with retry and parallel deletes (#649) (Thanks Xinli Shang!)
+apache/iceberg-cpp,5e13fb13d1e26d49331736f625fe1f5b1c560ba5,5e13fb1,Guotao Yu,guotao.yugt@gmail.com,2026-06-03T11:56:59+08:00,GitHub,noreply@github.com,2026-06-03T11:56:59+08:00,feat: add MergingSnapshotUpdate (#682),"Abstract base for merge-based snapshot operations (MergeAppend,
+OverwriteFiles, RowDelta, etc.), implementing the filter → write → merge
+pipeline consistent with Java's MergingSnapshotProducer.",f936553ef248ff5204a0988c4c691301800a5950,682,false,,28,5633,397,.github; src,58,6,64,base; feature/api verb; large file count; large churn; multi-area change; has PR number; LanceDB similarity 0.21,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- feat: add MergingSnapshotUpdate (#682) (Thanks Guotao Yu!)
+apache/iceberg-cpp,8bbda0ccf54e372f5efcbdb9c0c86e26af413ef6,8bbda0c,wzhuo,wngzhuo@gmail.com,2026-06-17T13:28:43+08:00,GitHub,noreply@github.com,2026-06-17T13:28:43+08:00,feat: implement purge support in DropTable for InMemoryCatalog and SqlCatalog (#744),"When purge=true, delete all metadata files (current + metadata log
+entries) before unregistering the table. Old log files are deleted first
+so the current metadata file remains as an anchor for retries.",cf0af5b1b8aaf0df971f1c0ee07e83e68b0f6567,744,false,,2,35,4,src,57,6,63,base; feature/api verb; strategic: catalog; has PR number; LanceDB similarity 0.21,"Revert ""Move deleted files to Hadoop trash if configured """,- feat: implement purge support in DropTable for InMemoryCatalog and SqlCatalog (#744) (Thanks wzhuo!)
+apache/iceberg-cpp,701d39ca6b4f077039b37417b4ad992a24f1d4d6,701d39c,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-06-10T10:16:29+08:00,GitHub,noreply@github.com,2026-06-10T10:16:29+08:00,"fix(rest): use ""ref"" field name for AssertRefSnapshotId requirement (#702)","The `AssertRefSnapshotId` table requirement was serialized and
+deserialized with the JSON field name `ref-name`. Per the Iceberg REST
+OpenAPI spec (`rest-catalog-open-api.yaml`), this requirement's field is
+named `ref`. Only the `SetSnapshotRef` / `RemoveSnapshotRef` *updates*
+use `ref-name`",50aee7e3fd3ef2aa82dcb930b8ad60c2fa872e8a,702,false,,2,14,4,src,55,7,62,base; fix; important area: rest; strategic: catalog; has PR number; LanceDB similarity 0.22,"API, Core: Align offsets of field stats with Design doc / Spec","- fix(rest): use ""ref"" field name for AssertRefSnapshotId requirement (#702) (Thanks Jiajia Li!)"
+apache/iceberg-cpp,171ac5764ec65adee5a25cc7cf9df9d72a6d3ab4,171ac57,Zehua Zou,zehuazou2000@gmail.com,2026-06-05T17:33:11+08:00,GitHub,noreply@github.com,2026-06-05T17:33:11+08:00,feat: add executor pool support (#687),,ec2075275019667bd2cb7866ca1a0c615d92c1e4,687,false,,19,1204,372,cmake_modules; src,54,8,62,base; feature/api verb; medium file count; large churn; multi-area change; has PR number; LanceDB similarity 0.28,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- feat: add executor pool support (#687) (Thanks Zehua Zou!)
+apache/iceberg-cpp,e9a68b7e6b1407785b37fbf90a78044be9bc4166,e9a68b7,lishuxu,lishuxu@gmail.com,2026-06-20T20:10:47+08:00,GitHub,noreply@github.com,2026-06-20T20:10:47+08:00,fix(rest): avoid default catalog reference cycle (#764),"Store the cached default catalog view as a weak_ptr so AsCatalog() can
+reuse a live view without keeping it alive from the RestCatalog root.",255657beae7d142e574acefc17a9e50c56ffca99,764,false,,3,32,5,src,55,6,61,base; fix; important area: rest; strategic: catalog; has PR number; LanceDB similarity 0.19,"API, Spark: Optimize NOT IN and != predicate evaluation for fields containing a single-value <Joy Haldar>",- fix(rest): avoid default catalog reference cycle (#764) (Thanks lishuxu!)
+apache/iceberg-cpp,fc9781f4b3ed168e4eed701d4f6074bfc909d789,fc9781f,Minh Vu,vuhoangminh97@gmail.com,2026-06-16T10:40:12+02:00,GitHub,noreply@github.com,2026-06-16T16:40:12+08:00,fix(rest): reject empty namespace separators (#740),"## Summary
+
+- Reject empty REST namespace separators in namespace encode/decode
+helpers.
+- Reject empty namespace separators when constructing `ResourcePaths`.
+- Add regression coverage for direct helper calls and the resource path
+config boundary.
+
+## Why
+
+`DecodeNamespace` advances by `separator.size()` after each match. An
+empty separator never advances the cursor, so a misconfigured separator
+can hang namespace parsing.
+
+## Testing
+
+- `cmake -S . -B build-rest -G Ninja -DICEBERG_BUILD_BUNDLE=OFF
+-DICEBERG_BUILD_REST=ON -DICEBERG_BUILD_HIVE=OFF
+-DICEBERG_BUILD_SQL_CATALOG=OFF`
+- `cmake --build build-rest --target rest_catalog_test`
+- `ctest --test-dir build-rest -R rest_catalog_test --output-on-failure`",2169e31616617f38d3d160f7bf09825f711a05d5,740,false,,3,35,0,src,55,6,61,base; fix; important area: rest; strategic: catalog; has PR number; LanceDB similarity 0.19,Core: Fix compute_table_stats failures with concurrent writes,- fix(rest): reject empty namespace separators (#740) (Thanks Minh Vu!)
+apache/iceberg-cpp,5eb32df030fdd0fe735fcf824046c66e0ddb1f0e,5eb32df,Minh Vu,vuhoangminh97@gmail.com,2026-06-15T05:23:45+02:00,GitHub,noreply@github.com,2026-06-15T11:23:45+08:00,Fix URL encoding for non-ASCII bytes (#738),"## Summary
+
+- Treat URL encoder input bytes as unsigned before splitting them into
+hex nibbles.
+- Add UTF-8 regression coverage for `café` encoding to `caf%C3%A9`.
+
+## Why
+
+On platforms where `char` is signed, bytes >= 0x80 can become negative
+before the hex lookup. That can lead to undefined behavior or incorrect
+percent encoding for non-ASCII strings.
+
+## Testing
+
+- `cmake -S . -B build -G Ninja -DICEBERG_BUILD_BUNDLE=OFF
+-DICEBERG_BUILD_REST=OFF -DICEBERG_BUILD_HIVE=OFF
+-DICEBERG_BUILD_SQL_CATALOG=OFF`
+- `cmake --build build --target util_test`
+- `ctest --test-dir build -R util_test --output-on-failure`",a68602cfe49e45ae252450d4bc09fe83cbf3dd34,738,false,,2,6,3,src,52,7,59,base; fix; strategic: catalog; correctness signal; has PR number; LanceDB similarity 0.23,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- Fix URL encoding for non-ASCII bytes (#738) (Thanks Minh Vu!)
+apache/iceberg-cpp,8d88bef10676c052afe0b171df697deaf420ac16,8d88bef,Junwang Zhao,zhjwpku@gmail.com,2026-06-15T11:26:03+08:00,GitHub,noreply@github.com,2026-06-15T11:26:03+08:00,fix: allow avro date reads from plain int (#728),per https://github.com/apache/iceberg/pull/16446/changes,5eb32df030fdd0fe735fcf824046c66e0ddb1f0e,728,false,,5,45,8,src,49,9,58,base; feature/api verb; fix; medium file count; has PR number; LanceDB similarity 0.31,https://github.com/apache/iceberg/milestone/59,- fix: allow avro date reads from plain int (#728) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,50aee7e3fd3ef2aa82dcb930b8ad60c2fa872e8a,50aee7e,Gang Wu,ustcwg@gmail.com,2026-06-10T09:41:28+08:00,GitHub,noreply@github.com,2026-06-10T09:41:28+08:00,fix: align manifest partition reads with reassigned IDs (#700),"Use unknown types for missing partition source fields when building
+manifest partition schemas. Add Java-style schema ID reassignment maps
+and use them to map raw manifest partition field IDs back to their
+original IDs.
+
+Also add transform result type support so unbound partition specs can
+derive partition field types consistently with Java.",f9949ac2445d836a61d45d5cdaf07395c7665b7c,700,false,,13,328,35,src,48,10,58,base; fix; strategic: manifest; medium file count; medium churn; has PR number; LanceDB similarity 0.32,Core: Add partition to TrackedFile,- fix: align manifest partition reads with reassigned IDs (#700) (Thanks Gang Wu!)
+apache/iceberg-cpp,255657beae7d142e574acefc17a9e50c56ffca99,255657b,Junwang Zhao,zhjwpku@gmail.com,2026-06-20T19:27:26+08:00,GitHub,noreply@github.com,2026-06-20T19:27:26+08:00,feat: add merge append (#699),,950fbfffc5130102a3e3ee10818ff124a218ae1b,699,false,,13,1675,0,src,49,8,57,base; feature/api verb; medium file count; large churn; has PR number; LanceDB similarity 0.27,Make StandardEncryptionManager serializable,- feat: add merge append (#699) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,40cc9922bb17d70df1de5044b6f2b5a17d808080,40cc992,liuxiaoyu,45345701+MisterRaindrop@users.noreply.github.com,2026-06-16T14:50:11+08:00,GitHub,noreply@github.com,2026-06-16T14:50:11+08:00,feat(hive): vendor Hive Metastore IDL and generated bindings (#749),"- Update vendored Hive Metastore IDL to Hive 4.0.1.
+- Check in generated HMS/fb303 C++ bindings.
+- Add a regeneration script plus lint/license exclusions for generated sources.",1777794fc01dfcaf45c932b6aa2d1c5c8e0e9175,749,false,,16,248184,140,.github; .pre-commit-config.yaml; dev; src; thirdparty,49,7,56,base; medium file count; large churn; multi-area change; release/security/notice signal; has PR number; LanceDB similarity 0.24,Core: Fix rewriting delete manifests in RewriteTablePathUtil,- feat(hive): vendor Hive Metastore IDL and generated bindings (#749) (Thanks liuxiaoyu!)
+apache/iceberg-cpp,ed051a702c940f7a08b3e38e01b7774efe0cc899,ed051a7,Manu Zhang,OwenZhang1990@gmail.com,2026-06-23T23:08:53+08:00,GitHub,noreply@github.com,2026-06-23T23:08:53+08:00,feat: add row delta update (#721),"Implements the RowDelta update builder, table and transaction factory
+methods, and focused tests for row-level add/delete flows.
+
+---------
+
+Co-authored-by: Codex <codex@openai.com>",f6f99513980251336ca70a8c6a0059b19332e3a4,721,false,Codex,14,830,6,src,48,7,55,base; feature/api verb; medium file count; medium churn; co-authored; has PR number; LanceDB similarity 0.24,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- feat: add row delta update (#721) (Thanks Manu Zhang!)
+apache/iceberg-cpp,5ac524624552c37faca652f9412ae89be3aa20ed,5ac5246,Junwang Zhao,zhjwpku@gmail.com,2026-06-23T13:32:46+08:00,GitHub,noreply@github.com,2026-06-23T13:32:46+08:00,fix: allow historical sort orders with dropped fields (#762),This fix is aligned with https://github.com/apache/iceberg/pull/16521,959fda6703bb74a0268c7038d48e189427a2f67e,762,false,,2,94,13,src,45,9,54,base; feature/api verb; fix; has PR number; LanceDB similarity 0.30,https://github.com/apache/iceberg/milestone/59,- fix: allow historical sort orders with dropped fields (#762) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,6f503f9af75978a34b13dfab121a9cbdc9268b6a,6f503f9,Manu Zhang,OwenZhang1990@gmail.com,2026-06-21T23:49:29+08:00,GitHub,noreply@github.com,2026-06-21T23:49:29+08:00,feat: add DeleteFiles update API (#709),"## Summary
+- Add a DeleteFiles snapshot update API and wire it through table and
+transaction update flows.
+- Add DeleteFiles implementation/build integration.
+- Add coverage for path matching, case-insensitive row filters, empty
+delete commits, and strict-projection partial-match rejection.
+
+## Validation
+- `cmake --build build --target table_update_test`
+- `./build/src/iceberg/test/table_update_test
+'--gtest_filter=DeleteFilesTest.*'`
+
+Co-authored-by: Codex <codex@openai.com>",e9a68b7e6b1407785b37fbf90a78044be9bc4166,709,false,Codex,12,380,0,src,48,6,54,base; feature/api verb; medium file count; medium churn; co-authored; has PR number; LanceDB similarity 0.20,"API, Core: Add FileIO to Scan API",- feat: add DeleteFiles update API (#709) (Thanks Manu Zhang!)
+apache/iceberg-cpp,7324142d373d836ab068d94eb52fae7ff948dda1,7324142,Huangshi Tian,All-less@users.noreply.github.com,2026-06-15T00:55:29-04:00,GitHub,noreply@github.com,2026-06-15T12:55:29+08:00,feat(inspect): add base metadata table interface (#607),"This PR kicks off the implementation of table inspection support.
+
+- Add `MetadataTable` class (without scan support for now).
+- Add `SnapshotsTable` and `HistoryTable` as example impl.",cc4d35f25d7f3f6d7eab9a432a337cb6886ee9f2,607,false,,17,575,1,src,45,7,52,base; feature/api verb; medium file count; medium churn; has PR number; LanceDB similarity 0.23,Core: Unlink table metadata's last-updated timestamp from snapshot timestamp,- feat(inspect): add base metadata table interface (#607) (Thanks Huangshi Tian!)
+apache/iceberg-cpp,ad9b8fcf8e8717cc2a0296b70d33d786ea5a6cc4,ad9b8fc,liuxiaoyu,45345701+MisterRaindrop@users.noreply.github.com,2026-06-09T16:36:59+08:00,GitHub,noreply@github.com,2026-06-09T16:36:59+08:00,feat(hive): vendor Hive 3.1 metastore + fb303 Thrift IDL (#694),"Vendor the Apache Hive 3.1 standalone-metastore IDL and the fb303 helper
+IDL it includes into thirdparty/hive_metastore/. These files are the
+input for the C++ HMS client bindings, generated by a follow-up commit
+that invokes `thrift --gen cpp` at build time.
+
+Provenance:
+* hive_metastore.thrift - apache/hive @ branch-3.1, standalone-metastore
+* share/fb303/if/fb303.thrift - apache/thrift @ master, contrib/fb303
+
+Both upstream files retain their Apache 2.0 license headers; only
+trailing whitespace and final newlines were normalized by the
+repository's pre-commit hooks. .github/.licenserc.yaml gains thirdparty/**
+to paths-ignore so the license-eye check skips the vendored tree.",3ca8842a4733f6513d38138c55f841b9f05f25ed,694,false,,4,2407,0,.github; thirdparty,45,6,51,base; large churn; multi-area change; release/security/notice signal; has PR number; LanceDB similarity 0.20,Core: Simplify handling of the current planId in client side of remote planning <Eduard Tudenhoefner>,- feat(hive): vendor Hive 3.1 metastore + fb303 Thrift IDL (#694) (Thanks liuxiaoyu!)
+apache/iceberg-cpp,5c8c4e5d024ab72c1486a8d5ad32d67431dff894,5c8c4e5,Junwang Zhao,zhjwpku@gmail.com,2026-06-23T11:59:08+08:00,GitHub,noreply@github.com,2026-06-23T11:59:08+08:00,fix(rest): align error handlers with Java implementation (#763),"While reviewing #614, I noticed that `PlanErrorHandler::Accept` does not
+match the behavior of the Java implementation.
+
+A detailed comparison with Java's `ErrorHandlers` revealed several gaps
+between iceberg-cpp and Iceberg Java. Some of these are oversights in
+the original implementation, while others correspond to improvements
+that were made later in Iceberg Java, including:
+
+* https://github.com/apache/iceberg/pull/13143
+* https://github.com/apache/iceberg/pull/14927
+* https://github.com/apache/iceberg/pull/15051
+* https://github.com/apache/iceberg/pull/16059
+
+This PR closes those gaps and brings the error handling behavior in
+iceberg-cpp closer to the Java implementation.",7fe2e93ed1d34a583098ce29e03b4a7851f213cc,763,false,,9,488,57,src,43,7,50,base; fix; important area: rest; medium file count; medium churn; has PR number; LanceDB similarity 0.25,Core: Add properties to InMemoryFileIO,- fix(rest): align error handlers with Java implementation (#763) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,af4b76f2f806f026d921e9a8dea2b8ffbee30dc1,af4b76f,Zehua Zou,zehuazou2000@gmail.com,2026-06-23T17:00:41+08:00,GitHub,noreply@github.com,2026-06-23T17:00:41+08:00,feat: add StoredLength method to PositionOutputStream (#773),,5ac524624552c37faca652f9412ae89be3aa20ed,773,false,,5,44,1,src,41,7,48,base; feature/api verb; medium file count; has PR number; LanceDB similarity 0.23,Core: Add properties to InMemoryFileIO,- feat: add StoredLength method to PositionOutputStream (#773) (Thanks Zehua Zou!)
+apache/iceberg-cpp,42b498f60c02314fbca02d3c97ae4f5c787b3fc5,42b498f,Abanoub Doss,abanoubdoss@gmail.com,2026-06-22T04:38:21-05:00,GitHub,noreply@github.com,2026-06-22T17:38:21+08:00,ci: cancel superseded runs in remaining workflows (#767),"## What
+Add a concurrency block to the five workflows that don't have one —
+`cpp-linter`, `pre-commit`, `license_check`, `zizmor`, and `codeql`:
+
+```yaml
+concurrency:
+  group: ${{ github.repository }}-${{ github.head_ref || github.sha }}-${{ github.workflow }}
+  cancel-in-progress: true
+```
+
+## Why
+The heavier workflows already cancel outdated runs, but these five don't
+- so pushing again to a PR leaves the old runs going and tying up
+runners. Grouping on `head_ref || sha` cancels superseded PR runs while
+leaving `main` and scheduled runs untouched.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",0aff5e99c7f696d476e92face67d1dba34369e84,767,false,Abanoub Doss,5,20,0,.github,39,7,46,base; medium file count; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.22,OpenAPI: Promote the S3 signing endpoint to the main spec,- ci: cancel superseded runs in remaining workflows (#767) (Thanks Abanoub Doss!)
+apache/iceberg-cpp,6f50a39d2680160b19d21e25844b98bf32e0ddd5,6f50a39,wzhuo,wngzhuo@gmail.com,2026-06-19T05:31:30+08:00,GitHub,noreply@github.com,2026-06-19T05:31:30+08:00,feat: add uniqueValue optimization for notEq/notIn in InclusiveMetricsEvaluator (#754),"When a column has a single unique value (no nulls, no NaNs, and lower
+bound == upper bound), notEq(X) and notIn({...X...}) can prune files
+where that unique value matches the predicate, returning
+ROWS_CANNOT_MATCH. Previously these always returned ROWS_MIGHT_MATCH,
+never pruning.
+
+This mirrors the upstream Java InclusiveMetricsEvaluator.uniqueValue()
+logic. The StrictMetricsEvaluator is unchanged: its existing
+bounds-based notEq/notIn logic already covers the single-value case,
+matching upstream Java which has no uniqueValue helper there.
+
+Ports the corresponding
+testNotEqWithSingleValue/testNotInWithSingleValue cases from the Java
+test suite.
+
+---------
+
+Co-authored-by: Junwang Zhao <zhjwpku@gmail.com>",9a2e21da10be52410bfcdb71e836341cb785c98c,754,false,Junwang Zhao,2,196,1,src,40,6,46,base; feature/api verb; co-authored; has PR number; LanceDB similarity 0.21,Kafka Connect: Fix CVE-2025-67721 in io.airlift:aircompressor by bumping to 2.0.3,- feat: add uniqueValue optimization for notEq/notIn in InclusiveMetricsEvaluator (#754) (Thanks wzhuo and Junwang Zhao!)
+apache/iceberg-cpp,9a2e21da10be52410bfcdb71e836341cb785c98c,9a2e21d,wzhuo,wngzhuo@gmail.com,2026-06-19T05:31:09+08:00,GitHub,noreply@github.com,2026-06-19T05:31:09+08:00,fix: skip only null partition value rows in ParseDataFile (#756),"## Summary
+
+`ParseDataFile()` in `manifest_reader.cc` iterated over rows for each
+partition child field and used `break` to skip null partition values.
+`break` exits the entire inner row loop, so once a null value was
+encountered, **all subsequent rows for that partition column were
+skipped** and never had their partition values parsed.
+
+The fix changes `break` to `continue`, so only the current null row is
+skipped while the remaining rows are still processed.
+
+## Changes
+
+- `src/iceberg/manifest/manifest_reader.cc`: `break` → `continue` in the
+partition-value row loop.
+- `src/iceberg/test/manifest_reader_test.cc`: add regression test
+`NullPartitionValueDoesNotSkipSubsequentRows` that writes a manifest
+with a null partition value before non-null ones and verifies the later
+rows are parsed correctly.
+
+## Testing
+
+- New test passes for manifest versions V1/V2/V3.
+- Confirmed the test fails with the original `break`
+(`partition.num_fields()` is 0 instead of 1 for rows after the null
+one).
+- Full `manifest_test` suite passes (171 tests).",92feae1e06604fcd7a170b973784a245332464dc,756,false,,2,110,33,src,40,6,46,"base; fix; strategic: manifest, v3; has PR number; LanceDB similarity 0.19",Fix incorrect partition bounds calculation in manifest on deletion,- fix: skip only null partition value rows in ParseDataFile (#756) (Thanks wzhuo!)
+apache/iceberg-cpp,28163ce3ff26963b0310dff6dbcf2f6c14f94748,28163ce,Zehua Zou,zehuazou2000@gmail.com,2026-06-22T16:42:41+08:00,GitHub,noreply@github.com,2026-06-22T16:42:41+08:00,feat: parallelize reading manifests (#697),,82b0adb1ab8989f8e5df47cb58419a28727ca2a7,697,false,,7,499,48,src,40,5,45,base; strategic: manifest; medium file count; medium churn; has PR number; LanceDB similarity 0.18,"API, Core: Add overwrite-aware table registration",- feat: parallelize reading manifests (#697) (Thanks Zehua Zou!)
+apache/iceberg-cpp,0aff5e99c7f696d476e92face67d1dba34369e84,0aff5e9,Abanoub Doss,abanoubdoss@gmail.com,2026-06-22T04:28:29-05:00,GitHub,noreply@github.com,2026-06-22T17:28:29+08:00,ci: cache vcpkg packages on Windows builds (#766),"## What
+Cache the installed vcpkg packages on the Windows builds in `test` and
+`sql_catalog_test`, and skip the install step when the cache is present.
+
+## Why
+Every Windows run reinstalls the same packages (zlib, nlohmann-json,
+nanoarrow, roaring, plus cpr / sqlite3) from scratch, costing a couple
+of minutes each time. Caching them removes that on every run after the
+first. This matches what `aws_test` already does.
+
+## Validation
+A warm run reused the cached packages and skipped the install. The cache
+only rebuilds when the package list changes.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",a38e0cdef88a2cd3673a78e659cbadb575fa6c2e,766,false,Abanoub Doss,2,15,1,.github,35,7,42,base; strategic: catalog; co-authored; has PR number; LanceDB similarity 0.23,Flink: Support UUID type in Avro and Parquet readers and writers,- ci: cache vcpkg packages on Windows builds (#766) (Thanks Abanoub Doss!)
+apache/iceberg-cpp,64691e4bf408fc1161b09a4d551ed29cfb5e06f4,64691e4,Junwang Zhao,zhjwpku@gmail.com,2026-06-16T14:41:19+08:00,GitHub,noreply@github.com,2026-06-16T14:41:19+08:00,fix: reject tag refs for main snapshot ref (#745),"Validate that the reserved main snapshot ref is always a branch, and
+preserve snapshot log timestamps for newly added snapshots without
+overwriting table metadata update time.
+
+This behavior is aligned with Java's TableMetadata.Builder.setRef",f71f485394caf75b7f3db2f705882c3e8341d825,745,false,,5,98,11,src,36,6,42,base; fix; medium file count; correctness signal; has PR number; LanceDB similarity 0.21,Core: populate manifest created/replaced/kept count when commit a snapshot,- fix: reject tag refs for main snapshot ref (#745) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,ae29c3d4b497c26a62de47ee7659f6cf7aba60f8,ae29c3d,Innocent Djiofack,djiofack007@gmail.com,2026-06-05T06:07:40-07:00,GitHub,noreply@github.com,2026-06-05T21:07:40+08:00,feat: metrics reporting for scan and commit (#589),"Initial commit for addressing
+https://github.com/apache/iceberg-cpp/issues/533
+
+---------
+
+Co-authored-by: Innocent <idjiofack@jabode.com>",c21d425461b2a86f87fc2904114d4f6827ee481d,589,false,Innocent,25,3573,0,src,31,7,38,base; large file count; large churn; co-authored; has PR number; LanceDB similarity 0.25,https://github.com/apache/iceberg/milestone/59,- feat: metrics reporting for scan and commit (#589) (Thanks Innocent Djiofack and Innocent!)
+apache/iceberg-cpp,c21d425461b2a86f87fc2904114d4f6827ee481d,c21d425,Zehua Zou,zehuazou2000@gmail.com,2026-06-05T17:41:06+08:00,GitHub,noreply@github.com,2026-06-05T17:41:06+08:00,chore: update LICENSE of FnOnce (#698),,171ac5764ec65adee5a25cc7cf9df9d72a6d3ab4,698,false,,1,1,0,LICENSE,32,5,37,base; release/security/notice signal; has PR number; LanceDB similarity 0.17,Hive: Update view query in HMS when replacing view <wuya>,- chore: update LICENSE of FnOnce (#698) (Thanks Zehua Zou!)
+apache/iceberg-cpp,796efb35dbb5036689d6bae91d18aaa5a8c4daf0,796efb3,Gang Wu,ustcwg@gmail.com,2026-06-16T13:13:48+08:00,GitHub,noreply@github.com,2026-06-16T13:13:48+08:00,fix: align rest table update serde with java/spec (#716),,bb83edec9cb766be750e2191ec5cc8152cb44314,716,false,,17,549,38,src,28,8,36,base; fix; medium file count; medium churn; has PR number; LanceDB similarity 0.25,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- fix: align rest table update serde with java/spec (#716) (Thanks Gang Wu!)
+apache/iceberg-cpp,17ae1648896419186ae7b8551a5eebfe65f5a57a,17ae164,Junwang Zhao,zhjwpku@gmail.com,2026-06-03T11:57:44+08:00,GitHub,noreply@github.com,2026-06-03T11:57:44+08:00,chore: normalize license headers (#692),,5e13fb13d1e26d49331736f625fe1f5b1c560ba5,692,false,,2,36,32,src,32,4,36,base; release/security/notice signal; has PR number; LanceDB similarity 0.15,AWS: Add scheduled refresh for the S3FileIO held storage credentials,- chore: normalize license headers (#692) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,cf0af5b1b8aaf0df971f1c0ee07e83e68b0f6567,cf0af5b,Rahul Goel,goel.rahul4200@gmail.com,2026-06-17T01:27:46-04:00,GitHub,noreply@github.com,2026-06-17T13:27:46+08:00,fix: cast to unsigned char in ASCII case conversion (#748),"fix: cast to unsigned char in ASCII case conversion
+
+`std::tolower`/`toupper` are UB when passed a negative `char`, which is
+what you get for any non-ASCII byte in a signed `char`.
+`StringUtils::ToLower`, `ToUpper`, and `EqualsIgnoreCase`
+  all did this. Cast through `unsigned char`.
+
+Behavior for ASCII is unchanged; this doesn't add Unicode case folding,
+just fixes the UB.
+
+  Related: #613
+
+---------
+
+Co-authored-by: Claude Opus 4.8 <noreply@anthropic.com>",a2bbf180cd0a8ef51ff7510e182a9efe10d25e39,748,false,Claude Opus 4.8,2,48,3,src,23,8,31,base; fix; co-authored; has PR number; LanceDB similarity 0.27,Bump to Parquet 1.17.0,- fix: cast to unsigned char in ASCII case conversion (#748) (Thanks Rahul Goel and Claude Opus 4.8!)
+apache/iceberg-cpp,cc4d35f25d7f3f6d7eab9a432a337cb6886ee9f2,cc4d35f,Junwang Zhao,zhjwpku@gmail.com,2026-06-15T12:50:23+08:00,GitHub,noreply@github.com,2026-06-15T12:50:23+08:00,doc: add release history for release v0.3.0 (#743),Co-authored-by: Gang Wu <ustcwg@gmail.com>,8d88bef10676c052afe0b171df697deaf420ac16,743,false,Gang Wu,1,16,0,mkdocs,28,3,31,base; feature/api verb; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Kafka Connect: Fix CVE-2025-67721 in io.airlift:aircompressor by bumping to 2.0.3,- doc: add release history for release v0.3.0 (#743) (Thanks Junwang Zhao and Gang Wu!)
+apache/iceberg-cpp,92feae1e06604fcd7a170b973784a245332464dc,92feae1,Zehua Zou,zehuazou2000@gmail.com,2026-06-18T23:45:52+08:00,GitHub,noreply@github.com,2026-06-18T23:45:52+08:00,fix: fast append should not contain deleted file during retry process (#706),,8bbda0ccf54e372f5efcbdb9c0c86e26af413ef6,706,false,,6,139,27,src,24,6,30,base; fix; medium file count; has PR number; LanceDB similarity 0.19,GCS: Throw NotFoundException for nonexisting input GCS file,- fix: fast append should not contain deleted file during retry process (#706) (Thanks Zehua Zou!)
+apache/iceberg-cpp,7fe2e93ed1d34a583098ce29e03b4a7851f213cc,7fe2e93,Yuya Ebihara,ebyhry@gmail.com,2026-06-23T07:08:16+09:00,GitHub,noreply@github.com,2026-06-22T15:08:16-07:00,CI: Check ASF action allowlist on every PR (#772),"Relates to:
+* https://github.com/apache/iceberg/issues/16934
+* https://github.com/apache/iceberg/pull/16926",42b498f60c02314fbca02d3c97ae4f5c787b3fc5,772,false,,1,0,4,.github,12,16,28,base; has PR number; LanceDB similarity 0.54,https://github.com/apache/iceberg/milestone/59,- CI: Check ASF action allowlist on every PR (#772) (Thanks Yuya Ebihara!)
+apache/iceberg-cpp,30c312083cd9a8a073e22c981fe3adafc6dc1307,30c3120,wzhuo,wngzhuo@gmail.com,2026-06-10T10:16:52+08:00,GitHub,noreply@github.com,2026-06-10T10:16:52+08:00,fix: Assign UUID when creating table metadata (#713),,701d39ca6b4f077039b37417b4ad992a24f1d4d6,713,false,,2,4,1,src,20,8,28,base; fix; has PR number; LanceDB similarity 0.25,Core: v4 table metadata location should be optional,- fix: Assign UUID when creating table metadata (#713) (Thanks wzhuo!)
+apache/iceberg-cpp,a2bbf180cd0a8ef51ff7510e182a9efe10d25e39,a2bbf18,Minh Vu,vuhoangminh97@gmail.com,2026-06-17T07:26:21+02:00,GitHub,noreply@github.com,2026-06-17T13:26:21+08:00,fix: validate truncate widths in utility entrypoints (#739),"## Summary
+
+- Reject non-positive widths in the `TruncateLiteral` and
+`TruncateLiteralMax` utility entrypoints.
+- Reject zero width in `TruncateUTF8Max`, which returns a `Result` and
+can report invalid input directly.
+- Add regression coverage for zero and negative widths across numeric,
+decimal, string, and binary literal truncation.
+
+## Why
+
+The truncate transform validates its width before creating a transform
+function, but the utility functions can also be called directly. Without
+a guard there, invalid widths can reach modulo operations or iterator
+arithmetic in the type-specific implementations.
+
+## Testing
+
+- `cmake --build build --target util_test`
+- `ctest --test-dir build -R util_test --output-on-failure`",fc9781f4b3ed168e4eed701d4f6074bfc909d789,739,false,,2,63,0,src,20,7,27,base; fix; has PR number; LanceDB similarity 0.22,Fix incorrect partition bounds calculation in manifest on deletion,- fix: validate truncate widths in utility entrypoints (#739) (Thanks Minh Vu!)
+apache/iceberg-cpp,a68602cfe49e45ae252450d4bc09fe83cbf3dd34,a68602c,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-06-14T17:39:34+08:00,GitHub,noreply@github.com,2026-06-14T17:39:34+08:00,feat(arrow): resolve S3-compatible schemes in ArrowFileSystemFileIO (#703),"`ArrowFileSystemFileIO::ResolvePath` passed the full URI to the wrapped
+FileSystem's `PathFromUri`, which only accepts that FileSystem's native
+scheme(`s3://` for `S3FileSystem`). S3-compatible object stores are
+commonly addressed with other schemes — `s3a`/`s3n`, or vendor schemes
+such as `gs://` (GCS) and`oss://` (Alibaba OSS) — served by an
+`arrow::fs::S3FileSystem` configured with an `endpoint_override`. Every
+read and write of such a location failed with:
+```
+expected a URI with one of the schemes (s3) but received <scheme>://...
+```",cf50b12ba4df2e6540a652e1e4343dbbb6beb791,703,false,,4,59,5,src,20,7,27,base; fix; has PR number; LanceDB similarity 0.22,Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,- feat(arrow): resolve S3-compatible schemes in ArrowFileSystemFileIO (#703) (Thanks Jiajia Li!)
+apache/iceberg-cpp,3fd8a49ee5cbc2afdcb243275f1915e4fe9a6aef,3fd8a49,wzhuo,wngzhuo@gmail.com,2026-06-10T14:04:25+08:00,GitHub,noreply@github.com,2026-06-10T14:04:25+08:00,fix: YearTransform passes wrong TransformType kTruncate instead of kYear (#715),"## Summary
+
+**Bug:** YearTransform constructor passed TransformType::kTruncate to
+the TransformFunction base class instead of TransformType::kYear. This
+caused transform_type() to return kTruncate on a bound YearTransform,
+affecting code paths that dispatch based on transform_type() (e.g.,
+Transform::Project, Transform::ProjectStrict,
+Transform::SatisfiesOrderOf).
+
+**Fix:** Changed kTruncate to kYear in the YearTransform constructor.
+
+**Tests:** Added TransformFunctionTest cases for Year, Month, Day, Hour,
+and Void transforms to verify transform_type() after Bind(). The
+existing suite only tested Identity, Bucket, and Truncate.",30c312083cd9a8a073e22c981fe3adafc6dc1307,715,false,,2,51,1,src,20,7,27,base; fix; has PR number; LanceDB similarity 0.23,Core: Simplify handling of the current planId in client side of remote planning <Eduard Tudenhoefner>,- fix: YearTransform passes wrong TransformType kTruncate instead of kYear (#715) (Thanks wzhuo!)
+apache/iceberg-cpp,6452715fde84837cdb42707376f025c638f60397,6452715,Zehua Zou,zehuazou2000@gmail.com,2026-06-19T05:31:43+08:00,GitHub,noreply@github.com,2026-06-19T05:31:43+08:00,fix: MergingSnapshotUpdate should not contain deleted file during retry (#707),,6f50a39d2680160b19d21e25844b98bf32e0ddd5,707,false,,3,50,5,src,20,6,26,base; fix; has PR number; LanceDB similarity 0.21,Core: Fix rewriting delete manifests in RewriteTablePathUtil,- fix: MergingSnapshotUpdate should not contain deleted file during retry (#707) (Thanks Zehua Zou!)
+apache/iceberg-cpp,c0c6b01393070b0813f49b0d6220c98256379cef,c0c6b01,Gang Wu,ustcwg@gmail.com,2026-06-10T20:55:07+08:00,GitHub,noreply@github.com,2026-06-10T20:55:07+08:00,fix: make git run watch optional in release_rc.sh (#720),,0284683f7e1dd5742913d5f0a7c4b48e445df7a4,720,false,,1,28,23,dev,20,6,26,base; fix; has PR number; LanceDB similarity 0.20,"Core, Parquet: Allow for Writing Parquet/Avro Manifests in V4",- fix: make git run watch optional in release_rc.sh (#720) (Thanks Gang Wu!)
+apache/iceberg-cpp,f71f485394caf75b7f3db2f705882c3e8341d825,f71f485,Rahul Goel,goel.rahul4200@gmail.com,2026-06-16T02:13:14-04:00,GitHub,noreply@github.com,2026-06-16T14:13:14+08:00,fix: Handle unknown record_count better (#747),"Fixes #732  Only special-case ```record_count == 0;```
+Let negative/unknown counts fall through
+to normal strict metrics evaluation.",796efb35dbb5036689d6bae91d18aaa5a8c4daf0,747,false,,2,43,1,src,20,5,25,base; fix; has PR number; LanceDB similarity 0.18,Core: Rename tableIo to tableIO,- fix: Handle unknown record_count better (#747) (Thanks Rahul Goel!)
+apache/iceberg-cpp,bb83edec9cb766be750e2191ec5cc8152cb44314,bb83ede,wzhuo,wngzhuo@gmail.com,2026-06-16T13:13:18+08:00,GitHub,noreply@github.com,2026-06-16T13:13:18+08:00,feat: Collect Parquet NaN metrics during writes (#727),"Collects NaN value counts for float and double columns during Parquet
+writes, since the Parquet footer statistics do not track NaN counts.
+
+## Changes
+
+- **Write-side NaN metric collection** (`FieldMetricsCollector`): A
+visitor that walks each record batch before writing, accumulating value
+counts, null counts, NaN counts, and NaN-excluding lower/upper bounds
+for float/double fields.
+- **MetricsConfig-aware skipping**: Fields whose `MetricsMode` is
+`kNone` are skipped entirely, avoiding wasted work.
+- **Integration with existing footer metrics**: Write-side
+`FieldMetrics` take precedence over footer statistics in
+`ParquetMetrics::GetMetrics`, so NaN counts are populated while
+counts/bounds still fall back to footer stats when write-side data isn't
+available.
+- **Tests**: `ParquetMetricsTest` now overrides `ReportsNanCounts()` to
+`true`, and existing NaN test cases verify NaN counts alongside existing
+value/null count assertions.
+
+## Behavior alignment with Java
+
+- Fields nested inside lists/maps do not get NaN metrics (both Java and
+C++ agree — Java collects then discards; C++ skips collection entirely).
+- NaN values are excluded from lower/upper bounds in both
+implementations.
+- Float/double fields with all-NaN values correctly set
+`nan_value_count` without setting bounds.",cb79f2983575c1ea7f4526b1926a81ac0d7b5826,727,false,,4,171,10,src,12,6,18,base; has PR number; LanceDB similarity 0.19,Bump to Parquet 1.17.0,- feat: Collect Parquet NaN metrics during writes (#727) (Thanks wzhuo!)
+apache/iceberg-cpp,9dbad3139df6fcdfc8d3f0bf6127dff9611ca9cd,9dbad31,Junwang Zhao,zhjwpku@gmail.com,2026-06-08T17:38:24+08:00,GitHub,noreply@github.com,2026-06-08T17:38:24+08:00,chore: release candidate version string (#705),,945599d92e2be1e11a5f27da5ebe887e408e22d9,705,false,,1,1,1,CMakeLists.txt,12,6,18,base; has PR number; LanceDB similarity 0.21,Site: Updates for 1.10.1 Release <Huaxin Gao>,- chore: release candidate version string (#705) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,c0e6e86dd2614fdb1cb0d19dbaed324c3868930f,c0e6e86,Junwang Zhao,zhjwpku@gmail.com,2026-06-09T22:54:55+08:00,GitHub,noreply@github.com,2026-06-09T22:54:55+08:00,chore: disable installing googletest libs (#711),,b6508226cb944e36267685d29c3a23c8422d8cad,711,false,,1,4,0,src,12,4,16,base; has PR number; LanceDB similarity 0.13,Flink: DynamicSink: Report writer records/bytes send metrics <aiborodin>,- chore: disable installing googletest libs (#711) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,d3b02bbbed0790d0bfa153549c077e831e2b1b8f,d3b02bb,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-06-13T21:03:38-07:00,GitHub,noreply@github.com,2026-06-14T12:03:38+08:00,"Revert ""chore: remove spdlog dependency (#459)"" (#718)","## What
+Re-adds spdlog (v1.15.3, configured with SPDLOG_USE_STD_FORMAT) as a
+build dependency, reverting #459.
+
+## Why
+#459 removed spdlog because nothing used it at the time, with the note
+that it could be added back ""when it is actually needed."" It is now
+needed: this is the foundation for the upcoming logging system for
+iceberg-cpp. Restoring the dependency wiring in its own change keeps
+that follow-up focused purely on the logger itself.",577c8e4e3fdcf02a55cfe89faaec8641cc950889,718,false,,5,94,3,README.md; cmake_modules; src; subprojects,6,3,9,base; medium file count; multi-area change; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,"- Revert ""chore: remove spdlog dependency (#459)"" (#718) (Thanks kamcheungting-db!)"
+apache/iceberg-cpp,945599d92e2be1e11a5f27da5ebe887e408e22d9,945599d,Zehua Zou,zehuazou2000@gmail.com,2026-06-08T17:37:44+08:00,GitHub,noreply@github.com,2026-06-08T17:37:44+08:00,chore: upgrade avro and remove fmt in ci script (#704),This reverts commit e97a8e84d9fa31ea15f793a009769c9d6d65e9af.,ae29c3d4b497c26a62de47ee7659f6cf7aba60f8,704,false,,5,1,25,.github; cmake_modules,6,3,9,base; medium file count; multi-area change; downrank routine build/deps; has PR number; LanceDB similarity 0.27; capped LanceDB boost for routine/low-signal commit,Spark 4.1: Introduce modes in SparkWriteBuilder,- chore: upgrade avro and remove fmt in ci script (#704) (Thanks Zehua Zou!)
+apache/iceberg-cpp,f38090e0c7b192cdb95bf9c153f135e870c19fa1,f38090e,Abanoub Doss,abanoubdoss@gmail.com,2026-06-22T23:06:08-05:00,GitHub,noreply@github.com,2026-06-23T12:06:08+08:00,ci: cache the sccache directory across C++ test builds (#765),"## What
+Turn on compiler caching (sccache) for the Linux and macOS builds in
+`test`, `aws_test`, `sanitizer_test`, and `sql_catalog_test`, and switch
+the Windows `test` build to the same setup. `main` builds once and saves
+the cache; pull requests reuse it without writing back.
+
+## Why
+Right now only the Windows builds reuse compiled output — every Linux
+and macOS build recompiles the whole bundled Arrow/Parquet/Avro/Boost
+stack from scratch, even though it never changes between PRs. Building
+it once and reusing it removes most of that repeated work. Saving the
+cache as a single file (instead of one upload per compiled file) also
+avoids the upload rate limit that causes ""cache write error"" spam.
+
+## Validation
+On a warm pull-request run, every build reused the cache: 99.6–99.9% of
+files came from cache, zero write errors. The heavy builds drop from
+~10–27 min to ~1.5–5 min.
+
+---------
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",5c8c4e5d024ab72c1486a8d5ad32d67431dff894,765,false,Abanoub Doss,4,171,16,.github,3,3,6,base; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.30; capped LanceDB boost for routine/low-signal commit,OpenAPI: Promote the S3 signing endpoint to the main spec,- ci: cache the sccache directory across C++ test builds (#765) (Thanks Abanoub Doss!)
+apache/iceberg-cpp,950fbfffc5130102a3e3ee10818ff124a218ae1b,950fbff,Junwang Zhao,zhjwpku@gmail.com,2026-06-19T20:25:09+08:00,GitHub,noreply@github.com,2026-06-19T20:25:09+08:00,chore(ci): enable sccache for Meson Windows builds (#761),,6452715fde84837cdb42707376f025c638f60397,761,false,,2,11,0,.github,2,4,6,base; feature/api verb; downrank low-signal sync item; has PR number; LanceDB similarity 0.14,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(ci): enable sccache for Meson Windows builds (#761) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,f6f99513980251336ca70a8c6a0059b19332e3a4,f6f9951,Zehua Zou,zehuazou2000@gmail.com,2026-06-23T21:54:02+08:00,GitHub,noreply@github.com,2026-06-23T21:54:02+08:00,ci: upgrade to ubuntu-26.04 image (#771),,af4b76f2f806f026d921e9a8dea2b8ffbee30dc1,771,false,,8,22,22,.github,1,3,4,base; medium file count; downrank routine build/deps; has PR number; LanceDB similarity 0.31; capped LanceDB boost for routine/low-signal commit,Upgrade to Spark 3.5.8,- ci: upgrade to ubuntu-26.04 image (#771) (Thanks Zehua Zou!)
+apache/iceberg-cpp,3ca8842a4733f6513d38138c55f841b9f05f25ed,3ca8842,Manu Zhang,OwenZhang1990@gmail.com,2026-06-09T16:35:26+08:00,GitHub,noreply@github.com,2026-06-09T16:35:26+08:00,build: install generated version header (#710),"Install the generated iceberg/version.h with the rest of the public
+headers so installed packages expose the version macros.
+
+Co-authored-by: Codex <codex@openai.com>",9dbad3139df6fcdfc8d3f0bf6127dff9611ca9cd,710,false,Codex,1,2,0,src,0,3,3,base; co-authored; downrank routine build/deps; has PR number; LanceDB similarity 0.27; capped LanceDB boost for routine/low-signal commit,"Core, Spark: add the comment table property key",- build: install generated version header (#710) (Thanks Manu Zhang!)
+apache/iceberg-cpp,82b0adb1ab8989f8e5df47cb58419a28727ca2a7,82b0adb,Zehua Zou,zehuazou2000@gmail.com,2026-06-22T16:08:12+08:00,GitHub,noreply@github.com,2026-06-22T16:08:12+08:00,chore: make pre-commit and ci clang-format version consistent (#769),,6f503f9af75978a34b13dfab121a9cbdc9268b6a,769,false,,1,1,1,.pre-commit-config.yaml,-3,3,0,base; downrank routine build/deps; has PR number; LanceDB similarity 0.27; capped LanceDB boost for routine/low-signal commit,Core: Convert metrics to Content Stats,- chore: make pre-commit and ci clang-format version consistent (#769) (Thanks Zehua Zou!)
+apache/iceberg-cpp,0284683f7e1dd5742913d5f0a7c4b48e445df7a4,0284683,Gang Wu,ustcwg@gmail.com,2026-06-10T16:51:54+08:00,GitHub,noreply@github.com,2026-06-10T16:51:54+08:00,fix: make release script more robust (#717),,3fd8a49ee5cbc2afdcb243275f1915e4fe9a6aef,717,false,,5,80,30,ci; cmake_modules; dev,-6,6,0,base; fix; medium file count; multi-area change; downrank low-signal sync item; has PR number; LanceDB similarity 0.21,"Core, Spark 4.1: Fix querying equality deletes with schema evolution",- fix: make release script more robust (#717) (Thanks Gang Wu!)
+apache/iceberg-cpp,f9949ac2445d836a61d45d5cdaf07395c7665b7c,f9949ac,Gang Wu,ustcwg@gmail.com,2026-06-10T09:40:37+08:00,GitHub,noreply@github.com,2026-06-10T09:40:37+08:00,fix: avoid stale gh run watch in RC release script (#712),"Allow release_rc.sh to resume from an existing GitHub Actions run by
+setting RELEASE_RUN_ID, and add RELEASE_WATCH=0 to poll run/job status
+with plain gh run view output instead of gh run watch.
+
+This avoids getting stuck on stale gh run watch terminal output while
+keeping the default release flow unchanged.",c0e6e86dd2614fdb1cb0d19dbaed324c3868930f,712,false,,1,30,2,dev,-15,6,-9,base; fix; downrank low-signal sync item; has PR number; LanceDB similarity 0.20,Flink: Support Variant to Flink 2.1,- fix: avoid stale gh run watch in RC release script (#712) (Thanks Gang Wu!)
+apache/iceberg-cpp,ca392061f463a51b9ff08f3c3b54f85d4d99ea4d,ca39206,Junwang Zhao,zhjwpku@gmail.com,2026-06-14T17:01:04+08:00,GitHub,noreply@github.com,2026-06-14T17:01:04+08:00,chore: bump version to 0.4.0-SNAPSHOT (#733),,d3b02bbbed0790d0bfa153549c077e831e2b1b8f,733,false,,3,5,4,CMakeLists.txt; meson.build; src,-43,3,-40,base; multi-area change; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,Spark: Add Spark app name to env context <Stas Pak>,- chore: bump version to 0.4.0-SNAPSHOT (#733) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,399af1bfb007d254ada9d1c4c4b9a5540878e95c,399af1b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-14T17:01:48+08:00,GitHub,noreply@github.com,2026-06-14T17:01:48+08:00,chore(deps): bump actions/checkout from 6.0.2 to 6.0.3 (#734),"Bumps [actions/checkout](https://github.com/actions/checkout) from 6.0.2
+to 6.0.3.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/checkout/releases"">actions/checkout's
+releases</a>.</em></p>
+<blockquote>
+<h2>v6.0.3</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Update changelog by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2357"">actions/checkout#2357</a></li>
+<li>fix: expand merge commit SHA regex and add SHA-256 test cases by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2414"">actions/checkout#2414</a></li>
+<li>Fix checkout init for SHA-256 repositories by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2439"">actions/checkout#2439</a></li>
+<li>Update changelog for v6.0.3 by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2446"">actions/checkout#2446</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a href=""https://github.com/yaananth""><code>@​yaananth</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/actions/checkout/pull/2414"">actions/checkout#2414</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/checkout/compare/v6...v6.0.3"">https://github.com/actions/checkout/compare/v6...v6.0.3</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/checkout/blob/main/CHANGELOG.md"">actions/checkout's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Changelog</h1>
+<h2>v6.0.3</h2>
+<ul>
+<li>Fix checkout init for SHA-256 repositories by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2439"">actions/checkout#2439</a></li>
+<li>fix: expand merge commit SHA regex and add SHA-256 test cases by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2414"">actions/checkout#2414</a></li>
+</ul>
+<h2>v6.0.2</h2>
+<ul>
+<li>Fix tag handling: preserve annotations and explicit fetch-tags by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2356"">actions/checkout#2356</a></li>
+</ul>
+<h2>v6.0.1</h2>
+<ul>
+<li>Add worktree support for persist-credentials includeIf by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2327"">actions/checkout#2327</a></li>
+</ul>
+<h2>v6.0.0</h2>
+<ul>
+<li>Persist creds to a separate file by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2286"">actions/checkout#2286</a></li>
+<li>Update README to include Node.js 24 support details and requirements
+by <a href=""https://github.com/salmanmkc""><code>@​salmanmkc</code></a>
+in <a
+href=""https://redirect.github.com/actions/checkout/pull/2248"">actions/checkout#2248</a></li>
+</ul>
+<h2>v5.0.1</h2>
+<ul>
+<li>Port v6 cleanup to v5 by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2301"">actions/checkout#2301</a></li>
+</ul>
+<h2>v5.0.0</h2>
+<ul>
+<li>Update actions checkout to use node 24 by <a
+href=""https://github.com/salmanmkc""><code>@​salmanmkc</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2226"">actions/checkout#2226</a></li>
+</ul>
+<h2>v4.3.1</h2>
+<ul>
+<li>Port v6 cleanup to v4 by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2305"">actions/checkout#2305</a></li>
+</ul>
+<h2>v4.3.0</h2>
+<ul>
+<li>docs: update README.md by <a
+href=""https://github.com/motss""><code>@​motss</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1971"">actions/checkout#1971</a></li>
+<li>Add internal repos for checking out multiple repositories by <a
+href=""https://github.com/mouismail""><code>@​mouismail</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1977"">actions/checkout#1977</a></li>
+<li>Documentation update - add recommended permissions to Readme by <a
+href=""https://github.com/benwells""><code>@​benwells</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2043"">actions/checkout#2043</a></li>
+<li>Adjust positioning of user email note and permissions heading by <a
+href=""https://github.com/joshmgross""><code>@​joshmgross</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2044"">actions/checkout#2044</a></li>
+<li>Update README.md by <a
+href=""https://github.com/nebuk89""><code>@​nebuk89</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2194"">actions/checkout#2194</a></li>
+<li>Update CODEOWNERS for actions by <a
+href=""https://github.com/TingluoHuang""><code>@​TingluoHuang</code></a>
+in <a
+href=""https://redirect.github.com/actions/checkout/pull/2224"">actions/checkout#2224</a></li>
+<li>Update package dependencies by <a
+href=""https://github.com/salmanmkc""><code>@​salmanmkc</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2236"">actions/checkout#2236</a></li>
+</ul>
+<h2>v4.2.2</h2>
+<ul>
+<li><code>url-helper.ts</code> now leverages well-known environment
+variables by <a href=""https://github.com/jww3""><code>@​jww3</code></a>
+in <a
+href=""https://redirect.github.com/actions/checkout/pull/1941"">actions/checkout#1941</a></li>
+<li>Expand unit test coverage for <code>isGhes</code> by <a
+href=""https://github.com/jww3""><code>@​jww3</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1946"">actions/checkout#1946</a></li>
+</ul>
+<h2>v4.2.1</h2>
+<ul>
+<li>Check out other refs/* by commit if provided, fall back to ref by <a
+href=""https://github.com/orhantoy""><code>@​orhantoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1924"">actions/checkout#1924</a></li>
+</ul>
+<h2>v4.2.0</h2>
+<ul>
+<li>Add Ref and Commit outputs by <a
+href=""https://github.com/lucacome""><code>@​lucacome</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1180"">actions/checkout#1180</a></li>
+<li>Dependency updates by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a>- <a
+href=""https://redirect.github.com/actions/checkout/pull/1777"">actions/checkout#1777</a>,
+<a
+href=""https://redirect.github.com/actions/checkout/pull/1872"">actions/checkout#1872</a></li>
+</ul>
+<h2>v4.1.7</h2>
+<ul>
+<li>Bump the minor-npm-dependencies group across 1 directory with 4
+updates by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1739"">actions/checkout#1739</a></li>
+<li>Bump actions/checkout from 3 to 4 by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1697"">actions/checkout#1697</a></li>
+<li>Check out other refs/* by commit by <a
+href=""https://github.com/orhantoy""><code>@​orhantoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1774"">actions/checkout#1774</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/actions/checkout/commit/df4cb1c069e1874edd31b4311f1884172cec0e10""><code>df4cb1c</code></a>
+Update changelog for v6.0.3 (<a
+href=""https://redirect.github.com/actions/checkout/issues/2446"">#2446</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/1cce3390c2bfda521930d01229c073c7ff920824""><code>1cce339</code></a>
+Fix checkout init for SHA-256 repositories (<a
+href=""https://redirect.github.com/actions/checkout/issues/2439"">#2439</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/900f2210b1d28bbbd0bd22d17926b9e224e8f231""><code>900f221</code></a>
+fix: expand merge commit SHA regex and add SHA-256 test cases (<a
+href=""https://redirect.github.com/actions/checkout/issues/2414"">#2414</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/0c366fd6a839edf440554fa01a7085ccba70ac98""><code>0c366fd</code></a>
+Update changelog (<a
+href=""https://redirect.github.com/actions/checkout/issues/2357"">#2357</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/actions/checkout/compare/de0fac2e4500dabe0009e67214ff5f5447ce83dd...df4cb1c069e1874edd31b4311f1884172cec0e10"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=actions/checkout&package-manager=github_actions&previous-version=6.0.2&new-version=6.0.3)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",ca392061f463a51b9ff08f3c3b54f85d4d99ea4d,734,false,dependabot[bot],12,18,18,.github,-66,3,-63,base; medium file count; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,AWS: Add scheduled refresh for the S3FileIO held storage credentials,- chore(deps): bump actions/checkout from 6.0.2 to 6.0.3 (#734) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,cf50b12ba4df2e6540a652e1e4343dbbb6beb791,cf50b12,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-14T17:02:40+08:00,GitHub,noreply@github.com,2026-06-14T17:02:40+08:00,chore(deps): bump github/codeql-action from 4.36.0 to 4.36.2 (#736),"Bumps [github/codeql-action](https://github.com/github/codeql-action)
+from 4.36.0 to 4.36.2.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.36.2</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>v4.36.1</h2>
+<p>No user facing changes.</p>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<p>No user facing changes.</p>
+<h2>4.36.2 - 04 Jun 2026</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>4.36.1 - 02 Jun 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.0 - 22 May 2026</h2>
+<ul>
+<li><em>Breaking change</em>: Bump the minimum required CodeQL bundle
+version to 2.19.4. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3894"">#3894</a></li>
+<li>Add support for SHA-256 Git object IDs. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3893"">#3893</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.5"">2.25.5</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3926"">#3926</a></li>
+</ul>
+<h2>4.35.5 - 15 May 2026</h2>
+<ul>
+<li>We have improved how the JavaScript bundles for the CodeQL Action
+are generated to avoid duplication across bundles and reduce the size of
+the repository by around 70%. This should have no effect on the runtime
+behaviour of the CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3899"">#3899</a></li>
+<li>For performance and accuracy reasons, <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> will now only be enabled on a pull request when
+diff-informed analysis is also enabled for that run. If diff-informed
+analysis is unavailable (for example, because the PR diff ranges could
+not be computed), the action will fall back to a full analysis. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3791"">#3791</a></li>
+<li>If multiple inputs are provided for the GitHub-internal
+<code>analysis-kinds</code> input, only <code>code-scanning</code> will
+be enabled. The <code>analysis-kinds</code> input is experimental, for
+GitHub-internal use only, and may change without notice at any time. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3892"">#3892</a></li>
+<li>Added an experimental change which, when running a Code Scanning
+analysis for a PR with <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> enabled, prefers CodeQL CLI versions that have
+a cached overlay-base database for the configured languages. This speeds
+up analysis for a repository when there is not yet a cached overlay-base
+database for the latest CLI version. We expect to roll this change out
+to everyone in May. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3880"">#3880</a></li>
+</ul>
+<h2>4.35.4 - 07 May 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.4"">2.25.4</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3881"">#3881</a></li>
+</ul>
+<h2>4.35.3 - 01 May 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.19.3 and earlier. These versions of
+CodeQL were discontinued on 9 April 2026 alongside GitHub Enterprise
+Server 3.15, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3837"">#3837</a></li>
+<li>Configurations for private registries that use Cloudsmith or GCP
+OIDC are now accepted. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3850"">#3850</a></li>
+<li>Best-effort connection tests for private registries now use
+<code>GET</code> requests instead of <code>HEAD</code> for better
+compatibility with various registry implementations. For NuGet feeds,
+the test is now always performed against the service index. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3853"">#3853</a></li>
+<li>Fixed a bug where two diagnostics produced within the same
+millisecond could overwrite each other on disk, causing one of them to
+be lost. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3852"">#3852</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.3"">2.25.3</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3865"">#3865</a></li>
+</ul>
+<h2>4.35.2 - 15 Apr 2026</h2>
+<ul>
+<li>The undocumented TRAP cache cleanup feature that could be enabled
+using the <code>CODEQL_ACTION_CLEANUP_TRAP_CACHES</code> environment
+variable is deprecated and will be removed in May 2026. If you are
+affected by this, we recommend disabling TRAP caching by passing the
+<code>trap-caching: false</code> input to the <code>init</code> Action.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3795"">#3795</a></li>
+<li>The Git version 2.36.0 requirement for improved incremental analysis
+now only applies to repositories that contain submodules. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3789"">#3789</a></li>
+<li>Python analysis on GHES no longer extracts the standard library,
+relying instead on models of the standard library. This should result in
+significantly faster extraction and analysis times, while the effect on
+alerts should be minimal. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3794"">#3794</a></li>
+<li>Fixed a bug in the validation of OIDC configurations for private
+registries that was added in CodeQL Action 4.33.0 / 3.33.0. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3807"">#3807</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.2"">2.25.2</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3823"">#3823</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/8aad20d150bbac5944a9f9d289da16a4b0d87c1e""><code>8aad20d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3949"">#3949</a>
+from github/update-v4.36.2-dcb947ce1</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/f521b08cd8f468ab193ea950a589cb2e9c869c6a""><code>f521b08</code></a>
+Add additional changelog notes</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/8aeff0ffb7b78582ee0d0e6eebb8140684400d08""><code>8aeff0f</code></a>
+Update changelog for v4.36.2</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/dcb947ce15976d40ea82935510b2db4872ec124c""><code>dcb947c</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3948"">#3948</a>
+from github/update-bundle/codeql-bundle-v2.25.6</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/c251bcefa178f7780f62f150002acffe3d07fde9""><code>c251bce</code></a>
+Add changelog note</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/62953c18b35f59e28351d2f1e806925aef8b1e3c""><code>62953c1</code></a>
+Update default bundle to codeql-bundle-v2.25.6</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/423b570baf1976cd7a3daeba5d6e9f9b76432f37""><code>423b570</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3946"">#3946</a>
+from github/dependabot/npm_and_yarn/npm-minor-5d507a...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/c35d1b164463ee62a100735382aaaa525c5d3496""><code>c35d1b1</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3947"">#3947</a>
+from github/dependabot/github_actions/dot-github/wor...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/cb1a588b02755b176e7b9d033ed4b69312f0e1bd""><code>cb1a588</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3937"">#3937</a>
+from github/robertbrignull/waitForProcessing_backoff</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/ba47406412c54532b5b4fcfbaf877c9e2382b206""><code>ba47406</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3943"">#3943</a>
+from github/henrymercer/cache-cli-version-info</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/7211b7c8077ea37d8641b6271f6a365a22a5fbfa...8aad20d150bbac5944a9f9d289da16a4b0d87c1e"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=github/codeql-action&package-manager=github_actions&previous-version=4.36.0&new-version=4.36.2)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",04e0ce3565c52b0ad97c9a08e5f040950c901686,736,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.28; capped LanceDB boost for routine/low-signal commit,"Core, Hive: Detect if a view already exists when registering a table",- chore(deps): bump github/codeql-action from 4.36.0 to 4.36.2 (#736) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,04e0ce3565c52b0ad97c9a08e5f040950c901686,04e0ce3,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-14T17:02:10+08:00,GitHub,noreply@github.com,2026-06-14T17:02:10+08:00,chore(deps): bump actions/cache from 4.3.0 to 5.0.5 (#735),"Bumps [actions/cache](https://github.com/actions/cache) from 4.3.0 to
+5.0.5.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/cache/releases"">actions/cache's
+releases</a>.</em></p>
+<blockquote>
+<h2>v5.0.5</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Update ts-http-runtime dependency by <a
+href=""https://github.com/yacaovsnc""><code>@​yacaovsnc</code></a> in <a
+href=""https://redirect.github.com/actions/cache/pull/1747"">actions/cache#1747</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/cache/compare/v5...v5.0.5"">https://github.com/actions/cache/compare/v5...v5.0.5</a></p>
+<h2>v5.0.4</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Add release instructions and update maintainer docs by <a
+href=""https://github.com/Link""><code>@​Link</code></a>- in <a
+href=""https://redirect.github.com/actions/cache/pull/1696"">actions/cache#1696</a></li>
+<li>Potential fix for code scanning alert no. 52: Workflow does not
+contain permissions by <a
+href=""https://github.com/Link""><code>@​Link</code></a>- in <a
+href=""https://redirect.github.com/actions/cache/pull/1697"">actions/cache#1697</a></li>
+<li>Fix workflow permissions and cleanup workflow names / formatting by
+<a href=""https://github.com/Link""><code>@​Link</code></a>- in <a
+href=""https://redirect.github.com/actions/cache/pull/1699"">actions/cache#1699</a></li>
+<li>docs: Update examples to use the latest version by <a
+href=""https://github.com/XZTDean""><code>@​XZTDean</code></a> in <a
+href=""https://redirect.github.com/actions/cache/pull/1690"">actions/cache#1690</a></li>
+<li>Fix proxy integration tests by <a
+href=""https://github.com/Link""><code>@​Link</code></a>- in <a
+href=""https://redirect.github.com/actions/cache/pull/1701"">actions/cache#1701</a></li>
+<li>Fix cache key in examples.md for bun.lock by <a
+href=""https://github.com/RyPeck""><code>@​RyPeck</code></a> in <a
+href=""https://redirect.github.com/actions/cache/pull/1722"">actions/cache#1722</a></li>
+<li>Update dependencies &amp; patch security vulnerabilities by <a
+href=""https://github.com/Link""><code>@​Link</code></a>- in <a
+href=""https://redirect.github.com/actions/cache/pull/1738"">actions/cache#1738</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a href=""https://github.com/XZTDean""><code>@​XZTDean</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/actions/cache/pull/1690"">actions/cache#1690</a></li>
+<li><a href=""https://github.com/RyPeck""><code>@​RyPeck</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/actions/cache/pull/1722"">actions/cache#1722</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/cache/compare/v5...v5.0.4"">https://github.com/actions/cache/compare/v5...v5.0.4</a></p>
+<h2>v5.0.3</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Bump <code>@actions/cache</code> to v5.0.5 (Resolves: <a
+href=""https://github.com/actions/cache/security/dependabot/33"">https://github.com/actions/cache/security/dependabot/33</a>)</li>
+<li>Bump <code>@actions/core</code> to v2.0.3</li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/cache/compare/v5...v5.0.3"">https://github.com/actions/cache/compare/v5...v5.0.3</a></p>
+<h2>v.5.0.2</h2>
+<h1>v5.0.2</h1>
+<h2>What's Changed</h2>
+<p>When creating cache entries, 429s returned from the cache service
+will not be retried.</p>
+<h2>v5.0.1</h2>
+<blockquote>
+<p>[!IMPORTANT]
+<strong><code>actions/cache@v5</code> runs on the Node.js 24 runtime and
+requires a minimum Actions Runner version of
+<code>2.327.1</code>.</strong></p>
+<p>If you are using self-hosted runners, ensure they are updated before
+upgrading.</p>
+</blockquote>
+<hr />
+<h1>v5.0.1</h1>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/cache/blob/main/RELEASES.md"">actions/cache's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Releases</h1>
+<h2>How to prepare a release</h2>
+<blockquote>
+<p>[!NOTE]<br />
+Relevant for maintainers with write access only.</p>
+</blockquote>
+<ol>
+<li>Switch to a new branch from <code>main</code>.</li>
+<li>Run <code>npm test</code> to ensure all tests are passing.</li>
+<li>Update the version in <a
+href=""https://github.com/actions/cache/blob/main/package.json""><code>https://github.com/actions/cache/blob/main/package.json</code></a>.</li>
+<li>Run <code>npm run build</code> to update the compiled files.</li>
+<li>Update this <a
+href=""https://github.com/actions/cache/blob/main/RELEASES.md""><code>https://github.com/actions/cache/blob/main/RELEASES.md</code></a>
+with the new version and changes in the <code>## Changelog</code>
+section.</li>
+<li>Run <code>licensed cache</code> to update the license report.</li>
+<li>Run <code>licensed status</code> and resolve any warnings by
+updating the <a
+href=""https://github.com/actions/cache/blob/main/.licensed.yml""><code>https://github.com/actions/cache/blob/main/.licensed.yml</code></a>
+file with the exceptions.</li>
+<li>Commit your changes and push your branch upstream.</li>
+<li>Open a pull request against <code>main</code> and get it reviewed
+and merged.</li>
+<li>Draft a new release <a
+href=""https://github.com/actions/cache/releases"">https://github.com/actions/cache/releases</a>
+use the same version number used in <code>package.json</code>
+<ol>
+<li>Create a new tag with the version number.</li>
+<li>Auto generate release notes and update them to match the changes you
+made in <code>RELEASES.md</code>.</li>
+<li>Toggle the set as the latest release option.</li>
+<li>Publish the release.</li>
+</ol>
+</li>
+<li>Navigate to <a
+href=""https://github.com/actions/cache/actions/workflows/release-new-action-version.yml"">https://github.com/actions/cache/actions/workflows/release-new-action-version.yml</a>
+<ol>
+<li>There should be a workflow run queued with the same version
+number.</li>
+<li>Approve the run to publish the new version and update the major tags
+for this action.</li>
+</ol>
+</li>
+</ol>
+<h2>Changelog</h2>
+<h3>5.0.4</h3>
+<ul>
+<li>Bump <code>minimatch</code> to v3.1.5 (fixes ReDoS via globstar
+patterns)</li>
+<li>Bump <code>undici</code> to v6.24.1 (WebSocket decompression bomb
+protection, header validation fixes)</li>
+<li>Bump <code>fast-xml-parser</code> to v5.5.6</li>
+</ul>
+<h3>5.0.3</h3>
+<ul>
+<li>Bump <code>@actions/cache</code> to v5.0.5 (Resolves: <a
+href=""https://github.com/actions/cache/security/dependabot/33"">https://github.com/actions/cache/security/dependabot/33</a>)</li>
+<li>Bump <code>@actions/core</code> to v2.0.3</li>
+</ul>
+<h3>5.0.2</h3>
+<ul>
+<li>Bump <code>@actions/cache</code> to v5.0.3 <a
+href=""https://redirect.github.com/actions/cache/pull/1692"">#1692</a></li>
+</ul>
+<h3>5.0.1</h3>
+<ul>
+<li>Update <code>@azure/storage-blob</code> to <code>^12.29.1</code> via
+<code>@actions/cache@5.0.1</code> <a
+href=""https://redirect.github.com/actions/cache/pull/1685"">#1685</a></li>
+</ul>
+<h3>5.0.0</h3>
+<blockquote>
+<p>[!IMPORTANT]
+<code>actions/cache@v5</code> runs on the Node.js 24 runtime and
+requires a minimum Actions Runner version of <code>2.327.1</code>.</p>
+</blockquote>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/actions/cache/commit/27d5ce7f107fe9357f9df03efb73ab90386fccae""><code>27d5ce7</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/actions/cache/issues/1747"">#1747</a>
+from actions/yacaovsnc/update-dependency</li>
+<li><a
+href=""https://github.com/actions/cache/commit/f280785d7b6e1884c7d12b9136eb0f4a1574fcfd""><code>f280785</code></a>
+licensed changes</li>
+<li><a
+href=""https://github.com/actions/cache/commit/619aeb1606e195be0b36fd0ff68dcf1aff6b65a7""><code>619aeb1</code></a>
+npm run build generated dist files</li>
+<li><a
+href=""https://github.com/actions/cache/commit/bcf16c2893940a4899761e55c7ac3c1cf88a04f6""><code>bcf16c2</code></a>
+Update ts-http-runtime to 0.3.5</li>
+<li><a
+href=""https://github.com/actions/cache/commit/668228422ae6a00e4ad889ee87cd7109ec5666a7""><code>6682284</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/actions/cache/issues/1738"">#1738</a>
+from actions/prepare-v5.0.4</li>
+<li><a
+href=""https://github.com/actions/cache/commit/e34039626f957d3e3e50843d15c1b20547fc90e2""><code>e340396</code></a>
+Update RELEASES</li>
+<li><a
+href=""https://github.com/actions/cache/commit/8a671105293e81530f1af99863cdf94550aba1a6""><code>8a67110</code></a>
+Add licenses</li>
+<li><a
+href=""https://github.com/actions/cache/commit/1865903e1b0cb750dda9bc5c58be03424cc62830""><code>1865903</code></a>
+Update dependencies &amp; patch security vulnerabilities</li>
+<li><a
+href=""https://github.com/actions/cache/commit/565629816435f6c0b50676926c9b05c254113c0c""><code>5656298</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/actions/cache/issues/1722"">#1722</a>
+from RyPeck/patch-1</li>
+<li><a
+href=""https://github.com/actions/cache/commit/4e380d19e192ace8e86f23f32ca6fdec98a673c6""><code>4e380d1</code></a>
+Fix cache key in examples.md for bun.lock</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/actions/cache/compare/0057852bfaa89a56745cba8c7296529d2fc39830...27d5ce7f107fe9357f9df03efb73ab90386fccae"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=actions/cache&package-manager=github_actions&previous-version=4.3.0&new-version=5.0.5)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",399af1bfb007d254ada9d1c4c4b9a5540878e95c,735,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,Hive: Update view query in HMS when replacing view <wuya>,- chore(deps): bump actions/cache from 4.3.0 to 5.0.5 (#735) (Thanks dependabot[bot]!)
