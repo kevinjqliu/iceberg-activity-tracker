@@ -2479,3 +2479,18 @@ apache/iceberg-python,b8ffdd3059ce5c19b37ac2e5b9918d2fab93f72c,b8ffdd3,vishnu pr
   Only a clearer error message: a zone-less nanosecond timestamp
   now reports ""Missing zone offset"" instead of ""Invalid timestamp
   with zone"". No API changes.",c85c9eecb1b79cdc0acd4dc27983802788518aa3,3505,false,,2,11,1,pyiceberg; tests
+apache/iceberg-python,01a86f987d1924ca3246a2b985b78890ec0c0fbd,01a86f9,Yuya Ebihara,ebyhry@gmail.com,2026-06-25T22:32:06+09:00,GitHub,noreply@github.com,2026-06-25T09:32:06-04:00,Extract DeletionVector logic from PuffinFile (#3491),"# Rationale for this change
+
+PuffinFile handles two tasks: format parsing (magic bytes, footer,
+blobs) and deletion vector domain logic (bitmap deserialization and
+PyArrow conversion).
+This will become problematic when we introduce support for the NDV
+`apache-datasketches-theta-v1` blob in the future.
+
+## Are these changes tested?
+
+Yes
+
+## Are there any user-facing changes?
+
+Yes - PuffinFile class user needs to call DeletionVector.",b8ffdd3059ce5c19b37ac2e5b9918d2fab93f72c,3491,false,,4,103,54,pyiceberg; test_deletion_vector.py

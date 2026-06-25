@@ -3381,3 +3381,26 @@ protected-name clash; ValidateFromSnapshot rejects negative ids early.
 
 Co-authored-by: shuxu.li <shuxu.li@clickzetta.com>",ed051a702c940f7a08b3e38e01b7774efe0cc899,741,false,shuxu.li,20,1301,75,src
 apache/iceberg-cpp,988f363e7e867c79a147317b3ff1f6c2bb11fea1,988f363,Zehua Zou,zehuazou2000@gmail.com,2026-06-24T17:18:30+08:00,GitHub,noreply@github.com,2026-06-24T17:18:30+08:00,feat: parallelize update and scan processing (#770),,3c9d13d4072362b68e00dc246cb3cedf93217a76,770,false,,14,649,347,src
+apache/iceberg-cpp,3e8203e8ee66bd835a59b06127bb5f9d935769bb,3e8203e,Gang Wu,ustcwg@gmail.com,2026-06-24T22:11:35+08:00,GitHub,noreply@github.com,2026-06-24T22:11:35+08:00,fix(update): clean up delete files from expired manifests (#779),"Reachable cleanup now reads live paths from data and delete manifests,
+matching Java's ManifestFiles.readPaths behavior.",988f363e7e867c79a147317b3ff1f6c2bb11fea1,779,false,,2,25,25,src
+apache/iceberg-cpp,411c0f8ddc2abe95140552cb9d1cf363d541b0af,411c0f8,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-06-24T08:43:48-07:00,GitHub,noreply@github.com,2026-06-24T23:43:48+08:00,feat(logging): add CerrLogger std::cerr backend (#724),"Part 3 of the logging stack — now based on `main` (#723 merged). Adds
+the first concrete sink: a dependency-free `std::cerr` logger, also the
+default backend when spdlog is off.
+
+**What's here**
+- `CerrLogger` writes one line per record: `YYYY-MM-DDThh:mm:ss.mmmZ
+LEVEL [tid] [file:line] message`.
+- UTC millisecond timestamps, OS-native cached thread id (extracted to
+`util/thread_util.h`), lock-free level check, and a whole-line mutex so
+concurrent records never interleave.
+- Pure standard library, always available. `Log`/`Flush` never throw.
+Inherits the base `Initialize(""level"")`; `pattern` is ignored (fixed
+layout; only the spdlog backend honors `pattern`).
+
+**Tests** (`cerr_logger_test`): level filtering, the fixed line layout
+incl. the `.mmm` field and `[file:line]`, inherited `Initialize`,
+`Flush`, never-throw when the sink itself throws, and concurrent-write
+non-interleaving. Built/run under clang-libc++; ASan + TSan clean.
+
+This pull request and its description were written by Isaac.",3e8203e8ee66bd835a59b06127bb5f9d935769bb,724,false,,13,463,15,ci; src
+apache/iceberg-cpp,a1f3514d506951db356d398c72c3a71797fd10ff,a1f3514,liuxiaoyu,45345701+MisterRaindrop@users.noreply.github.com,2026-06-25T17:44:05+08:00,GitHub,noreply@github.com,2026-06-25T17:44:05+08:00,feat(hive): add iceberg_hive library with bundled/system thrift dependency (#753),,411c0f8ddc2abe95140552cb9d1cf363d541b0af,753,false,,10,691,8,CMakeLists.txt; cmake_modules; src

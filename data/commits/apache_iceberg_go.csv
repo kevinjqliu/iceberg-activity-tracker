@@ -13881,3 +13881,403 @@ Closes #1278
 ---------
 
 Co-authored-by: Nanook <nanookclaw@users.noreply.github.com>",9841548519315ddc9689bc2412359d389264094e,1282,false,Nanook,4,44,5,table; types.go; types_test.go
+apache/iceberg-go,3d11af6cb1ecd760d99258d0125ecc8f1d5b5498,3d11af6,Tobias Pütz,tobias@minio.io,2026-06-24T18:11:29+02:00,GitHub,noreply@github.com,2026-06-24T18:11:29+02:00,feat(compaction): force compaction on file-scoped delete dead space (#1296),"The candidate planner only counted positional and equality delete files
+toward delete pressure, so a right-sized data file accumulating
+file-scoped deletes (a deletion vector, or a path-scoped positional
+delete) was never rewritten — its dead rows persisted as read
+amplification indefinitely.
+
+Add a DeleteRatioThreshold (default 0.3, mirroring Java's
+delete-ratio-threshold). A file is forced into compaction when its
+file-scoped deletes shadow at least that fraction of its rows. Following
+Java's BinPackRewriteFilePlanner.tooHighDeleteRatio, the deleted-row
+count sums the record counts of file-scoped deletes only — deletion
+vectors and path-scoped positional deletes (those carrying a referenced
+data file), identified by isFileScoped (= referenced data file present,
+matching ContentFileUtil.isFileScoped) — capped at the data file's
+record count. Equality deletes and partition-scoped positional deletes
+are not file-scoped and stay under the existing count rule, to which
+deletion vectors are now also added.
+
+Unlike Java, a threshold of 0 disables the rule so a zero-valued Config
+stays valid; the default remains 0.3.",76f4e950bf50921a6efadc5bf4db361e794dedca,1296,false,,2,352,18,table
+apache/iceberg-go,325040eea9d9e90f816474436977ae0d7a409c2d,325040e,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-06-24T12:15:10-07:00,GitHub,noreply@github.com,2026-06-24T15:15:10-04:00,feat(exprs): expression parsing for server-side planning (#1212),"I'm hoping to build out server-side planning support in Go. There's a
+bunch of prerequisites we need to do before we can implement.
+
+One of them is parsing Iceberg Expressions, which will be sent over the
+wire. There's work being done to formalize the Expression spec, so it's
+as good a time as any to have this support in iceberg-go.
+
+Apologies, this is longer than I'd like because the expression spec is
+lengthy.",3d11af6cb1ecd760d99258d0125ecc8f1d5b5498,1212,false,,4,1203,4,expr_json.go; expr_json_test.go; exprs.go; literals.go
+apache/iceberg-go,6df72d923bbe34d926341d0341b4187f5ef7b5a6,6df72d9,Andrei Tserakhau,laskoviymishka@gmail.com,2026-06-24T21:27:27+02:00,GitHub,noreply@github.com,2026-06-24T15:27:27-04:00,fix(table): guard nil sequence number in matchDVToData (#1270),"matchDVToData decided DV applicability with
+`dataEntry.SequenceNum() <= dvEntry.SequenceNum()`. A deletion-vector
+ManifestEntry can reach this point with an unset sequence number, for
+which SequenceNum() reports the -1 sentinel — so for any real (>= 0)
+data sequence number the comparison dataSeq <= -1 was always false and
+the DV was silently skipped, resurfacing rows it should have deleted.
+
+Entries arrive here already inherited, so a committed ADDED entry always
+carries a real sequence number; an unset value comes from an
+EXISTING/DELETED entry missing its required explicit sequence number, or
+a not-yet-committed manifest. Treat an indeterminate (negative) sequence
+number as applicable — mirroring the existing seq >= 0 sentinel guard in
+the scan task builder — so an unknown sequence never drops a DV.",325040eea9d9e90f816474436977ae0d7a409c2d,1270,false,,2,68,3,table
+apache/iceberg-go,2d4cbcedb1a182670d2282c49ea230457f73596e,2d4cbce,Tobias Pütz,tobias@minio.io,2026-06-24T21:29:40+02:00,GitHub,noreply@github.com,2026-06-24T15:29:40-04:00,fix(manifest): inherit first_row_id for v1/v2-era manifests in v3 tables (#1295),"Row-id inheritance was gated on the manifest file's own internal
+format-version (>= 3). A v1/v2-era manifest carried into an upgraded v3
+table keeps its older format-version but is assigned a first_row_id when
+written into the v3 manifest list, and its data files must still inherit
+row IDs per the spec (First Row ID Inheritance, applies 'even if the
+data file is existing'). Gating on the manifest-list first_row_id
+instead fixes compaction silently dropping _row_id on mixed v2->v3
+groups while the reference engine (Spark) preserves it.
+
+Also skip DELETED entries when advancing the inherited first_row_id, and
+advance only on files actually assigned, matching Java's idAssigner. The
+manifest-list writer reserves a manifest's id range as added+existing
+rows, so counting deleted entries let a live file following a deleted
+one overflow into the next manifest's range.
+
+Adds a regression test that upgrades a v2 table to v3 and compacts a
+mixed group, asserting every row's _row_id is preserved, and a
+manifest-reader test asserting deleted entries consume no row IDs.",6df72d923bbe34d926341d0341b4187f5ef7b5a6,1295,false,,3,208,10,manifest.go; manifest_test.go; table
+apache/iceberg-go,ebd443e0365502e5c51bdb818ebc7c1522147075,ebd443e,Ahmed Dlshad,ahmed.dlshad.m@gmail.com,2026-06-24T22:34:17+03:00,GitHub,noreply@github.com,2026-06-24T15:34:17-04:00,test: distinguish the managed-identity branch from the DefaultAzureCredential fallback (#1297),"## What
+
+Hardens `TestCreateAzureBucketManagedIdentityCredentialCalled`
+(`io/gocloud/azure_test.go`) so it actually distinguishes the
+managed-identity path from the `DefaultAzureCredential` fallback, as
+requested in #1277.
+
+The existing assertion only checks that the error contains
+`""ManagedIdentityCredential""`. But `DefaultAzureCredential` includes
+`ManagedIdentityCredential` in its chain and aggregates each source's
+error, so a regression that fell back to `DefaultAzureCredential` would
+still satisfy that assertion and pass unnoticed.
+
+This adds `assert.NotContains(err.Error(), ""DefaultAzureCredential"")`,
+which passes on the current managed-identity-only path and would fail if
+the code regressed to `DefaultAzureCredential`.
+
+No production code changes; test-only.
+
+Closes #1277
+
+Signed-off-by: Ahmed <ahmed.dlshad.m@gmail.com>",2d4cbcedb1a182670d2282c49ea230457f73596e,1297,false,,1,2,0,io
+apache/iceberg-go,490ef50afa600888e77233b653a78cface26b99f,490ef50,Tobias Pütz,tobias@minio.io,2026-06-24T21:35:39+02:00,GitHub,noreply@github.com,2026-06-24T15:35:39-04:00,fix(table): honor useLargeTypes when projecting list arrays (#1299),"compacting a pyiceberg created table fails because of this
+
+Summary
+- coerce LIST/LARGE_LIST records to the variant useLargeTypes requests
+in arrowProjectionVisitor.List, converting offsets rather than
+relabeling
+- add a regression covering large_list->list downcast and
+list->large_list
+
+Why
+ReadTasks returns a writer schema built with useLargeTypes (small list
+by default), but the visitor copied the reader's list variant verbatim.
+The arrow-go bump in #1238 taught getNestedFactory to reconstruct a
+parquet file's embedded ARROW:schema, so list columns from
+pyiceberg-written files (which declare large_list) now read back as
+large_list instead of list. The projected records no longer match the
+small-list writer schema, so the parquet file writer rejects every batch
+with ""record schema does not match writer's"" -- surfacing in compaction
+as a group that writes no files and a table that never gets its replace
+snapshot. Primitives dodge this because castIfNeeded already downcasts
+large_string/large_binary.
+
+Testing
+- go test ./table -run TestToRequestedSchema -count=1
+- go test ./table -count=1",ebd443e0365502e5c51bdb818ebc7c1522147075,1299,false,,2,66,1,table
+apache/iceberg-go,d60220fbfa3120d5d16897051c80d46fe816fe34,d60220f,Minh Vu,vuhoangminh97@gmail.com,2026-06-24T21:37:59+02:00,GitHub,noreply@github.com,2026-06-24T15:37:59-04:00,fix(table): release empty scan batches (#1290),"Summary
+
+Release zero-row record batches before `createIterator` skips them. The
+iterator owns batches after pulling them from the sequenced channel, so
+an empty batch still needs the same cleanup as any other batch that is
+not yielded.
+
+The test uses a checked allocator and a zero-row slice backed by a real
+Arrow buffer, so it catches the leak directly instead of relying on a
+full scan setup.
+
+Testing
+
+- `go test ./table -run '^TestCreateIteratorReleasesEmptyRecordBatches$'
+-count=1`
+- `go test ./table -count=1`
+- `go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./table/...`
+- `git diff --check`",490ef50afa600888e77233b653a78cface26b99f,1290,false,,2,47,0,table
+apache/iceberg-go,59265455ab65917d653821524091fee763d712e9,5926545,Minh Vu,vuhoangminh97@gmail.com,2026-06-24T22:16:24+02:00,GitHub,noreply@github.com,2026-06-24T16:16:24-04:00,fix(io): keep MemFS WalkDir within root (#1302),"MemFS.WalkDir matched roots by raw string prefix, so walking a path like .../table also included sibling keys such as table2 and table_backup. Match on path boundaries instead and normalize trailing slashes on the walk root, with regression coverage for sibling prefixes.",d60220fbfa3120d5d16897051c80d46fe816fe34,1302,false,,2,39,1,io
+apache/iceberg-go,a3fda4fdfa97c6068da898d9a51550d251519684,a3fda4f,Minh Vu,vuhoangminh97@gmail.com,2026-06-24T22:32:18+02:00,GitHub,noreply@github.com,2026-06-24T16:32:18-04:00,fix(catalog/rest): close SigV4 signing body clone (#1304),"The REST session transport hashed signed-request payloads via r.GetBody() but never closed that clone after io.Copy, leaking resources held by custom body clones across repeated signed POST/commit requests. Close the clone and return any close error from the signing path instead of sending the request after cleanup fails.",59265455ab65917d653821524091fee763d712e9,1304,false,,2,106,0,catalog
+apache/iceberg-go,e7117c371a78beb0a9ebd9895087a84620e6bc06,e7117c3,Minh Vu,vuhoangminh97@gmail.com,2026-06-24T22:41:04+02:00,GitHub,noreply@github.com,2026-06-24T16:41:04-04:00,fix(table): return error when rolling writer is closed (#1305),"RollingDataWriter.Add used a single-value receive on errorCh, so once the stream goroutine closed that channel, Add could receive the zero error value, release the record, and return nil — making a stopped writer look like it accepted a batch. Add now returns ErrWriterClosed on a closed channel, and the stream removes itself from the factory writer cache on exit so later partition writes don't reuse a dead writer.",a3fda4fdfa97c6068da898d9a51550d251519684,1305,false,,2,65,1,table
+apache/iceberg-go,2a831b00b65d5955243764eaa85aef06f7e3ae05,2a831b0,Minh Vu,vuhoangminh97@gmail.com,2026-06-24T22:54:36+02:00,GitHub,noreply@github.com,2026-06-24T16:54:36-04:00,fix(manifest): commit writer state after encode (#1306),"ManifestWriter.addEntry updated file counts, row counts, partition summaries, and the caller's DataFile partition data before prepareEntry and writer.Encode could fail, so a rejected entry left the writer looking as if it had been written. Encode the entry (through an Avro-field clone so partition conversion does not mutate the caller's DataFile) before updating any writer counters or summaries, keeping those mutations on the success side of Encode.",e7117c371a78beb0a9ebd9895087a84620e6bc06,1306,false,,2,86,34,manifest.go; manifest_test.go
+apache/iceberg-go,915be564bd55610bfca1dd7d95831c6289356030,915be56,Minh Vu,vuhoangminh97@gmail.com,2026-06-24T22:58:54+02:00,GitHub,noreply@github.com,2026-06-24T16:58:54-04:00,fix: reject invalid parameterized transforms (#1308),"ParseTransform used prefix checks for bucket and truncate before applying a generic bracket parser, which let strings with extra transform-name text (e.g. bucketx[5], truncatefoo[10]) parse as valid parameterized transforms. Parse bucket and truncate with exact anchored syntax so only the Iceberg forms bucket[N] and truncate[N] are accepted.",2a831b00b65d5955243764eaa85aef06f7e3ae05,1308,false,,2,31,33,transforms.go; transforms_test.go
+apache/iceberg-go,04f229ec6af36b7006083a58843030eaef9224de,04f229e,Minh Vu,vuhoangminh97@gmail.com,2026-06-24T23:02:49+02:00,GitHub,noreply@github.com,2026-06-24T17:02:49-04:00,fix(table): write added manifests with file spec (#1301),"The added-file manifest path wrote every new data/delete file using the table's current spec. After partition-spec evolution a position-delete file can carry a spec ID different from the current one, so an added delete file could land in a manifest whose partition_spec_id did not match the file's own spec. Group newly added entries by the added file's spec ID and write each manifest with that matching spec, mirroring the existing deleted-entry grouping; use the file's own spec for snapshot summary partition metrics too.",915be564bd55610bfca1dd7d95831c6289356030,1301,false,,2,105,30,table
+apache/iceberg-go,d666cb560b4d17a3116b912b28ab20e4dbce01f0,d666cb5,Minh Vu,vuhoangminh97@gmail.com,2026-06-24T23:18:33+02:00,GitHub,noreply@github.com,2026-06-24T17:18:33-04:00,fix(table): reject empty equality delete keys (#1303),"Summary
+
+- reject equality delete files with no equality field IDs while loading
+scan deletes
+- add reader-level regression coverage for malformed delete metadata
+before any delete file is read
+
+Why
+
+Equality delete keys are built from the file's equality field IDs. If
+that list is empty, the reader can build an empty key, and every data
+row also encodes to that same empty key. A malformed equality delete
+file could therefore filter every row from an applicable scan.
+
+Writers already reject empty equality field IDs; this adds the same
+guard to the reader path for externally-written or malformed delete
+files.
+
+Testing
+
+- go test ./table -run
+'^TestReadAllEqualityDeleteFilesRejectsEmptyEqualityFieldIDs$' -count=1
+- go test ./table -count=1
+- go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./table/...
+- git diff --check",04f229ec6af36b7006083a58843030eaef9224de,1303,false,,2,54,0,table
+apache/iceberg-go,b39c17043f39de4097dfe0bfbb7d47947dea14c3,b39c170,Minh Vu,vuhoangminh97@gmail.com,2026-06-24T23:19:44+02:00,GitHub,noreply@github.com,2026-06-24T17:19:44-04:00,fix(io): create parent dirs in LocalFS WriteFile (#1310),"Summary
+
+- create missing parent directories in LocalFS.WriteFile before writing
+- cover nested plain paths and file:// paths
+
+Why
+
+LocalFS.Create already creates parent directories, but WriteFile called
+os.WriteFile directly. Code paths that write generated nested locations
+through WriteFile could fail locally even though the matching Create
+path succeeds.
+
+Testing
+
+- go test ./io -run '^TestLocalFSWriteFileCreatesParentDirectories$'
+-count=1
+- go test ./io -count=1
+- go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./io
+- git diff --check",d666cb560b4d17a3116b912b28ab20e4dbce01f0,1310,false,,2,34,1,io
+apache/iceberg-go,a96ce041d76591812b9cc5fd807dd5ac8f05a117,a96ce04,Revanth,revanthcse1@gmail.com,2026-06-24T17:48:32-05:00,GitHub,noreply@github.com,2026-06-25T00:48:32+02:00,test: cover Glue and Hive purge table (#1285),"## Summary
+
+Adds unit coverage for `PurgeTable` in the Glue and Hive catalogs.
+
+The new tests verify that:
+
+- `PurgeTable` loads the table and drops the catalog entry
+- local table metadata/data files are physically deleted
+- `PurgeFiles` failures are swallowed after the drop
+- the warning path is logged when file purge fails
+
+## Why
+
+`glue.PurgeTable` and `hive.PurgeTable` already call `DropTable`
+followed by best-effort `tbl.PurgeFiles`, but only `DropTable` had test
+coverage. These tests lock in the intended purge behavior and the
+existing swallow-and-log error handling.
+
+Fixes #1272.
+
+## Testing
+
+```sh
+go test ./catalog/glue ./catalog/hive
+go test ./...",b39c17043f39de4097dfe0bfbb7d47947dea14c3,1285,false,,2,341,0,catalog
+apache/iceberg-go,6cee8f7f3ba535028caf3820ed2af50e38ccb82d,6cee8f7,Revanth,revanthcse1@gmail.com,2026-06-24T17:49:22-05:00,GitHub,noreply@github.com,2026-06-25T00:49:22+02:00,refactor: require ListableIO for orphan cleanup walk (#1286),"Fixes #1276.
+
+## Summary
+
+Removes the dead fallback path in orphan-cleanup directory walking.
+
+`walkDirectory` now requires the table `FileIO` to implement
+`ListableIO` and returns a clear error if it does not. This also removes
+the old reflection-based `getBucketName` helper and the unused `reflect`
+import.
+
+## Why
+
+All concrete IO implementations used here now implement `WalkDir` /
+`ListableIO`, so the old post-`ListableIO` fallback was unreachable.
+Removing it gets rid of brittle reflection against blob internals.
+
+
+## Testing
+
+```sh
+go test ./table
+go test ./...",a96ce041d76591812b9cc5fd807dd5ac8f05a117,1286,false,,3,86,61,io; table
+apache/iceberg-go,88a9757ed3c3cfd23f864fb16df7e6a2ed302d44,88a9757,Andrei Tserakhau,laskoviymishka@gmail.com,2026-06-25T00:59:24+02:00,GitHub,noreply@github.com,2026-06-25T00:59:24+02:00,fix(codec): validate primary data file spec id in EncodeFileScanTask (#1287),"Three related codec cleanups:
+
+- EncodeFileScanTask validated the SpecID of every delete/equality/DV
+file (via encodeDataFileSlice) but not the primary task.File.
+EncodeDataFile encodes partition data against the passed-in spec, so a
+transposed (spec, task) pair silently mis-mapped or dropped partition
+values and still returned success. Guard the primary file the same way
+the delete files are guarded, and update the doc comment to say every
+file is checked.
+
+- Tag the Encode/DecodeFileScanTask propagation-path errors with the
+""codec: EncodeFileScanTask:"" / ""codec: DecodeFileScanTask:"" markers,
+matching the convention EncodeDataFile/DecodeDataFile already use (and
+that data_file_test.go asserts).
+
+- Fix the SetSchemaCacheSize doc: it claimed ""not safe to call
+concurrently"", but the underlying golang-lru/v2 cache serializes Resize
+against Get/Add through the same mutex, so it is safe.",6cee8f7f3ba535028caf3820ed2af50e38ccb82d,1287,false,,4,134,21,codec; data_file_codec.go
+apache/iceberg-go,ce27c2989fd1893572e05013057edab1789527f7,ce27c29,Andrei Tserakhau,laskoviymishka@gmail.com,2026-06-25T09:59:08+02:00,GitHub,noreply@github.com,2026-06-25T09:59:08+02:00,fix(table): recover panics in RollingDataWriter.stream (#1279),"stream runs in its own goroutine (spawned by newRollingDataWriter) and
+has no caller able to recover a panic. Inside, closeWriter ->
+FileWriter.Close -> stats.ToDataFile panics when NewDataFileBuilder
+fails, so that panic escaped the goroutine and crashed the whole process
+instead of failing the write.
+
+Add a recover at the top of stream that converts a panic into an error
+delivered on errorCh, mirroring the recover already present in
+equalityDeleteRecordsToDataFiles. The defer is declared after the
+close(r.errorCh) defer so it runs first (LIFO) and sends while errorCh
+is still open; the existing Abort defer still cleans up the half-written
+file.",88a9757ed3c3cfd23f864fb16df7e6a2ed302d44,1279,false,,2,91,0,table
+apache/iceberg-go,178655c864567139f4cdd3b72cb0b59e45593297,178655c,Revanth,revanthcse1@gmail.com,2026-06-25T02:59:59-05:00,GitHub,noreply@github.com,2026-06-25T09:59:59+02:00,"feat(table,rest): propose public API surface for REST scan planning (#1213)","# REST scan planning: proposed public API surface (#1178)
+
+> This design is under active development and will keep changing as it's
+discussed. Feedback on the open decisions especially welcome and
+appreciated. Thank you.
+
+This is a design proposal, not an implementation. Every body is
+`panic(""unimplemented"")`, and there is no behavior change.
+
+Opening this as a ""PR with interfaces"" so the seam can be reviewed in Go
+before implementation. Part of #1178.
+
+## Why
+
+Planning large-table scans entirely in a short-lived Go client (Lambda,
+Cloud Run, small k8s jobs) can be slow or infeasible. The REST spec's
+scan-planning endpoints let the catalog plan near its metadata and
+return only the tasks the client needs, with optional plan-scoped
+credentials and catalog-side governance. **Local planning stays the
+default; remote is opt-in.**
+
+## Public API surface
+
+**`table` (the seam)**
+- `ScanPlanningMode` (`local` / `remote` / `auto`) +
+`WithScanPlanningMode(...) ScanOption`
+- `ScanPlanner`: `SupportsRemoteScanPlanning() bool`, `PlanFiles(ctx,
+ScanPlanningRequest) (ScanPlanningResult, error)`
+- `ScanPlanningRequest` / `ScanPlanningResult`
+- Proposed `FileScanTask.Residual iceberg.BooleanExpression`: not added
+here (would trip the `codec/file_scan_task.go` drift guard), lands with
+the scan-task decoder PR.
+
+**root `iceberg` (expression codec)**
+- `MarshalExpressionJSON` / `UnmarshalExpressionJSON`: Java
+`ExpressionParser`-compatible. Correctness-critical; every encoding is
+pinned to checked-in Java golden fixtures (e.g. `AlwaysTrue`/`False`
+serialize as the bare booleans `true`/`false`).
+
+**`catalog/rest` (client)**
+- Capability discovery `Endpoint` + `SupportsEndpoint`: **Phase 0,
+already implemented in a separate PR** (held pending).
+- Split capability: `SupportsPlanTableScan` /
+`SupportsFullRemoteScanPlanning`
+- `PlanTableScan` / `FetchPlanningResult` / `CancelPlanning` /
+`FetchScanTasks` / `WaitForPlan`
+- `ErrPlanExpired` and wire-type envelopes
+- `var _ table.ScanPlanner = (*Catalog)(nil)`: compile-time proof the
+seam fits.
+
+`table` does not import `catalog/rest`; `StorageCredential` stays out of
+`table`.
+
+## Decisions pending (before this lands)
+
+1. **Plan-scoped FileIO carrier (OQ1).** How does plan-scoped IO reach
+`ReadTasks` across the `PlanFiles` -> `ReadTasks` boundary? Options: a
+richer planned-result object, an internal plan context on `Scan`, or a
+serializable credential handle on `FileScanTask`. A *live* FileIO should
+not sit on `FileScanTask` because it has a transport codec. No firm
+recommendation yet.
+2. **Capability gating (OQ2).** A single gate is too coarse: requiring
+all four endpoints falls back to local on sync-only servers; requiring
+only the plan endpoint can false-positive on `submitted` / `plan-tasks`
+flows. Proposed split: `SupportsPlanTableScan` vs
+`SupportsFullRemoteScanPlanning`. I'll confirm what the Java
+`iceberg-rest-fixture` advertises.
+3. **Schema binding across the boundary (OQ4).** A returned residual
+must bind to the snapshot schema (via schema-id); the ordered-partition
+decode uses each file's partition spec-id, kept separate.
+`UseSnapshotSchema` needs a concrete contract.
+4. **`scan-planning-mode=server`.** Proposed fail-fast contract: config
+`server` requires remote planning; an explicit `ScanPlanningLocal`
+against a `server` table is an error, not a silent local plan.
+
+## Phasing
+
+0. Capability discovery (`endpoints` decode + `SupportsEndpoint`) -
+separate PR, no behavior change.
+1. Expression JSON codec - highest risk; Java golden tests.
+2. REST content-file + scan-task JSON; add `FileScanTask.Residual`.
+3. Wire types + validation.
+4. REST client methods + poller/backoff + cancel-on-context.
+5. Table planner seam.
+6. Scanner delegation (`WithScanPlanningMode`, local/remote/auto).
+7. Fake server + parity tests; gated Java-fixture integration.
+8. Docs + hardening.
+
+## Correctness anchor
+
+The acceptance bar is a local-vs-remote parity test. A fake server that
+plans locally internally proves *plumbing only*; the real oracle is
+golden request/response fixtures captured from the Java
+`iceberg-rest-fixture`.
+Expression-JSON mismatch and incorrect server residuals are the
+silent-corruption risks this design guards against.
+
+## Not in this PR
+
+Implementation (bodies panic), a REST server, a distributed worker
+runtime, incremental/CDC scans (deferred; point-in-time first), and any
+change to the local planning path.",ce27c2989fd1893572e05013057edab1789527f7,1213,false,,11,869,21,catalog; expression_json.go; table
+apache/iceberg-go,447c346020d2f010aa01af6bd711c67b495e9446,447c346,Revanth,revanthcse1@gmail.com,2026-06-25T03:00:40-05:00,GitHub,noreply@github.com,2026-06-25T10:00:40+02:00,fix(table): harden GeoArrow CRS read parsing (#1239),"closes #1231
+
+## Summary
+- Reject unsupported GeoArrow string CRS encodings for `projjson` and
+WKT2:2019.
+- Keep non-empty string CRS values readable to preserve existing data
+and read/write round-tripping.
+- Preserve canonical `OGC:CRS84` / `EPSG:4326` handling even when
+`crs_type:""srid""` is present.
+- Improve JSON-object CRS diagnostics for invalid `id`, `id.authority`,
+and `id.code` members.
+
+## Testing
+- go test ./table -run
+'Test(IcebergGeoTypesToArrowSchema|GeoArrowCRSToIcebergCRS|IcebergCRSToGeoArrowMetadata)'
+- go test ./table",178655c864567139f4cdd3b72cb0b59e45593297,1239,false,,3,237,16,table
+apache/iceberg-go,8a8556b0e0011b867116bb661e5c2d8a22e85103,8a8556b,Revanth,revanthcse1@gmail.com,2026-06-25T03:01:13-05:00,GitHub,noreply@github.com,2026-06-25T10:01:13+02:00,test: pin geo type JSON wire format (#1284),"## Summary
+
+Adds a cross-implementation schema JSON fixture to pin the Iceberg geo
+type-string wire format.
+
+The fixture includes:
+
+- `geometry(srid:3857)`
+- `geography(srid:4269, karney)`
+
+The new test loads the fixture, unmarshals and re-marshals it through
+Go, then compares the raw emitted JSON `type` string literals
+byte-for-byte instead of using `assert.JSONEq`.
+
+## Why
+
+Existing geo tests validated JSON equivalence, but did not pin the exact
+type strings that other Iceberg clients parse. This locks the current
+wire format before more geo-related work builds on it.
+
+Fixes #1271.
+
+## Testing
+
+```sh
+go test ./...",447c346020d2f010aa01af6bd711c67b495e9446,1284,false,,2,82,0,schema_test.go; testdata
