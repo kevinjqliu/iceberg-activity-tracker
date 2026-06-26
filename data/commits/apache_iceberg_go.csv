@@ -14281,3 +14281,66 @@ Fixes #1271.
 
 ```sh
 go test ./...",447c346020d2f010aa01af6bd711c67b495e9446,1284,false,,2,82,0,schema_test.go; testdata
+apache/iceberg-go,5bff7cb58fc602dec6f03b99d053c131271bd34f,5bff7cb,Prafulla Kiran,129253561+prafulla-kiran@users.noreply.github.com,2026-06-26T15:31:50+05:30,GitHub,noreply@github.com,2026-06-26T12:01:50+02:00,fix(catalog/glue): case-insensitive type match in convertGlueToIceberg (#1269),"Fixes #1267 (related: #479, regressed by #537).
+
+### Summary
+
+`convertGlueToIceberg` is the only remaining case-sensitive `table_type`
+check in `catalog/glue/glue.go` — the other two sites (`getTable`,
+`filterTableListByType`) already use `strings.EqualFold` since #480.
+This brings the third site in line so `LoadTable` accepts Glue tables
+written by PyIceberg or via the AWS Glue Iceberg REST endpoint (both
+emit lowercase `iceberg`), matching the case-insensitive semantics of
+the PyIceberg and Java Glue implementations.
+
+### Why
+
+`LoadTable` → `getTable` now passes case-insensitively but the
+subsequent `convertGlueToIceberg` rejects the same table, reproducing
+the symptom from #479 (`table X.Y is not an iceberg table` on a valid
+Iceberg table). Originally flagged by @tommika in a comment on #479.
+
+### Change
+
+- One-line fix at `catalog/glue/glue.go:703`: `!=` →
+`!strings.EqualFold(...)`.
+- New unit test `TestGlueConvertGlueToIcebergCaseInsensitive` mirroring
+the existing `TestGlueGetTableCaseInsensitive`, covering `ICEBERG`,
+`iceberg`, `IcEbErG`, and a non-Iceberg negative case. Verified by
+reverting the fix and confirming the new test fails.
+
+### Test plan
+
+- [x] `go test ./catalog/glue/` passes
+- [x] `golangci-lint run ./catalog/glue/...` clean
+- [x] New test fails without the fix, passes with it",8a8556b0e0011b867116bb661e5c2d8a22e85103,1269,false,,2,56,1,catalog
+apache/iceberg-go,1802df7eac51dfbf2b20ddedd8e6a2ad30259d73,1802df7,Minh Vu,vuhoangminh97@gmail.com,2026-06-26T12:02:33+02:00,GitHub,noreply@github.com,2026-06-26T12:02:33+02:00,fix(table): reject read-only file io in write paths (#1256),"Summary
+
+- add a shared WriteFileIO requirement helper for table write paths
+- replace unchecked transaction WriteFileIO assertions with normal
+errors
+- keep ErrWriteIORequired compatible with the older ErrNotImplemented
+match from WriteRecords
+- run the write-IO guard before automatic name-mapping mutations
+- reuse the copy-on-write deletion WriteFileIO in Overwrite instead of
+resolving the FS twice
+- add regression coverage for append, overwrite, copy-on-write delete,
+merge-on-read delete, row delta, AddDataFiles, AddFiles, replacement
+add-only paths, WriteEqualityDeletes, and WriteRecords
+
+Why
+
+Custom FileIO implementations can satisfy io.IO without supporting
+writes. A few table write paths still used direct WriteFileIO
+assertions, so a read-only implementation could panic instead of
+returning an error.
+
+Testing
+
+- go test ./table -run
+'TestWritePathsReturnErrorForReadOnlyIO|TestWriteRecords/TestFSNotWritable|TestDoCommit_NonWriteFileIOReturnsError'
+-count=1
+- go test ./table -count=1
+- go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./table/...
+- git diff --check",5bff7cb58fc602dec6f03b99d053c131271bd34f,1256,false,,7,305,64,table

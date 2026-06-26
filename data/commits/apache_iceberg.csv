@@ -3247,3 +3247,42 @@ Signed-off-by: Thomas Thornton <thomaswilliamthornton@gmail.com>",b27930e1827b7f
 apache/iceberg,33bd1019a3544ad005979c64b73ee0a8da2d50e4,33bd101,Robin Moffatt,robin@moffatt.me,2026-06-25T12:27:38+01:00,GitHub,noreply@github.com,2026-06-25T13:27:38+02:00,Flink: Improve error message for unsupported table kinds in createTable (#16079),,3c604fb6073d1c11095f0a6708c8dca5731430aa,16079,false,,2,33,1,flink
 apache/iceberg,d1f789e517cd93589968325e60fab86306982cce,d1f789e,Yujiang Zhong,42907416+zhongyujiang@users.noreply.github.com,2026-06-25T20:09:01+08:00,GitHub,noreply@github.com,2026-06-25T14:09:01+02:00,Flink: Backport fix file offset mismatch in DataIterator.seek() when files are skipped (#16950),Backports #16929,33bd1019a3544ad005979c64b73ee0a8da2d50e4,16950,false,,6,372,8,flink
 apache/iceberg,b99389ba82cd573e17683818e00b6b052a5ef345,b99389b,gaborkaszab,gaborkaszab@gmail.com,2026-06-25T15:34:52+02:00,GitHub,noreply@github.com,2026-06-25T15:34:52+02:00,Core: Set scan planning mode when initializing client (#15903),,d1f789e517cd93589968325e60fab86306982cce,15903,false,,2,106,16,core
+apache/iceberg,6c5f9f242750fe2cade46e5dbd1a90d011741ea6,6c5f9f2,Maximilian Michels,mxm@apache.org,2026-06-25T22:43:41+02:00,GitHub,noreply@github.com,2026-06-25T13:43:41-07:00,Flink: Add equality delete conversion API and integration tests (#16948),"* Flink: Add equality delete conversion API and integration tests
+
+Flink's upsert mode writes equality deletes, which are cheap to produce but
+force every reader to join the data against the delete files (merge-on-read).
+ConvertEqualityDeletes is a maintenance task that rewrites them into deletion
+vectors on a target branch, so reads apply deletes by position. The writer keeps
+appending equality deletes to a staging branch while the conversion runs in the
+background.
+
+Example:
+```
+    TableMaintenance.forTable(env, tableLoader)
+        .add(
+            ConvertEqualityDeletes.builder()
+                .stagingBranch(""staging"")
+                .targetBranch(""main"")
+                .equalityFieldColumns(ImmutableList.of(""id""))
+                .scheduleOnEqDeleteFileCount(1)
+        .append();
+```
+
+The table must be V3 for deletion vectors, the equality field columns must match
+the writer's, and every partition column must be an equality field, because the
+converter keys rows on equality values alone and would otherwise resolve a
+delete against the wrong partition. The conversion task has checks in place to
+ensure this.
+
+* fixup! Add runtime check to ensure spec fields are included in equality fields
+
+* fixup! Add requested test for an unknown equality field column
+
+* fixup! Increase test timeout to prevent flakiness in CI",b99389ba82cd573e17683818e00b6b052a5ef345,16948,false,,7,1884,1,flink
+apache/iceberg,cfebc8ed16fcdee7a28ad92635adbb744b0258bc,cfebc8e,Robin Moffatt,robin@moffatt.me,2026-06-25T21:46:20+01:00,GitHub,noreply@github.com,2026-06-25T13:46:20-07:00,Flink: Backport improved createTable error message to 1.20 and 2.0 (#16959),"Backports #16079 to the Flink 1.20 and 2.0 modules. FlinkCatalog#createTable
+now reports the actual table class and explains that the Iceberg Flink catalog
+only supports resolved catalog tables, instead of the terse
+""table should be resolved"", and adds a test asserting the precondition rejects
+a CatalogMaterializedTable.",6c5f9f242750fe2cade46e5dbd1a90d011741ea6,16959,false,,4,66,2,flink
+apache/iceberg,66150ef442be414c9580fc1c73962f1f9719d441,66150ef,Swapna Marru,swapna267@gmail.com,2026-06-25T22:36:29-07:00,GitHub,noreply@github.com,2026-06-26T07:36:29+02:00,"Flink: Backport Pass only white-listed Catalog properties to 1.20,2.0 (#16966)",Backports #16728,cfebc8ed16fcdee7a28ad92635adbb744b0258bc,16966,false,,14,54,83,flink
+apache/iceberg,7269fc1750b13d3f871b5e051fe670bb19fbe870,7269fc1,Maximilian Michels,mxm@apache.org,2026-06-26T07:58:46+02:00,GitHub,noreply@github.com,2026-06-26T07:58:46+02:00,Flink: Backport: Add equality delete conversion API and integration tests (#16969),Backports #16948,66150ef442be414c9580fc1c73962f1f9719d441,16969,false,,14,3768,2,flink
