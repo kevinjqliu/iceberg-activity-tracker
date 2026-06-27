@@ -14344,3 +14344,45 @@ Testing
 - go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
 run --timeout=10m ./table/...
 - git diff --check",5bff7cb58fc602dec6f03b99d053c131271bd34f,1256,false,,7,305,64,table
+apache/iceberg-go,ed207d846227630c6296f030f3ccb0ebc9c8ba10,ed207d8,Badal Prasad Singh,badal@datazip.io,2026-06-26T22:41:30+05:30,GitHub,noreply@github.com,2026-06-26T13:11:30-04:00,"fix(literals): incorrect comparison result for (false, false) in BoolLiteral.Comparator (#1317)","BoolLiteral.Comparator returned -1 for (false, false) because it fell through the v1 branch unconditionally; replace with an explicit v1 == v2 equality check. Adds a comparator test covering all four boolean pairs.",1802df7eac51dfbf2b20ddedd8e6a2ad30259d73,1317,false,,2,24,4,literals.go; literals_test.go
+apache/iceberg-go,31989833c1d932c2d9fab0ec71707898bb91a5c6,3198983,Badal Prasad Singh,badal@datazip.io,2026-06-26T22:44:37+05:30,GitHub,noreply@github.com,2026-06-26T13:14:37-04:00,fix(literals): handle non-int64 big-int correctly when casting DecimalLiteral to Int32 (#1323),"## Description
+
+Fixes #1322, the incorrect overflow direction detection in
+`DecimalLiteral.To(Int32Type)` for decimal values whose unscaled
+`big.Int` exceeds the `int64` range.
+
+## Testing
+Added regression tests covering:
+1. Positive values outside the `int64` range (`n4`).
+2. Negative values that previously produced an incorrect in-range
+`Int32Literal` (`n5`).
+3. Negative values outside the `int64` range that previously returned
+the wrong overflow sentinel (`n6`).
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",ed207d846227630c6296f030f3ccb0ebc9c8ba10,1323,false,,2,29,4,literals.go; literals_test.go
+apache/iceberg-go,1c0e4dce1680c14e6f07cf5f8845e3ef6cb1a02c,1c0e4dc,Minh Vu,vuhoangminh97@gmail.com,2026-06-26T23:33:39+02:00,GitHub,noreply@github.com,2026-06-26T23:33:39+02:00,fix(table): track actual metadata removals (#1311),"Summary
+
+- record only partition spec and schema IDs that were actually removed
+- avoid emitting remove updates when no requested IDs match existing
+metadata
+- make partition spec removal capacity safe when callers pass more IDs
+than existing specs
+
+Why
+
+RemovePartitionSpecs and RemoveSchemas preallocated the removed ID slice
+with length instead of capacity. That made any non-empty request look
+like a successful removal, and the emitted update used the requested IDs
+rather than the IDs that were actually removed.
+
+Testing
+
+- go test ./table -run
+'Test(AddRemovePartitionSpec|RemovePartitionSpecsNoMatchDoesNotUpdate|RemoveSchemas|RemoveSchemasNoMatchDoesNotUpdate)$'
+-count=1
+- go test ./table -count=1
+- go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./table/...
+- git diff --check",31989833c1d932c2d9fab0ec71707898bb91a5c6,1311,false,,2,39,7,table

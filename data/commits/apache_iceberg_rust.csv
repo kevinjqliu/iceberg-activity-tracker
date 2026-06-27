@@ -18506,3 +18506,104 @@ Specify what test covers (unit test, integration test, etc.).
 If tests are not included in your PR, please explain why (for example,
 are they covered by existing tests)?
 -->",148afc50ee950b2cd8d99c0243242ef45f3948c5,2700,false,,20,341,89,CHANGELOG.md; Cargo.lock; Cargo.toml; bindings; crates; dev
+apache/iceberg-rust,fc308a23079d2ad7d04d9900838909b58b26abb1,fc308a2,Dhruv Arya,dhruv.arya@databricks.com,2026-06-26T14:25:49-07:00,GitHub,noreply@github.com,2026-06-26T23:25:49+02:00,fix: avoid lost-wakeup hang in DeleteFileIndex::get_deletes_for_data_file (#2696),"## Which issue does this PR close?
+
+N/A — concurrency bug found while reviewing #2590.
+
+## What changes are included in this PR?
+
+Fixes a lost-wakeup hang in
+`DeleteFileIndex::get_deletes_for_data_file`.
+
+## The bug
+
+`DeleteFileIndex` populates asynchronously on a background task that
+signals completion with `tokio::sync::Notify::notify_waiters()`. Per the
+tokio docs, `notify_waiters()` stores no permit and only wakes
+`Notified` futures that have already been **created**.
+
+`get_deletes_for_data_file` observes the `Populating` state, **releases
+the read lock**, and only *then* creates the `Notified` future. If the
+populating task flips the state to `Populated` and calls
+`notify_waiters()` in that window, the wakeup is lost and the query
+awaits forever.
+
+The window is normally only a few instructions wide and is effectively
+never hit, because the querier usually registers before the populator is
+even scheduled. This is reachable from the `SnapshotValidator` commit
+path (apache/iceberg-rust#2590), which drops the channel sender
+immediately before querying — making the populator finish right as the
+query starts.
+
+## The fix
+
+Create the `Notified` future (via `notified_owned`) **while still
+holding the read lock**. The populating task cannot call
+`notify_waiters()` until it acquires the write lock, which is blocked
+while the read lock is held — so the notification is guaranteed to
+happen *after* the future has been created, and tokio guarantees such
+notifications are delivered. No re-check needed.
+
+The same latent pattern exists in `arrow/delete_filter.rs` and
+`arrow/caching_delete_file_loader.rs`; this PR fixes only the index
+site, and I'm happy to follow up on the others.
+
+## Are these changes tested?
+
+This production change is intentionally minimal (no test), because a
+deterministic regression test requires a small test-only seam to make
+the otherwise nanosecond-wide race window reliable. To keep that out of
+this PR, the seam + test live in companion PRs on my fork:
+
+- Reproduction only — the test **fails** (hangs → timeout),
+demonstrating the bug:
+https://github.com/dhruvarya-db/iceberg-rust/pull/9
+- The same fix **with** the regression test — the test **passes**:
+https://github.com/dhruvarya-db/iceberg-rust/pull/10
+
+I'm happy to fold the regression test into this PR if maintainers
+prefer.
+
+
+## How the race happens (before this fix)
+
+`get_deletes_for_data_file` releases the read lock at **(B)** and only
+creates its `Notified` future at **(C)**. The populating task can flip
+the state to `Populated` and call `notify_waiters()` in the window
+between (B) and (C). Because `notify_waiters()` stores no permit (unlike
+`notify_one()`) and only wakes `Notified` futures created *before* the
+call, a notification fired before the future exists is lost — and the
+consumer then awaits forever:
+
+```
+ CONSUMER  get_deletes_for_data_file       PRODUCER  populating task
+ ─────────────────────────────────         ──────────────────────────
+ read lock: state == Populating   (A)
+ clone notifier (Arc<Notify>)
+ drop read lock                   (B)
+        │
+        │  ◄═══════ WINDOW ═══════►         write lock: state = Populated
+        │                                   drop write lock
+        │                                   notify_waiters()  ✗ no waiter registered yet
+        │                                           → wakeup lost (no permit stored)
+        ▼
+ notifier.notified().await        (C)        (task has exited)
+        │
+        ▼
+   ░░░ awaits forever ░░░  ← never woken → commit/query hangs
+```
+
+This is reachable in practice because observing `Populating` at (A) is
+the common case: the consumer does only synchronous work between
+dropping the sender and the read at (A), while the populator must first
+be woken from its parked `collect()`, scheduled, and acquire the write
+lock — so the consumer typically reaches (A) before the state flips.
+
+**The fix** creates the `Notified` future at **(A)**, while the read
+lock is still held. The populator cannot call `notify_waiters()` until
+it takes the write lock (blocked while the read lock is held), so the
+future always precedes any `notify_waiters()` and the notification is
+guaranteed to be delivered.
+
+Signed-off-by: Dhruv Arya <aryadhruv@gmail.com>
+Co-authored-by: Dhruv Arya <aryadhruv@gmail.com>",ac92ec9d4f6bf6ca8b7298e60d46130814b8f18f,2696,false,Dhruv Arya,1,10,5,crates

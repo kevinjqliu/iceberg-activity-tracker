@@ -3405,3 +3405,42 @@ non-interleaving. Built/run under clang-libc++; ASan + TSan clean.
 This pull request and its description were written by Isaac.",3e8203e8ee66bd835a59b06127bb5f9d935769bb,724,false,,13,463,15,ci; src
 apache/iceberg-cpp,a1f3514d506951db356d398c72c3a71797fd10ff,a1f3514,liuxiaoyu,45345701+MisterRaindrop@users.noreply.github.com,2026-06-25T17:44:05+08:00,GitHub,noreply@github.com,2026-06-25T17:44:05+08:00,feat(hive): add iceberg_hive library with bundled/system thrift dependency (#753),,411c0f8ddc2abe95140552cb9d1cf363d541b0af,753,false,,10,691,8,CMakeLists.txt; cmake_modules; src
 apache/iceberg-cpp,bb5cab58a71d28a03d460f860bec017de26ac25f,bb5cab5,Junwang Zhao,zhjwpku@gmail.com,2026-06-26T11:57:39+08:00,GitHub,noreply@github.com,2026-06-26T11:57:39+08:00,ci: cache cpp-linter build (#782),,a1f3514d506951db356d398c72c3a71797fd10ff,782,false,,1,32,1,.github
+apache/iceberg-cpp,8d72abb2c025fe23c97d347481c82877f54f61b9,8d72abb,Manu Zhang,OwenZhang1990@gmail.com,2026-06-27T00:02:59+08:00,GitHub,noreply@github.com,2026-06-27T00:02:59+08:00,build: add Makefile clean target (#784),Co-authored-by: Codex <codex@openai.com>,bb5cab58a71d28a03d460f860bec017de26ac25f,784,false,Codex,1,5,1,Makefile
+apache/iceberg-cpp,9a7439c7dcef070fafa470ea0e159bf176eeb4f8,9a7439c,Junwang Zhao,zhjwpku@gmail.com,2026-06-27T00:03:45+08:00,GitHub,noreply@github.com,2026-06-27T00:03:45+08:00,chore: align table metadata JSON fixtures with Java (#781),,8d72abb2c025fe23c97d347481c82877f54f61b9,781,false,,2,3,2,src
+apache/iceberg-cpp,90a2be7053bb92fd0194b8d9a1ec0913696437c0,90a2be7,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-06-26T18:39:28-07:00,GitHub,noreply@github.com,2026-06-27T09:39:28+08:00,refactor(serde): return Result from ToJson schema/type/metadata serializers (#785),"## What
+
+Change the schema/type/metadata `ToJson` serializers from returning bare
+`nlohmann::json` to `Result<nlohmann::json>`:
+
+- `json_serde`: `ToJson(SchemaField | Type | Schema | TableMetadata |
+TableUpdate)`
+- REST: `ToJson(CreateTableRequest | CommitTableRequest |
+LoadTableResult | CommitTableResponse)`
+
+Errors propagate via `ICEBERG_ASSIGN_OR_RAISE`; callers bottom out at
+the existing `Result`-returning boundaries (`ToJsonString`,
+`rest_catalog`, `TableMetadataUtil::Write`).
+
+## Why
+
+Preparation for v3 column default values (#730 / #746). Single-value
+(`Literal`) serialization is fallible, and column defaults invoke it
+from schema serialization, so these serializers need to propagate the
+error instead of throwing. Splitting it out keeps the feature PR focused
+on the feature.
+
+## Notes
+
+- **No behavior change** — every conversion still succeeds today; only
+the return type changes.
+- The shared `ToJsonList` template stays bare (it also serializes
+infallible types such as partition specs and snapshots); `TableMetadata`
+serializes its schema list with an explicit loop.
+- The REST `ICEBERG_DECLARE_JSON_SERDE` macro is unchanged; the four
+schema/metadata-bearing models are declared explicitly so only their
+`ToJson` return type differs.
+
+## Testing
+
+No behavior change; existing tests are adapted to the new return type.
+Full build and `ctest` pass locally.",9a7439c7dcef070fafa470ea0e159bf176eeb4f8,785,false,,9,120,67,src
