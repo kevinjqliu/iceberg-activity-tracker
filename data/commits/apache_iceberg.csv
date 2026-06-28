@@ -3296,3 +3296,74 @@ Generated-by: GPT-5
 
 Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>",7269fc1750b13d3f871b5e051fe670bb19fbe870,16725,false,Kevin Liu,3,62,4,docker
 apache/iceberg,8e46f49123f81fc5d8c87dbbdaa6eb5ea103cb86,8e46f49,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-06-26T16:43:56-07:00,GitHub,noreply@github.com,2026-06-26T16:43:56-07:00,"API, Parquet: Map geometry and geography to Parquet logical types (#16765)",,4af3ebee5d12a964a9c19721cc5ffebc219a44fc,16765,false,,8,269,31,api; parquet
+apache/iceberg,874e4096e5d16fddbbf43b91f20e248616232cc3,874e409,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-06-27T16:50:32-04:00,GitHub,noreply@github.com,2026-06-27T14:50:32-06:00,"Core, Spark: Ensure correct delete file sizes in rewrite table action (#15470)",,8e46f49123f81fc5d8c87dbbdaa6eb5ea103cb86,15470,false,,8,1523,191,core; spark
+apache/iceberg,9ca2a4b024e9cb060eab31aba62c57933bc558f4,9ca2a4b,Maximilian Michels,mxm@apache.org,2026-06-28T06:27:48+02:00,GitHub,noreply@github.com,2026-06-27T21:27:48-07:00,Flink: Fix monitor source rate limit for sub-second intervals (#16979),"The monitor source rate was computed as perSecond(1.0 / rateLimit.getSeconds()).
+Duration.getSeconds() rounds any sub-second rate limit down to 0, so the rate
+became perSecond(Infinity), which turns off rate limiting. This change computes
+the rate from millis, so sub-second intervals are limited correctly. The 60s
+default is unchanged.
+
+This made the maintenance E2E tests flaky, since they use sub-second rate
+limits.  With no rate limit the source calls table.refresh() in a loop and uses
+a full CPU core per job. CI runs the tests with -DtestParallelism=auto, which
+starts one MiniCluster per fork, so these busy sources use up all the cores. The
+converter runs on a timer, and under that load the timer fires too slowly,
+letting the test fail after the timeout hits.",874e4096e5d16fddbbf43b91f20e248616232cc3,16979,false,,2,22,1,flink
+apache/iceberg,ff1108756294f886863b149125508de79d93c251,ff11087,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-27T22:07:27-07:00,GitHub,noreply@github.com,2026-06-27T22:07:27-07:00,Build: Bump org.codehaus.jettison:jettison from 1.5.5 to 1.5.6 (#16988),"Bumps [org.codehaus.jettison:jettison](https://github.com/jettison-json/jettison) from 1.5.5 to 1.5.6.
+- [Release notes](https://github.com/jettison-json/jettison/releases)
+- [Commits](https://github.com/jettison-json/jettison/compare/jettison-1.5.5...jettison-1.5.6)
+
+---
+updated-dependencies:
+- dependency-name: org.codehaus.jettison:jettison
+  dependency-version: 1.5.6
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",9ca2a4b024e9cb060eab31aba62c57933bc558f4,16988,false,dependabot[bot],1,1,1,kafka-connect
+apache/iceberg,45975ec1555b0365e4f2f6bdffa948ff2441711a,45975ec,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-27T23:48:30-07:00,GitHub,noreply@github.com,2026-06-27T23:48:30-07:00,Build: Bump actions/checkout from 6.0.3 to 7.0.0 (#16986),"Bumps [actions/checkout](https://github.com/actions/checkout) from 6.0.3 to 7.0.0.
+- [Release notes](https://github.com/actions/checkout/releases)
+- [Changelog](https://github.com/actions/checkout/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/actions/checkout/compare/df4cb1c069e1874edd31b4311f1884172cec0e10...9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0)
+
+---
+updated-dependencies:
+- dependency-name: actions/checkout
+  dependency-version: 7.0.0
+  dependency-type: direct:production
+  update-type: version-update:semver-major
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",ff1108756294f886863b149125508de79d93c251,16986,false,dependabot[bot],19,24,24,.github
+apache/iceberg,ce92c469bd38616f3ae1bb4cf4311d9c662c4ca4,ce92c46,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-27T23:48:47-07:00,GitHub,noreply@github.com,2026-06-27T23:48:47-07:00,Build: Bump actions/setup-java from 5.2.0 to 5.3.0 (#16991),"Bumps [actions/setup-java](https://github.com/actions/setup-java) from 5.2.0 to 5.3.0.
+- [Release notes](https://github.com/actions/setup-java/releases)
+- [Commits](https://github.com/actions/setup-java/compare/be666c2fcd27ec809703dec50e508c2fdc7f6654...ad2b38190b15e4d6bdf0c97fb4fca8412226d287)
+
+---
+updated-dependencies:
+- dependency-name: actions/setup-java
+  dependency-version: 5.3.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",45975ec1555b0365e4f2f6bdffa948ff2441711a,16991,false,dependabot[bot],12,16,16,.github
+apache/iceberg,839b22647ce5aa08e27220bbe85cde1292129fea,839b226,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-27T23:49:07-07:00,GitHub,noreply@github.com,2026-06-27T23:49:07-07:00,Build: Bump com.diffplug.spotless:spotless-plugin-gradle (#16990),"Bumps [com.diffplug.spotless:spotless-plugin-gradle](https://github.com/diffplug/spotless) from 8.6.0 to 8.7.0.
+- [Release notes](https://github.com/diffplug/spotless/releases)
+- [Changelog](https://github.com/diffplug/spotless/blob/main/CHANGES.md)
+- [Commits](https://github.com/diffplug/spotless/compare/gradle/8.6.0...gradle/8.7.0)
+
+---
+updated-dependencies:
+- dependency-name: com.diffplug.spotless:spotless-plugin-gradle
+  dependency-version: 8.7.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",ce92c469bd38616f3ae1bb4cf4311d9c662c4ca4,16990,false,dependabot[bot],1,1,1,build.gradle

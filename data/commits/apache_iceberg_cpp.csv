@@ -3444,3 +3444,25 @@ schema/metadata-bearing models are declared explicitly so only their
 
 No behavior change; existing tests are adapted to the new return type.
 Full build and `ctest` pass locally.",9a7439c7dcef070fafa470ea0e159bf176eeb4f8,785,false,,9,120,67,src
+apache/iceberg-cpp,75bef3f75853d5e1673516927745480357f775fa,75bef3f,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-06-28T00:35:58+08:00,GitHub,noreply@github.com,2026-06-28T00:35:58+08:00,feat(rest): support vended storage credentials (#719),"Support REST vended storage credentials
+
+Parse storage credentials from REST load table responses and pass them to
+FileIO implementations that support credential routing.
+
+Also align table FileIO creation with table-level config overrides, route S3
+requests by the longest matching credential prefix, and clean up related tests.
+
+---------
+
+Co-authored-by: Gang Wu <ustcwg@gmail.com>",90a2be7053bb92fd0194b8d9a1ec0913696437c0,719,false,Gang Wu,16,680,134,src
+apache/iceberg-cpp,e516a756b7f0d34079fca0dc14f8f1bea96f76c2,e516a75,Minh Vu,vuhoangminh97@gmail.com,2026-06-28T03:41:36+02:00,GitHub,noreply@github.com,2026-06-28T09:41:36+08:00,fix: invalidate table scan schema cache (#758),"## Summary
+- invalidate the cached scan snapshot schema whenever
+snapshot/ref/time-travel state changes
+- preserve requested column-stat names and re-resolve them during Build
+so stats IDs match the final snapshot schema
+- add regression coverage for IncludeColumnStats before UseSnapshot and
+non-main UseRef with an evolved schema
+
+## Tests
+- cmake --build build --target scan_test
+- ctest --test-dir build -R scan_test --output-on-failure",75bef3f75853d5e1673516927745480357f775fa,758,false,,3,81,12,src
