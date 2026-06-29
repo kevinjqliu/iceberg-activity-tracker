@@ -14386,3 +14386,198 @@ Testing
 - go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
 run --timeout=10m ./table/...
 - git diff --check",31989833c1d932c2d9fab0ec71707898bb91a5c6,1311,false,,2,39,7,table
+apache/iceberg-go,c78dbd823edf9e55b2c230d3c1d2ee55cc978697,c78dbd8,Andrei Tserakhau,laskoviymishka@gmail.com,2026-06-29T11:29:08+02:00,GitHub,noreply@github.com,2026-06-29T11:29:08+02:00,fix(table): detect concurrently-removed data files in row-level deletes (#1298),"Two related fixes for optimistic-concurrency validation of position
+deletes.
+
+1. validateDataFilesExist counted a referenced data file as present
+whenever any manifest entry for its path existed on the branch head,
+because it iterated head.dataFiles (discardDeleted=false). A concurrent
+compaction or overwrite that rewrote the file leaves a DELETED
+tombstone, so the check passed and the orphaned position delete (its
+rows had moved to a new file) was committed silently. Iterate
+data-manifest entries and treat a DELETED entry as absent — only a live
+ADDED/EXISTING entry satisfies existence, mirroring Java's
+MergingSnapshotProducer. This corrects the check for every caller,
+including RowDelta.
+
+2. performMergeOnReadDeletion never ran that check at all: it builds an
+overwriteFiles producer whose only validator checks partition-filter
+overlap, and appended its position deletes without registering
+validateDataFilesExist (wired only into RowDelta.validate). So a
+merge-on-read delete whose referenced data file was concurrently removed
+went undetected. writePositionDeletesForFiles now returns the referenced
+data-file paths of the position deletes it appends, and
+performMergeOnReadDeletion registers a validateDataFilesExist validator
+over them, mirroring RowDelta.validate: unconditional (no isolation
+gating) and additive to the producer's partition-filter validator. A
+position delete that does not record its referenced data file is
+skipped, matching RowDelta and Java.
+
+Tests: TestValidateDataFilesExist_TreatsConcurrentlyRemovedFileAsMissing
+pins the status-aware check (a compacted-away file is missing; a live
+file is present);
+TestMergeOnReadDeleteConflict_ReferencedDataFileRemoved drives a
+merge-on-read delete whose referenced file a concurrent compaction
+removes and asserts the commit fails with ErrDataFilesMissing; the
+no-conflict control still commits.",1c0e4dce1680c14e6f07cf5f8845e3ef6cb1a02c,1298,false,,4,279,10,table
+apache/iceberg-go,e64ebd6c67017b88ad6da60790ec080b3794c66e,e64ebd6,Bruno FERNANDO,bruno.fernando@jobteaser.com,2026-06-29T11:51:41+02:00,GitHub,noreply@github.com,2026-06-29T11:51:41+02:00,feat(cmd/config): add aws-profile support for Glue catalog (#1320),"## Problem
+
+When using the Glue catalog, the CLI always resolves AWS credentials
+through the SDK default chain.
+Users working with multiple AWS accounts or roles had to fall back to
+environment variables (`AWS_PROFILE`) or profile-switching wrappers
+instead of expressing the profile in their iceberg-go config (1 catalog
+= 1 account = 1 profile).
+
+## Fix
+
+Add an `aws-profile` field to `CatalogConfig` in `config/config.go`.
+When the Glue catalog is initialised in `initCatalog`, the profile is
+passed to `awsconfig.LoadDefaultConfig` via `WithSharedConfigProfile`.
+A matching `--aws-profile` CLI flag is also wired up and takes
+precedence over the config file value (following the same merge pattern
+used by the other catalog flags).
+
+## How to test
+
+Add an entry to `~/.iceberg-go.yaml`:
+
+```yaml
+catalog:
+  default:
+    type: glue
+    aws-profile: my-aws-profile
+```
+
+Run any Glue command and confirm it authenticates with the named
+profile:
+```
+iceberg list
+```
+
+Alternatively, supply it on the command line:
+```
+iceberg --catalog glue --aws-profile my-aws-profile list
+```
+
+Unit test:
+```
+go test ./config/...
+```",c78dbd823edf9e55b2c230d3c1d2ee55cc978697,1320,false,,6,52,1,cmd; config; website
+apache/iceberg-go,9045d8c9f9e099ce634e7c5590ab409d7ae3ebc3,9045d8c,Minh Vu,vuhoangminh97@gmail.com,2026-06-29T11:55:04+02:00,GitHub,noreply@github.com,2026-06-29T11:55:04+02:00,fix(table): equality delete null key encoding (#1242),"## Summary
+
+This makes the equality-delete fast-path encoders write the same null
+tag as the generic encoder before reading raw Arrow values. Without that
+guard, nullable numeric/date/time/timestamp keys could be encoded as
+non-null zero or epoch-like values.
+
+The tests cover the raw fast-path encoders directly and scan-level
+equality deletes where a null delete key must remove only null rows, not
+non-null zero or epoch rows.
+
+## Testing
+
+- `go test ./table -run
+'TestEqualityDeleteNullable|TestMakeColEncoderMatchesGenericForNullFastPathTypes'
+-count=1`
+- `git diff --check`
+- `go test ./table -count=1`
+- `go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./table/...`
+- `go test ./... -count=1`",e64ebd6c67017b88ad6da60790ec080b3794c66e,1242,false,,3,449,72,table
+apache/iceberg-go,1d599bec31f8486effe2d732c61679ed9534d59c,1d599be,Minh Vu,vuhoangminh97@gmail.com,2026-06-29T11:56:22+02:00,GitHub,noreply@github.com,2026-06-29T11:56:22+02:00,fix(catalog/hadoop): publish metadata without replacement (#1300),"Summary
+
+- add a no-replace rename path for Hadoop metadata publishes
+- use it when creating `v1.metadata.json` and when committing the next
+table metadata version
+- return `ErrTableAlreadyExists` for create races and
+`table.ErrCommitFailed` for commit races
+- add deterministic concurrent create/commit coverage where two writers
+publish the same metadata version
+
+Why
+
+Hadoop commits wrote metadata to a temp file, checked whether the final
+path existed, then used `Rename` to publish it. On local filesystems
+`os.Rename` replaces the destination, so another writer could win
+between the existence check and rename and then be overwritten by the
+later commit.
+
+The metadata file publish now fails if the final path already exists.
+`version-hint.text` stays best-effort after the metadata file is
+committed.
+
+Testing
+
+- go test ./catalog/hadoop -run
+'TestHadoopCatalogTestSuite/(TestCreateTableConcurrentMetadataPublishConflict|TestCommitTableConcurrentMetadataPublishConflict|TestCommitTableConflictDetection)'
+-count=1
+- go test ./io -run '^TestLocalFSRenameNoReplaceDoesNotOverwrite$'
+-count=1
+- go test ./catalog/hadoop -count=1
+- go test ./catalog/... -count=1
+- go test ./io -count=1
+- go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./catalog/hadoop/...
+- go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./io
+- git diff --check",9045d8c9f9e099ce634e7c5590ab409d7ae3ebc3,1300,false,,5,212,23,catalog; io
+apache/iceberg-go,d86ee87f7f860a86bc21cca39f6affaccaea75cc,d86ee87,Andrei Tserakhau,laskoviymishka@gmail.com,2026-06-29T15:01:15+02:00,GitHub,noreply@github.com,2026-06-29T09:01:15-04:00,"fix(table): return ([]string, error) from writePositionDeletesForFiles (#1342)","A bare `return err` returned a single value where the function now
+returns ([]string, error), so the table package — and every package that
+imports it — failed to compile, turning main red.
+
+Silent semantic merge conflict: #1256 added the requireWriteFileIO guard
+with `return err` while the function still returned only error; #1298
+later widened the signature and converted the returns it could see, but
+its base predated #1256 so it never saw that one. Each PR compiled
+alone; only the merge breaks, and with no textual conflict git didn't
+flag it.",1d599bec31f8486effe2d732c61679ed9534d59c,1342,false,,1,1,1,table
+apache/iceberg-go,7ccae1783b5de9ae80bd4774bd16cf613b27789c,7ccae17,Colton Loftus,70598503+C-Loftus@users.noreply.github.com,2026-06-29T09:51:14-04:00,GitHub,noreply@github.com,2026-06-29T15:51:14+02:00,fix(catalog/hadoop): Load arbitrary filesystems dynamically for hadoop catalog (#1280),"Following up on https://github.com/apache/iceberg-go/pull/1268 as next
+step for https://github.com/apache/iceberg-go/issues/1096
+
+The previous PR mistakenly specified `filesystem: icebergio.LocalFS{},`
+so the hadoop catalog will continue to only use the local filesystem
+which is incorrect. Note that for the time being, only `LocalFS` is
+wired up to support the interface for hadoop. Support for blob stores
+will come in a future PR.
+
+- I moved the path normalization into an if statement to only do path
+cleanups if the uri is local. Otherwise for schemes like `s3://` it will
+use it directly as the client provides it.
+- I added a type check to see if the filesystem implements the
+`HadoopCatalogFS` interface. This is dynamic since we presumably want to
+support external users creating their own implementations if needed and
+loading them via `io.LoadFS`. We could of course also change the
+`NewCatalog` function to directly take in a filesystem which fulfils the
+interface but I assumed we didn't want to edit the constructor in that
+way.",d86ee87f7f860a86bc21cca39f6affaccaea75cc,1280,false,,2,254,47,catalog
+apache/iceberg-go,29525aa179f4063041279725ffe4e53f342b3ee4,29525aa,Minh Vu,vuhoangminh97@gmail.com,2026-06-29T16:27:52+02:00,GitHub,noreply@github.com,2026-06-29T16:27:52+02:00,fix(table): return scanner memoization errors (#1333),"Summary
+
+replace the panic-wrapping memoized factory helper with an
+error-carrying cache
+propagate cached factory errors through scanner planning, filtered
+overwrite classification, and conflict validation
+add regression coverage for cached factory failures and an invalid-spec
+manifest path that used to panic
+
+Why
+
+The scanner code memoized several per-spec builders using
+`newKeyDefaultMapWrapErr`, which converted any factory error into a
+panic. That meant ordinary failures like unknown partition spec ids or
+projection/evaluator build errors could crash the process instead of
+being returned to the caller.
+
+The shared helper is also reused in transaction-side manifest
+classification and conflict validation, so the same panic behavior
+leaked there too.
+
+Testing
+
+go test ./table -run
+'Test(KeyDefaultMapWrapErrCachesError|FetchPartitionSpecFilteredManifests_InvalidSpecIDDoesNotPanic|BuildPartitionProjectionWithInvalidSpecID|BuildManifestEvaluatorWithInvalidSpecID|BuildPartitionEvaluatorWithInvalidSpecID|FetchPartitionSpecFilteredManifests_PropagatesEvalError)$'
+-count=1
+go test ./table -count=1
+go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./table/...
+git diff --check",7ccae1783b5de9ae80bd4774bd16cf613b27789c,1333,false,,4,148,30,table
