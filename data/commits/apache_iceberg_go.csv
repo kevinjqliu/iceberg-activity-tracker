@@ -14581,3 +14581,62 @@ go test ./table -count=1
 go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
 run --timeout=10m ./table/...
 git diff --check",7ccae1783b5de9ae80bd4774bd16cf613b27789c,1333,false,,4,148,30,table
+apache/iceberg-go,7d6493f22c2a73d11f7725441dd65532cb78d1a0,7d6493f,Minh Vu,vuhoangminh97@gmail.com,2026-06-29T18:56:18+02:00,GitHub,noreply@github.com,2026-06-29T12:56:18-04:00,fix(manifest): preserve 64-bit list metadata ids (#1334),,29525aa179f4063041279725ffe4e53f342b3ee4,1334,false,,2,105,9,manifest.go; manifest_test.go
+apache/iceberg-go,5b64ceeb0bdff365a8de531e5868a63468a2ae92,5b64cee,Minh Vu,vuhoangminh97@gmail.com,2026-06-29T18:56:22+02:00,GitHub,noreply@github.com,2026-06-29T12:56:22-04:00,fix(table): dedupe transaction requirements by semantics (#1328),,7d6493f22c2a73d11f7725441dd65532cb78d1a0,1328,false,,2,139,2,table
+apache/iceberg-go,befd0f8473d43640ebcb377ff7c796258f59d32e,befd0f8,Minh Vu,vuhoangminh97@gmail.com,2026-06-29T18:56:25+02:00,GitHub,noreply@github.com,2026-06-29T12:56:25-04:00,fix(table): preserve version hint URIs in orphan cleanup (#1331),,5b64ceeb0bdff365a8de531e5868a63468a2ae92,1331,false,,2,49,1,table
+apache/iceberg-go,0a964bf906880d4ee2675867168005b786bd914b,0a964bf,Minh Vu,vuhoangminh97@gmail.com,2026-06-29T18:56:29+02:00,GitHub,noreply@github.com,2026-06-29T12:56:29-04:00,fix(partitions): align paths with compacted partition fields (#1332),,befd0f8473d43640ebcb377ff7c796258f59d32e,1332,false,,4,108,19,partitions.go; partitions_test.go; table
+apache/iceberg-go,a29903641d9dd922144feeb4e78c8189e0a4d820,a299036,Minh Vu,vuhoangminh97@gmail.com,2026-06-29T18:56:32+02:00,GitHub,noreply@github.com,2026-06-29T12:56:32-04:00,docs(catalog): fix tabulario image name (#1335),,0a964bf906880d4ee2675867168005b786bd914b,1335,false,,1,2,2,catalog
+apache/iceberg-go,c366aa0f657afa3a5127d2f2566688085943b7ab,c366aa0,Minh Vu,vuhoangminh97@gmail.com,2026-06-29T18:56:35+02:00,GitHub,noreply@github.com,2026-06-29T12:56:35-04:00,fix(table): validate pos delete position chunks (#1337),,a29903641d9dd922144feeb4e78c8189e0a4d820,1337,false,,2,47,14,table
+apache/iceberg-go,21df1396f7910ac0e7ef4cad41a77cd554914fe2,21df139,Minh Vu,vuhoangminh97@gmail.com,2026-06-29T18:56:38+02:00,GitHub,noreply@github.com,2026-06-29T12:56:38-04:00,fix(glue): revalidate source table during rename (#1338),,c366aa0f657afa3a5127d2f2566688085943b7ab,1338,false,,2,142,11,catalog
+apache/iceberg-go,858613dff5bcaa9d79eab5e762b3a7a5535fcb54,858613d,Minh Vu,vuhoangminh97@gmail.com,2026-06-29T18:56:42+02:00,GitHub,noreply@github.com,2026-06-29T12:56:42-04:00,fix(rest): reject malformed authorization URLs (#1336),,21df1396f7910ac0e7ef4cad41a77cd554914fe2,1336,false,,2,46,4,catalog
+apache/iceberg-go,bf9cb31a0ce97e5b24ec346d34592dec670ee6d8,bf9cb31,Hardik Borse,174507577+the-onewho-knocks@users.noreply.github.com,2026-06-29T22:28:44+05:30,GitHub,noreply@github.com,2026-06-29T18:58:44+02:00,feat: let WriteManifest set and return v3 first_row_id (#1321),"**Summary**
+
+* add `WithManifestFileFirstRowID`, a `ManifestFileOption` that sets
+`first_row_id` on a v3+ data manifest
+* forward variadic `ManifestFileOption` args through `WriteManifest` to
+`ToManifestFile`
+
+**Why**
+
+`WriteManifest` predates the v3 work in #735 and forwarded no options to
+`ToManifestFile`, so `ManifestFile.FirstRowID()` was always `nil` for
+manifests written through this public helper, even though
+`ManifestWriter`/`ToManifestFile` already supported setting it via
+`opts`. Library consumers had no way to set or observe `first_row_id`
+through `WriteManifest`.
+
+`WriteManifest`'s signature change is purely additive (`opts` is the
+last, variadic parameter), so existing call sites are unaffected.
+
+**Testing**
+
+* `go test ./... -run '^TestWriteManifestWithFirstRowIDOption$'
+-count=1`
+* `go test ./... -count=1`
+* `gofmt -l .`
+* `golangci-lint run`
+
+Fixes #1274
+
+---------
+
+Signed-off-by: the-onewho-knocks <borsehardik@gmail.com>",858613dff5bcaa9d79eab5e762b3a7a5535fcb54,1321,false,,2,206,18,manifest.go; manifest_test.go
+apache/iceberg-go,54df1f058f2b813b99f2b42148bcc375b5a45c72,54df1f0,Minh Vu,vuhoangminh97@gmail.com,2026-06-29T22:12:48+02:00,GitHub,noreply@github.com,2026-06-29T22:12:48+02:00,fix: use transform equality for partition compatibility (#1314),"Summary
+
+- compare partition spec transforms with Transform.Equals in
+CompatibleWith
+- add regression coverage for non-comparable transform implementations
+
+Why
+
+PartitionField.Equals already delegates transform comparison to
+Transform.Equals, but PartitionSpec.CompatibleWith compared transform
+interfaces directly. That can panic for non-comparable transform
+implementations and also bypass transform-specific equality semantics.
+
+Testing
+
+- go test . -run '^TestPartitionSpecCompatibleWithUsesTransformEquals$'
+-count=1\n- go test . -count=1\n- go run
+github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4 run
+--timeout=10m .\n- git diff --check",bf9cb31a0ce97e5b24ec346d34592dec670ee6d8,1314,false,,2,79,1,partitions.go; partitions_test.go

@@ -2733,3 +2733,102 @@ Yes
 
 No",f17bdd522d5ff0e9c1353926c3e42d898c5f41d2,3581,false,,1,5,0,.github
 apache/iceberg-python,d871cd2de7550eb02dc6c4e0753d846088ccd7c3,d871cd2,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-06-29T02:59:43-04:00,GitHub,noreply@github.com,2026-06-28T23:59:43-07:00,Build: Bump gcsfs to 2026.6.0 (#3582),,de48fe4cedc275e57200832aa2aca1a5597c4b2c,3582,false,,2,12,7,Makefile; uv.lock
+apache/iceberg-python,da665337ff9121fa150e0af7884432823d3418e7,da66533,Junwang Zhao,zhjwpku@gmail.com,2026-06-30T11:12:59+08:00,GitHub,noreply@github.com,2026-06-30T05:12:59+02:00,Reject unsupported identity transform types (#3517),"<!--
+Thanks for opening a pull request!
+-->
+
+# Rationale for this change
+
+Per spec[1], the identity transform source type must be any primitive
+except for geometry, geography, and variant. This PR rejects
+GeographyType and GeometryType as source types for identity
+transforms.(No VariantType yet)
+
+[1] https://iceberg.apache.org/spec/#partition-transforms
+
+## Are these changes tested?
+
+Yes
+
+## Are there any user-facing changes?
+
+No",d871cd2de7550eb02dc6c4e0753d846088ccd7c3,3517,false,,2,11,1,pyiceberg; tests
+apache/iceberg-python,da66a12d7d2dd29c1440c8b47eefa5814701d111,da66a12,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-06-29T23:33:23-04:00,GitHub,noreply@github.com,2026-06-29T20:33:23-07:00,Prune dependency upper bounds (#3586),"This PR removes as many upperbounds restrictions as possible from our
+dependencies.
+
+Why remove unnecessary upper bounds:
+- Makes PyIceberg easier to install alongside applications that already
+use newer compatible dependency versions.
+- Reduces resolver conflicts and forced downgrades for downstream users,
+while keeping caps where there is a real compatibility boundary or known
+bad version.
+
+We already removed upperbound for pyarrow in #2258
+And theres a request to remove upperbound for cachetools in #3214
+
+Closes #3214
+
+Changes:
+- Removes upper bounds that passed local validation, while keeping the
+remaining compatibility caps.
+- Refreshes `uv.lock` with upgraded packages.
+- Updates tests for newer Moto and PyArrow behavior exposed by the
+lockfile refresh.
+
+Validation:
+- `make test PYTHON=3.12` (`3736 passed, 1534 deselected`)",da665337ff9121fa150e0af7884432823d3418e7,3586,false,,4,2148,1686,pyproject.toml; tests; uv.lock
+apache/iceberg-python,71f0f0b55b58073640beb8f16b38b93ea31776ee,71f0f0b,Fokko Driesprong,fokko@apache.org,2026-06-30T05:59:31+02:00,GitHub,noreply@github.com,2026-06-30T05:59:31+02:00,CI: Pass args through docker-compose (#3587),"# Rationale for this change
+
+This way we pass in the MIRROR from docker-compose to the Dockerfile as
+well. Also git-ignore the `.env` file to avoid checking in this file.
+
+## Are these changes tested?
+
+## Are there any user-facing changes?
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",da66a12d7d2dd29c1440c8b47eefa5814701d111,3587,false,,2,10,2,.gitignore; dev
+apache/iceberg-python,41276a3998e28a2d5832563585beaccab22a3c59,41276a3,Yuya Ebihara,ebyhry@gmail.com,2026-06-30T13:02:00+09:00,GitHub,noreply@github.com,2026-06-30T06:02:00+02:00,Fix strip spec-mandated DV blob framing before deserializing (#3576),"# Rationale for this change
+
+Fix `_payload` storing `puffin[8:]` instead of `puffin` — blob offsets
+in the footer are file-relative (from byte 0), not relative to byte 8.
+The two bugs cancelled for single-blob files at offset 4; the fix was
+only testable once PuffinFile supported multi-blob/compressed files.
+
+Also widen `PuffinBlobMetadata.type` from
+`Literal[""deletion-vector-v1""]`
+to `str` so `PuffinFile` can parse files containing non-DV blobs without
+a Pydantic validation error.
+
+## Are these changes tested?
+
+Yes. Copied files from
+https://github.com/apache/iceberg/tree/main/core/src/test/resources/org/apache/iceberg/puffin/v1
+`sample-metric-data-compressed-zstd.bin` will be added separately in
+#3575
+
+## Are there any user-facing changes?
+
+No
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",71f0f0b55b58073640beb8f16b38b93ea31776ee,3576,false,,5,69,6,pyiceberg; tests
+apache/iceberg-python,9d36e2361493a7f582490519edac848a376ac913,9d36e23,Fokko Driesprong,fokko@apache.org,2026-06-30T06:47:59+02:00,GitHub,noreply@github.com,2026-06-29T21:47:59-07:00,Bump to Java Iceberg 1.11.0 (#3389),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- In the case this PR will resolve an issue, please replace
+${GITHUB_ISSUE_ID} below with the actual Github issue id. -->
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+This reverts https://github.com/apache/iceberg-python/pull/3240 and we
+now should be able to support custom `namespace-seperator`
+
+## Are these changes tested?
+
+## Are there any user-facing changes?
+
+<!-- In the case of user-facing changes, please add the changelog label.
+-->",41276a3998e28a2d5832563585beaccab22a3c59,3389,false,,6,10,8,dev; pyiceberg; tests

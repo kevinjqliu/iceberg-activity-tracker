@@ -20043,3 +20043,109 @@ I've checked that the dependency checks pass locally.
 
 cc @CTTY",83e777cfffb1a5a83bcd6c41c6b2c6e24ff36f6e,2706,false,,2,25,81,.github; website
 apache/iceberg-rust,229160259fe0b939fb99164d3c84e9fd0dd81ff8,2291602,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-06-29T19:09:14+08:00,GitHub,noreply@github.com,2026-06-29T19:09:14+08:00,chore(deps): Bump bytes from 1.11.1 to 1.12.0 (#2734),,ca61fc820e25d535880caaa04bced27e3c9adf7d,2734,false,,1,2,2,Cargo.lock
+apache/iceberg-rust,ab27bba98f5f4f6c80aa518d0df2c1e1da95b802,ab27bba,Daniel Carl Jones,djonesoa@amazon.com,2026-06-29T21:59:58+01:00,GitHub,noreply@github.com,2026-06-29T13:59:58-07:00,chore: Update all cargo install references to use --locked (#2739),"## Which issue does this PR close?
+
+Addresses follow-up item:
+https://github.com/apache/iceberg-rust/pull/2627#pullrequestreview-4484455091
+
+## What changes are included in this PR?
+
+This change ensures that all CLI installs via Cargo will install using
+the same dependency graph as the crate was published with, avoiding
+dependencies silently changing. Sometimes patch version updates are
+fine, although occasionally breaking changes can slip in. This change
+standardizes all installs in the codebase to recommend using --locked.
+
+## Are these changes tested?
+
+Tested by running the tools locally.",229160259fe0b939fb99164d3c84e9fd0dd81ff8,2739,false,,4,5,5,.github; Makefile; dev
+apache/iceberg-rust,03799b1586841f839d46eebe441896f2a8cf7a36,03799b1,Liang-Chi Hsieh,viirya@gmail.com,2026-06-30T05:32:42+08:00,GitHub,noreply@github.com,2026-06-29T14:32:42-07:00,fix(transaction): don't let user properties override computed summary metrics (#2726),"## Which issue does this PR close?
+
+- Closes #2725.
+
+## What changes are included in this PR?
+
+Building a snapshot summary let a user-supplied snapshot property
+overwrite a computed metric key, and a non-integer value then panicked
+total computation. Both are fixed to match iceberg-java.
+
+**1. Computed metrics now win over user properties
+(`transaction/snapshot.rs`).** Previously:
+
+```rust
+let mut additional_properties = summary_collector.build();
+additional_properties.extend(self.snapshot_properties.clone());   // user overwrites computed
+```
+
+Now the user properties are applied first and the computed metrics
+overwrite them:
+
+```rust
+let mut additional_properties = self.snapshot_properties.clone();
+additional_properties.extend(summary_collector.build());          // computed overwrites user
+```
+
+This matches `SnapshotSummary.Builder.build()` in iceberg-java, which
+does `builder.putAll(properties)` (custom props) first and then
+`metrics.addTo(builder)`, so computed metrics win on a key collision.
+
+**2. `update_totals` tolerates an unparseable delta instead of panicking
+(`spec/snapshot_summary.rs`).** The `added-*`/`removed-*` parses used
+`.expect(""must be parsable as it was just serialized"")`. A non-integer
+value (which can also legitimately come from a previous snapshot's
+summary) panicked the commit. It now skips that total, matching
+iceberg-java's `SnapshotProducer.updateTotal`, which wraps the
+`Long.parseLong` calls in `try { … } catch (NumberFormatException e) {
+// ignore and do not add total }`.
+
+Both Java behaviors verified against `apache/iceberg` `main`
+(`core/src/main/java/org/apache/iceberg/SnapshotProducer.java`,
+`SnapshotSummary.java`).
+
+## Are these changes tested?
+
+Two new regression tests:
+
+-
+`transaction::append::test_snapshot_properties_cannot_override_computed_metrics`
+— a fast-append whose `snapshot_properties` set `added-data-files=9999`
+and `added-records=<non-integer>` commits without panicking, and the
+resulting summary reports the real computed counts (`1`), not the user
+values.
+-
+`spec::snapshot_summary::test_update_totals_tolerates_unparseable_added_value`
+— an unparseable `added-*` value skips that one total while sibling
+totals still compute, with no panic.
+
+Both fail if the respective fix is reverted (verified). Full `iceberg`
+lib suite (1373 tests) passes, clippy + rustfmt clean.",ab27bba98f5f4f6c80aa518d0df2c1e1da95b802,2726,false,,3,125,18,crates
+apache/iceberg-rust,77c5d7101a658d645c9ed9adbfb45005b3f31e9f,77c5d71,Daniel Carl Jones,djonesoa@amazon.com,2026-06-29T23:15:26+01:00,GitHub,noreply@github.com,2026-06-29T15:15:26-07:00,fix: Update Python binding test fixtures to close catalogs (#2721),"## Which issue does this PR close?
+
+- Closes #2720.
+
+## What changes are included in this PR?
+
+On Python 3.13, the tests error with ResourceWarning: unclosed database
+at session teardown. This is because the SqlCatalog (and its underlying
+sqlite3 connections) are never explicitly closed. Python 3.13 began
+reporting this error:
+https://docs.python.org/3.13/whatsnew/3.13.html#sqlite3
+
+This change adopts the PyTest fixture generator pattern, where the
+fixture yields some value and then after the test, the fixture function
+is resumed to perform cleanup.
+
+## Are these changes tested?
+
+Yes, tests pass after the changes on Python 3.13 and Python 3.14.",03799b1586841f839d46eebe441896f2a8cf7a36,2721,false,,2,8,4,bindings
+apache/iceberg-rust,f903a19c2705850953859d52c6274efd8674ff90,f903a19,Daniel Carl Jones,djonesoa@amazon.com,2026-06-30T00:12:35+01:00,GitHub,noreply@github.com,2026-06-29T16:12:35-07:00,chore: Update changelog and dependency lists for 0.10.0 (#2745),"## Which issue does this PR close?
+
+N/A
+
+## What changes are included in this PR?
+
+Update changelog for us to cut 0.10.0-rc2.
+
+## Are these changes tested?
+
+No, changelog update only.",77c5d7101a658d645c9ed9adbfb45005b3f31e9f,2745,false,,17,30,17,CHANGELOG.md; bindings; crates
