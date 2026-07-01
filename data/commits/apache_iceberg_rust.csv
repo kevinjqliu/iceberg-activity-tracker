@@ -20149,3 +20149,287 @@ Update changelog for us to cut 0.10.0-rc2.
 ## Are these changes tested?
 
 No, changelog update only.",77c5d7101a658d645c9ed9adbfb45005b3f31e9f,2745,false,,17,30,17,CHANGELOG.md; bindings; crates
+apache/iceberg-rust,be6cc96eaeb1cac4574cabb11ea6e1e92e0aad45,be6cc96,Daniel Carl Jones,djonesoa@amazon.com,2026-06-30T16:45:59+01:00,GitHub,noreply@github.com,2026-06-30T08:45:59-07:00,chore(ci): Remove '--locked' flag on toml-cli install (#2750),"## Which issue does this PR close?
+
+N/A
+
+## What changes are included in this PR?
+
+We moved all CLI installs to `--locked` in #2739. Unfortunately, this
+doesn't work for `toml-cli` as it is not regularly updated and its lock
+file refers to outdated dependencies. In particular, it points to crates
+which use nightly unstable features which no longer exist.
+
+This change removes `--locked` and adds a comment to explain why.
+
+Alternatively, we could use the stable toolchain here although I think
+it's OK to use newer dependencies instead.
+
+## Are these changes tested?
+
+Manually tested, the following command succeeds:
+
+```
+cargo +nightly-2026-03-05 install toml-cli --force
+```",f903a19c2705850953859d52c6274efd8674ff90,2750,false,,1,3,1,.github
+apache/iceberg-rust,25197f46b54a559b3a543ef87bfa3445d5b15c3e,25197f4,Abanoub Doss,abanoubdoss@gmail.com,2026-06-30T14:56:20-05:00,GitHub,noreply@github.com,2026-06-30T12:56:20-07:00,ci: cache Python bindings Rust artifacts (#2679),"## Which issue does this PR close?
+
+- None. This is a CI maintenance change for the Python bindings test
+job.
+
+## What changes are included in this PR?
+
+This adds a real Rust artifact cache to the Python bindings CI test job
+for host maturin builds on Windows and macOS.
+
+Concretely, this PR adds two steps before `PyO3/maturin-action`:
+
+- `Setup Rust toolchain`
+- `Cache Rust artifacts`
+
+Linux maturin builds may run inside the manylinux Docker container,
+where the host `target/` cache is not expected to help. Windows and
+macOS build on the host, so `swatinem/rust-cache` can restore Cargo
+artifacts for the expensive maturin compile.
+
+The cache uses a dedicated bindings key, and its `save-if` behavior
+matches the existing CI cache discipline: PRs may restore cache entries,
+but only `main` pushes create new ones.
+
+## Are these changes tested?
+
+  - Not run locally; this is a GitHub Actions workflow-only change.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",be6cc96eaeb1cac4574cabb11ea6e1e92e0aad45,2679,false,Abanoub Doss,1,10,0,.github
+apache/iceberg-rust,6c3dec8fa9a9945453c8c10f9980b293880dad9b,6c3dec8,Daniel Carl Jones,djonesoa@amazon.com,2026-07-01T00:01:34+01:00,GitHub,noreply@github.com,2026-06-30T16:01:34-07:00,chore: Update changelog for 0.10.0 (#2751),"## Which issue does this PR close?
+
+N/A
+
+## What changes are included in this PR?
+
+Changelog update for 0.10.0.
+
+## Are these changes tested?
+
+N/A",25197f46b54a559b3a543ef87bfa3445d5b15c3e,2751,false,,1,2,0,CHANGELOG.md
+apache/iceberg-rust,4215bd378cdd997f364dea737fa154aee4f6b6e2,4215bd3,kid,lucian1412@outlook.com,2026-07-01T07:43:15+08:00,GitHub,noreply@github.com,2026-06-30T16:43:15-07:00,fix(datafusion): return single row with count 0 for empty inserts (#2712),"Which issue does this PR close?
+-------------------------------
+
+* Closes #2713.
+
+What changes are included in this PR?
+-------------------------------------
+
+Fix empty inserts in the DataFusion integration.
+
+When an `INSERT` produces no data files (e.g. `INSERT INTO ... SELECT
+... WHERE false`), `IcebergCommitExec` previously returned an empty
+`RecordBatch`. DataFusion expects a single-row count result for DML
+statements, so this PR changes the empty-data path to return a batch
+with count `0`.
+
+for empty inserts, the code returns early when there are no data files,
+before it ever starts a transaction, so it will not create snapshot.
+
+Are these changes tested?
+-------------------------
+
+Yes. Added tests verifying that:
+
+* Empty inserts return a single-row `UInt64` count batch with value `0`.
+* Existing insert tests continue to pass.
+
+Local verification:
+
+* `cargo test -p iceberg-datafusion`
+* `cargo clippy -p iceberg-datafusion --all-targets -- -D warnings`
+* `cargo fmt --all -- --check`
+* `git diff --check`",6c3dec8fa9a9945453c8c10f9980b293880dad9b,2712,false,,2,109,3,crates
+apache/iceberg-rust,c915c31e495bb1ad211079a23bca9b63bae45460,c915c31,kid,lucian1412@outlook.com,2026-07-01T07:44:08+08:00,GitHub,noreply@github.com,2026-06-30T16:44:08-07:00,fix(datafusion): reject non-append insert operations (#2714),"## Which issue does this PR close?
+
+- Closes #2711.
+
+## What changes are included in this PR?
+
+Reject DataFusion `InsertOp::Overwrite` and `InsertOp::Replace` before
+constructing an Iceberg write plan.
+
+Previously, `IcebergTableProvider::insert_into` ignored the requested
+insert operation while the commit executor always used `fast_append`.
+Unsupported overwrite or replace requests could therefore be silently
+executed with append semantics.
+
+This patch keeps the existing append path unchanged and returns
+`DataFusionError::NotImplemented` for unsupported insert operations. It
+preserves the existing `_insert_op` parameter name to avoid changing the
+generated public API snapshot.
+
+## Are these changes tested?
+
+Yes. Added unit tests verifying that:
+
+- `InsertOp::Overwrite` returns `DataFusionError::NotImplemented`.
+- `InsertOp::Replace` returns `DataFusionError::NotImplemented`.
+- Existing append-insert behavior remains unchanged.
+
+Local verification:
+
+- `cargo test -p iceberg-datafusion test_catalog_backed_provider_rejects
+-- --nocapture`
+- `cargo fmt --all -- --check`
+- `git diff --check`",4215bd378cdd997f364dea737fa154aee4f6b6e2,2714,false,,1,42,0,crates
+apache/iceberg-rust,ed347f2eac82983e4060288dee04e8b42dd59f22,ed347f2,Krisztián Szűcs,szucs.krisztian@gmail.com,2026-07-01T01:45:19+02:00,GitHub,noreply@github.com,2026-06-30T16:45:19-07:00,feat(writer): honor write.parquet.* via ParquetWriterBuilder::from_table_properties (#2561),"## Which issue does this PR close?
+
+N/A — no tracking issue.
+
+## What changes are included in this PR?
+
+Only the DataFusion `INSERT INTO` path honored `write.parquet.*` table
+properties, and only the content-defined-chunking (CDC) keys, via a
+hand-rolled translation inlined in `IcebergWriteExec`. Anything writing
+through the writer stack directly (`DataFileWriter` →
+`ParquetWriterBuilder`) silently fell back to parquet-rs defaults.
+
+This PR moves that translation behind a reusable constructor:
+
+- Add `ParquetWriterBuilder::from_table_properties(&TableProperties,
+schema)`, the single place that maps `write.parquet.*` into
+`WriterProperties`. It currently translates the CDC keys
+(`write.parquet.content-defined-chunking.*`); other keys still fall back
+to parquet-rs defaults and can be added here later.
+- Add a chainable `with_match_mode` setter so the field match mode can
+be overridden — DataFusion needs name-based matching since its Arrow
+batches carry no field-id metadata.
+- Refactor the DataFusion `insert_into` writer to build via
+`from_table_properties`, reusing the `TableProperties` it already parses
+and dropping the inline CDC translation.
+
+Additive only: `new` and `new_with_match_mode` are unchanged; no
+breaking changes.
+
+## Are these changes tested?
+
+- Unit tests in `parquet_writer.rs`: CDC is off by default, and CDC
+properties propagate through `build()` to the writer's
+`WriterProperties` — asserted on the getter rather than by re-reading a
+written file, so future `write.parquet.*` options only need an assertion
+on their corresponding getter.
+- Existing `test_insert_into*` DataFusion integration tests cover the
+refactored path, which is behaviorally unchanged.",c915c31e495bb1ad211079a23bca9b63bae45460,2561,false,,3,123,17,crates
+apache/iceberg-rust,1016ace4700299307932e410376cd635c8b9c03e,1016ace,Xander,zander181@googlemail.com,2026-07-01T13:54:54+05:30,GitHub,noreply@github.com,2026-07-01T16:24:54+08:00,refactor(encryption) remove key_metadata from the constructor of an unencrypted manifest writer (#2666),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- working towards https://github.com/apache/iceberg-rust/issues/2034
+
+Follow up for https://github.com/apache/iceberg-rust/pull/2628
+
+## What changes are included in this PR?
+Now that we have two constructors for `ManifestWriterBuilder`, `new` and
+`new_from_encrypted`, it should never be the case that you want to
+present `key_metadata` to an unencrypted `output`.
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",ed347f2eac82983e4060288dee04e8b42dd59f22,2666,false,,7,3,32,crates
+apache/iceberg-rust,7239a24538af0773722df74c2fb46b42031ef52d,7239a24,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-01T17:16:27+08:00,GitHub,noreply@github.com,2026-07-01T17:16:27+08:00,chore(deps): Bump reqwest from 0.12.28 to 0.13.3 (#2690),,1016ace4700299307932e410376cd635c8b9c03e,2690,false,,1,14,14,Cargo.lock
+apache/iceberg-rust,125822d610ecde61c6a82fc767ee7e7e8b22b3f3,125822d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-01T17:46:12+08:00,GitHub,noreply@github.com,2026-07-01T17:46:12+08:00,chore(deps): Bump zeroize from 1.8.2 to 1.9.0 (#2691),"Bumps [zeroize](https://github.com/RustCrypto/utils) from 1.8.2 to
+1.9.0.
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/RustCrypto/utils/commit/0b715735a660a8566ccd240bf42489fe2ed98efb""><code>0b71573</code></a>
+zeroize v1.9.0 (<a
+href=""https://redirect.github.com/RustCrypto/utils/issues/1494"">#1494</a>)</li>
+<li><a
+href=""https://github.com/RustCrypto/utils/commit/3e3f18c273ec48c99ffca514ffd8bc91e1352a9a""><code>3e3f18c</code></a>
+zeroize: always enable AVX-512 support (<a
+href=""https://redirect.github.com/RustCrypto/utils/issues/1493"">#1493</a>)</li>
+<li><a
+href=""https://github.com/RustCrypto/utils/commit/1ea42bb68f560a2909c856b20aa3c62901f6305c""><code>1ea42bb</code></a>
+zeroize_derive v1.5.0 (<a
+href=""https://redirect.github.com/RustCrypto/utils/issues/1492"">#1492</a>)</li>
+<li><a
+href=""https://github.com/RustCrypto/utils/commit/8d785d1f9ddc6f8caeef1f4744fb93647f00a56d""><code>8d785d1</code></a>
+zeroize: rustdoc improvements (<a
+href=""https://redirect.github.com/RustCrypto/utils/issues/1491"">#1491</a>)</li>
+<li><a
+href=""https://github.com/RustCrypto/utils/commit/d844f3659d74b1461f9527ac31251d9800f49e55""><code>d844f36</code></a>
+zeroize: incorporate README.md into rustdoc (<a
+href=""https://redirect.github.com/RustCrypto/utils/issues/1490"">#1490</a>)</li>
+<li><a
+href=""https://github.com/RustCrypto/utils/commit/c65c09d0a1ca7ba1c27e568712934cb6893e2297""><code>c65c09d</code></a>
+ctutils: use <code>reason</code> instead of comment in
+<code>forbid</code> attribute (<a
+href=""https://redirect.github.com/RustCrypto/utils/issues/1489"">#1489</a>)</li>
+<li><a
+href=""https://github.com/RustCrypto/utils/commit/cbd0963c685df025c42bed31f78c50d1bada3805""><code>cbd0963</code></a>
+Release block-buffer v0.12.1 (<a
+href=""https://redirect.github.com/RustCrypto/utils/issues/1488"">#1488</a>)</li>
+<li><a
+href=""https://github.com/RustCrypto/utils/commit/9aa541d55770f47bb1c50c1d476d167977e3de2a""><code>9aa541d</code></a>
+block-buffer: fix exception safety (<a
+href=""https://redirect.github.com/RustCrypto/utils/issues/1487"">#1487</a>)</li>
+<li><a
+href=""https://github.com/RustCrypto/utils/commit/5c7e4f9bb31af81bf766360e836b6d633b84dbff""><code>5c7e4f9</code></a>
+cmov v0.5.4 (<a
+href=""https://redirect.github.com/RustCrypto/utils/issues/1485"">#1485</a>)</li>
+<li><a
+href=""https://github.com/RustCrypto/utils/commit/87cadbce34655ac3c78efa7290f37d942d551b2c""><code>87cadbc</code></a>
+cmov: fix clippy (<a
+href=""https://redirect.github.com/RustCrypto/utils/issues/1484"">#1484</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/RustCrypto/utils/compare/zeroize-v1.8.2...zeroize-v1.9.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7239a24538af0773722df74c2fb46b42031ef52d,2691,false,dependabot[bot],1,2,2,Cargo.lock
+apache/iceberg-rust,713e2016230c46624f0debba23363430fc3715c4,713e201,Xander,zander181@googlemail.com,2026-07-01T15:31:24+05:30,GitHub,noreply@github.com,2026-07-01T18:01:24+08:00,refactor(encryption) use `StandardKeyMetadata` from `EncryptedOutputFile` in `ManifestWriterBuilder` (#2628),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+In https://github.com/apache/iceberg-rust/pull/2568 we introduced
+`new_from_encrypted` but the api isn't very ergonomic because
+`EncryptedOutputFile` has `StandardKeyMetadata` on it already so we
+don't need to pass in `key_metadata` also.
+
+working towards #2034
+
+## What changes are included in this PR?
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",125822d610ecde61c6a82fc767ee7e7e8b22b3f3,2628,false,,2,6,5,crates

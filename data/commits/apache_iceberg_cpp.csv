@@ -3942,3 +3942,79 @@ Added tests",3664d998d07b938fe4144a795a9a5024615adfb1,746,false,,13,593,14,src
 apache/iceberg-cpp,93577b3fe713912b3017e5e3374e89d64c4d0c7a,93577b3,Zehua Zou,zehuazou2000@gmail.com,2026-06-29T16:19:58+08:00,GitHub,noreply@github.com,2026-06-29T16:19:58+08:00,feat: parallelize writing manifests (#778),,881b3b517c5aa985ec202a61e94db7a79dbe1a90,778,false,,8,304,66,src
 apache/iceberg-cpp,68ee0f47ab6df0a41244a32076873bc8977bc7e2,68ee0f4,Minh Vu,vuhoangminh97@gmail.com,2026-06-30T04:21:45+02:00,GitHub,noreply@github.com,2026-06-30T10:21:45+08:00,fix(scan): reject missing column stats fields (#759),,93577b3fe713912b3017e5e3374e89d64c4d0c7a,759,false,,2,12,3,src
 apache/iceberg-cpp,c65a806c64f3f87e161321593a96acf81faaf7f0,c65a806,Gang Wu,ustcwg@gmail.com,2026-06-30T12:32:25+08:00,GitHub,noreply@github.com,2026-06-30T12:32:25+08:00,feat: write snapshot v3 row lineage fields at top level (#791),,68ee0f47ab6df0a41244a32076873bc8977bc7e2,791,false,,4,94,32,src
+apache/iceberg-cpp,61400e894fb4f88bd71cd95b27d549fd84feced7,61400e8,wzhuo,wngzhuo@gmail.com,2026-06-30T22:07:46+08:00,GitHub,noreply@github.com,2026-06-30T22:07:46+08:00,feat: implement RewriteFiles operation (#751),"This PR implements the RewriteFiles operation for the Iceberg C++
+library.
+
+## Changes
+
+- Added RewriteFiles update class in src/iceberg/update/rewrite_files.h
+and .cc
+- Added RewriteFiles to the type forward declarations in
+src/iceberg/type_fwd.h
+- Registered RewiteFiles as a merging snapshot update in
+src/iceberg/table.h and .cc
+- Added RewriteFiles support in transaction (src/iceberg/transaction.h
+and .cc)
+- Added comprehensive tests in src/iceberg/test/rewrite_files_test.cc
+- Added merge test for RewriteFiles in
+src/iceberg/test/merging_snapshot_update_test.cc",c65a806c64f3f87e161321593a96acf81faaf7f0,751,false,,21,1470,12,src
+apache/iceberg-cpp,7c4f15cc9a858c023e963224ebd05685cb6a6f49,7c4f15c,Junwang Zhao,zhjwpku@gmail.com,2026-07-01T15:36:24+08:00,GitHub,noreply@github.com,2026-07-01T15:36:24+08:00,feat: Support UUID values across row and file IO (#790),closes #314,61400e894fb4f88bd71cd95b27d549fd84feced7,790,false,,9,399,7,src
+apache/iceberg-cpp,9fb4a2b2ed08e1ad1483355c950b54ac33766c40,9fb4a2b,wzhuo,wngzhuo@gmail.com,2026-07-01T15:42:24+08:00,GitHub,noreply@github.com,2026-07-01T15:42:24+08:00,feat: add ArrowRowBuilder for materializing Arrow batches (#780),"## Summary
+
+Adds `ArrowRowBuilder` (`arrow_row_builder_internal.h` /
+`arrow_row_builder.cc`), a schema-driven RAII helper that materializes
+in-memory rows into an Arrow `ArrowArray` (a struct batch) for an
+arbitrary Iceberg schema. It wraps the nanoarrow boilerplate and exposes
+per-column access plus typed append free functions, so metadata tables
+(snapshots, history, manifests, …) can emit rows without re-implementing
+it.
+
+This is the first of a series splitting metadata-table support into
+focused PRs; the `InMemoryBatchReader` and the `SnapshotsTable::Scan`
+integration are intended to follow in separate PRs that build on this.
+
+## What's included
+- **`ArrowRowBuilder`** — a single RAII class (move-only) with
+`Make(const Schema&)` and `Make(const ArrowSchema*)` overloads. Handles
+the full nanoarrow lifecycle: `InitFromSchema` → `StartAppending` → …
+append values … → `FinishBuilding` → `Release`. The `ArrowArray` is
+guarded immediately after `InitFromSchema` so a failure in
+`StartAppending` releases it automatically.
+- **`ArrowArrayGuard::Release()`** — added to the existing guard so
+other call sites (`position_delete_writer`, `manifest_adapter`) can
+reuse the RAII-release pattern instead of manually managing nanoarrow
+resources.
+- **Free functions** in the `iceberg` namespace: `AppendNull`,
+`AppendBoolean`, `AppendInt` (covers int32/int64/timestamp via
+nanoarrow's int64), `AppendString`, `AppendStringMap`.
+- The implementation lives at the **core** `iceberg` library level — it
+only needs nanoarrow + `ToArrowSchema` (no Apache Arrow), matching peers
+like `manifest_adapter` and `arrow_c_data_util`.
+- Unit tests in `arrow_row_builder_test.cc` covering typed appends
+(int32/string/int64/boolean/map), null handling for optional columns,
+multi-entry/empty string maps, zero-row batches, and column-index
+bounds. Compiled into the `iceberg-data-test` test target.
+
+## Testing
+- CMake (Ninja): `cmake --build build --target iceberg-data-test` then
+ran the test binary — 5/5 `ArrowRowBuilderTest` tests pass. `ctest`
+green.
+- The test verifies output by importing the produced C-data into Apache
+Arrow (`arrow::ImportRecordBatch`), so its target is under `USE_BUNDLE`.
+
+## Notes
+- The test is registered under CMake's bundle build only. The meson
+build (which has no Apache Arrow/bundle layer) is left unchanged; the
+core-only test target continues to build there.
+- Developed with AI-assisted tooling, reviewed by the author.",7c4f15cc9a858c023e963224ebd05685cb6a6f49,780,false,,7,456,2,src
+apache/iceberg-cpp,9bf1ba1b2fb18012f1b7ad2323a54dec40718329,9bf1ba1,Gang Wu,ustcwg@gmail.com,2026-07-01T18:02:47+08:00,GitHub,noreply@github.com,2026-07-01T18:02:47+08:00,feat: retry stale v3 snapshot row-lineage validation (#794),"Add a retryable validation error kind and use it for add-snapshot stale
+sequence-number and stale first-row-id checks, matching Java Iceberg's
+RetryableValidationException behavior.
+
+Include the new retryable validation kind in commit retry policy, while
+preserving normal validation failures for mixed/non-retryable builder
+errors. Add focused v3 row-lineage tests for multi-file assignment,
+branch commits, retry reassignment, stale snapshot validation, and
+delete-manifest null first_row_id handling.",9fb4a2b2ed08e1ad1483355c950b54ac33766c40,794,false,,8,256,17,src
+apache/iceberg-cpp,9f84804259bd81c78f321a660a0006e799be724d,9f84804,Junwang Zhao,zhjwpku@gmail.com,2026-07-01T19:21:09+08:00,GitHub,noreply@github.com,2026-07-01T19:21:09+08:00,fix: use correct API in merge append test (#797),,9bf1ba1b2fb18012f1b7ad2323a54dec40718329,797,false,,1,1,1,src
+apache/iceberg-cpp,a080eb038e983ee2fd054ed5e513181fc857b1e6,a080eb0,Junwang Zhao,zhjwpku@gmail.com,2026-07-01T20:59:40+08:00,GitHub,noreply@github.com,2026-07-01T20:59:40+08:00,test: refactor minimal metadata selection in update tests (#798),,9f84804259bd81c78f321a660a0006e799be724d,798,false,,3,58,56,src

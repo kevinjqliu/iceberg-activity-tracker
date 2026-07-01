@@ -14640,3 +14640,68 @@ Testing
 -count=1\n- go test . -count=1\n- go run
 github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4 run
 --timeout=10m .\n- git diff --check",bf9cb31a0ce97e5b24ec346d34592dec670ee6d8,1314,false,,2,79,1,partitions.go; partitions_test.go
+apache/iceberg-go,561c2154a74eef1616e59b832e183276dcd958ed,561c215,Hectar,84522781+hectar-glitches@users.noreply.github.com,2026-06-30T12:50:55-07:00,GitHub,noreply@github.com,2026-06-30T21:50:55+02:00,Add explicit next-row-id monotonic increase check (#589) (#1054),"## Summary
+
+Add explicit post-update validation to ensure `next-row-id`
+monotonically increases across snapshots. Previously,
+`MetadataBuilder.validateAndUpdateRowLineage` only checked that the
+snapshot's first-row-id wasn't behind the table's cursor, but didn't
+verify the cursor actually advances after applying AddedRows.
+
+This fix rejects buggy producers that set `AddedRows` to 0 or negative
+values, which would silently leave the cursor unchanged or move it
+backwards.
+
+## Changes
+### Implementation
+**table/metadata.go**: Added explicit post-update check in
+`validateAndUpdateRowLineage`: Rejects if `newNextRowID <=
+previousNextRowID`
+Error message names both the previous and new values for clarity:
+Catches both `AddedRows = 0` (stasis) and negative `AddedRows` (backward
+movement)
+
+
+### Tests
+
+Added three comprehensive tests in
+**table/metadata_builder_internal_test.go** to check happy cases,
+rejected added rows if number of rows is 0, and rejecting negative added
+rows.
+
+
+
+Fixes #589
+
+---------
+
+Signed-off-by: hectar-glitches <hectar@uni.minerva.edu>",54df1f058f2b813b99f2b42148bcc375b5a45c72,1054,false,,2,51,0,table
+apache/iceberg-go,e6cbe37251a35de1b046c2d329a47737fccfbd8c,e6cbe37,Minh Vu,vuhoangminh97@gmail.com,2026-07-01T09:38:34+02:00,GitHub,noreply@github.com,2026-07-01T09:38:34+02:00,fix(table): reject float equality delete fields (#1347),"Summary
+
+- reject float and double columns in equality delete field IDs
+- share equality-ID schema validation between WriteEqualityDeletes and
+RowDelta commit
+- add writer and RowDelta regression coverage for both float and double
+fields
+- cover the partitioned equality-delete writer path with float rejection
+and decimal acceptance
+
+Why
+
+Iceberg equality delete keys cannot be float or double. Before this
+change, WriteEqualityDeletes and manually-built equality delete
+DataFiles could accept those field IDs, which made iceberg-go appear to
+support delete shapes other engines reject.
+
+Closes #1288.
+
+Testing
+
+- go test ./table -run
+'Test(WriteEqualityDeleteFilesRejectsFloatAndDoubleFieldIDs|WriteEqualityDeleteFilesPartitionedTableRejectsFloatFieldID|WriteEqualityDeleteFilesPartitionedTableAcceptsDecimalFieldID|WriteEqualityDeleteFilesPartitionedTable|WriteEqualityDeleteFilesRejectsInvalidFieldID|WriteEqualityDeleteFilesRejectsEmptyFieldIDs|RowDeltaRejectsEqDeleteWithFloatAndDoubleFieldIDs|RowDeltaRejectsEqDeleteWithInvalidFieldID|RowDeltaRejectsEqDeleteWithoutFieldIDs|RowDeltaCommitWithEqualityDeletes)$'
+-count=1
+- go test ./table -count=1
+- go test ./table/... -count=1
+- go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./table/...
+- git diff --check",561c2154a74eef1616e59b832e183276dcd958ed,1347,false,,4,196,12,table
