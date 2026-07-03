@@ -14705,3 +14705,84 @@ Testing
 - go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
 run --timeout=10m ./table/...
 - git diff --check",561c2154a74eef1616e59b832e183276dcd958ed,1347,false,,4,196,12,table
+apache/iceberg-go,6f271406ae285bbe064227756e2a90edffb4f2a6,6f27140,Minh Vu,vuhoangminh97@gmail.com,2026-07-02T20:27:34+02:00,GitHub,noreply@github.com,2026-07-02T20:27:34+02:00,fix(rest): honor token property in catalog config (#1330),"Summary
+
+parse the REST catalog `token` property into the static OAuth token
+option
+preserve that static token in the catalog's retained properties
+add regression coverage for helper parsing/serialization and the
+`catalog.Load(..., {""token"": ...})` auth path
+
+Why
+
+The REST catalog already defines `token` as a first-class property key,
+and `WithOAuthToken` correctly wires a static bearer token into
+authentication. But the property path was incomplete: `fromProps`
+ignored `token`, so `catalog.Load` silently skipped static-token auth,
+and `toProps` dropped it from the catalog's retained properties.
+
+This made property-driven REST catalog auth behave differently from the
+explicit option path.
+
+Testing
+
+go test ./catalog/rest -run
+'Test(ToPropsSigv4RegionFallback|FromPropsReadsOAuthToken|TokenAuthenticationPriority|RestTLSCatalogSuite)$'
+-count=1
+go test ./catalog/rest -count=1
+go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./catalog/rest/...
+git diff --check",e6cbe37251a35de1b046c2d329a47737fccfbd8c,1330,false,,3,80,2,catalog
+apache/iceberg-go,6ecfe78687f80a1e732389565316524d8abd6d92,6ecfe78,Minh Vu,vuhoangminh97@gmail.com,2026-07-02T20:28:47+02:00,GitHub,noreply@github.com,2026-07-02T20:28:47+02:00,fix(table): reject nil uuid assignment updates (#1329),"Summary
+
+reject uuid.Nil in the table metadata builder's SetUUID path
+add regression coverage for direct builder calls and assign-uuid updates
+applied through the builder
+preserve the existing NewMetadata/NewMetadataWithUUID behavior where
+uuid.Nil means ""generate a fresh table UUID"" for brand-new metadata
+
+Why
+
+New table creation already treats uuid.Nil as a sentinel for
+auto-generation, but the mutable table metadata builder still accepted
+uuid.Nil later through SetUUID and assign-uuid updates. That made it
+possible to write the zero UUID into table metadata even though the
+table UUID is supposed to uniquely identify the table.
+
+Testing
+
+go test ./table -run
+'Test(SetUUIDRejectsNil|AssignUUIDUpdate_ApplyRejectsNilUUID|SetFormatVersionV1ToV2AssignsUUID)$'
+-count=1
+go test ./table -count=1
+go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./table/...
+git diff --check",6f271406ae285bbe064227756e2a90edffb4f2a6,1329,false,,3,45,4,table
+apache/iceberg-go,f47d50053b4db8b3b687908a648a278935f36fe8,f47d500,Minh Vu,vuhoangminh97@gmail.com,2026-07-02T20:31:43+02:00,GitHub,noreply@github.com,2026-07-02T20:31:43+02:00,fix(rest): require absolute auth URL (#1345),"Summary
+
+- follow-up to #1336
+- require rest.authorization-url to include a scheme and host after
+url.Parse succeeds
+- extract authorization URL parsing into a testable helper
+- extend regression coverage for malformed local props, missing
+scheme/host, valid local config, and server overrides
+
+Why
+
+#1336 made malformed rest.authorization-url values fail instead of being
+silently ignored. url.Parse still accepts common typos like
+example.com/auth, localhost:8080, and the empty string, though. Those
+values made authUri non-nil, so credential-based auth skipped the
+default OAuth endpoint and pointed at a bad authorization URL instead of
+rejecting the config.
+
+Testing
+
+- go test ./catalog/rest -run
+'Test(LoadRegisteredCatalogRejectsInvalidAuthURL|LoadRegisteredCatalogAcceptsValidAuthURL|NewCatalogRejectsInvalidAuthURLFromConfig|NewCatalogAcceptsValidAuthURLFromConfig)$'
+-count=1
+- go test ./catalog/rest -count=1
+- go test ./catalog/... -count=1
+- go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./catalog/rest/...
+- git diff --check",6ecfe78687f80a1e732389565316524d8abd6d92,1345,false,,2,163,14,catalog

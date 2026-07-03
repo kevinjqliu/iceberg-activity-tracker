@@ -3438,3 +3438,34 @@ apache/iceberg,e4074709c509bf41bf2b4a112773786105707765,e407470,Ryan Blue,blue@a
 apache/iceberg,41113b1f691d34a7b62c933e2303836c029f2142,41113b1,gaborkaszab,gaborkaszab@gmail.com,2026-07-01T22:08:13+02:00,GitHub,noreply@github.com,2026-07-01T13:08:13-07:00,Core: Remove unused TestTrackedFileStruct.CONTENT_STATS_ORDINAL (#17031),,e4074709c509bf41bf2b4a112773786105707765,17031,false,,1,0,3,core
 apache/iceberg,d6aa0bf5c244cf6934eaa1820f1a88d099610f7b,d6aa0bf,Szehon Ho,szehon.apache@gmail.com,2026-07-01T15:22:22-07:00,GitHub,noreply@github.com,2026-07-01T15:22:22-07:00,Spec: Add optional specific-name to UDF definition model (#16727),,41113b1f691d34a7b62c933e2303836c029f2142,16727,false,,1,8,0,format
 apache/iceberg,da8ff447a23447733ea6231625cc4d468245b090,da8ff44,Vova Kolmakov,wombatukun@gmail.com,2026-07-02T13:51:42+07:00,GitHub,noreply@github.com,2026-07-01T23:51:42-07:00,Docs: Document nightly snapshots (#16544),,d6aa0bf5c244cf6934eaa1820f1a88d099610f7b,16544,false,,4,115,1,site
+apache/iceberg,744e811036c87727b41aa211fab9010bab48721f,744e811,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-07-02T17:36:18-07:00,GitHub,noreply@github.com,2026-07-02T17:36:18-07:00,Parquet: Read and write geometry and geography WKB values (#16982),,da8ff447a23447733ea6231625cc4d468245b090,16982,false,,10,114,35,api; core; data; parquet
+apache/iceberg,035fc1e405d8902b272f4c5af42a24919d2ea625,035fc1e,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-07-02T17:37:38-07:00,GitHub,noreply@github.com,2026-07-02T17:37:38-07:00,Spark 4.1: Map geo Spark types (#16851),,744e811036c87727b41aa211fab9010bab48721f,16851,false,,4,226,0,spark
+apache/iceberg,49b89a8c59d7d88290c6e925f41b65fa9fc99a88,49b89a8,Maximilian Michels,mxm@apache.org,2026-07-03T08:33:17+02:00,GitHub,noreply@github.com,2026-07-02T23:33:17-07:00,Flink: Hold back equality delete converter watermark until completion (#17038),"This PR fixes the CI test flakiness seen in:
+
+```
+TestConvertEqualityDeletesE2E > testConvertEqualityDeletesE2E(String) > [1] staging FAILED
+    org.opentest4j.AssertionFailedError:
+    expected: 2L
+     but was: 1L
+        at app//org.apache.iceberg.flink.maintenance.api.TestConvertEqualityDeletesE2E.lambda$testConvertEqualityDeletesE2E$1(TestConvertEqualityDeletesE2E.java:127)
+```
+e.g.:
+https://github.com/apache/iceberg/actions/runs/28499724055/job/84473933155?pr=16293
+
+Flink's table maintenance framework maintains a lock to prevent concurrent
+execution of maintenance tasks. The component responsible for removing the
+lock (LockRemover) releases the task lock once a watermark reaches it past the
+task's start timestamp.
+
+EqualityConvertPlanner emits phase watermarks in the middle of its execution,
+and the committer forwarded them, so the lock was released before the run
+completed. The maintenance framework then started a next cycle concurrently, and
+both re-processed the same uncommitted staging snapshot. The overlapping commits
+conflicted, and one advanced its commit marker while dropping its deletion
+vector, causing the test flakiness.
+
+The solution is to forward watermarks from the committer only after it finishes
+the conversion cycle, to ensure mutual exclusive execution of the maintenance
+tasks.",035fc1e405d8902b272f4c5af42a24919d2ea625,17038,false,,2,71,18,flink
+apache/iceberg,11706a286bc94f852aa6046d2d1ec6c3b85039a5,11706a2,Maximilian Michels,mxm@apache.org,2026-07-03T12:13:24+02:00,GitHub,noreply@github.com,2026-07-03T12:13:24+02:00,Flink: Backport: Hold back equality delete converter watermark until completion (#17038) (#17067),,49b89a8c59d7d88290c6e925f41b65fa9fc99a88,17067,false,,4,142,36,flink
+apache/iceberg,3038fde68307bb5bc95de256670cb0b38ed6de71,3038fde,Zehua Zou,zehuazou2000@gmail.com,2026-07-03T22:27:28+08:00,GitHub,noreply@github.com,2026-07-03T08:27:28-06:00,Core: Fix thread-unsafe duplicate delete handling in ManifestFilterManager (#16686),,11706a286bc94f852aa6046d2d1ec6c3b85039a5,16686,false,,2,61,17,core
