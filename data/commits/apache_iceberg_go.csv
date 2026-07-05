@@ -15830,3 +15830,281 @@ required reserved parameters as well.
 
 - `go test ./catalog/glue ./catalog/hive`
 - `go test ./...`",ca69707aa877227de635ec2238cf0e2822718e7f,1352,false,,4,117,15,catalog
+apache/iceberg-go,03ae0029878a5eb16a8f971d65b30585a953780a,03ae002,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:07:03+02:00,GitHub,noreply@github.com,2026-07-04T13:07:03-04:00,fix(puffin): guard ClearProperties after Finish (#1373),"## Problem
+`Writer.ClearProperties` in `puffin` could be called after `Finish` and
+silently mutate state because there was no finalization guard.
+
+That is inconsistent with other mutation methods and weakens writer
+lifecycle safety.
+
+## Fix
+- Change `(*Writer).ClearProperties` signature to return `error`.
+- Add a finalization check:
+- when `w.done == true`, return `errors.New(""puffin: cannot clear
+properties: writer already finalized"")`
+- Keep normal pre-finish behavior unchanged (`w.props` is cleared and
+call succeeds).
+- Update tests to assert:
+  - `ClearProperties` returns `nil` before finish
+  - `ClearProperties` returns an error after finish
+- Note: this is a small API-surface change because callers now handle an
+error return.
+
+## Validation
+- `go test ./puffin -run TestClearProperties -count=1`
+- `go test ./puffin -run
+""Test(SetCreatedBy|ClearProperties|AddPropertiesAfterFinish)"" -count=1`
+
+## Scope
+No behavior change for active writer usage; only enforces lifecycle
+consistency after finalization.",da9484324a58f61d98651e67a4ac4bcfd83ec134,1373,false,,2,14,3,puffin
+apache/iceberg-go,ff56d5c79e4312bf832d29021aa5bfb35651f820,ff56d5c,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:07:06+02:00,GitHub,noreply@github.com,2026-07-04T13:07:06-04:00,fix(table): reject nil table in PositionDeltaWriter (#1374),"## Problem
+`NewPositionDeltaWriter` currently panics when called with a nil
+`*Table` because it dereferences `tbl.metadata` immediately.
+
+For a public constructor, that turns a bad call site into a runtime
+crash instead of an actionable error.
+
+## Fix
+- Add a nil guard in `NewPositionDeltaWriter`:
+- returns `fmt.Errorf(""%w: table is nil"", iceberg.ErrInvalidArgument)`
+when `tbl` is nil
+- Keep the existing version check behavior unchanged for non-nil tables.
+- Add regression test `TestPositionDeltaWriter_NilTable` asserting:
+  - an error is returned
+  - error is wrapped by `iceberg.ErrInvalidArgument`
+  - returned writer is nil
+
+## Validation
+- `go test ./table -run TestPositionDeltaWriter_NilTable -count=1`
+- `go test ./table -run ""TestPositionDeltaWriter_"" -count=1`
+
+## Scope
+No user-visible data-path behavior change; this is a targeted API-safety
+fix for invalid constructor input.",03ae0029878a5eb16a8f971d65b30585a953780a,1374,false,,2,12,0,table
+apache/iceberg-go,e54a840afec89df9686ace13f99fb2088d00dab7,e54a840,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:07:46+02:00,GitHub,noreply@github.com,2026-07-04T13:07:46-04:00,fix(partitions): copy partition fields in NewPartitionSpecID (#1376),"## Summary
+
+Fixes mutable aliasing when creating a partition spec.
+
+`NewPartitionSpecID` now copies the variadic field arguments and each
+field's `SourceIDs` slice before initialization, so callers can safely
+reuse/mutate their input slice after constructing a spec.
+
+Also added a regression test:
+- `TestNewPartitionSpecIDCopiesFields` in `partitions_test.go`
+
+## Validation
+- `go test ./... -count=1`",ff56d5c79e4312bf832d29021aa5bfb35651f820,1376,false,,2,30,1,partitions.go; partitions_test.go
+apache/iceberg-go,3125c644055a8b5f543e789e1a796293fe2d3454,3125c64,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:07:48+02:00,GitHub,noreply@github.com,2026-07-04T13:07:48-04:00,fix(gocloud): parse gcs.usejsonapi as boolean (#1377),"## Summary
+
+`ParseGCSConfig` used to enable JSON reads on `gcs.usejsonapi` whenever
+the key existed, so values like `""false""` still switched it on.
+
+This change now parses the property as a boolean using
+`strconv.ParseBool` and only enables JSON reads when it resolves to
+`true`.
+
+Also included:
+- Unit tests covering `true`, `false`, absent, and invalid values
+(`not-a-bool`).
+- Documentation update in `website/src/configuration.md`.
+- Removed outdated comment in `io/config.go` that implied
+truthy-by-presence behavior.
+
+## Validation
+
+- `go test ./io/gocloud -run TestParseGCSConfigUseJSONAPI -count=1`",e54a840afec89df9686ace13f99fb2088d00dab7,1377,false,,4,54,4,io; website
+apache/iceberg-go,306709044158187c8acffcddd7f42adc1a54a437,3067090,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:08:32+02:00,GitHub,noreply@github.com,2026-07-04T13:08:32-04:00,fix(table): return errors for invalid writer file schemas (#1375),"## Summary
+- Change writer factory options to return errors so
+`withFactoryFileSchema` can propagate Arrow schema conversion failures
+instead of panicking.
+- Update `withFactoryFileSchema` to return a construction error when
+`SchemaToArrowSchema` fails.
+- Update `newWriterFactory` to stop option iteration and return the
+first option error.
+- Add regression test:
+`TestNewWriterFactoryReturnsErrorForInvalidFileSchema` verifies
+invalid/unsupported file schemas fail with error and no panic.
+
+## Verification
+- `go test ./table -run
+TestRollingDataWriter/TestNewWriterFactoryReturnsErrorForInvalidFileSchema
+-count=1`
+- `go test ./table -run TestRollingDataWriter -count=1`
+- `go test ./table -count=1`",3125c644055a8b5f543e789e1a796293fe2d3454,1375,false,,2,63,6,table
+apache/iceberg-go,0470b716a232ed7d09df7878473d59ed02512ad7,0470b71,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:08:35+02:00,GitHub,noreply@github.com,2026-07-04T13:08:35-04:00,fix(requirements): validate missing last partition spec id (#1380),"## Summary
+
+Fix a panic in requirement validation when metadata lacks last partition
+spec ID (for example v1 or malformed metadata).
+
+The previous implementation directly dereferenced
+`meta.LastPartitionSpecID()` and could panic. This change now checks for
+nil and returns a clean requirement failure message:
+
+- `requirement failed: last assigned partition id is missing`
+
+When the field is present, behavior is unchanged and the previous
+comparison path still validates for mismatches.
+
+## Testing
+
+- `go test ./table -run TestAssertLastAssignedPartitionIDValidate
+-count=1`",306709044158187c8acffcddd7f42adc1a54a437,1380,false,,2,61,2,table
+apache/iceberg-go,79f571c41397addd1286ac780710566bebcc9fa2,79f571c,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:08:44+02:00,GitHub,noreply@github.com,2026-07-04T13:08:44-04:00,fix(types): safe compare defaults in NestedField.Equals (#1383),"## Summary
+
+`NestedField.Equals` compared `InitialDefault` and `WriteDefault` with
+`==`, which can panic when defaults contain non-comparable values
+(maps/slices/etc).
+
+This changes equality to use `reflect.DeepEqual` for defaults so
+schema/field comparisons stay safe and correct with nested defaults.
+
+Also adds a regression test that verifies:
+- non-comparable defaults no longer panic in `Equals`, and
+- equivalent deep structures compare equal while different defaults
+compare false.
+
+## Testing
+
+- `go test ./... -run
+'TestNestedFieldEqualsWithNonComparableDefaults|TestUnknownTypeInNestedStructs|TestTypesBasic'
+-count=1`",0470b716a232ed7d09df7878473d59ed02512ad7,1383,false,,2,51,6,types.go; types_test.go
+apache/iceberg-go,8e876f04268bc802f04138af53e7bf0d24b317f9,8e876f0,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:08:53+02:00,GitHub,noreply@github.com,2026-07-04T13:08:53-04:00,fix(table): clone scan options map in WithOptions (#1385),"## Summary
+
+- Fix `table.WithOptions` to copy the caller's map with `maps.Clone` so
+scan behavior no longer changes if the caller mutates options after scan
+creation.
+- Add regression test `TestScanWithOptionsAliasing` in
+`table/table_test.go` to verify scan behavior is isolated from later
+external map mutations.
+
+## Testing
+- `go test ./table -run TestTable -count=1`",79f571c41397addd1286ac780710566bebcc9fa2,1385,false,,2,27,1,table
+apache/iceberg-go,f5e9aa44961a9f4f6b966fc860209541b503ca38,f5e9aa4,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:09:01+02:00,GitHub,noreply@github.com,2026-07-04T13:09:01-04:00,fix(transforms): validate BucketTransform NumBuckets (#1365),"## Summary
+- Make `BucketTransform` validate `NumBuckets` before modulo and
+path/transform application.
+- Guard `Apply`, `Transformer`, and `Project` so invalid values
+(`NumBuckets <= 0`) return safe, non-panicking outcomes.
+- Return invalid `Optional` from `Apply`/`Transformer` and
+`ErrInvalidArgument` from `Project` when bucket count is invalid.
+- Add regression tests covering invalid bucket counts for `Apply`,
+`Transformer`, and `Project`.
+- Harden unsupported source-type handling in `Transformer` to return
+invalid values instead of panicking.",8e876f04268bc802f04138af53e7bf0d24b317f9,1365,false,,4,127,1,partitions.go; partitions_test.go; transforms.go; transforms_test.go
+apache/iceberg-go,42c2d006187a8c99e6767d746b2e1e80f58d8d04,42c2d00,Andrei Tserakhau,laskoviymishka@gmail.com,2026-07-04T19:29:49+02:00,GitHub,noreply@github.com,2026-07-04T13:29:49-04:00,"fix(table): clarify v3 next-row-id overflow guard, harden tests (#1348)","Follow-up to #1054. cleanup the next-row-id overflow guard in
+validateAndUpdateRowLineage to check overflow before computing the
+wrapped sum (added-rows > MaxInt64 - next-row-id) and reword the error
+to say what actually happened (""adding N rows to next-row-id M overflows
+int64"") rather than the misleading ""regressed"". Document the invariants
+the guard relies on: added-rows is non-nil/non-negative and next-row-id
+is non-negative at that point.
+
+Tests: drop the redundant positive-advance case (covered by
+TestAddSnapshotV3UpdatesNextRowID), make the zero-added-rows test
+falsifiable by seeding a non-zero cursor first, and add the MaxInt64
+accept boundary alongside the overflow reject.",f5e9aa44961a9f4f6b966fc860209541b503ca38,1348,false,,2,79,16,table
+apache/iceberg-go,acdacb9c23cf795d760f2552869ce8430bf9fc8c,acdacb9,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:29:52+02:00,GitHub,noreply@github.com,2026-07-04T13:29:52-04:00,fix(rest): validate table and view identifiers (#1354),"## Summary
+
+REST table and view operations accepted one-part identifiers such as
+`[""table""]`. The path helper treated that as an empty namespace plus
+table name, which could produce malformed REST paths or JSON
+identifiers.
+
+This adds a shared `catalog.ValidateTableIdentifier` helper that
+requires at least one namespace level and a table/view name, then wires
+REST table and view operations through it. Rename and transaction
+commits now validate identifiers before constructing REST identifier
+payloads too.
+
+## Testing
+
+- `go test ./catalog ./catalog/rest`
+- `go test ./...`",42c2d006187a8c99e6767d746b2e1e80f58d8d04,1354,false,,5,205,11,catalog
+apache/iceberg-go,4fea6ffa62413eab138eebe153192dbd5b1fc0bd,4fea6ff,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:29:59+02:00,GitHub,noreply@github.com,2026-07-04T13:29:59-04:00,fix(view): join view metadata location (#1356),"### Summary
+- build view metadata paths with `url.JoinPath` instead of raw string
+concatenation
+- add a regression test for trailing slash view locations
+
+### Testing
+- `go test ./view`
+- `go test ./catalog/sql ./catalog/hive ./catalog/rest`
+- `go test ./...`",acdacb9c23cf795d760f2552869ce8430bf9fc8c,1356,false,,2,33,1,view
+apache/iceberg-go,9ed3bd829ddb6a33856bca78e6b7b42be73aed8e,9ed3bd8,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:30:07+02:00,GitHub,noreply@github.com,2026-07-04T13:30:07-04:00,fix(metadata): replace updates on unmarshal (#1357),"### Summary
+- decode table and view updates into fresh slices before assigning to
+the receiver
+- decode table and view requirements the same way, including the
+matching view requirement path found during inspection
+- add receiver-reuse regressions that also confirm failed decodes do not
+partially mutate prior results
+
+### Testing
+- `go test ./table ./view`
+- `go test ./...`",4fea6ffa62413eab138eebe153192dbd5b1fc0bd,1357,false,,8,125,4,table; view
+apache/iceberg-go,6c12ad0288a06175400713a12da979ace7d81111,6c12ad0,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:30:15+02:00,GitHub,noreply@github.com,2026-07-04T13:30:15-04:00,fix(scan): use snapshot schema for pruning (#1358),"### Summary
+- resolve the effective scan schema from the selected snapshot before
+local planning
+- pass that schema into partition projection, manifest pruning,
+partition evaluation, metrics pruning, and read-time row filter binding
+- keep transaction conflict validation on the current metadata schema by
+passing it explicitly
+- add schema-evolution regressions for time-travel manifest and metrics
+pruning
+
+### Testing
+- `go test ./table -run TestTimeTravel`
+- `go test ./table`
+- `go test ./...`",9ed3bd829ddb6a33856bca78e6b7b42be73aed8e,1358,false,,5,272,74,table
+apache/iceberg-go,d416dfb17b2f0a58cfbb741cdee974de85d44067,d416dfb,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:30:23+02:00,GitHub,noreply@github.com,2026-07-04T13:30:23-04:00,fix(sql): return error for unsupported dialect (#1362),"## Summary
+- Changed SQL catalog dialect resolution to return typed errors instead
+of panicking for unsupported dialects.
+- Updated registry usage to rely on clean error flow from
+\'sql.NewCatalog\'.
+- Added test for direct catalog creation via NewCatalog with unsupported
+dialect.
+
+## Testing
+- go test ./catalog/sql -run
+'TestInvalidDialect|TestNewCatalogInvalidDialect' -count=1
+- go test ./catalog/sql -count=1",6c12ad0288a06175400713a12da979ace7d81111,1362,false,,2,39,19,catalog
+apache/iceberg-go,d5e1770cdbfad4004e3b697f38b815e0c418b332,d5e1770,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:30:31+02:00,GitHub,noreply@github.com,2026-07-04T13:30:31-04:00,fix(dv): reject negative deletion-vector positions in DVWriter.Add (#1364),"## Summary
+- Validate DVWriter.Add positions are non-negative.
+- Change DVWriter.Add to return an error on negative positions.
+- Plumb error handling where DVWriter.Add is called.
+- Add regression coverage for negative position rejection in dv_writer
+tests.
+
+## Testing
+- go test ./table/dv -run 'TestDVWriter'
+- go test ./table -run
+'TestScanPruningWithDeletionVector|TestReadTaskDeletionVectorSupersedesPositionalDeletes|TestRewriteDataFilesPreservesSiblingDeletionVector'
+- go test ./table ./table/dv",d416dfb17b2f0a58cfbb741cdee974de85d44067,1364,false,,5,82,24,table
+apache/iceberg-go,d4f5a4aa4550cebb9376d1b24e4ff9fdf431f19c,d4f5a4a,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:30:39+02:00,GitHub,noreply@github.com,2026-07-04T13:30:39-04:00,fix(literals): return BinaryLiteral for FixedLiteral→binary cast (#1366),"## Summary
+
+- FixedLiteral.To(BinaryType) now returns a copied BinaryLiteral value
+instead of returning FixedLiteral directly.
+- Added regression coverage in TestFixedLiteral to verify:
+  - cast result type is BinaryLiteral
+  - target type is binary
+- conversion returns an independent byte slice from the source fixed
+bytes
+
+This avoids type mismatch issues during predicate binding/serialization
+paths when casting fixed literals to binary.",d5e1770cdbfad4004e3b697f38b815e0c418b332,1366,false,,2,9,2,literals.go; literals_test.go
+apache/iceberg-go,dbe2b13198a4dde6d07ccc06280e8e55e4ba0f85,dbe2b13,Minh Vu,vuhoangminh97@gmail.com,2026-07-04T19:30:46+02:00,GitHub,noreply@github.com,2026-07-04T13:30:46-04:00,fix(sort): validate sort source IDs during unmarshal (#1367),"## Summary
+
+- Require exactly one of `source-id` or `source-ids` in
+`SortField.UnmarshalJSON`.
+- Reject malformed sort fields at unmarshal time when source IDs are
+missing, empty, zero, or negative.
+- Tightened source ID validation (`> 0`) to prevent invalid source ID 0
+from being treated as a valid value.
+- Updated sort tests to assert rejection and add coverage for these
+invalid paths.
+
+## Testing
+
+- `go test ./table -run
+'TestSortField|TestUnmarshalSortOrder|TestNewSortOrder|TestSortOrder'
+-count=1`
+- `go test ./table -count=1`
+- `go test ./... -count=1`",d4f5a4aa4550cebb9376d1b24e4ff9fdf431f19c,1367,false,,2,73,108,table
