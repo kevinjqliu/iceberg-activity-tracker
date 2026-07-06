@@ -16108,3 +16108,52 @@ invalid paths.
 -count=1`
 - `go test ./table -count=1`
 - `go test ./... -count=1`",d4f5a4aa4550cebb9376d1b24e4ff9fdf431f19c,1367,false,,2,73,108,table
+apache/iceberg-go,3ae4f91e0743fd5ea256c78edd26afbcfaf44e14,3ae4f91,Minh Vu,vuhoangminh97@gmail.com,2026-07-06T14:00:28+02:00,GitHub,noreply@github.com,2026-07-06T14:00:28+02:00,fix(io): validate cloud object URI buckets (#1259),"Summary
+
+- parse cloud object locations without URL-unescaping, so raw `%` and
+spaces in keys keep working
+- reject fully-qualified object paths whose authority differs from the
+opened bucket or container
+- apply the same authority check through S3/GCS/OSS and ADLS
+- use the parsed object location for WalkDir path reconstruction, keep
+the root trailing slash, and reject malformed authority-only roots
+instead of walking the whole bucket
+- add regression coverage for raw key characters, cross-authority
+rejection, ADLS authority checks, WalkDir roots, and malformed roots
+
+Why
+
+The current gocloud FileIO is bucket/container-bound. Silently folding
+`s3://other-bucket/...` into the opened bucket can read, write, or
+delete the wrong object, so this now fails loudly when a manifest path
+points at a different authority. If iceberg-go should support
+cross-authority metadata and data paths, that should be handled with
+explicit per-authority routing in a follow-up instead of pretending the
+current bucket-bound FileIO can safely serve both.
+
+Testing
+
+- go test ./io/gocloud -run
+'TestDefaultKeyExtractor|TestBlobFileIORejectsWrongBucketObjectPaths|TestBlobFileIOWalkDirRejectsWrongBucket|TestBlobFileIOWalkDirRejectsWrongAzureAuthority|TestAdlsKeyExtractor'
+-count=1
+- go test ./io/gocloud -count=1
+- go test ./io -count=1
+- go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+run --timeout=10m ./io/gocloud ./io
+- git diff --check",dbe2b13198a4dde6d07ccc06280e8e55e4ba0f85,1259,false,,5,565,77,io
+apache/iceberg-go,6d48b9a4dc4e4818503db2658711c3f239695399,6d48b9a,Minh Vu,vuhoangminh97@gmail.com,2026-07-06T17:50:54+02:00,GitHub,noreply@github.com,2026-07-06T17:50:54+02:00,fix(table): separate rolling data writer close/abort paths (#1368),"## Summary
+- Split rolling-data writer lifecycle into graceful close and abort
+paths.
+- Graceful close now only closes writer input (no context cancellation),
+while abort cancels context and closes input.
+- fanout writers now use a decoupled context for coordination so
+`errgroup.Wait()` does not cancel post-success draining.
+- writerFactory.closeAll uses graceful close so normal completion can
+flush queued records.
+- Unpartitioned write error paths now use abort path; success path now
+uses `closeAndWait` for consistent lifecycle behavior.
+- Added regression tests for normal close flushing, context-cancel
+fanout regression, and abort cancellation behavior.
+
+## Testing
+- `go test ./table -count=1`",3ae4f91e0743fd5ea256c78edd26afbcfaf44e14,1368,false,,7,257,44,table
