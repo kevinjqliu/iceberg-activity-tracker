@@ -3599,3 +3599,14 @@ updated-dependencies:
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",2d3f5c24e0697b361fe95362d8ee13b915e98048,17108,false,dependabot[bot],2,11,10,gcp-bundle; gradle
+apache/iceberg,79bae78cba314ecf29cb2c2bf7b7016503e6c919,79bae78,Eunbin Son,58901024+thswlsqls@users.noreply.github.com,2026-07-07T03:20:47+09:00,GitHub,noreply@github.com,2026-07-06T20:20:47+02:00,Docs: Fix reversed Flink binary/varbinary to Iceberg type mapping (#17090),,04a35e412d2f37bb03e0cc68d56111be5d8dbb5b,17090,false,,1,2,2,docs
+apache/iceberg,d303514b4a9e90e62ffe136dcea3eed624eab288,d303514,Eunbin Son,58901024+thswlsqls@users.noreply.github.com,2026-07-07T03:21:12+09:00,GitHub,noreply@github.com,2026-07-06T20:21:12+02:00,ORC: Fix garbled exception message for invalid timestamp unit attribute (#17098),"OrcToIcebergVisitor.primitive() built the exception message for an
+unrecognized iceberg.timestamp-unit attribute value by concatenating
+""%s"" with the raw string (+) instead of calling String.format, so the
+literal ""%s"" was never substituted and stayed in the thrown message.
+Both the TIMESTAMP and TIMESTAMP_INSTANT branches had the same bug.
+Switch both to String.format, matching the sibling pattern already
+used in GenericOrcReader for similar ""invalid type"" exceptions.
+
+Generated-by: Claude Code",79bae78cba314ecf29cb2c2bf7b7016503e6c919,17098,false,,2,28,2,orc
+apache/iceberg,34b03b7710a116a7ffc14b2e68aad1b8ee484d1f,34b03b7,Maximilian Michels,mxm@apache.org,2026-07-07T11:08:49+02:00,GitHub,noreply@github.com,2026-07-07T11:08:49+02:00,Flink: Resolve unpartitioned equality deletes across all partitions (#17018),,d303514b4a9e90e62ffe136dcea3eed624eab288,17018,false,,7,233,61,flink

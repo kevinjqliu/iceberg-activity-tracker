@@ -16157,3 +16157,28 @@ fanout regression, and abort cancellation behavior.
 
 ## Testing
 - `go test ./table -count=1`",3ae4f91e0743fd5ea256c78edd26afbcfaf44e14,1368,false,,7,257,44,table
+apache/iceberg-go,058bc2388d161ed4aa3c8848989c337c659153ec,058bc23,Minh Vu,vuhoangminh97@gmail.com,2026-07-07T11:52:56+02:00,GitHub,noreply@github.com,2026-07-07T11:52:56+02:00,fix(table): clone selected fields in scan options (#1390),"## Summary
+- fix(table): clone selected fields inside WithSelectedFields
+- add regression test that mutating caller slice after option creation
+does not affect scan.selectedFields
+
+## Testing
+- go test ./table -run TestWithSelectedFields -count=1
+- go test ./table -count=1",6d48b9a4dc4e4818503db2658711c3f239695399,1390,false,,4,149,5,cmd; table
+apache/iceberg-go,6ce8a149447f5fb128299a30bda6529a51ec548c,6ce8a14,Minh Vu,vuhoangminh97@gmail.com,2026-07-07T14:21:56+02:00,GitHub,noreply@github.com,2026-07-07T14:21:56+02:00,fix(codec): validate FileScanTask scan ranges on decode (#1395),"## Summary
+- Reject negative Start/Length scan ranges in DecodeFileScanTask.
+- Add regression coverage for malformed envelopes with negative Start
+and Length.
+
+## Testing
+- go test ./codec -run 'DecodeFileScanTask|EncodeDecodeFileScanTask'
+-count=1
+- go test ./codec -count=1",058bc2388d161ed4aa3c8848989c337c659153ec,1395,false,,3,71,0,codec
+apache/iceberg-go,bc12a973a8ddfe54da06e5d20a5d1e736c2871a0,bc12a97,Minh Vu,vuhoangminh97@gmail.com,2026-07-07T14:22:56+02:00,GitHub,noreply@github.com,2026-07-07T14:22:56+02:00,fix(io): return not-exist error for missing MemFS removals (#1396),"## Summary
+- Make MemFS.Remove return a `*fs.PathError` with `ErrNotExist` when the
+target file path is absent.
+- Add regression coverage in `io/mem_test.go` for removing a missing
+file path.
+
+## Testing
+- `go test ./io -count=1`",6ce8a149447f5fb128299a30bda6529a51ec548c,1396,false,,2,14,1,io

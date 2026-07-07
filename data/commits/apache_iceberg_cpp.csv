@@ -4830,3 +4830,34 @@ PR or upgrade to it yourself)
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",c3bc6461a7cbc139b72d33230046b089d2f243da,816,false,dependabot[bot],5,9,9,.github
+apache/iceberg-cpp,5d31dee04533b8f46709a157e100d084605a5354,5d31dee,wzhuo,wngzhuo@gmail.com,2026-07-07T13:44:19+08:00,GitHub,noreply@github.com,2026-07-07T13:44:19+08:00,refactor: move typed arrow Append helpers to ArrowRowBuilder (#821),"Move AppendUInt, AppendDouble, AppendBytes, AppendIntList (2 overloads),
+AppendIntMap, and AppendBinaryMap from the anonymous namespace in
+manifest_adapter.cc to ArrowRowBuilder, the central home for typed
+nanoarrow append helpers. Remove the duplicate implementations and
+update all call sites in ManifestEntryAdapter, ManifestFileAdapter, and
+their nested methods to use the ArrowRowBuilder helpers.",fce18ea53d16cea2ecfb26255320050b0ce6f6d8,821,false,,3,183,168,src
+apache/iceberg-cpp,f4f6359fa9a95bde4bb2627bd8a5d45273644294,f4f6359,Anupam Yadav,anupamy030@gmail.com,2026-07-06T23:13:50-07:00,GitHub,noreply@github.com,2026-07-07T14:13:50+08:00,"build: scope warnings-as-error to project targets, not FetchContent subprojects (#819)","## What
+
+Fixes #246. `-Werror` (via a global `CMAKE_COMPILE_WARNING_AS_ERROR`)
+leaked into FetchContent-built dependencies, so a warning in a
+third-party subproject (e.g. Arrow) could fail the whole build. As noted
+on the issue, the global flag does not reliably isolate subprojects.
+
+## How
+- Removed the global `CMAKE_COMPILE_WARNING_AS_ERROR ON`.
+- Set `COMPILE_WARNING_AS_ERROR ON` as a per-target property on
+Iceberg's own shared/static libraries, so the project stays strict.
+- Set `BUILD_WARNING_LEVEL PRODUCTION` for Arrow to suppress its
+independent `-Werror` injection.
+- Kept a defensive guard in `prepare_fetchcontent()` for the case where
+`-DCMAKE_COMPILE_WARNING_AS_ERROR=ON` is passed on the command line.
+
+## Verified
+Iceberg targets still compile with `-Werror`; FetchContent subprojects
+do not. Build + tests green (18/18).
+
+---
+This contribution was authored with assistance from Claude Opus 4.8, in
+line with the Iceberg guidelines for AI-assisted contributions
+(https://iceberg.apache.org/contribute/#guidelines-for-ai-assisted-contributions).
+All changes were reviewed and tested by the author.",5d31dee04533b8f46709a157e100d084605a5354,819,false,,4,6,4,CMakeLists.txt; cmake_modules; src

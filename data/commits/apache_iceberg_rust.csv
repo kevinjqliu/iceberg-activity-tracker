@@ -21343,3 +21343,46 @@ slowest at 10 to 12 minutes.
 CI-only change, exercised by this PR's own CI run.
 
 Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",e38ecf08ea9e40e1dd220f98e3949352b05de3b0,2771,false,Abanoub Doss,3,38,67,.github; Makefile
+apache/iceberg-rust,997db2d1371a98d8f9bf88be0db66ab2be58b52e,997db2d,blackmwk,liurenjie1024@outlook.com,2026-07-07T05:52:51+08:00,GitHub,noreply@github.com,2026-07-06T14:52:51-07:00,Fix zizmor pin (#2762),"## Which issue does this PR close?
+
+
+- Closes #.
+
+## What changes are included in this PR?
+
+Fix the asf yml pin error in #2729
+
+## Are these changes tested?
+
+ci.
+
+---------
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",22e80a63dbb4e58e034672b4ff665a6eae82fa02,2762,false,dependabot[bot],2,2,2,.github
+apache/iceberg-rust,c5448e707950e631e01c7a04cd01c5c4785371c1,c5448e7,Xander,zander181@googlemail.com,2026-07-07T06:20:20+05:30,GitHub,noreply@github.com,2026-07-07T08:50:20+08:00,feat(encryption) [8/N] Read encrypted manifest file (#2586),,997db2d1371a98d8f9bf88be0db66ab2be58b52e,2586,false,,1,158,2,crates
+apache/iceberg-rust,f12772deed34b4181605d79b6dc20fb487684ae8,f12772d,Minh Vu,vuhoangminh97@gmail.com,2026-07-07T07:08:36+02:00,GitHub,noreply@github.com,2026-07-06T22:08:36-07:00,Reject negative positional delete positions (#2631),"## Summary
+
+- Reject negative row positions while parsing positional delete files.
+- Return `ErrorKind::DataInvalid` instead of casting negative `i64`
+values to huge `u64` positions.
+- Add a focused regression test for `pos = -1`.
+
+## Root cause
+
+The positional-delete parser reads positions from an `Int64Array`, but
+inserted each value with `pos as u64`. That allowed malformed negative
+positions to wrap into very large row offsets instead of failing
+validation.
+
+## Tests
+
+- `cargo fmt --check`
+- `CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse cargo test -p iceberg
+test_parse_positional_deletes_rejects_negative_positions --locked`
+- `CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse cargo test -p iceberg
+arrow::caching_delete_file_loader::tests --locked`
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",c5448e707950e631e01c7a04cd01c5c4785371c1,2631,false,Kevin Liu,1,22,0,crates

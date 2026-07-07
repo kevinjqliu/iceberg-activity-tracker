@@ -2832,3 +2832,105 @@ now should be able to support custom `namespace-seperator`
 
 <!-- In the case of user-facing changes, please add the changelog label.
 -->",41276a3998e28a2d5832563585beaccab22a3c59,3389,false,,6,10,8,dev; pyiceberg; tests
+apache/iceberg-python,9a23d17ce0517f4f503cf4587cc97e1aa175c661,9a23d17,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-06T21:33:54+02:00,GitHub,noreply@github.com,2026-07-06T21:33:54+02:00,Build: Bump actions/setup-python from 6.2.0 to 6.3.0 (#3599),,9d36e2361493a7f582490519edac848a376ac913,3599,false,,7,13,13,.github
+apache/iceberg-python,af1416de9e5206268489558c0067ef61a4bb1147,af1416d,Jared Yu (余启正),qzyu999@gmail.com,2026-07-06T12:50:05-07:00,GitHub,noreply@github.com,2026-07-06T21:50:05+02:00,Docs: Add missing `_downcast_ns_timestamp_to_us` docstring (#3594),"## Which issue does this PR close?
+
+Minor documentation gap (no issue).
+
+## Rationale for this change
+
+The `ArrowScan` class declares `_downcast_ns_timestamp_to_us: bool |
+None` as a class-level type annotation and documents all other
+attributes in the docstring, but this attribute was missing from the
+Attributes section.
+
+## What changes are included in this PR?
+
+Adds one line to the `ArrowScan` class docstring documenting the
+`_downcast_ns_timestamp_to_us` attribute.
+
+## Are there any user-facing changes?
+
+No.",9a23d17ce0517f4f503cf4587cc97e1aa175c661,3594,false,,1,1,0,pyiceberg
+apache/iceberg-python,1a87aa3c519839aa3f8713631af6d7ec4bf1d34c,1a87aa3,Anas Khan,83116240+anxkhn@users.noreply.github.com,2026-07-07T01:46:02+05:30,GitHub,noreply@github.com,2026-07-06T22:16:02+02:00,fix: require `pyarrow>=18.0.0` for native UUID type support (#3606),"<!-- Closes #1174 -->
+
+# Rationale for this change
+
+PyIceberg's PyArrow UUID handling depends on the native UUID APIs
+`pyarrow.uuid()`
+and `pyarrow.UuidType`, but the `pyarrow`, `pandas`, `duckdb`, and `ray`
+extras
+still pin `pyarrow>=17.0.0`.
+
+- On write, `PyArrowSchemaVisitor.visit_uuid` returns `pa.uuid()`
+  (`pyiceberg/io/pyarrow.py:806`).
+- On read, `_ConvertToIceberg.primitive` branches on
+  `isinstance(primitive, pa.UuidType)` (`pyiceberg/io/pyarrow.py:1497`).
+
+Both `pyarrow.uuid()` and `pyarrow.UuidType` were introduced in Apache
+Arrow
+18.0.0 (released 2024-10-28) and do not exist in 17.x. So an environment
+that
+resolves `pyarrow==17.x` under the current floor raises
+`AttributeError: module 'pyarrow' has no attribute 'uuid'` (or
+`'UuidType'`) as
+soon as a UUID-typed column is written, or an Arrow schema containing a
+UUID is
+converted back to Iceberg.
+
+This usage was added in #2007 (""Fix UUID support"") without raising the
+floor, and
+the earlier `Bump PyArrow to 18.0.0` change only moved the tested/locked
+version,
+not the declared lower bound. This PR bumps the floor to
+`pyarrow>=18.0.0` for the
+four affected extras so the declared dependency matches what the code
+actually
+requires. See also #1174 (Minimum required pyarrow version).
+
+## Are these changes tested?
+
+This is a dependency-floor bump with no code change, so the real guard
+is CI
+resolving the raised floor across the supported Python matrix; `uv lock
+--check`
+confirms `uv.lock` stays in sync with `pyproject.toml`.
+
+Locally:
+- `uv lock --check` passes (lock in sync).
+- `make lint` (ruff, ruff-format, mypy, license, uv-lock, ...) all pass.
+- Existing UUID coverage still passes and exercises both affected code
+paths:
+  `tests/io/test_pyarrow_visitor.py` (60 passed),
+`tests/utils/test_schema_conversion.py -k UUID` (2 passed), and the UUID
+cases in
+  `tests/test_conversions.py` (2 passed). A manual round-trip
+  `UUIDType -> pa.uuid() -> pa.UuidType -> UUIDType` runs clean.
+
+No new test is added because there is no new code path to cover: the
+existing UUID
+conversion tests already exercise `visit_uuid` and `_ConvertToIceberg`,
+and the
+floor bump only makes the declared dependency honest. A heavier
+alternative would
+be to version-gate `pa.uuid()`/`pa.UuidType` at runtime (as done for
+`AzureFileSystem` via `MIN_PYARROW_VERSION_SUPPORTING_AZURE_FS` in
+`pyiceberg/io/pyarrow.py`), but that keeps UUID unsupported on 17.x
+rather than
+requiring the version the feature needs; happy to go that route instead
+if
+preferred.
+
+## Are there any user-facing changes?
+
+Yes, indirectly: the minimum supported `pyarrow` for the `pyarrow`,
+`pandas`,
+`duckdb`, and `ray` extras rises from 17.0.0 to 18.0.0. This only
+affects
+environments currently resolving `pyarrow` 17.x, where UUID columns are
+already
+broken; it prevents that unsupported install rather than changing any
+working
+behavior. (Adding the `changelog` label if this warrants a changelog
+entry - I
+don't have permission to set labels as an external contributor.)",af1416de9e5206268489558c0067ef61a4bb1147,3606,false,,2,8,8,pyproject.toml; uv.lock
