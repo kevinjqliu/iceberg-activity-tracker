@@ -21386,3 +21386,104 @@ arrow::caching_delete_file_loader::tests --locked`
 ---------
 
 Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",c5448e707950e631e01c7a04cd01c5c4785371c1,2631,false,Kevin Liu,1,22,0,crates
+apache/iceberg-rust,0d6ada1cea01455477e383c0911300553e81ba8f,0d6ada1,Daniel Carl Jones,djonesoa@amazon.com,2026-07-07T18:04:08+01:00,GitHub,noreply@github.com,2026-07-07T10:04:08-07:00,chore: Update changelog for 0.10.0 (#2782),"## What changes are included in this PR?
+
+Update changelog and dependency files for 0.10.0 release (RC3).
+
+0.10.0 tracking: https://github.com/apache/iceberg-rust/issues/2527
+
+## Are these changes tested?
+
+N/A",f12772deed34b4181605d79b6dc20fb487684ae8,2782,false,,17,57,35,CHANGELOG.md; bindings; crates
+apache/iceberg-rust,894108bd5eda51b4a6f164f7040c4ca4933b46de,894108b,Daniel Carl Jones,djonesoa@amazon.com,2026-07-07T21:48:14+01:00,GitHub,noreply@github.com,2026-07-07T13:48:14-07:00,chore(refactor): rename SnapshotProducer::manifest_file to produce_manifest_file_list (#2596),"## Which issue does this PR close?
+
+- Closes #2529.
+
+## What changes are included in this PR?
+
+Renames the trait method and adds rustdoc.
+
+The change is pretty small, although risks impacting open PRs. I would
+recommend to either merge now or park for a while.
+
+Originally suggested as the naming does not indicate what the purpose of
+the method is.
+
+## Are these changes tested?
+
+N/A",0d6ada1cea01455477e383c0911300553e81ba8f,2596,false,,1,6,4,crates
+apache/iceberg-rust,875fdb7463f0a2d685fa3c61c70527469bcd4407,875fdb7,Xander,zander181@googlemail.com,2026-07-08T00:02:50+01:00,GitHub,noreply@github.com,2026-07-07T16:02:50-07:00,chore(deps): Bump DataFusion to 54.0.0 (#2648),"## Which issue does this PR close?
+
+DataFusion to 54.0.0 was recently released, we should try and track
+latests releases.
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Closes #.
+
+## What changes are included in this PR?
+
+[ExecutionPlan](https://github.com/apache/datafusion/pull/21263)
+[TableProvider, SchemaProvider, CatalogProvider,
+CatalogProviderList](https://github.com/apache/datafusion/pull/21346)
+and [PhysicalExpr](https://github.com/apache/datafusion/pull/21573) have
+all had their `as_any` removed from the trait. That's really the only
+change needed here. [Upgrade guide documents
+this](https://datafusion.apache.org/library-user-guide/upgrading/54.0.0.html#remove-as-any-from-physicalexpr-scalarudfimpl-aggregateudfimpl-windowudfimpl-executionplan-tableprovider-schemaprovider-catalogprovider-catalogproviderlist-tablesource-filesource-fileformat-fileformatfactory-datasource-and-datasink)
+
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",894108bd5eda51b4a6f164f7040c4ca4933b46de,2648,false,,15,1026,1528,Cargo.lock; Cargo.toml; crates
+apache/iceberg-rust,22c256e985a68b3a71dd3890d3ebd6bedc3e7b0d,22c256e,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-07-08T03:10:59-04:00,GitHub,noreply@github.com,2026-07-08T15:10:59+08:00,fix(reader): keep rows with a null equality-delete column value (#2781),"## Which issue does this PR close?
+
+- Closes #2780.
+
+## What changes are included in this PR?
+
+Equality deletes are applied by building a predicate that keeps rows not
+matched by any delete row. For each equality column the keep term was
+`col != v`, produced by negating the equality match. Applied as a row
+filter, `null != v` evaluates to null, so a data row whose equality
+column is null was dropped. Per the spec ([Equality Delete
+Files](https://iceberg.apache.org/spec/#equality-delete-files)), a null
+value matches only a null delete value, so such rows should be kept.
+
+This builds the keep predicate directly in
+`parse_equality_deletes_record_batch_stream`: `col IS NULL OR col != v`
+for a non-null delete value, and `col IS NOT NULL` for a null delete
+value. Rows with a null value in an equality column are no longer
+deleted.
+
+## Are these changes tested?
+
+Yes, unit tests in `caching_delete_file_loader` covering the predicate
+construction:
+
+- `test_equality_delete_predicate_preserves_null_rows`: a non-null
+delete value on a nullable column produces `(col IS NULL) OR (col !=
+v)`.
+- `test_equality_delete_predicate_matches_null_delete_value`: a null
+delete value produces `col IS NOT NULL`.
+- `test_equality_delete_predicate_multiple_columns`: per-column keep
+terms are OR-ed.
+- `test_equality_delete_predicate_multiple_delete_rows`: per-row keep
+predicates are AND-ed.
+- `test_delete_file_loader_parse_equality_deletes` (existing, updated):
+the combined case with multiple columns, a required column, and null
+delete values.",875fdb7463f0a2d685fa3c61c70527469bcd4407,2781,false,,1,131,10,crates

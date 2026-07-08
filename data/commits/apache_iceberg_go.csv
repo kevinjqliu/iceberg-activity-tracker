@@ -16182,3 +16182,20 @@ file path.
 
 ## Testing
 - `go test ./io -count=1`",6ce8a149447f5fb128299a30bda6529a51ec548c,1396,false,,2,14,1,io
+apache/iceberg-go,4d27dcc4d3a7bc2cfd3f9f1cb89360f85b332792,4d27dcc,Tanmay Rauth,t_rauth@apple.com,2026-07-07T14:17:38-07:00,GitHub,noreply@github.com,2026-07-07T23:17:38+02:00,fix(table): dedupe repeated ref assertions by ref name (#1370),"Key assert-ref-snapshot-id dedupe by requirement type and ref name,
+ignoring the asserted snapshot id. As a transaction mutates its own
+builder ref state across operations, the same ref would otherwise carry
+multiple, mutually contradictory base-state assertions that a validating
+catalog rejects. Other requirement types keep the canonical JSON payload
+key, so assertions for different refs still survive dedupe.
+
+Closes #1344",bc12a973a8ddfe54da06e5d20a5d1e736c2871a0,1370,false,,2,128,2,table
+apache/iceberg-go,fa15d43aa6613e9489ff16880bc154dd4d084121,fa15d43,Tanmay Rauth,t_rauth@apple.com,2026-07-07T14:41:30-07:00,GitHub,noreply@github.com,2026-07-07T23:41:30+02:00,feat(metrics): add Reporter contract and built-in reporters (#1236) (#1343),"First PR of the metrics reporting framework.
+Adds the metrics package with the Reporter interface, the sealed Report
+marker, and the built-in Nop, Logging, InMemory, and Combine reporters.
+Reporting is opt-in and must never block or fail the observed
+scan/commit.
+
+Concrete report types and instrumentation follow in later PRs.
+
+Related: #1236",4d27dcc4d3a7bc2cfd3f9f1cb89360f85b332792,1343,false,,4,491,1,Makefile; metrics

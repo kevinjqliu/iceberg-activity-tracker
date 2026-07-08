@@ -3610,3 +3610,21 @@ used in GenericOrcReader for similar ""invalid type"" exceptions.
 
 Generated-by: Claude Code",79bae78cba314ecf29cb2c2bf7b7016503e6c919,17098,false,,2,28,2,orc
 apache/iceberg,34b03b7710a116a7ffc14b2e68aad1b8ee484d1f,34b03b7,Maximilian Michels,mxm@apache.org,2026-07-07T11:08:49+02:00,GitHub,noreply@github.com,2026-07-07T11:08:49+02:00,Flink: Resolve unpartitioned equality deletes across all partitions (#17018),,d303514b4a9e90e62ffe136dcea3eed624eab288,17018,false,,7,233,61,flink
+apache/iceberg,773907d28b46f984698bb85b52b3de47053063cd,773907d,Ryan Blue,blue@apache.org,2026-07-07T12:32:18-07:00,GitHub,noreply@github.com,2026-07-07T12:32:18-07:00,Core: Add id tracking to MetricsConfig (#17022),,34b03b7710a116a7ffc14b2e68aad1b8ee484d1f,17022,false,,27,252,140,.palantir; core; data; flink; spark
+apache/iceberg,2780b917ea82c509d1fd817e536b70e7a21dc12c,2780b91,Amogh Jahagirdar,amoghj@apache.org,2026-07-07T14:07:34-06:00,GitHub,noreply@github.com,2026-07-07T13:07:34-07:00,Core: Cleanup some of the TrackedFile tests (#17035),,773907d28b46f984698bb85b52b3de47053063cd,17035,false,,1,232,365,core
+apache/iceberg,1d64a7c9109cc03a3b445403be526fb59f59e2ed,1d64a7c,Maximilian Michels,mxm@apache.org,2026-07-07T22:59:21+02:00,GitHub,noreply@github.com,2026-07-07T13:59:21-07:00,Flink: Backport: Resolve unpartitioned equality deletes across all partitions (#17018) (#17129),,2780b917ea82c509d1fd817e536b70e7a21dc12c,17129,false,,14,466,122,flink
+apache/iceberg,3cd56a70623e4fb5856b7ec58b4698febbaae5df,3cd56a7,Xiaoxuan,xioxuan@amazon.com,2026-07-07T22:34:19-07:00,GitHub,noreply@github.com,2026-07-07T22:34:19-07:00,Parquet: Fix variant shredding of large decimals (precision > 18) (#17002),"VariantShreddingAnalyzer shredded a decimal with precision > 18 into a
+FIXED_LEN_BYTE_ARRAY typed_value with a hardcoded length of 16. The writer
+(FixedDecimalWriter) instead emits the minimum number of bytes for the
+precision, TypeUtil.decimalRequiredBytes (e.g. 9 bytes for precision 20), so
+the write fails with IllegalArgumentException: 'Fixed Binary size 9 does not
+match field type length 16'. This breaks write/read of any variant holding an
+int128-range value (stored as DECIMAL16), such as an integer with 19-35 digits.
+
+The hardcoded 16 was the only fixed-decimal width in the codebase not derived
+from decimalRequiredBytes; TypeToMessageType and every Parquet decimal writer
+already use it. decimalRequiredBytes is 9-15 bytes for precision 19-35 and 16
+bytes only for precision 36-38, so the constant matched the writer just at
+36-38; for precision 19-35 the declared length exceeded the bytes the writer
+emits. Set the length to TypeUtil.decimalRequiredBytes(maxPrecision) to realign
+this outlier. Precision <= 18 is unaffected (INT32/INT64).",1d64a7c9109cc03a3b445403be526fb59f59e2ed,17002,false,,6,106,4,flink; parquet; spark
