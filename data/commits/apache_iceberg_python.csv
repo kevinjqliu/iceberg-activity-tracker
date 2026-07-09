@@ -2934,3 +2934,100 @@ working
 behavior. (Adding the `changelog` label if this warrants a changelog
 entry - I
 don't have permission to set labels as an external contributor.)",af1416de9e5206268489558c0067ef61a4bb1147,3606,false,,2,8,8,pyproject.toml; uv.lock
+apache/iceberg-python,c109e100193bc6ddf8097ea6e587733d8a33e575,c109e10,Jared Yu (余启正),qzyu999@gmail.com,2026-07-08T09:05:27-07:00,GitHub,noreply@github.com,2026-07-08T09:05:27-07:00,Build: Add .venv/ to .gitignore (#3626),"<!--
+Thanks for opening a pull request!
+-->
+
+<!-- Closes #${GITHUB_ISSUE_ID} -->
+
+# Rationale for this change
+
+`.venv/` is the default directory name created by `python -m venv .venv`
+and is the convention recommended by the Python docs and modern tooling
+like `uv`. Currently `.gitignore` only ignores `venv/` but not `.venv/`,
+so contributors using the dotted convention could accidentally stage
+their virtualenv.
+
+## Are these changes tested?
+
+N/A — this is a `.gitignore`-only change.
+
+## Are there any user-facing changes?
+
+No.",1a87aa3c519839aa3f8713631af6d7ec4bf1d34c,3626,false,,1,1,0,.gitignore
+apache/iceberg-python,2c7552324800f40adbeda844bbc40d3420c05a84,2c75523,Anas Khan,anxkhn28@gmail.com,2026-07-08T21:38:11+05:30,GitHub,noreply@github.com,2026-07-08T09:08:11-07:00,fix(ci): correct stale-issue-label and exempt security issues (#3605),"# Rationale for this change
+
+The stale-bot workflow (`.github/workflows/stale.yml`) configures the
+issue side
+incorrectly:
+
+```yaml
+stale-issue-label: 'stale,security'
+exempt-issue-labels: 'not-stale'
+```
+
+`stale-issue-label` takes a **single** label and `actions/stale` applies
+it
+verbatim (it is not comma-split, unlike the `*-labels` inputs). So
+instead of
+tagging stale issues with `stale`, the workflow tags them with one bogus
+label
+literally named `stale,security`. That breaks the workflow's own
+`stale-issue-message` (which tells users to add `not-stale`, keyed on
+the stale
+state) and anything else that relies on a plain `stale` label.
+
+It also leaves `security` out of `exempt-issue-labels`, so
+`security`-labeled
+issues are still marked stale and auto-closed after 180+14 days. This is
+inconsistent with the **PR** side of the same file, which already
+exempts
+`security`:
+
+```yaml
+stale-pr-label: 'stale'
+exempt-pr-labels: 'not-stale,security'
+```
+
+The value was introduced in #3125, which changed `stale-issue-label:
+'stale'` to
+`'stale,security'` in the same change that added
+`exempt-pr-labels: 'not-stale,security'`, i.e. `security` was meant as
+an
+exemption on both sides but landed in the wrong key on the issue side.
+
+This change makes the issue side mirror the (already correct) PR side:
+
+```yaml
+stale-issue-label: 'stale'
+exempt-issue-labels: 'not-stale,security'
+```
+
+## Are these changes tested?
+
+There is no test harness for GitHub Actions workflow semantics in this
+repo, so
+this was validated by inspection against the pinned action's contract
+and source:
+
+- Against `actions/stale`'s `action.yml` at the pinned SHA
+(`eb5cf3af3ac0a1aa4c9c45633dd1ae542a27a899`, v10.3.0):
+`stale-issue-label` is
+documented as ""The label to apply when an issue is stale"" (single value,
+default `Stale`), while `exempt-issue-labels` documents ""Separate
+multiple
+labels with commas"". In the action source, the stale label is applied
+verbatim
+and only the exempt labels are comma-split, confirming both effects
+above.
+- `stale-issue-label: 'stale'` matches the PR side of this same file and
+the
+  Java `apache/iceberg` `stale.yml`.
+- Repo linters pass on the changed file (`check-yaml`, `codespell`,
+  trailing-whitespace, end-of-file-fixer).
+
+## Are there any user-facing changes?
+
+No. This only affects the repository's stale-bot automation (issue
+labeling and
+which issues are exempt from auto-close). No changelog label needed.",c109e100193bc6ddf8097ea6e587733d8a33e575,3605,false,,1,2,2,.github

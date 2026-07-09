@@ -21487,3 +21487,136 @@ predicates are AND-ed.
 - `test_delete_file_loader_parse_equality_deletes` (existing, updated):
 the combined case with multiple columns, a required column, and null
 delete values.",875fdb7463f0a2d685fa3c61c70527469bcd4407,2781,false,,1,131,10,crates
+apache/iceberg-rust,2454d64f8ee4fb351d0e917620e5dd1971f7eeb2,2454d64,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-07-08T16:39:32-07:00,GitHub,noreply@github.com,2026-07-08T16:39:32-07:00,feat(catalog-rest): parse server-advertised endpoints from GET /v1/config (#2692),"## Which issue does this PR close?
+
+Related to #1690 (server-side scan planning), which relies on endpoint
+negotiation. This PR lands the negotiation piece on its own so it can be
+reviewed independently.
+
+## What changes are included in this PR?
+
+The REST spec lets a server advertise the routes it supports in the
+`endpoints`
+field of its `GET /v1/config` response, so clients can negotiate
+optional
+capabilities instead of assuming every server implements every
+operation. The
+Rust client currently ignores this field.
+
+This mirrors the capability negotiation the Java client gained in
+apache/iceberg#10929 (the `endpoints` field in the config response, the
+`Endpoint` type, and the default-endpoint fallback when a server omits
+the list).
+
+This PR:
+- Adds an `Endpoint` type (HTTP method + path template) parsed from the
+`""<method> <path>""` wire form via `FromStr` — which validates the
+single-space
+shape and the HTTP method — with serde delegating to it. The method is
+stored
+as a typed `http::Method` (kept out of the public API; `method()`
+returns
+  `&str`).
+- Parses the config response's `endpoints` into `Option<Vec<Endpoint>>`
+so an
+absent field and an explicit empty list are modelled distinctly, and
+stores
+  the negotiated set on the catalog's runtime context.
+- Resolves the set following the spec's optional-field semantics: an
+absent
+field → a standard base set of namespace/table operations is assumed (so
+an
+older server still resolves its core operations as supported); a present
+list
+— even an empty one — is used verbatim. Optional endpoints outside the
+base
+  set stay unsupported unless explicitly advertised.
+- Exposes `RestCatalog::supports_endpoint(&Endpoint)` to query the
+negotiated
+  set.
+
+No existing behaviour changes for callers that don't consult
+`supports_endpoint`.
+
+## Are these changes tested?
+
+Yes:
+- Unit tests for `Endpoint`: `FromStr`/serde round-trip, rejection of
+malformed
+  input (no / extra / leading / trailing space, empty), HTTP-method
+  normalization, and the default endpoint set.
+- `mockito` catalog tests: a server that advertises `endpoints`
+(asserting
+`supports_endpoint` is true/false for listed/unlisted routes), a server
+that
+omits the field (base operations resolve as supported), and a server
+that
+  sends an explicit empty list (nothing is supported).",22c256e985a68b3a71dd3890d3ebd6bedc3e7b0d,2692,false,,4,220,0,crates
+apache/iceberg-rust,ff678ca6d1123d9d82902b34379ccba2caf172b6,ff678ca,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-07-09T05:13:15-04:00,GitHub,noreply@github.com,2026-07-09T17:13:15+08:00,fix(spec): support float/double conversion in Datum::to() (#2783),"## Which issue does this PR close?
+
+- Closes #.
+
+## What changes are included in this PR?
+
+`Datum::to()` had no conversion between `float` and `double`, so binding
+a predicate whose literal type differed from the column type failed with
+`Can't convert datum from double type to float type`. This is common
+because engines often carry a floating point literal as a double even
+when the column is a float.
+
+This PR adds the two missing arms:
+
+- `Double -> Float`: narrows through a new `f64_to_f32` helper that
+returns `AboveMax` / `BelowMin` when the value is outside the finite
+float range, matching the existing integer narrowing helpers
+(`i64_to_i32`, `i128_to_i64`). A plain `as f32` cast would saturate to
+`+/-inf` and change comparison results, so the sentinels let predicate
+binding resolve the comparison correctly.
+- `Float -> Double`: widens losslessly.
+
+## Are these changes tested?
+
+Yes. Four unit tests in `spec/values/tests.rs` cover the in range
+narrowing, the above max and below min cases, and the widening. The
+`AboveMax` / `BelowMin` handling is already exercised by the existing
+predicate binding tests in `expr::predicate`.
+
+---------
+
+Co-authored-by: emkornfield <emkornfield@gmail.com>
+Co-authored-by: blackmwk <liurenjie1024@outlook.com>",2454d64f8ee4fb351d0e917620e5dd1971f7eeb2,2783,false,emkornfield; blackmwk,2,60,0,crates
+apache/iceberg-rust,facecafa4c2acbd64a98b67d138c3c2be3c84ce3,facecaf,Xander,zander181@googlemail.com,2026-07-09T15:57:13+01:00,GitHub,noreply@github.com,2026-07-09T22:57:13+08:00,feat(encryption): [11/N] KMS factory trait and catalog wiring (#2650),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Working towards: #2034
+
+## What changes are included in this PR?
+
+Adds `KmsClientFactory` to the catalog builder to allow a catalog to
+build one KMS client per catalog, this mirrors [Java's implementation
+](https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/encryption/EncryptionUtil.java#L47).
+Note in rust we don't have reflection so using Java's
+`encryption.kms-impl` isn't an option for us. This is a very similar
+pattern to what we do for the `StorageFactory` so I believe the pattern
+is idiomatic for us.
+
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",ff678ca6d1123d9d82902b34379ccba2caf172b6,2650,false,,18,554,68,crates
