@@ -3641,3 +3641,29 @@ apache/iceberg,30d137e441e08f475d2cf82b5909489cb362de89,30d137e,Xin Huang,425973
 apache/iceberg,dd35b7840edefdcbcb5a1fce14702cdafe76967b,dd35b78,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-07-08T17:38:05-07:00,GitHub,noreply@github.com,2026-07-08T17:38:05-07:00,Core: Test geometry and geography metrics keep counts without bounds (#17131),,30d137e441e08f475d2cf82b5909489cb362de89,17131,false,,1,46,0,core
 apache/iceberg,a71f95023184b39f41e643dc5eeb006c554b5428,a71f950,GuoYu,511955993@qq.com,2026-07-09T15:04:46+08:00,GitHub,noreply@github.com,2026-07-09T09:04:46+02:00,Docs: Add doc for flink table maintenance ConvertEqualityDeletes (#17113),,dd35b7840edefdcbcb5a1fce14702cdafe76967b,17113,false,,1,55,0,docs
 apache/iceberg,30f87adc15408f798dfe3f087a6a74f0f69321ab,30f87ad,pvary,peter.vary.apache@gmail.com,2026-07-09T10:53:23+02:00,GitHub,noreply@github.com,2026-07-09T10:53:23+02:00,"Revert ""Core: Test geometry and geography metrics keep counts without bounds (#17131)"" (#17141)",This reverts commit dd35b7840edefdcbcb5a1fce14702cdafe76967b.,a71f95023184b39f41e643dc5eeb006c554b5428,17141,false,,1,0,46,core
+apache/iceberg,5f154712f799a0b24d4d2dac8d889de67aefa051,5f15471,Gang Wu,ustcwg@gmail.com,2026-07-10T00:42:43+08:00,GitHub,noreply@github.com,2026-07-09T10:42:43-06:00,"Core, Spark: Fix row lineage last updated sequence inheritance (#17039)","Core, Spark: Fix row lineage last updated sequence inheritance
+
+Restore the row lineage spec wording and update Java scan constants to inherit _last_updated_sequence_number from a data file's data sequence number.
+
+This preserves the original row update sequence when a v2 rewrite carries an older data sequence number and the table is later upgraded to v3.",30f87adc15408f798dfe3f087a6a74f0f69321ab,17039,false,,5,171,1,core; spark
+apache/iceberg,d41101270ed4f8738c0769e05e37f5126972ab33,d411012,Gabriel Baldez,130607246+GabrielBBaldez@users.noreply.github.com,2026-07-09T18:20:37-03:00,GitHub,noreply@github.com,2026-07-09T14:20:37-07:00,AWS: Use assumed-role credentials for REST SigV4 signing (#16794),"* AWS: Use assumed-role credentials for REST SigV4 signing
+
+RESTSigV4AuthSession signs requests with AwsProperties#restCredentialsProvider(), whose decision chain only handled static rest.* keys, a custom client.credentials-provider, and otherwise the default credential chain. When the catalog is configured with AssumeRoleAwsClientFactory, the assumed role is applied to the S3/Glue/KMS/DynamoDB clients but never to the SigV4 REST signing path, so REST calls silently fall back to the default credential chain and diverge from the other AWS clients.
+
+Add an assume-role branch between the custom-provider and default-chain steps that returns an StsAssumeRoleCredentialsProvider built from the existing client.assume-role.* properties, mirroring AssumeRoleAwsClientFactory#createCredentialsProvider.
+
+* AWS: Fall back to default credentials when assume-role region is missing for REST signing
+
+* Docs: Add documentation on SigV4 REST credential configuration
+
+* Docs: Add assume-role configurations to sigv4 docs. Add disclaimer in aws to refer to rest sigv4 catalog configuration
+
+* AWS: Use stable UUID per AwsProperties instance for lazily creating random session name
+
+* AWS: Make assumeRoleCredentialsProvider in AwsProperties package-private. Update AssumeRoleAwsClientFactory to use shared function to reduce code duplication
+
+---------
+
+Co-authored-by: Nathan Yee <yee.nathan.c@gmail.com>",5f154712f799a0b24d4d2dac8d889de67aefa051,16794,false,Nathan Yee,5,151,39,aws; docs
+apache/iceberg,f5770491d63d319f2c4d3308ac163415bb2a38ef,f577049,Maximilian Michels,mxm@apache.org,2026-07-10T15:12:21+02:00,GitHub,noreply@github.com,2026-07-10T15:12:21+02:00,Flink: Integrate ConvertEqualityDeletes with IcebergSink (#17142),,d41101270ed4f8738c0769e05e37f5126972ab33,17142,false,,10,445,0,docs; flink
+apache/iceberg,f07ac96a25b19c56a03c41fd460fa3dfe8e43cc6,f07ac96,Adam Szita,40628386+szlta@users.noreply.github.com,2026-07-10T15:56:51+02:00,GitHub,noreply@github.com,2026-07-10T15:56:51+02:00,Fix catalog properties links after docs refactor of #15848 (#17153),,f5770491d63d319f2c4d3308ac163415bb2a38ef,17153,false,,2,2,2,open-api; site

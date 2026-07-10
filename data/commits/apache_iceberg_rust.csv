@@ -21620,3 +21620,38 @@ Specify what test covers (unit test, integration test, etc.).
 If tests are not included in your PR, please explain why (for example,
 are they covered by existing tests)?
 -->",ff678ca6d1123d9d82902b34379ccba2caf172b6,2650,false,,18,554,68,crates
+apache/iceberg-rust,6077a42ea061f73a561c26880993f84fafb1ba0f,6077a42,Abanoub Doss,abanoubdoss@gmail.com,2026-07-10T01:00:05-05:00,GitHub,noreply@github.com,2026-07-10T14:00:05+08:00,ci: fix the cargo-public-api double install (#2793),"## Which issue does this PR close?
+
+- None. CI maintenance for the Public API job.
+
+## What changes are included in this PR?
+
+The job installs cargo-public-api twice per run.
+`taiki-e/install-action` has no prebuilt binary for it, so that step
+falls back to cargo-binstall and compiles the latest release from source
+(currently v0.52.0, ~76s). `make check-public-api` then compiles the
+pinned v0.51.0 from source again (~72s) because the installed version
+doesn't match the pin. And since the binary on disk never matches the
+pin at cache-save time, rust-cache never shortcuts either install.
+
+This deletes the install-action step. The Makefile's `cargo install
+--locked cargo-public-api@0.51.0` becomes the only install; on warm runs
+rust-cache restores the pinned binary and the install is a no-op. 0.51.0
+is the version the checked-in `public-api.txt` files were generated
+with, so the check itself is unchanged.
+
+The Makefile also stops computing `PUBLIC_API_CRATES` with `$(shell
+cargo metadata ...)` at parse time, which made every `make` invocation
+pay a cargo metadata call. The list is now evaluated inside the two
+recipes that use it, with identical command and output.
+
+Warm Public API job time on a fork: 4:03 to 1:36.
+
+## Are these changes tested?
+
+- Verified on a fork: warm runs skip the install and run the same
+checks.
+- `make check-public-api` and `make generate-public-api` expand to the
+same commands as before.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",facecafa4c2acbd64a98b67d138c3c2be3c84ce3,2793,false,Abanoub Doss,2,6,9,.github; Makefile
