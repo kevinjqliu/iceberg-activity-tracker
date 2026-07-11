@@ -17644,3 +17644,30 @@ longer impacts the underlying manifest entry.
 ## Compatibility
 This is a source-compatible behavioral safety fix with no external API
 change.",02b7ef1de397cc90f8f8b65d486a90e101550660,1401,false,,2,25,1,manifest.go; manifest_test.go
+apache/iceberg-go,de53c8d660a36ea0f17517416da05c1d7f0a0cf6,de53c8d,Minh Vu,vuhoangminh97@gmail.com,2026-07-10T18:02:27+02:00,GitHub,noreply@github.com,2026-07-10T18:02:27+02:00,fix(cli): validate branch and tag retention inputs (#1399),"## Why
+The branch/tag create commands previously accepted invalid ref names and
+non-positive retention values. Those inputs could create metadata
+updates that should have been rejected up front.
+
+## What Changed
+- Reject invalid branch/tag names before updates are built, preventing
+malformed refs (empty names, whitespace-wrapped names, path separators,
+`.`/`..`, control characters).
+- Reject non-positive retention settings (`--max-ref-age`,
+`--max-snapshot-age`, `--min-snapshots-to-keep`) so invalid policies are
+not persisted.
+- Add regression coverage for both branch and tag validation paths.
+
+## Testing
+`go test ./cmd/iceberg -run
+'TestRunBranchCreateRejectsNegativeRetentionValues|TestRunBranchCreateRejectsInvalidRefName|TestRunTagCreateRejectsNegativeMaxRefAge|TestRunTagCreateRejectsInvalidRefName'
+-count=1`",bc52bc78a6709a14a40ccf8b7a9b24b1d938ca52,1399,false,,2,313,0,cmd
+apache/iceberg-go,e5748b15129dbe633b8142a118e668a6c79673a3,e5748b1,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-07-10T12:48:01-07:00,GitHub,noreply@github.com,2026-07-10T21:48:01+02:00,feat(cli): RewriteManifests Maintenance Task (#1283),"Maintenance tasks are awesome! This introduces support for
+RewriteManifests and the associated CLI command.
+
+The goal of RewriteManifests is to ""rewrite"" manifests by combining them
+together into larger manifests.
+
+Note: I had to introduce a new parameter to the SnapshotProducer impl
+called `rebuildFromInheritedOnly`. I tried to match the others. Let me
+know if there's a better way to express this.",de53c8d660a36ea0f17517416da05c1d7f0a0cf6,1283,false,,10,1706,29,cmd; table

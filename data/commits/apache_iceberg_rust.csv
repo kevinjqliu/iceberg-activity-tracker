@@ -21655,3 +21655,42 @@ checks.
 same commands as before.
 
 Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",facecafa4c2acbd64a98b67d138c3c2be3c84ce3,2793,false,Abanoub Doss,2,6,9,.github; Makefile
+apache/iceberg-rust,a03e450c6f8afbbf01d35d46e58d263cbd34be5d,a03e450,Abanoub Doss,abanoubdoss@gmail.com,2026-07-11T02:34:05-05:00,GitHub,noreply@github.com,2026-07-11T09:34:05+02:00,ci: drop unnecessary protoc installs (#2805),"## Which issue does this PR close?
+
+- None. CI maintenance.
+
+## What changes are included in this PR?
+
+Deletes every `Install protoc` step: five in ci.yml, one in
+public-api.yml, one in website.yml.
+
+The installs were added with the datafusion 48 bump (#1501). That bump
+pulled in the `substrait` crate, whose build script runs prost-build,
+and prost-build shells out to protoc. The DataFusion 54 bump (#2648)
+dropped `substrait` and `prost-build` from the tree, and prost-build was
+the only thing that ever ran protoc. The remaining
+`prost`/`prost-derive` dependencies come from datafusion-proto, which
+ships pregenerated code and has no build script. So nothing in `make
+build`, the test suite, or the `cargo doc` run in website.yml needs
+protoc anymore.
+
+A side benefit of this simplification is that we remove a dependency on
+arduino/setup-protoc, which hasn't seen a commit since September 2024
+and was printing a Node runtime deprecation warning on every run.
+
+## Are these changes tested?
+
+- Verified on a fork based past #2648: all ci.yml and public-api.yml
+jobs run green without protoc, including the full docker-backed test
+suite.
+- `cargo metadata` confirms datafusion-proto and datafusion-proto-common
+have no build script. `prost-build` is absent from Cargo.lock and
+nothing in the workspace source references protoc.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",6077a42ea061f73a561c26880993f84fafb1ba0f,2805,false,Abanoub Doss,3,0,34,.github
+apache/iceberg-rust,d1b8eacd87e3601b9b5c59dfa21c3f2a925a7240,d1b8eac,Yuya Ebihara,ebyhry@gmail.com,2026-07-11T16:34:47+09:00,GitHub,noreply@github.com,2026-07-11T09:34:47+02:00,Infra: Group github/codeql-action bumps into a single dependabot PR (#2800),"Thus, dependabot can update these two jobs in a single PR:
+
+
+https://github.com/apache/iceberg-rust/blob/6077a42ea061f73a561c26880993f84fafb1ba0f/.github/workflows/codeql.yml#L48-L54
+
+- https://github.com/apache/infrastructure-actions/pull/1028",a03e450c6f8afbbf01d35d46e58d263cbd34be5d,2800,false,,1,7,0,.github
