@@ -5405,3 +5405,66 @@ issue.
 ```
 error: ‘void operator delete(void*, std::size_t)’ called on a pointer to an unallocated object ‘1’ [-Werror=free-nonheap-object]
 ```",62e1bd8ed5e1ba58b86f8630d10be7cf2ecbb908,812,false,,3,24,14,.github; ci; src
+apache/iceberg-cpp,755799d1ba4ae3d63ffa01cb7152cc796ed3ef52,755799d,Junwang Zhao,zhjwpku@gmail.com,2026-07-12T00:04:02+08:00,GitHub,noreply@github.com,2026-07-12T00:04:02+08:00,refactor: use decimal high and low for Arrow scalar (#803),,aa36d3584917deb267a47014b9556f07b8eae47e,803,false,,1,1,3,src
+apache/iceberg-cpp,263795e9288fe4421c9248888ddd16aba677b8a4,263795e,Timothy Wang,timothy.art@gmail.com,2026-07-11T18:39:30-07:00,GitHub,noreply@github.com,2026-07-12T09:39:30+08:00,build: add benchmark build scaffolding (#825),"## Summary
+
+Adds an opt-in benchmark build path so future C++ microbenchmarks can
+live in-tree without affecting normal builds. Benchmarks stay disabled
+by default, and this PR keeps the executable intentionally small so
+reviewers can focus on CMake/Meson wiring and Google Benchmark
+integration.
+
+- Adds `ICEBERG_BUILD_BENCHMARKS` for CMake and a disabled-by-default
+`benchmarks` Meson feature.
+- Wires `src/iceberg/benchmark` into both build systems.
+- Adds Google Benchmark dependency setup for CMake and Meson.
+- Adds a tiny smoke benchmark so the new target is buildable in
+isolation.
+
+Part of #690.
+
+## Stack
+
+This is PR 1 of 2.
+
+PR 2 adds the actual metrics evaluator benchmark cases on top of this
+scaffolding: timothyw553/iceberg-cpp#1.
+
+## Test Plan
+
+- [x] Configured benchmark-enabled CMake build with
+`-DICEBERG_BUILD_BENCHMARKS=ON`.
+- [x] Built `metrics_evaluator_benchmark` on this branch.
+- [x] Ran the smoke benchmark with `--benchmark_min_time=0.01s`.
+- [x] Re-ran the default build and test suite on the top of the stack:
+18/18 tests passed.
+- [ ] Meson wiring is syntax-reviewed but not locally executed because
+`meson` is not installed in this shell.
+
+## Verification Commands
+
+```bash
+cmake -S . -B build-bench-stack -G Ninja \
+  -DFETCHCONTENT_TRY_FIND_PACKAGE_MODE=NEVER \
+  -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew/anaconda3 \
+  -DCMAKE_PREFIX_PATH='/opt/homebrew/opt/snappy;/opt/homebrew/opt/zstd' \
+  -DICEBERG_BUILD_BENCHMARKS=ON
+cmake --build build-bench-stack --target metrics_evaluator_benchmark
+build-bench-stack/src/iceberg/benchmark/metrics_evaluator_benchmark --benchmark_min_time=0.01s
+cmake --build build
+ctest --test-dir build --output-on-failure
+```",755799d1ba4ae3d63ffa01cb7152cc796ed3ef52,825,false,,9,160,0,.github; CMakeLists.txt; meson.options; src; subprojects
+apache/iceberg-cpp,2191844e14f4efd3d6ee9bf5d0db835e218c1ffd,2191844,Anupam Yadav,anupamy030@gmail.com,2026-07-11T18:50:58-07:00,GitHub,noreply@github.com,2026-07-12T09:50:58+08:00,build: enable clang-tidy misc-include-cleaner for include hygiene (#820),,263795e9288fe4421c9248888ddd16aba677b8a4,820,false,,1,3,0,.clang-tidy
+apache/iceberg-cpp,0825f56c4f9dd535487aba292e99c053570f8d8b,0825f56,Abanoub Doss,abanoubdoss@gmail.com,2026-07-11T21:16:48-05:00,GitHub,noreply@github.com,2026-07-12T10:16:48+08:00,ci: retry build dir cleanup on Windows (#807),"## What
+Retry `rm -rf` cleanup in the CMake CI helper scripts. Windows can
+briefly keep a just-built executable or DLL open, which can make cleanup
+fail even after the build and tests have passed.
+
+`build_example.sh` retries before configuring and still lets `mkdir`
+fail if the directory remains, so it will not build in a half-deleted
+tree. `build_iceberg.sh` retries after the build and does not fail an
+otherwise successful job if final cleanup is still blocked.
+
+---------
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",2191844e14f4efd3d6ee9bf5d0db835e218c1ffd,807,false,Abanoub Doss,2,24,3,ci

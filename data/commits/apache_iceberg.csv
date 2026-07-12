@@ -3669,3 +3669,117 @@ apache/iceberg,f5770491d63d319f2c4d3308ac163415bb2a38ef,f577049,Maximilian Miche
 apache/iceberg,f07ac96a25b19c56a03c41fd460fa3dfe8e43cc6,f07ac96,Adam Szita,40628386+szlta@users.noreply.github.com,2026-07-10T15:56:51+02:00,GitHub,noreply@github.com,2026-07-10T15:56:51+02:00,Fix catalog properties links after docs refactor of #15848 (#17153),,f5770491d63d319f2c4d3308ac163415bb2a38ef,17153,false,,2,2,2,open-api; site
 apache/iceberg,9ddc391c1ac863e94be6520be5adc63ccdc19eb9,9ddc391,Maximilian Michels,mxm@apache.org,2026-07-11T00:46:28+02:00,GitHub,noreply@github.com,2026-07-10T15:46:28-07:00,Flink: Backport: Integrate ConvertEqualityDeletes with IcebergSink (#17142) (#17156),,f07ac96a25b19c56a03c41fd460fa3dfe8e43cc6,17156,false,,16,780,0,flink
 apache/iceberg,d99b0eefab6a9459e65a77448de914c61a89fadd,d99b0ee,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-07-10T23:53:21-07:00,GitHub,noreply@github.com,2026-07-10T23:53:21-07:00,Core: Test geometry and geography metrics keep counts without bounds (#17147),,9ddc391c1ac863e94be6520be5adc63ccdc19eb9,17147,false,,1,44,0,core
+apache/iceberg,c6fded17a633103c2364fc6c65ca969ce6de1058,c6fded1,Anas Khan,anxkhn28@gmail.com,2026-07-12T01:15:14+05:30,GitHub,noreply@github.com,2026-07-11T12:45:14-07:00,Core: Fix OAuthTokenResponse.addScope error to show the invalid scope (#17126),"* Core: Fix OAuthTokenResponse.addScope error to show the invalid scope
+
+Builder.addScope validated the scope with
+Preconditions.checkArgument(..., ""Invalid scope: %s"") but did not pass
+the scope argument for the %s placeholder. Guava leaves the unmatched
+%s in place, so an invalid scope raised IllegalArgumentException with
+the literal message ""Invalid scope: %s"", hiding the value that was
+actually rejected.
+
+Pass the scope as the format argument so the message reports the
+offending value, and add a regression test asserting the message
+contains the scope rather than the literal placeholder.
+
+Generated-by: opencode
+Signed-off-by: Anas Khan <83116240+anxkhn@users.noreply.github.com>
+
+* Apply suggestion from @nastra
+
+---------
+
+Signed-off-by: Anas Khan <83116240+anxkhn@users.noreply.github.com>
+Co-authored-by: Eduard Tudenhoefner <etudenhoefner@gmail.com>",d99b0eefab6a9459e65a77448de914c61a89fadd,17126,false,Eduard Tudenhoefner,2,8,1,core
+apache/iceberg,e8959f23a749695478e9c9075364518d08e09c85,e8959f2,Neelesh Salian,nssalian@users.noreply.github.com,2026-07-11T12:46:27-07:00,GitHub,noreply@github.com,2026-07-11T12:46:27-07:00,Parquet: Cache adjacent identical metadata in variant reader (#16852),"* Parquet: Cache adjacent identical metadata in variant reader
+
+* Update tests to check for hits and misses
+
+---------
+
+Co-authored-by: backport <backport@local>",c6fded17a633103c2364fc6c65ca969ce6de1058,16852,false,backport,2,140,1,parquet
+apache/iceberg,9729c94287749703b59f77d698d9726d558bd137,9729c94,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-11T23:55:08-07:00,GitHub,noreply@github.com,2026-07-11T23:55:08-07:00,Build: Bump github/codeql-action/upload-sarif from 4.36.2 to 4.36.3 (#17172),"Bumps [github/codeql-action/upload-sarif](https://github.com/github/codeql-action) from 4.36.2 to 4.36.3.
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/8aad20d150bbac5944a9f9d289da16a4b0d87c1e...54f647b7e1bb85c95cddabcd46b0c578ec92bc1a)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/upload-sarif
+  dependency-version: 4.36.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",e8959f23a749695478e9c9075364518d08e09c85,17172,false,dependabot[bot],1,1,1,.github
+apache/iceberg,a9240011f5b5d86bc3dbebb01f873d67b7b7cf8a,a924001,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-11T23:56:31-07:00,GitHub,noreply@github.com,2026-07-11T23:56:31-07:00,Build: Bump org.apache.httpcomponents.client5:httpclient5 (#17170),"Bumps [org.apache.httpcomponents.client5:httpclient5](https://github.com/apache/httpcomponents-client) from 5.6.1 to 5.6.2.
+- [Changelog](https://github.com/apache/httpcomponents-client/blob/rel/v5.6.2/RELEASE_NOTES.txt)
+- [Commits](https://github.com/apache/httpcomponents-client/compare/rel/v5.6.1...rel/v5.6.2)
+
+---
+updated-dependencies:
+- dependency-name: org.apache.httpcomponents.client5:httpclient5
+  dependency-version: 5.6.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",9729c94287749703b59f77d698d9726d558bd137,17170,false,dependabot[bot],1,1,1,gradle
+apache/iceberg,a221a146d278d8a81f22e4f46ffd2ff6bade482e,a221a14,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-11T23:57:08-07:00,GitHub,noreply@github.com,2026-07-11T23:57:08-07:00,Build: Bump software.amazon.awssdk:bom from 2.46.17 to 2.46.21 (#17168),"Bumps software.amazon.awssdk:bom from 2.46.17 to 2.46.21.
+
+---
+updated-dependencies:
+- dependency-name: software.amazon.awssdk:bom
+  dependency-version: 2.46.21
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a9240011f5b5d86bc3dbebb01f873d67b7b7cf8a,17168,false,dependabot[bot],1,1,1,gradle
+apache/iceberg,aa64e8ec823b1d5dec675824810acc722a0c7b65,aa64e8e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-11T23:57:39-07:00,GitHub,noreply@github.com,2026-07-11T23:57:39-07:00,Build: Bump com.diffplug.spotless:spotless-plugin-gradle (#17167),"Bumps [com.diffplug.spotless:spotless-plugin-gradle](https://github.com/diffplug/spotless) from 8.7.0 to 8.8.0.
+- [Release notes](https://github.com/diffplug/spotless/releases)
+- [Changelog](https://github.com/diffplug/spotless/blob/main/CHANGES.md)
+- [Commits](https://github.com/diffplug/spotless/compare/gradle/8.7.0...gradle/8.8.0)
+
+---
+updated-dependencies:
+- dependency-name: com.diffplug.spotless:spotless-plugin-gradle
+  dependency-version: 8.8.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a221a146d278d8a81f22e4f46ffd2ff6bade482e,17167,false,dependabot[bot],1,1,1,build.gradle
+apache/iceberg,2640206b5643bc8bcd453960a9d84bfc442051e6,2640206,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-11T23:58:08-07:00,GitHub,noreply@github.com,2026-07-11T23:58:08-07:00,Build: Bump datamodel-code-generator from 0.66.0 to 0.67.0 (#17166),"Bumps [datamodel-code-generator](https://github.com/koxudaxi/datamodel-code-generator) from 0.66.0 to 0.67.0.
+- [Release notes](https://github.com/koxudaxi/datamodel-code-generator/releases)
+- [Changelog](https://github.com/koxudaxi/datamodel-code-generator/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/koxudaxi/datamodel-code-generator/compare/0.66.0...0.67.0)
+
+---
+updated-dependencies:
+- dependency-name: datamodel-code-generator
+  dependency-version: 0.67.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",aa64e8ec823b1d5dec675824810acc722a0c7b65,17166,false,dependabot[bot],1,1,1,open-api
+apache/iceberg,5926f4fc8713ada3a44f008642b245f8b999b31c,5926f4f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-11T23:58:29-07:00,GitHub,noreply@github.com,2026-07-11T23:58:29-07:00,Build: Bump docker/setup-qemu-action from 4.1.0 to 4.2.0 (#17165),"Bumps [docker/setup-qemu-action](https://github.com/docker/setup-qemu-action) from 4.1.0 to 4.2.0.
+- [Release notes](https://github.com/docker/setup-qemu-action/releases)
+- [Commits](https://github.com/docker/setup-qemu-action/compare/06116385d9baf250c9f4dcb4858b16962ea869c3...96fe6ef7f33517b61c61be40b68a1882f3264fb8)
+
+---
+updated-dependencies:
+- dependency-name: docker/setup-qemu-action
+  dependency-version: 4.2.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",2640206b5643bc8bcd453960a9d84bfc442051e6,17165,false,dependabot[bot],1,1,1,.github
