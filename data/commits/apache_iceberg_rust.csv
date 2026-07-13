@@ -21694,3 +21694,1604 @@ apache/iceberg-rust,d1b8eacd87e3601b9b5c59dfa21c3f2a925a7240,d1b8eac,Yuya Ebihar
 https://github.com/apache/iceberg-rust/blob/6077a42ea061f73a561c26880993f84fafb1ba0f/.github/workflows/codeql.yml#L48-L54
 
 - https://github.com/apache/infrastructure-actions/pull/1028",a03e450c6f8afbbf01d35d46e58d263cbd34be5d,2800,false,,1,7,0,.github
+apache/iceberg-rust,bc1b585237bf9c78600ca8318984ea913bf96a9b,bc1b585,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-13T09:46:28+08:00,GitHub,noreply@github.com,2026-07-13T09:46:28+08:00,chore(deps): Bump rand from 0.9.4 to 0.10.2 (#2818),"Bumps [rand](https://github.com/rust-random/rand) from 0.9.4 to 0.10.2.
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/rust-random/rand/blob/master/CHANGELOG.md"">rand's
+changelog</a>.</em></p>
+<blockquote>
+<h2>[0.10.2] — 2026-07-02</h2>
+<h3>Fixes</h3>
+<ul>
+<li>Fix possible memory safety violation due to deserialization of
+<code>UniformChar</code> from bad source (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1790"">#1790</a>)</li>
+</ul>
+<h3>Changes</h3>
+<ul>
+<li>Document required output order of fn <code>partial_shuffle</code>
+and apply <code>#[must_use]</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1769"">#1769</a>)</li>
+<li>Avoid usage of <code>unsafe</code> in contexts where non-local
+memory corruption could invalidate contract (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1791"">#1791</a>)</li>
+</ul>
+<p><a
+href=""https://redirect.github.com/rust-random/rand/issues/1769"">#1769</a>:
+<a
+href=""https://redirect.github.com/rust-random/rand/pull/1769"">rust-random/rand#1769</a>
+<a
+href=""https://redirect.github.com/rust-random/rand/issues/1790"">#1790</a>:
+<a
+href=""https://redirect.github.com/rust-random/rand/pull/1790"">rust-random/rand#1790</a>
+<a
+href=""https://redirect.github.com/rust-random/rand/issues/1791"">#1791</a>:
+<a
+href=""https://redirect.github.com/rust-random/rand/pull/1791"">rust-random/rand#1791</a></p>
+<h2>[0.10.1] — 2026-02-11</h2>
+<p>This release includes a fix for a soundness bug; see <a
+href=""https://redirect.github.com/rust-random/rand/issues/1763"">#1763</a>.</p>
+<h3>Changes</h3>
+<ul>
+<li>Document panic behavior of <code>make_rng</code> and add
+<code>#[track_caller]</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1761"">#1761</a>)</li>
+<li>Deprecate feature <code>log</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1763"">#1763</a>)</li>
+</ul>
+<p><a
+href=""https://redirect.github.com/rust-random/rand/issues/1761"">#1761</a>:
+<a
+href=""https://redirect.github.com/rust-random/rand/pull/1761"">rust-random/rand#1761</a>
+<a
+href=""https://redirect.github.com/rust-random/rand/issues/1763"">#1763</a>:
+<a
+href=""https://redirect.github.com/rust-random/rand/pull/1763"">rust-random/rand#1763</a></p>
+<h2>[0.10.0] - 2026-02-08</h2>
+<h3>Changes</h3>
+<ul>
+<li>The dependency on <code>rand_chacha</code> has been replaced with a
+dependency on <code>chacha20</code>. This changes the implementation
+behind <code>StdRng</code>, but the output remains the same. There may
+be some API breakage when using the ChaCha-types directly as these are
+now the ones in <code>chacha20</code> instead of
+<code>rand_chacha</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1642"">#1642</a>).</li>
+<li>Rename fns <code>IndexedRandom::choose_multiple</code> -&gt;
+<code>sample</code>, <code>choose_multiple_array</code> -&gt;
+<code>sample_array</code>, <code>choose_multiple_weighted</code> -&gt;
+<code>sample_weighted</code>, struct <code>SliceChooseIter</code> -&gt;
+<code>IndexedSamples</code> and fns
+<code>IteratorRandom::choose_multiple</code> -&gt; <code>sample</code>,
+<code>choose_multiple_fill</code> -&gt; <code>sample_fill</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1632"">#1632</a>)</li>
+<li>Use Edition 2024 and MSRV 1.85 (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1653"">#1653</a>)</li>
+<li>Let <code>Fill</code> be implemented for element types, not
+sliceable types (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1652"">#1652</a>)</li>
+<li>Fix <code>OsError::raw_os_error</code> on UEFI targets by returning
+<code>Option&lt;usize&gt;</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1665"">#1665</a>)</li>
+<li>Replace fn <code>TryRngCore::read_adapter(..) -&gt;
+RngReadAdapter</code> with simpler struct <code>RngReader</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1669"">#1669</a>)</li>
+<li>Remove fns <code>SeedableRng::from_os_rng</code>,
+<code>try_from_os_rng</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1674"">#1674</a>)</li>
+<li>Remove <code>Clone</code> support for <code>StdRng</code>,
+<code>ReseedingRng</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1677"">#1677</a>)</li>
+<li>Use <code>postcard</code> instead of <code>bincode</code> to test
+the serde feature (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1693"">#1693</a>)</li>
+<li>Avoid excessive allocation in <code>IteratorRandom::sample</code>
+when <code>amount</code> is much larger than iterator size (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1695"">#1695</a>)</li>
+<li>Rename <code>os_rng</code> -&gt; <code>sys_rng</code>,
+<code>OsRng</code> -&gt; <code>SysRng</code>, <code>OsError</code> -&gt;
+<code>SysError</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1697"">#1697</a>)</li>
+<li>Rename <code>Rng</code> -&gt; <code>RngExt</code> as upstream
+<code>rand_core</code> has renamed <code>RngCore</code> -&gt;
+<code>Rng</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1717"">#1717</a>)</li>
+</ul>
+<h3>Additions</h3>
+<ul>
+<li>Add fns <code>IndexedRandom::choose_iter</code>,
+<code>choose_weighted_iter</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1632"">#1632</a>)</li>
+<li>Pub export <code>Xoshiro128PlusPlus</code>,
+<code>Xoshiro256PlusPlus</code> prngs (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1649"">#1649</a>)</li>
+<li>Pub export <code>ChaCha8Rng</code>, <code>ChaCha12Rng</code>,
+<code>ChaCha20Rng</code> behind <code>chacha</code> feature (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1659"">#1659</a>)</li>
+<li>Fn <code>rand::make_rng() -&gt; R where R: SeedableRng</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1734"">#1734</a>)</li>
+</ul>
+<h3>Removals</h3>
+<ul>
+<li>Removed <code>ReseedingRng</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1722"">#1722</a>)</li>
+<li>Removed unused feature &quot;nightly&quot; (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1732"">#1732</a>)</li>
+<li>Removed feature <code>small_rng</code> (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1732"">#1732</a>)</li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/rust-random/rand/commit/1540ea327e8beaf0694ea64f6d9eb8eaadd47bd5""><code>1540ea3</code></a>
+Prepare rand 0.10.2 (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1800"">#1800</a>)</li>
+<li><a
+href=""https://github.com/rust-random/rand/commit/a29964ad94b54c25b3865626de6964ce0f796a29""><code>a29964a</code></a>
+Bump chacha20 from 0.10.0 to 0.10.1 in the all-deps group (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1801"">#1801</a>)</li>
+<li><a
+href=""https://github.com/rust-random/rand/commit/ced94914cb75c93a1f19140a966a466345185fff""><code>ced9491</code></a>
+Tweak docs for RngExt::random_range and SampleRange (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1798"">#1798</a>)</li>
+<li><a
+href=""https://github.com/rust-random/rand/commit/db146647afaf002b866420d34e4501b0dd872163""><code>db14664</code></a>
+Check UniformChar validity on deser (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1790"">#1790</a>)</li>
+<li><a
+href=""https://github.com/rust-random/rand/commit/bea8620204c7aeecdefc132b5cb0dec8134add4b""><code>bea8620</code></a>
+Bump the all-deps group with 2 updates (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1796"">#1796</a>)</li>
+<li><a
+href=""https://github.com/rust-random/rand/commit/4f449322825498e4ec1f486119e5fd251ba97f8a""><code>4f44932</code></a>
+Bump actions/cache from 5 to 6 (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1795"">#1795</a>)</li>
+<li><a
+href=""https://github.com/rust-random/rand/commit/b999a130a990b30af01743021e8ea97f3b09a17e""><code>b999a13</code></a>
+Bump actions/checkout from 6 to 7 (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1794"">#1794</a>)</li>
+<li><a
+href=""https://github.com/rust-random/rand/commit/aeab810bd9704a3b7666ba0a78e1ad5d1d5ad1ae""><code>aeab810</code></a>
+Avoid unsafe where safety depends on non-local values (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1791"">#1791</a>)</li>
+<li><a
+href=""https://github.com/rust-random/rand/commit/1896d7c660524a022b3dbc3a1e044e162d766b25""><code>1896d7c</code></a>
+Add typos CI job (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1789"">#1789</a>)</li>
+<li><a
+href=""https://github.com/rust-random/rand/commit/43eddee18c8cca2cebee929be3899cf183afe801""><code>43eddee</code></a>
+Bump the all-deps group with 2 updates (<a
+href=""https://redirect.github.com/rust-random/rand/issues/1788"">#1788</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/rust-random/rand/compare/0.9.4...0.10.2"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=rand&package-manager=cargo&previous-version=0.9.4&new-version=0.10.2)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",d1b8eacd87e3601b9b5c59dfa21c3f2a925a7240,2818,false,dependabot[bot],1,13,13,Cargo.lock
+apache/iceberg-rust,7453309ab810abbe943bab146c11a193a8884dd4,7453309,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-13T11:48:57+08:00,GitHub,noreply@github.com,2026-07-13T11:48:57+08:00,chore(deps): Bump reqwest from 0.12.28 to 0.13.4 (#2810),"Bumps [reqwest](https://github.com/seanmonstar/reqwest) from 0.12.28 to
+0.13.4.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/seanmonstar/reqwest/releases"">reqwest's
+releases</a>.</em></p>
+<blockquote>
+<h2>v0.13.4</h2>
+<h2>tl;dr</h2>
+<ul>
+<li>Add <code>ClientBuilder::tls_sslkeylogfile(bool)</code> option to
+allow using the related environment variable.</li>
+<li>Add <code>ClientBuilder::http2_keep_alive_*</code> options for the
+<code>blocking</code> client.</li>
+<li>Add TLS 1.3 support when using <code>native-tls</code> backend.</li>
+<li>Fix redirect handling to strip sensitive headers when the scheme
+changes.</li>
+<li>Fix HTTP/3 happy-eyeball connection creation.</li>
+<li>Upgrade hickory-resolver to 0.26.</li>
+</ul>
+<h2>What's Changed</h2>
+<ul>
+<li>fix(tls): improve rustls-no-provider panic message and add module
+docs by <a href=""https://github.com/smythg4""><code>@​smythg4</code></a>
+in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3021"">seanmonstar/reqwest#3021</a></li>
+<li>fix: do not lose the url in error when decoding json by <a
+href=""https://github.com/Dushistov""><code>@​Dushistov</code></a> in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3026"">seanmonstar/reqwest#3026</a></li>
+<li>Add tls_sslkeylogfile builder method by <a
+href=""https://github.com/passcod""><code>@​passcod</code></a> in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/2923"">seanmonstar/reqwest#2923</a></li>
+<li>fix(redirect): strip sensitive headers on scheme change across
+redirects by <a href=""https://github.com/SAY-5""><code>@​SAY-5</code></a>
+in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3034"">seanmonstar/reqwest#3034</a></li>
+<li>chore: upgrade MSRV to 1.85 by <a
+href=""https://github.com/seanmonstar""><code>@​seanmonstar</code></a> in
+<a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3038"">seanmonstar/reqwest#3038</a></li>
+<li>chore: clean up minimal-versions CI job by <a
+href=""https://github.com/seanmonstar""><code>@​seanmonstar</code></a> in
+<a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3039"">seanmonstar/reqwest#3039</a></li>
+<li>fix(http3): use happy eyeballs for h3 connect by <a
+href=""https://github.com/lyuzichong""><code>@​lyuzichong</code></a> in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3030"">seanmonstar/reqwest#3030</a></li>
+<li>fix: update hickory-resolver to 0.26 and adjust code accordingly by
+<a href=""https://github.com/seanmonstar""><code>@​seanmonstar</code></a>
+in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3040"">seanmonstar/reqwest#3040</a></li>
+<li>fix: remove unwrap in hickory initialization by <a
+href=""https://github.com/mat813""><code>@​mat813</code></a> in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3041"">seanmonstar/reqwest#3041</a></li>
+<li>feat(https): support TLS 1.3 as min version under native-tls 🎉 by <a
+href=""https://github.com/AverageHelper""><code>@​AverageHelper</code></a>
+in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/2975"">seanmonstar/reqwest#2975</a></li>
+<li>Expose keep alive configurations in blocking client by <a
+href=""https://github.com/aeb-dev""><code>@​aeb-dev</code></a> in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3043"">seanmonstar/reqwest#3043</a></li>
+<li>Prepare v0.13.4 by <a
+href=""https://github.com/seanmonstar""><code>@​seanmonstar</code></a> in
+<a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3046"">seanmonstar/reqwest#3046</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a href=""https://github.com/smythg4""><code>@​smythg4</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3021"">seanmonstar/reqwest#3021</a></li>
+<li><a href=""https://github.com/Dushistov""><code>@​Dushistov</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3026"">seanmonstar/reqwest#3026</a></li>
+<li><a href=""https://github.com/SAY-5""><code>@​SAY-5</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3034"">seanmonstar/reqwest#3034</a></li>
+<li><a href=""https://github.com/mat813""><code>@​mat813</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3041"">seanmonstar/reqwest#3041</a></li>
+<li><a
+href=""https://github.com/AverageHelper""><code>@​AverageHelper</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/2975"">seanmonstar/reqwest#2975</a></li>
+<li><a href=""https://github.com/aeb-dev""><code>@​aeb-dev</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/3043"">seanmonstar/reqwest#3043</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/seanmonstar/reqwest/compare/v0.13.3...v0.13.4"">https://github.com/seanmonstar/reqwest/compare/v0.13.3...v0.13.4</a></p>
+<h2>v0.13.3</h2>
+<h2>tl;dr</h2>
+<ul>
+<li>Fix CertificateRevocationList parsing of PEM values.</li>
+<li>Fix logging in resolver to only show host, not full URL.</li>
+<li>Fix hickory-dns to fallback to a default if
+<code>/etc/resolv.conf</code> fails.</li>
+<li>Fix HTTP/3 to handle <code>STOP_SENDING</code> as not an error.</li>
+<li>Fix HTTP/3 pool to remove timed out QUIC connections.</li>
+<li>Fix HTTP/3 connection establishment picking IPv4 and IPv6.</li>
+<li>Upgrade rustls-platform-verifier.</li>
+<li>(wasm) Only use wasm-bindgen on unknown-* targets.</li>
+</ul>
+<h2>What's Changed</h2>
+<ul>
+<li>Update docs.rs Features by <a
+href=""https://github.com/JamesWiresmith""><code>@​JamesWiresmith</code></a>
+in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/2961"">seanmonstar/reqwest#2961</a></li>
+<li>fix: fallback to hickory_resolver's default config if reading
+/etc/resolv.conf fails by <a
+href=""https://github.com/monosans""><code>@​monosans</code></a> in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/2797"">seanmonstar/reqwest#2797</a></li>
+<li>fix: remove timeout con by <a
+href=""https://github.com/cuiweixie""><code>@​cuiweixie</code></a> in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/2967"">seanmonstar/reqwest#2967</a></li>
+<li>http3: handle stop_sending without error by <a
+href=""https://github.com/anuraaga""><code>@​anuraaga</code></a> in <a
+href=""https://redirect.github.com/seanmonstar/reqwest/pull/2978"">seanmonstar/reqwest#2978</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/seanmonstar/reqwest/blob/master/CHANGELOG.md"">reqwest's
+changelog</a>.</em></p>
+<blockquote>
+<h2>v0.13.4</h2>
+<ul>
+<li>Add <code>ClientBuilder::tls_sslkeylogfile(bool)</code> option to
+allow using the related environment variable.</li>
+<li>Add <code>ClientBuilder::http2_keep_alive_*</code> options for the
+<code>blocking</code> client.</li>
+<li>Add TLS 1.3 support when using <code>native-tls</code> backend.</li>
+<li>Fix redirect handling to strip sensitive headers when the scheme
+changes.</li>
+<li>Fix HTTP/3 happy-eyeball connection creation.</li>
+<li>Upgrade hickory-resolver to 0.26.</li>
+</ul>
+<h2>v0.13.3</h2>
+<ul>
+<li>Fix CertificateRevocationList parsing of PEM values.</li>
+<li>Fix logging in resolver to only show host, not full URL.</li>
+<li>Fix hickory-dns to fallback to a default if
+<code>/etc/resolv.conf</code> fails.</li>
+<li>Fix HTTP/3 to handle <code>STOP_SENDING</code> as not an error.</li>
+<li>Fix HTTP/3 pool to remove timed out QUIC connections.</li>
+<li>Fix HTTP/3 connection establishment picking IPv4 and IPv6.</li>
+<li>Upgrade rustls-platform-verifier.</li>
+<li>(wasm) Only use wasm-bindgen on unknown-* targets.</li>
+</ul>
+<h2>v0.13.2</h2>
+<ul>
+<li>Fix HTTP/2 and native-tls ALPN feature combinations.</li>
+<li>Fix HTTP/3 to send h3 ALPN.</li>
+<li>(wasm) fix <code>RequestBuilder::json()</code> from override
+previously set content-type.</li>
+</ul>
+<h2>v0.13.1</h2>
+<ul>
+<li>Fixes compiling with rustls on Android targets.</li>
+</ul>
+<h1>v0.13.0</h1>
+<ul>
+<li><strong>Breaking changes</strong>:
+<ul>
+<li><code>rustls</code> is now the default TLS backend, instead of
+<code>native-tls</code>.</li>
+<li><code>rustls</code> crypto provider defaults to aws-lc instead of
+<em>ring</em>. (<code>rustls-no-provider</code> exists if you want a
+different crypto provider)</li>
+<li><code>rustls-tls</code> has been renamed to
+<code>rustls</code>.</li>
+<li>rustls roots features removed, <code>rustls-platform-verifier</code>
+is used by default.
+<ul>
+<li>To use different roots, call
+<code>tls_certs_only(your_roots)</code>.</li>
+</ul>
+</li>
+<li><code>native-tls</code> now includes ALPN. To disable, use
+<code>native-tls-no-alpn</code>.</li>
+<li><code>query</code> and <code>form</code> are now crate features,
+disabled by default.</li>
+<li>Long-deprecated methods and crate features have been removed (such
+as <code>trust-dns</code>, which was renamed <code>hickory-dns</code> a
+while ago).</li>
+</ul>
+</li>
+<li>Many TLS-related methods renamed to improve autocompletion and
+discovery, but previous name left in place with a &quot;soft&quot;
+deprecation. (just documented, no warnings)
+<ul>
+<li>For example, prefer <code>tls_backend_rustls()</code> over
+<code>use_rustls_tls()</code>.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/seanmonstar/reqwest/commit/11489b34eda6d32b15ad4033e62beba2ee401350""><code>11489b3</code></a>
+v0.13.4</li>
+<li><a
+href=""https://github.com/seanmonstar/reqwest/commit/d31ffbbf84ee718eb543fa203f25b9f78d02b5cd""><code>d31ffbb</code></a>
+feat: Expose HTTP2 keep alive configurations in blocking client (<a
+href=""https://redirect.github.com/seanmonstar/reqwest/issues/3043"">#3043</a>)</li>
+<li><a
+href=""https://github.com/seanmonstar/reqwest/commit/79ed0d712b4f9f00ffecb5103593cbf460f5bfa5""><code>79ed0d7</code></a>
+feat: support TLS 1.3 as min version under native-tls 🎉 (<a
+href=""https://redirect.github.com/seanmonstar/reqwest/issues/2975"">#2975</a>)</li>
+<li><a
+href=""https://github.com/seanmonstar/reqwest/commit/fb7bf6ae6dace30613b964425cf2b6039e9d388f""><code>fb7bf6a</code></a>
+fix: remove unwrap in hickory initialization (<a
+href=""https://redirect.github.com/seanmonstar/reqwest/issues/3041"">#3041</a>)</li>
+<li><a
+href=""https://github.com/seanmonstar/reqwest/commit/3da616fd4b5987e5b1f5f7e9f07d14b2cd603254""><code>3da616f</code></a>
+fix: update hickory-resolver to 0.26 and adjust code accordingly (<a
+href=""https://redirect.github.com/seanmonstar/reqwest/issues/3040"">#3040</a>)</li>
+<li><a
+href=""https://github.com/seanmonstar/reqwest/commit/c77e7b2de5b706ec35629e0302feff8e82969d7d""><code>c77e7b2</code></a>
+fix(http3): use happy eyeballs for h3 connect (<a
+href=""https://redirect.github.com/seanmonstar/reqwest/issues/3030"">#3030</a>)</li>
+<li><a
+href=""https://github.com/seanmonstar/reqwest/commit/9cbb65b3d3cd4ab05a859366bbb70e47bec7dc8c""><code>9cbb65b</code></a>
+chore: clean up minimal-versions CI job (<a
+href=""https://redirect.github.com/seanmonstar/reqwest/issues/3039"">#3039</a>)</li>
+<li><a
+href=""https://github.com/seanmonstar/reqwest/commit/17a7dc5a893b64509ed2d539892fe35f5feee255""><code>17a7dc5</code></a>
+chore: upgrade MSRV to 1.85 (<a
+href=""https://redirect.github.com/seanmonstar/reqwest/issues/3038"">#3038</a>)</li>
+<li><a
+href=""https://github.com/seanmonstar/reqwest/commit/03db63a48f35135c2f2c8b7aaa578217d5f678fe""><code>03db63a</code></a>
+fix(redirect): strip sensitive headers on scheme change across redirects
+(<a
+href=""https://redirect.github.com/seanmonstar/reqwest/issues/3034"">#3034</a>)</li>
+<li><a
+href=""https://github.com/seanmonstar/reqwest/commit/4b813a89dcd97a4b283fda02bd458d44339850c7""><code>4b813a8</code></a>
+feat: add tls_sslkeylogfile builder method (<a
+href=""https://redirect.github.com/seanmonstar/reqwest/issues/2923"">#2923</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/seanmonstar/reqwest/compare/v0.12.28...v0.13.4"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",bc1b585237bf9c78600ca8318984ea913bf96a9b,2810,false,dependabot[bot],1,5,5,Cargo.lock
+apache/iceberg-rust,25ba70a17f79ae53959f4240367bb99d36fe0b02,25ba70a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-13T11:49:44+08:00,GitHub,noreply@github.com,2026-07-13T11:49:44+08:00,chore(deps): Bump taiki-e/install-action from 2.82.2 to 2.82.9 (#2816),"Bumps
+[taiki-e/install-action](https://github.com/taiki-e/install-action) from
+2.82.2 to 2.82.9.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/taiki-e/install-action/releases"">taiki-e/install-action's
+releases</a>.</em></p>
+<blockquote>
+<h2>2.82.9</h2>
+<ul>
+<li>
+<p>Update <code>vacuum@latest</code> to 0.29.9.</p>
+</li>
+<li>
+<p>Update <code>prek@latest</code> to 0.4.8.</p>
+</li>
+<li>
+<p>Update <code>cargo-tarpaulin@latest</code> to 0.37.0.</p>
+</li>
+<li>
+<p>Update <code>cargo-leptos@latest</code> to 0.3.7.</p>
+</li>
+</ul>
+<h2>2.82.8</h2>
+<ul>
+<li>
+<p>Update <code>vacuum@latest</code> to 0.29.8.</p>
+</li>
+<li>
+<p>Update <code>uv@latest</code> to 0.11.26.</p>
+</li>
+<li>
+<p>Update <code>typos@latest</code> to 1.48.0.</p>
+</li>
+<li>
+<p>Update <code>trivy@latest</code> to 0.72.0.</p>
+</li>
+<li>
+<p>Update <code>tombi@latest</code> to 1.1.7.</p>
+</li>
+<li>
+<p>Update <code>prek@latest</code> to 0.4.6.</p>
+</li>
+<li>
+<p>Update <code>mise@latest</code> to 2026.7.0.</p>
+</li>
+<li>
+<p>Update <code>just@latest</code> to 1.55.1.</p>
+</li>
+<li>
+<p>Update <code>biome@latest</code> to 2.5.2.</p>
+</li>
+</ul>
+<h2>2.82.7</h2>
+<ul>
+<li>
+<p>Update <code>tombi@latest</code> to 1.1.6.</p>
+</li>
+<li>
+<p>Update <code>kingfisher@latest</code> to 1.105.0.</p>
+</li>
+<li>
+<p>Update <code>gungraun-runner@latest</code> to 0.19.3.</p>
+</li>
+<li>
+<p>Update <code>editorconfig-checker@latest</code> to 3.8.0.</p>
+</li>
+<li>
+<p>Update <code>dprint@latest</code> to 0.55.1.</p>
+</li>
+<li>
+<p>Update <code>cargo-tarpaulin@latest</code> to 0.36.0.</p>
+</li>
+</ul>
+<h2>2.82.6</h2>
+<ul>
+<li>
+<p>Update <code>vacuum@latest</code> to 0.29.7.</p>
+</li>
+<li>
+<p>Update <code>uv@latest</code> to 0.11.25.</p>
+</li>
+<li>
+<p>Update <code>syft@latest</code> to 1.46.0.</p>
+</li>
+<li>
+<p>Update <code>dprint@latest</code> to 0.55.0.</p>
+</li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/taiki-e/install-action/blob/main/CHANGELOG.md"">taiki-e/install-action's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Changelog</h1>
+<p>All notable changes to this project will be documented in this
+file.</p>
+<p>This project adheres to <a href=""https://semver.org"">Semantic
+Versioning</a>.</p>
+<!-- raw HTML omitted -->
+<h2>[Unreleased]</h2>
+<h2>[2.83.2] - 2026-07-12</h2>
+<ul>
+<li>
+<p>Update <code>parse-dockerfile@latest</code> to 0.1.8.</p>
+</li>
+<li>
+<p>Update <code>mise@latest</code> to 2026.7.5.</p>
+</li>
+<li>
+<p>Update <code>just@latest</code> to 1.56.0.</p>
+</li>
+<li>
+<p>Update <code>gungraun-runner@latest</code> to 0.19.4.</p>
+</li>
+<li>
+<p>Update <code>cargo-neat@latest</code> to 0.4.1.</p>
+</li>
+</ul>
+<h2>[2.83.1] - 2026-07-10</h2>
+<ul>
+<li>
+<p>Update <code>rclone@latest</code> to 1.74.4.</p>
+</li>
+<li>
+<p>Update <code>mise@latest</code> to 2026.7.4.</p>
+</li>
+<li>
+<p>Update <code>cargo-deny@latest</code> to 0.20.2.</p>
+</li>
+</ul>
+<h2>[2.83.0] - 2026-07-09</h2>
+<ul>
+<li>
+<p>Support <code>cargo-about</code>. (<a
+href=""https://redirect.github.com/taiki-e/install-action/pull/1924"">#1924</a>,
+thanks <a
+href=""https://github.com/ruffsl""><code>@​ruffsl</code></a>)</p>
+</li>
+<li>
+<p>Update <code>uv@latest</code> to 0.11.28.</p>
+</li>
+<li>
+<p>Update <code>martin@latest</code> to 1.12.0.</p>
+</li>
+<li>
+<p>Update <code>kingfisher@latest</code> to 1.106.0.</p>
+</li>
+<li>
+<p>Update <code>biome@latest</code> to 2.5.3.</p>
+</li>
+</ul>
+<h2>[2.82.11] - 2026-07-08</h2>
+<ul>
+<li>
+<p>Update <code>wasm-tools@latest</code> to 1.253.0.</p>
+</li>
+<li>
+<p>Update <code>uv@latest</code> to 0.11.27.</p>
+</li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/4684b8405694ae9dd42c9f39ba901a70ae83f4a3""><code>4684b84</code></a>
+Release 2.82.9</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/29fb1dbe52c0247f03f90f9dd43b08d3c603510b""><code>29fb1db</code></a>
+Update <code>vacuum@latest</code> to 0.29.9</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/584230b16680bbb1ddef3c65a89568570fd36f69""><code>584230b</code></a>
+Update tombi manifest</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/1872019a1c4268421e4c2d5f230285190a08b258""><code>1872019</code></a>
+Update <code>prek@latest</code> to 0.4.8</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/3e817d29dde43a866e242560569eb7f418035f1a""><code>3e817d2</code></a>
+Update <code>cargo-tarpaulin@latest</code> to 0.37.0</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/a71dd1a66df622ab4134f69df1b8c4b7a8889ddf""><code>a71dd1a</code></a>
+Update <code>cargo-leptos@latest</code> to 0.3.7</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/c93ccc03e00cd0e08e494f5fd058a6c55a6a1907""><code>c93ccc0</code></a>
+Release 2.82.8</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/5083f1886534d6d96c49df934ae7106b35fd488e""><code>5083f18</code></a>
+Update <code>vacuum@latest</code> to 0.29.8</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/fdd68a857612ac3f29f4abaa6be9f4d379946632""><code>fdd68a8</code></a>
+Update <code>uv@latest</code> to 0.11.26</li>
+<li><a
+href=""https://github.com/taiki-e/install-action/commit/3b61d4b2086bc6aee10b8e58f1e6a25675e03da4""><code>3b61d4b</code></a>
+Update <code>typos@latest</code> to 1.48.0</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/taiki-e/install-action/compare/v2.82.2...4684b8405694ae9dd42c9f39ba901a70ae83f4a3"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=taiki-e/install-action&package-manager=github_actions&previous-version=2.82.2&new-version=2.82.9)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7453309ab810abbe943bab146c11a193a8884dd4,2816,false,dependabot[bot],1,2,2,.github
+apache/iceberg-rust,0b694de1ee06fc9df763d09d5179e14db10eacd8,0b694de,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-13T11:50:21+08:00,GitHub,noreply@github.com,2026-07-13T11:50:21+08:00,chore(deps): Bump astral-sh/setup-uv from 8.2.0 to 8.3.0 (#2817),"Bumps [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv) from
+8.2.0 to 8.3.0.
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/d31148d669074a8d0a63714ba94f3201e7020bc3""><code>d31148d</code></a>
+Strip environment markers from detected uv dependency pins (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/938"">#938</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/17c398959b4611a88929fabb5c563a8e43a0ff60""><code>17c3989</code></a>
+Fix cache keys for Python version ranges (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/937"">#937</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/3cc3c11fdf511cab39136b7c946d973d4ad0df20""><code>3cc3c11</code></a>
+chore(deps): roll up Dependabot updates (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/936"">#936</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/9225f843d7a9f80a757cf25ef48901fda69ba4bc""><code>9225f84</code></a>
+chore(deps): bump release-drafter/release-drafter from 7.3.1 to 7.4.0
+(<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/924"">#924</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/fc16fa3bbf37d2816834f76a1fe25d33564eaa34""><code>fc16fa3</code></a>
+chore(deps): bump actions/checkout from 6.0.2 to 7.0.0 (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/926"">#926</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/a1a7345c8ef5d6d3b18c6f1c247244c19f1d878c""><code>a1a7345</code></a>
+ci: call docs update workflow from release (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/933"">#933</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/a5e9cbfd5f946647f478460490fa497b0a732e63""><code>a5e9cbf</code></a>
+docs: update version references to v8.2.0 (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/932"">#932</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/c5680ec91f7b9b91406fab4ded5d45245abf7b67""><code>c5680ec</code></a>
+chore: update known checksums for 0.11.26 (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/930"">#930</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/c86fe4ef1f4a79845e6d465628d733650f6c41d8""><code>c86fe4e</code></a>
+Add a threat model for setup-uv (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/923"">#923</a>)</li>
+<li><a
+href=""https://github.com/astral-sh/setup-uv/commit/224c887d488ab24d8a1b49f10416d6ad6b6ca71d""><code>224c887</code></a>
+chore: update known checksums for 0.11.25 (<a
+href=""https://redirect.github.com/astral-sh/setup-uv/issues/929"">#929</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/astral-sh/setup-uv/compare/fac544c07dec837d0ccb6301d7b5580bf5edae39...d31148d669074a8d0a63714ba94f3201e7020bc3"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=astral-sh/setup-uv&package-manager=github_actions&previous-version=8.2.0&new-version=8.3.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",25ba70a17f79ae53959f4240367bb99d36fe0b02,2817,false,dependabot[bot],3,4,4,.github
+apache/iceberg-rust,92be8fdf6956e3746e221067dbe64cb5031c3331,92be8fd,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-13T14:09:24+08:00,GitHub,noreply@github.com,2026-07-13T14:09:24+08:00,chore(deps-dev): Bump huggingface-hub from 1.21.0 to 1.22.0 in /bindings/python (#2806),"Bumps [huggingface-hub](https://github.com/huggingface/huggingface_hub)
+from 1.21.0 to 1.22.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/huggingface/huggingface_hub/releases"">huggingface-hub's
+releases</a>.</em></p>
+<blockquote>
+<h2>[v1.22.0] Sandboxes, faster downloads, and a rebuilt CLI</h2>
+<h2>🖥️ Sandboxes: isolated cloud machines on top of Jobs</h2>
+<p>Sandboxes are isolated cloud machines you can spin up in seconds, run
+commands in with live-streamed output, and move files in and out of —
+all from Python or the CLI. They are built entirely on top of Jobs:
+under the hood a sandbox is just a Job running a tiny static server, so
+any Docker image with <code>/bin/sh</code> works and it inherits Jobs'
+billing, hardware flavors, and namespace permissions for free. Two
+flavors are available: <code>Sandbox.create</code> for a dedicated VM
+(GPU workloads, untrusted code, full isolation) and
+<code>SandboxPool</code> to pack many cheap CPU sandboxes into a few
+shared host VMs for fan-out workloads like RL rollouts. This release
+also adds background processes (<code>sbx.run(...,
+background=True)</code> / <code>hf sandbox spawn</code>) and a port
+proxy (<code>Sandbox.proxy_url_for</code>) so you can reach a server
+running inside a sandbox from the outside over HTTP or WebSocket.</p>
+<pre lang=""python""><code>from huggingface_hub import Sandbox
+<p>with Sandbox.create(image=&quot;python:3.12&quot;) as sbx: # ready in
+~6s
+sbx.files.write(&quot;/app/main.py&quot;, &quot;print(40 + 2)&quot;)
+print(sbx.run(&quot;python /app/main.py&quot;).stdout)    # 42
+</code></pre></p>
+<pre lang=""bash""><code># Create, run, copy files, and terminate from the
+terminal
+hf sandbox create
+hf sandbox exec &lt;id&gt; -- python -c &quot;print('hi')&quot;
+hf sandbox cp data.csv &lt;id&gt;:/data/data.csv
+hf sandbox kill &lt;id&gt;
+</code></pre>
+<ul>
+<li>[Sandbox] Add Sandbox API and <code>hf sandbox</code> CLI on top of
+Jobs by <a href=""https://github.com/Wauplin""><code>@​Wauplin</code></a>
+in <a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4350"">#4350</a></li>
+<li>[Sandbox] Background processes + proxy to reach in-sandbox servers
+by <a href=""https://github.com/Wauplin""><code>@​Wauplin</code></a> in <a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4444"">#4444</a></li>
+</ul>
+<p>📚 <strong>Documentation:</strong> <a
+href=""https://huggingface.co/docs/huggingface_hub/main/en/guides/sandbox"">Sandboxes
+guide</a>, <a
+href=""https://huggingface.co/docs/huggingface_hub/main/en/package_reference/sandbox"">Sandbox
+reference</a></p>
+<h2>⚡ Faster snapshot downloads with a tree cache</h2>
+<p><code>snapshot_download</code> now caches a repository's file listing
+on disk under a new <code>trees/</code> folder, so re-downloading a
+commit that's already cached costs a single network call — resolving the
+branch or tag to a commit hash — instead of one metadata request per
+file. The listing is immutable per commit and shared by both
+<code>snapshot_download</code> and <code>hf_hub_download</code>; for
+Xet-enabled files it also skips the per-file HEAD <code>/resolve</code>
+request entirely, rebuilding the metadata from the cached listing. As a
+deliberate side effect of the completeness check, when the Hub can't be
+reached and the local snapshot is missing requested files,
+<code>snapshot_download</code> now raises
+<code>IncompleteSnapshotError</code> instead of silently returning a
+partial folder.</p>
+<ul>
+<li>[Download] Cache repo tree listing on disk in snapshot_download by
+<a href=""https://github.com/Wauplin""><code>@​Wauplin</code></a> in <a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4394"">#4394</a></li>
+</ul>
+<p>📚 <strong>Documentation:</strong> <a
+href=""https://huggingface.co/docs/huggingface_hub/main/en/guides/manage-cache"">Manage
+your cache</a></p>
+<h2>🛠️ CLI rebuilt on Click (drops Typer)</h2>
+<p>The entire <code>hf</code> CLI now runs on a small in-house layer
+over Click 8.x instead of Typer, which had vendored Click in a way that
+broke the CLI's custom help rendering, error enrichment, and shell
+completion — and forced capping <code>typer&lt;0.26</code>. The
+migration preserves existing behavior: <code>--help</code> output is
+byte-identical, the generated <code>cli.md</code> reference is unchanged
+apart from a header comment, and shell completion now uses Click's
+native completion. The public <code>typer_factory</code> helper is kept
+so downstream libraries like <code>transformers</code> that register
+their own commands keep working.</p>
+<ul>
+<li>[CLI] Add a minimal Click framework for the CLI by <a
+href=""https://github.com/hanouticelina""><code>@​hanouticelina</code></a>
+in <a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4462"">#4462</a></li>
+</ul>
+<h2>💔 Breaking Change</h2>
+<ul>
+<li>[Upload] Deprecate upload_large_folder (API + CLI) by <a
+href=""https://github.com/Wauplin""><code>@​Wauplin</code></a> in <a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4414"">#4414</a>
+— <code>upload_large_folder</code> and <code>hf
+upload-large-folder</code> are now deprecated in favor of
+<code>upload_folder</code> / <code>hf upload</code>, which handle very
+large and resumable uploads out of the box.</li>
+<li>Make filter_repo_objects pattern matching case-sensitive on all
+platforms by <a
+href=""https://github.com/Sreekant13""><code>@​Sreekant13</code></a> in <a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4435"">#4435</a>
+— <code>allow_patterns</code>/<code>ignore_patterns</code> now match
+case-sensitively on every OS (aligned with case-sensitive Hub paths). On
+Windows this is a behavior change: patterns like <code>*.PDF</code> no
+longer match <code>file.pdf</code>.</li>
+<li>[Inference Providers] Remove dead inference providers by <a
+href=""https://github.com/hanouticelina""><code>@​hanouticelina</code></a>
+in <a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4447"">#4447</a>
+— removes six providers no longer routed by the Hub
+(<code>black-forest-labs</code>, <code>clarifai</code>,
+<code>hyperbolic</code>, <code>nebius</code>, <code>nvidia</code>,
+<code>sambanova</code>) — <a
+href=""https://huggingface.co/docs/huggingface_hub/main/en/guides/inference"">docs</a></li>
+</ul>
+<h2>🖥️ CLI</h2>
+<ul>
+<li>[CLI] Add <code>hf discussions edit</code> by <a
+href=""https://github.com/Wauplin""><code>@​Wauplin</code></a> in <a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4415"">#4415</a>
+— <a
+href=""https://huggingface.co/docs/huggingface_hub/main/en/guides/cli"">docs</a></li>
+<li>[CLI] hf cache: surface &amp; prune incomplete downloads by <a
+href=""https://github.com/Wauplin""><code>@​Wauplin</code></a> in <a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4416"">#4416</a>
+— <code>hf cache ls</code> now flags leftover <code>.incomplete</code>
+files and <code>hf cache prune</code> removes them automatically — <a
+href=""https://huggingface.co/docs/huggingface_hub/main/en/guides/manage-cache"">docs</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/huggingface/huggingface_hub/commit/5db966a5f52fcf9235508a46a855390f0b95d23a""><code>5db966a</code></a>
+Release: v1.22.0</li>
+<li><a
+href=""https://github.com/huggingface/huggingface_hub/commit/1d6e7d0e6623f758d86bdbb244bd0aca2b286d7e""><code>1d6e7d0</code></a>
+Release: v1.22.0.rc0</li>
+<li><a
+href=""https://github.com/huggingface/huggingface_hub/commit/8f03d83624c624084fd1e1ee4d021612408421d5""><code>8f03d83</code></a>
+Expose base_model filter param on get_dataset_leaderboard (<a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4474"">#4474</a>)</li>
+<li><a
+href=""https://github.com/huggingface/huggingface_hub/commit/cc4e7cc67ae944d9e3d3e6dc3d44ef95be1f944f""><code>cc4e7cc</code></a>
+[Http] Support standard Retry-After header in http_backoff (<a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4460"">#4460</a>)</li>
+<li><a
+href=""https://github.com/huggingface/huggingface_hub/commit/7b53d234c37aa0b6dbe28c6000c9cb9c38598f17""><code>7b53d23</code></a>
+[CLI] Add a minimal Click framework for the CLI (<a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4462"">#4462</a>)</li>
+<li><a
+href=""https://github.com/huggingface/huggingface_hub/commit/4db84d02cd2ceca9a27d694df264de9ce8ecbfb0""><code>4db84d0</code></a>
+Docs: Jobs are no longer Pro-only — update availability note in jobs
+guide (#...</li>
+<li><a
+href=""https://github.com/huggingface/huggingface_hub/commit/a13927790106a76f6099179a366f334c4533e84b""><code>a139277</code></a>
+Accept two-letter byte units (KB/MB/GB/TB/PB) in parse_size (<a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4468"">#4468</a>)</li>
+<li><a
+href=""https://github.com/huggingface/huggingface_hub/commit/28aecd91906a78888252c3254b69821ef0518122""><code>28aecd9</code></a>
+Fix KeyError in get_dataset_leaderboard when entry has no source (<a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4473"">#4473</a>)</li>
+<li><a
+href=""https://github.com/huggingface/huggingface_hub/commit/f70f00d3f1d7ef0672065e2b8b8df9ee8123d50b""><code>f70f00d</code></a>
+Remove Usage command lists from CLI module docstrings (<a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4472"">#4472</a>)</li>
+<li><a
+href=""https://github.com/huggingface/huggingface_hub/commit/031d0020f59fabdf7a2feb09066e3e16afa3c3cc""><code>031d002</code></a>
+[CLI] Expose <code>out</code> singleton publicly + add
+<code>out.log</code> method (<a
+href=""https://redirect.github.com/huggingface/huggingface_hub/issues/4471"">#4471</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/huggingface/huggingface_hub/compare/v1.21.0...v1.22.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",0b694de1ee06fc9df763d09d5179e14db10eacd8,2806,false,dependabot[bot],1,6,40,bindings
+apache/iceberg-rust,c6103da8bedebe86c1b29569071d739d447e4633,c6103da,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-13T14:10:03+08:00,GitHub,noreply@github.com,2026-07-13T14:10:03+08:00,chore(deps): Bump crate-ci/typos from 1.47.2 to 1.48.0 (#2809),"Bumps [crate-ci/typos](https://github.com/crate-ci/typos) from 1.47.2 to
+1.48.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/crate-ci/typos/releases"">crate-ci/typos's
+releases</a>.</em></p>
+<blockquote>
+<h2>v1.48.0</h2>
+<h2>[1.48.0] - 2026-06-30</h2>
+<h3>Features</h3>
+<ul>
+<li>Updated the dictionary with the <a
+href=""https://redirect.github.com/crate-ci/typos/issues/1562"">June
+2026</a> changes</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/crate-ci/typos/blob/master/CHANGELOG.md"">crate-ci/typos's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Change Log</h1>
+<p>All notable changes to this project will be documented in this
+file.</p>
+<p>The format is based on <a href=""https://keepachangelog.com/"">Keep a
+Changelog</a>
+and this project adheres to <a href=""https://semver.org/"">Semantic
+Versioning</a>.</p>
+<!-- raw HTML omitted -->
+<h2>[Unreleased] - ReleaseDate</h2>
+<h2>[1.48.0] - 2026-06-30</h2>
+<h3>Features</h3>
+<ul>
+<li>Updated the dictionary with the <a
+href=""https://redirect.github.com/crate-ci/typos/issues/1562"">June
+2026</a> changes</li>
+</ul>
+<h2>[1.47.2] - 2026-06-04</h2>
+<h3>Fixes</h3>
+<ul>
+<li>Don't correct <code>inferrable</code></li>
+<li>Correct unused <code>inferible</code> variant</li>
+</ul>
+<h2>[1.47.1] - 2026-06-03</h2>
+<h3>Fixes</h3>
+<ul>
+<li>Don't correct <code>requestors</code></li>
+</ul>
+<h2>[1.47.0] - 2026-05-29</h2>
+<h3>Features</h3>
+<ul>
+<li>Updated the dictionary with the <a
+href=""https://redirect.github.com/crate-ci/typos/issues/1545"">May
+2026</a> changes</li>
+</ul>
+<h2>[1.46.3] - 2026-05-23</h2>
+<h3>Fixes</h3>
+<ul>
+<li>Don't correct to <code>sequentials</code></li>
+<li>Don't correct to <code>subdolder</code></li>
+</ul>
+<h2>[1.46.2] - 2026-05-16</h2>
+<h3>Fixes</h3>
+<ul>
+<li>Don't correct to <code>criterias</code></li>
+<li>Don't correct to <code>replaceables</code></li>
+</ul>
+<h2>[1.46.1] - 2026-05-08</h2>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/bee27e3a4fd1ea2111cf90ab89cd076c870fce14""><code>bee27e3</code></a>
+chore: Release</li>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/4939ca9c90a49d78125c35a3376bc5ee5c8aa489""><code>4939ca9</code></a>
+chore: Release</li>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/44b25bec760cf3e606f713cae5dd41978c1d8295""><code>44b25be</code></a>
+docs: Update changelog</li>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/22edab389daa634b04b0971b2ed8180c3aba0963""><code>22edab3</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/crate-ci/typos/issues/1574"">#1574</a>
+from epage/june</li>
+<li><a
+href=""https://github.com/crate-ci/typos/commit/a73679cf8e45a62643936f55f94bd8eb8c1662c8""><code>a73679c</code></a>
+feat(dict): June updates</li>
+<li>See full diff in <a
+href=""https://github.com/crate-ci/typos/compare/37bb98842b0d8c4ffebdb75301a13db0267cef89...bee27e3a4fd1ea2111cf90ab89cd076c870fce14"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=crate-ci/typos&package-manager=github_actions&previous-version=1.47.2&new-version=1.48.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",92be8fdf6956e3746e221067dbe64cb5031c3331,2809,false,dependabot[bot],1,1,1,.github
+apache/iceberg-rust,b8cfa9d8ad3c53c841131db7554f91118b5edea7,b8cfa9d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-13T14:11:42+08:00,GitHub,noreply@github.com,2026-07-13T14:11:42+08:00,chore(deps): Bump the codeql-action group with 2 updates (#2808),"Bumps the codeql-action group with 2 updates:
+[github/codeql-action/init](https://github.com/github/codeql-action) and
+[github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+Updates `github/codeql-action/init` from 4.36.2 to 4.36.3
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action/init's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.36.3</h2>
+<p>No user facing changes.</p>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action/init's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.20.6 and earlier. These versions of
+CodeQL were discontinued on 1 July 2026 alongside GitHub Enterprise
+Server 3.16, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3956"">#3956</a></li>
+</ul>
+<h2>4.37.0 - 08 Jul 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+<h2>4.36.3 - 01 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.2 - 04 Jun 2026</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>4.36.1 - 02 Jun 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.0 - 22 May 2026</h2>
+<ul>
+<li><em>Breaking change</em>: Bump the minimum required CodeQL bundle
+version to 2.19.4. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3894"">#3894</a></li>
+<li>Add support for SHA-256 Git object IDs. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3893"">#3893</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.5"">2.25.5</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3926"">#3926</a></li>
+</ul>
+<h2>4.35.5 - 15 May 2026</h2>
+<ul>
+<li>We have improved how the JavaScript bundles for the CodeQL Action
+are generated to avoid duplication across bundles and reduce the size of
+the repository by around 70%. This should have no effect on the runtime
+behaviour of the CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3899"">#3899</a></li>
+<li>For performance and accuracy reasons, <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> will now only be enabled on a pull request when
+diff-informed analysis is also enabled for that run. If diff-informed
+analysis is unavailable (for example, because the PR diff ranges could
+not be computed), the action will fall back to a full analysis. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3791"">#3791</a></li>
+<li>If multiple inputs are provided for the GitHub-internal
+<code>analysis-kinds</code> input, only <code>code-scanning</code> will
+be enabled. The <code>analysis-kinds</code> input is experimental, for
+GitHub-internal use only, and may change without notice at any time. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3892"">#3892</a></li>
+<li>Added an experimental change which, when running a Code Scanning
+analysis for a PR with <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> enabled, prefers CodeQL CLI versions that have
+a cached overlay-base database for the configured languages. This speeds
+up analysis for a repository when there is not yet a cached overlay-base
+database for the latest CLI version. We expect to roll this change out
+to everyone in May. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3880"">#3880</a></li>
+</ul>
+<h2>4.35.4 - 07 May 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.4"">2.25.4</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3881"">#3881</a></li>
+</ul>
+<h2>4.35.3 - 01 May 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.19.3 and earlier. These versions of
+CodeQL were discontinued on 9 April 2026 alongside GitHub Enterprise
+Server 3.15, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3837"">#3837</a></li>
+<li>Configurations for private registries that use Cloudsmith or GCP
+OIDC are now accepted. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3850"">#3850</a></li>
+<li>Best-effort connection tests for private registries now use
+<code>GET</code> requests instead of <code>HEAD</code> for better
+compatibility with various registry implementations. For NuGet feeds,
+the test is now always performed against the service index. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3853"">#3853</a></li>
+<li>Fixed a bug where two diagnostics produced within the same
+millisecond could overwrite each other on disk, causing one of them to
+be lost. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3852"">#3852</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/54f647b7e1bb85c95cddabcd46b0c578ec92bc1a""><code>54f647b</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3984"">#3984</a>
+from github/update-v4.36.3-1f34ec164</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/e78819e05527766c3c5919e3177647e280c6cb83""><code>e78819e</code></a>
+Trigger checks</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/2c9d3d63eb4941734e2d29468953529a56f5ff1c""><code>2c9d3d6</code></a>
+Update changelog for v4.36.3</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/1f34ec16430d82636d18716acc7aaa6d843b35a9""><code>1f34ec1</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3983"">#3983</a>
+from github/mbg/repo-props/ff-for-config-file-prop</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/d5f0145480025b49d8b08c3f6b36e6ad41a68c90""><code>d5f0145</code></a>
+Log when repository property has a value but is ignored</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/f27f56386a3c745af8d7bbfb806098c714a5e32a""><code>f27f563</code></a>
+Add test for when the FF is off</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/0025d0f2b5676fde748a0be9725dcce18dd9f986""><code>0025d0f</code></a>
+Use FF</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/f7fa18f05d107ff6735857c3510fbff190c9a1eb""><code>f7fa18f</code></a>
+Add FF for config file repo property</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/628fc3f124e68b0151f0d2a5d81e864ee1e42335""><code>628fc3f</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3979"">#3979</a>
+from github/henrymercer/overlay-db-cleanup-size-tele...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/9cfb67bab9b32441237f92d4ba29a7f3ccff259f""><code>9cfb67b</code></a>
+Add clarifying comments</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/8aad20d150bbac5944a9f9d289da16a4b0d87c1e...54f647b7e1bb85c95cddabcd46b0c578ec92bc1a"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github/codeql-action/analyze` from 4.36.2 to 4.36.3
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action/analyze's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.36.3</h2>
+<p>No user facing changes.</p>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action/analyze's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.20.6 and earlier. These versions of
+CodeQL were discontinued on 1 July 2026 alongside GitHub Enterprise
+Server 3.16, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3956"">#3956</a></li>
+</ul>
+<h2>4.37.0 - 08 Jul 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+<h2>4.36.3 - 01 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.2 - 04 Jun 2026</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>4.36.1 - 02 Jun 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.0 - 22 May 2026</h2>
+<ul>
+<li><em>Breaking change</em>: Bump the minimum required CodeQL bundle
+version to 2.19.4. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3894"">#3894</a></li>
+<li>Add support for SHA-256 Git object IDs. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3893"">#3893</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.5"">2.25.5</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3926"">#3926</a></li>
+</ul>
+<h2>4.35.5 - 15 May 2026</h2>
+<ul>
+<li>We have improved how the JavaScript bundles for the CodeQL Action
+are generated to avoid duplication across bundles and reduce the size of
+the repository by around 70%. This should have no effect on the runtime
+behaviour of the CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3899"">#3899</a></li>
+<li>For performance and accuracy reasons, <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> will now only be enabled on a pull request when
+diff-informed analysis is also enabled for that run. If diff-informed
+analysis is unavailable (for example, because the PR diff ranges could
+not be computed), the action will fall back to a full analysis. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3791"">#3791</a></li>
+<li>If multiple inputs are provided for the GitHub-internal
+<code>analysis-kinds</code> input, only <code>code-scanning</code> will
+be enabled. The <code>analysis-kinds</code> input is experimental, for
+GitHub-internal use only, and may change without notice at any time. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3892"">#3892</a></li>
+<li>Added an experimental change which, when running a Code Scanning
+analysis for a PR with <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> enabled, prefers CodeQL CLI versions that have
+a cached overlay-base database for the configured languages. This speeds
+up analysis for a repository when there is not yet a cached overlay-base
+database for the latest CLI version. We expect to roll this change out
+to everyone in May. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3880"">#3880</a></li>
+</ul>
+<h2>4.35.4 - 07 May 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.4"">2.25.4</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3881"">#3881</a></li>
+</ul>
+<h2>4.35.3 - 01 May 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.19.3 and earlier. These versions of
+CodeQL were discontinued on 9 April 2026 alongside GitHub Enterprise
+Server 3.15, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3837"">#3837</a></li>
+<li>Configurations for private registries that use Cloudsmith or GCP
+OIDC are now accepted. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3850"">#3850</a></li>
+<li>Best-effort connection tests for private registries now use
+<code>GET</code> requests instead of <code>HEAD</code> for better
+compatibility with various registry implementations. For NuGet feeds,
+the test is now always performed against the service index. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3853"">#3853</a></li>
+<li>Fixed a bug where two diagnostics produced within the same
+millisecond could overwrite each other on disk, causing one of them to
+be lost. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3852"">#3852</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/54f647b7e1bb85c95cddabcd46b0c578ec92bc1a""><code>54f647b</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3984"">#3984</a>
+from github/update-v4.36.3-1f34ec164</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/e78819e05527766c3c5919e3177647e280c6cb83""><code>e78819e</code></a>
+Trigger checks</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/2c9d3d63eb4941734e2d29468953529a56f5ff1c""><code>2c9d3d6</code></a>
+Update changelog for v4.36.3</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/1f34ec16430d82636d18716acc7aaa6d843b35a9""><code>1f34ec1</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3983"">#3983</a>
+from github/mbg/repo-props/ff-for-config-file-prop</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/d5f0145480025b49d8b08c3f6b36e6ad41a68c90""><code>d5f0145</code></a>
+Log when repository property has a value but is ignored</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/f27f56386a3c745af8d7bbfb806098c714a5e32a""><code>f27f563</code></a>
+Add test for when the FF is off</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/0025d0f2b5676fde748a0be9725dcce18dd9f986""><code>0025d0f</code></a>
+Use FF</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/f7fa18f05d107ff6735857c3510fbff190c9a1eb""><code>f7fa18f</code></a>
+Add FF for config file repo property</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/628fc3f124e68b0151f0d2a5d81e864ee1e42335""><code>628fc3f</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3979"">#3979</a>
+from github/henrymercer/overlay-db-cleanup-size-tele...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/9cfb67bab9b32441237f92d4ba29a7f3ccff259f""><code>9cfb67b</code></a>
+Add clarifying comments</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/8aad20d150bbac5944a9f9d289da16a4b0d87c1e...54f647b7e1bb85c95cddabcd46b0c578ec92bc1a"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore <dependency name> major version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's major version (unless you unignore this specific
+dependency's major version or upgrade to it yourself)
+- `@dependabot ignore <dependency name> minor version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's minor version (unless you unignore this specific
+dependency's minor version or upgrade to it yourself)
+- `@dependabot ignore <dependency name>` will close this group update PR
+and stop Dependabot creating any more for the specific dependency
+(unless you unignore this specific dependency or upgrade to it yourself)
+- `@dependabot unignore <dependency name>` will remove all of the ignore
+conditions of the specified dependency
+- `@dependabot unignore <dependency name> <ignore condition>` will
+remove the ignore condition of the specified dependency and ignore
+conditions
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",c6103da8bedebe86c1b29569071d739d447e4633,2808,false,dependabot[bot],1,2,2,.github
+apache/iceberg-rust,78df272cb1a4ca3dc668e45ea5588d136d6fa642,78df272,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-07-13T04:57:29-04:00,GitHub,noreply@github.com,2026-07-13T16:57:29+08:00,fix(arrow): error on required field absent from data file with no default (#2797),"## Which issue does this PR close?
+
+- Closes #2795.
+
+## What changes are included in this PR?
+
+When a projected field is not present in a data file,
+`RecordBatchTransformer` resolves it using the spec's Column Projection
+fallback rules. For a field with no `initial-default` it produced a null
+column (rule #4) unconditionally. That is correct only for optional
+fields.
+
+Per the spec's Default values section, null is a valid default only for
+an optional field:
+
+> If either default is not set for an optional field, then the default
+value is null for compatibility with older spec versions.
+
+So a required field that is absent from a data file with no
+`initial-default` has no valid value, and producing a null column for it
+violates the field's required (non-nullable) constraint. Previously this
+surfaced later as a confusing Arrow error (`Column '<name>' is declared
+as non-nullable but contains null values`) instead of a clear one.
+
+This PR adds the required-field case to the ""not present"" fallback in
+`record_batch_transformer.rs`: if a field is absent from the data file,
+has no `initial-default`, and is required, return `Missing required
+field: <name>`. The resolution order now mirrors Iceberg-Java's Parquet
+readers (`BaseParquetReaders` / `SparkParquetReaders.defaultReader`):
+file value, then `initial-default`, then null if optional, otherwise
+error.
+
+## Are these changes tested?
+
+Yes, a unit test in `record_batch_transformer.rs`. Together with the
+existing `test_all_four_spec_rules` and
+`schema_evolution_adds_date_column_with_nulls`, all combinations of a
+field absent from the data file are covered:
+
+- absent + has `initial-default` returns the default value (rule #3) -
+existing `test_all_four_spec_rules`.
+- absent + optional + no default returns null (rule #4) - existing
+`test_all_four_spec_rules` and
+`schema_evolution_adds_date_column_with_nulls`.
+- absent + required + no default now errors with `Missing required
+field: <name>` - new
+`schema_evolution_required_field_absent_without_default_errors`.",b8cfa9d8ad3c53c841131db7554f91118b5edea7,2797,false,,1,55,0,crates
+apache/iceberg-rust,f13bd41be3159df8fd42cee44fd2cb8f790d0390,f13bd41,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-13T20:17:18+08:00,GitHub,noreply@github.com,2026-07-13T20:17:18+08:00,chore(deps-dev): Bump datafusion from 52.3.0 to 54.0.0 in /bindings/python (#2807),,78df272cb1a4ca3dc668e45ea5588d136d6fa642,2807,false,,2,24,9,bindings
