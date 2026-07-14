@@ -5468,3 +5468,111 @@ otherwise successful job if final cleanup is still blocked.
 ---------
 
 Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",2191844e14f4efd3d6ee9bf5d0db835e218c1ffd,807,false,Abanoub Doss,2,24,3,ci
+apache/iceberg-cpp,fee18845357aefa570f3aa067061eb204ea33873,fee1884,Abanoub Doss,abanoubdoss@gmail.com,2026-07-14T00:36:12-05:00,GitHub,noreply@github.com,2026-07-14T13:36:12+08:00,ci: build Windows test leg in Debug (#806),"## What
+Let the CMake CI scripts use `ICEBERG_BUILD_TYPE` and default to
+`Debug`, including on Windows. MSVC builds with debug info now use
+embedded `/Z7` debug info through `CMP0141` and
+`CMAKE_MSVC_DEBUG_INFORMATION_FORMAT` so Debug objects remain cacheable
+by sccache.
+
+The build scripts also use the same single-config Ninja build path on
+every platform. Since these jobs pass `-G Ninja`, `CMAKE_BUILD_TYPE`
+controls the build and `--config Release` / `ctest -C Release` were not
+needed.
+
+## Why
+Windows was the only main `Test` workflow leg still forcing the helper
+scripts through `Release`. After this change, the helper-script CMake
+test jobs default to `Debug` on pull requests and `main`;
+`ICEBERG_BUILD_TYPE` remains available if the project wants an override.
+Release verification and the SQL Catalog workflow's explicit Windows
+`Release` matrix entry are unchanged.
+
+The original Windows Debug blocker in #39 was an `IMPORTED_LOCATION`
+failure from a multi-config CMake path. That specific failure no longer
+applies because the helper scripts now use Ninja single-config builds.
+The remaining Debug-only blocker was MSVC rejecting a `constexpr static
+PartitionValues` test helper: `PartitionValues` owns a `std::vector`,
+and MSVC Debug's checked-iterator mode (`_ITERATOR_DEBUG_LEVEL != 0`)
+makes that construction fail constant evaluation. This PR constructs the
+empty `PartitionValues` at the call site instead.
+
+This follows the CI direction discussed in #799.
+
+## Validation
+Fork validation passed:
+
+- `Test / AMD64 Windows 2025` passed in 23m48s on the pull-request run:
+https://github.com/abnobdoss/iceberg-cpp/actions/runs/28638474339/job/84929642907
+- `SQL Catalog / AMD64 Windows 2025` passed in 4m13s:
+https://github.com/abnobdoss/iceberg-cpp/actions/runs/28638474303/job/84929643407
+- `Meson / AMD64 Windows 2025` passed in 3m21s:
+https://github.com/abnobdoss/iceberg-cpp/actions/runs/28638474339/job/84929642897
+
+The Windows Debug test job reported 45% sccache hits, 385 hits, 477
+misses, and 0 errors. The first post-merge Apache `main` run will reseed
+Windows cache entries because the previous entries were built from
+Release objects.
+
+Closes #39.
+
+---------
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",0825f56c4f9dd535487aba292e99c053570f8d8b,806,false,Abanoub Doss,5,29,54,.github; ci; cmake_modules; src
+apache/iceberg-cpp,330de84b1bfba2d79a96f0506b330cc0d8294c7f,330de84,ZhaoXuan,425932451@qq.com,2026-07-14T22:38:26+08:00,GitHub,noreply@github.com,2026-07-14T22:38:26+08:00,feat(puffin): support deletion-vector-v1 blob read/write (#777),"feat(puffin): support deletion-vector-v1 blob read/write
+
+Add end-to-end support for the `deletion-vector-v1` Puffin blob type on
+top of the existing PuffinReader/PuffinWriter and RoaringPositionBitmap.
+
+Encoding (puffin/deletion_vector.{h,cc}):
+- SerializeDeletionVectorBlob / DeserializeDeletionVectorBlob implement
+the DV blob framing: 4-byte big-endian length, 0xD1D33964 magic, the
+portable Roaring vector, and a trailing big-endian CRC-32. Reads validate
+the magic and checksum.
+- MakeDeletionVectorBlob builds a spec-compliant Blob: fields set to the
+  row-position metadata column id, snapshot-id/sequence-number = -1, no
+compression, and the required referenced-data-file/cardinality properties.
+
+Writing (data/deletion_vector_writer.{h,cc}):
+- DeletionVectorWriter accumulates deleted positions per data file,
+run-length
+encodes each bitmap before serializing, writes one blob per data file,
+and produces a DataFile per blob carrying content_offset /
+content_size_in_bytes,  referenced_data_file and record_count for manifest
+registration.
+
+Reading (data/delete_loader.cc):
+- Implement DeleteLoader::LoadDV: read the blob bytes referenced by
+content_offset/content_size_in_bytes, validate referenced_data_file, the
+2GB limit and cardinality == record_count, then apply positions to the
+index. This wires DV deletes into DeleteFilter::ComputeAliveRows.
+
+Puffin writer convenience:
+- PuffinWriter::Make now fills a default `created-by` property when the
+caller does not provide one, matching the Java writer.
+
+Behavior matches the Java implementation (BaseDVFileWriter /
+BaseDeleteLoader /
+BitmapPositionDeleteIndex): magic, byte order, CRC coverage, blob
+fields, RLE and the read-side validations are all aligned.
+
+Tests:
+- DV blob framing round-trip and error cases (bad magic, corrupted CRC,
+  truncated blob, size mismatch).
+- DeletionVectorWriter -> DeleteLoader write/read round trip and guard
+cases.
+- delete_loader: load DV, referenced-file filtering, cardinality
+mismatch,
+  mixed DV + position-delete loading.
+- delete_filter: end-to-end ComputeAliveRows filtering with a real
+Puffin DV  file over Arrow FileIO.
+- PuffinWriter created-by default and caller-precedence.
+
+Not included (deletion-vector upper layer, follow-up): merging with
+previously written DVs (compaction), the bulk delete(PositionDeleteIndex)
+API, and per-data-file partition/spec in a single DV file.
+
+---------
+
+Co-authored-by: xuan.zhao <xuan.zhao@clickzetta.com>
+Co-authored-by: Gang Wu <ustcwg@gmail.com>",fee18845357aefa570f3aa067061eb204ea33873,777,false,xuan.zhao; Gang Wu,33,1608,68,.clang-tidy; CMakeLists.txt; cmake_modules; src

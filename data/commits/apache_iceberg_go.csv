@@ -19065,3 +19065,96 @@ view</a></li>
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",45818f6328ebbc902a366b65d2cb2138ce6b7ca6,1459,false,dependabot[bot],2,75,75,go.mod; go.sum
+apache/iceberg-go,74eba583d5c538aa425833d50baac2c7009f475d,74eba58,Minh Vu,vuhoangminh97@gmail.com,2026-07-13T19:46:00+02:00,GitHub,noreply@github.com,2026-07-13T13:46:00-04:00,fix(catalog): validate requirements when creating tables (#1451),"## Summary
+
+- validate requirements against nil metadata for create-via-commit
+operations
+- apply the same behavior to Hadoop
+- add SQL, Glue, Hive, and Hadoop regressions for AssertCreate and
+non-create requirements
+
+## Testing
+
+- go test ./...",d6307fa957f57aa9de6695c3cbfb000922981c00,1451,false,,6,178,13,catalog
+apache/iceberg-go,772aa2b4b61d6954e3c37f950c8fbb3022258275,772aa2b,Minh Vu,vuhoangminh97@gmail.com,2026-07-13T19:49:01+02:00,GitHub,noreply@github.com,2026-07-13T13:49:01-04:00,fix(table): include orphan file sizes in cleanup results (#1412),"## Summary
+- Add per-orphan file sizes to table orphan cleanup result as .
+- Populate file sizes during scan so retains size metadata, not just
+paths.
+- Map sizes into CLI output entries and render per-file size in text
+output.
+- Extend JSON output to always include and add regression tests for
+table/CLI.
+
+## Testing
+- go test ./...",74eba583d5c538aa425833d50baac2c7009f475d,1412,false,,5,174,16,cmd; table
+apache/iceberg-go,f0d4ec320e61c693f4cd71f503cd7d3813e563ff,f0d4ec3,Minh Vu,vuhoangminh97@gmail.com,2026-07-13T20:22:05+02:00,GitHub,noreply@github.com,2026-07-13T14:22:05-04:00,fix(view): validate SQL representations in NewVersion (#1384),"- Validate SQL representations in all code paths
+- Allow unknown representations on read
+- Ignore unknown representations in dialect tracking",772aa2b4b61d6954e3c37f950c8fbb3022258275,1384,false,,4,273,20,view
+apache/iceberg-go,ed3878a8bb8e56e7ca5bd26f43cb519469b1cfd0,ed3878a,Neelesh Salian,nssalian@users.noreply.github.com,2026-07-13T11:23:03-07:00,GitHub,noreply@github.com,2026-07-13T14:23:03-04:00,feat(table): variant shredded writer (#1351),"Adds opt-in Parquet variant shredding: schema inference, writer integration, decimal handling, documentation, and coverage for unpartitioned, partitioned, clustered, scalar, and integration scenarios.
+
+Closes #987",f0d4ec320e61c693f4cd71f503cd7d3813e563ff,1351,false,,10,2766,43,table; website
+apache/iceberg-go,e9072fb22e2581af2b598ec9d334c1d391fd99d8,e9072fb,Raul-Mircea Crivineanu,gfxsraul@gmail.com,2026-07-14T10:38:52+02:00,GitHub,noreply@github.com,2026-07-14T10:38:52+02:00,feat(udf): add SQL UDF REST catalog read support (#1432),"## Description
+
+Addressing part 2 from https://github.com/apache/iceberg-go/issues/1360,
+following the SQL UDF metadata model added in #1418.
+
+This adds read-side SQL UDF support to the REST catalog through a new
+optional `FunctionCatalog` capability interface. REST catalogs can list
+functions in a namespace, load a function and check whether a function
+exists. Loaded functions are represented by a new `udf.UDF` wrapper
+containing the catalog identifier, parsed UDF metadata and optional
+metadata location.
+
+The REST implementation supports the two function endpoints currently
+defined by the Iceberg REST OpenAPI:
+
+- `GET /v1/{prefix}/namespaces/{namespace}/functions`
+- `GET /v1/{prefix}/namespaces/{namespace}/functions/{function}`
+
+Function endpoints are not part of the REST spec's assumed default
+endpoint set, so they are used only when advertised by the server
+through `ConfigResponse.endpoints`. An unsupported load or existence
+check returns `ErrEndpointNotSupported`, while an unsupported listing
+yields no results without issuing a request, matching the existing list
+behavior for optional endpoints.
+
+`ListFunctions` is a paginated iterator and handles the
+function-specific `CatalogObjectIdentifier` wire shape: each identifier
+is a flat array of hierarchy levels, such as `[""accounting"", ""tax"",
+""paid""]`, rather than the `{namespace, name}` object used for tables and
+views. `LoadFunction` parses the returned metadata using the `udf`
+package and returns all overloads from the single metadata response. The
+optional `metadata-location` is preserved when present.
+
+The catalog adds `ErrNoSuchFunction` for `NoSuchFunctionException`
+responses and validates function identifiers independently from table
+and view identifiers. `CheckFunctionExists` uses `LoadFunction` because
+the REST spec does not define a HEAD endpoint for functions; invalid
+identifiers remain errors, while a server-reported missing function
+returns `false` without an error.
+
+This PR does not add create, replace or drop operations because
+standardized REST write endpoints for functions are not currently
+defined. It also does not resolve overloads or execute UDF SQL bodies;
+those remain query-engine responsibilities.
+
+The tests cover list and load responses, pagination, early iterator
+termination, page-size handling, subsequent-page errors, missing
+namespaces and functions, malformed metadata, identifier validation,
+GET-based existence checks and endpoint capability negotiation. They
+also add focused coverage for existing UDF metadata initialization and
+nil-properties safeguards.
+
+## Tests
+
+- `go test ./...`
+- `go test ./catalog/rest -run 'Function|Endpoint' -count=10`
+- `go test -race ./catalog ./catalog/rest ./udf -run
+'Function|Endpoint|TestUDF|TestBuilderFromBaseNilProperties|TestMetadataInitDefaults'
+-count=1`
+- `go vet ./...`
+- `golangci-lint run --timeout=10m`
+
+---------
+
+Signed-off-by: Raul <gfxsraul@gmail.com>",ed3878a8bb8e56e7ca5bd26f43cb519469b1cfd0,1432,false,,9,865,6,catalog; udf
