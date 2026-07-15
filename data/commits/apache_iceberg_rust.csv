@@ -23328,3 +23328,60 @@ Specify what test covers (unit test, integration test, etc.).
 If tests are not included in your PR, please explain why (for example,
 are they covered by existing tests)?
 -->",f13bd41be3159df8fd42cee44fd2cb8f790d0390,2796,false,,1,5,0,crates
+apache/iceberg-rust,d844a1e090f8f7e6c2895a1359b990526669aecc,d844a1e,Andrew Kane,andrew@ankane.org,2026-07-14T09:56:28-07:00,GitHub,noreply@github.com,2026-07-14T09:56:28-07:00,Include license and notice files in iceberg-storage-opendal crate (#2823),"## Which issue does this PR close?
+
+None
+
+## What changes are included in this PR?
+
+Applies #1601 to the `iceberg-storage-opendal` crate.
+
+## Are these changes tested?
+
+N/A",85c365f5b06905dd72053accc23c9d2fb2fddfd9,2823,false,,2,2,0,crates
+apache/iceberg-rust,5627a31eb1cc9837d6a4c02d0fdf91ae5638a3c7,5627a31,Daniel Carl Jones,djonesoa@amazon.com,2026-07-14T19:01:53+01:00,GitHub,noreply@github.com,2026-07-14T11:01:53-07:00,fix(license): Add missing LICENSE and NOTICE symlinks for iceberg-cache-moka and iceberg-catalog-loader (#2828),"## Which issue does this PR close?
+
+Follow-up from #2823.
+
+## What changes are included in this PR?
+
+Add symlinks from the crate roots to the project root's LICENSE and
+NOTICE files.
+
+## Are these changes tested?
+
+Tested using the following script provided by @kevinjqliu. Introducing
+this in CI is left as a follow-up (#2827).",d844a1e090f8f7e6c2895a1359b990526669aecc,2828,false,,4,4,0,crates
+apache/iceberg-rust,b80ebbf22f7319f62e21a981f05edbec4783e45e,b80ebbf,kid,19265318+u70b3@users.noreply.github.com,2026-07-15T17:54:18+08:00,GitHub,noreply@github.com,2026-07-15T17:54:18+08:00,fix(writer): validate equality delete field ids (#2723),"## Which issue does this PR close?
+
+- Closes #2722.
+
+## What changes are included in this PR?
+
+- Add writer config validation for equality delete field IDs.
+- Reject empty equality ID lists, duplicate equality field IDs, and
+field IDs that are missing from the table schema.
+- Keep the existing `RecordBatchProjector` behavior for unsupported
+field types and map/list reachability.
+- Fix a stale comment: equality delete fields may be optional, unlike
+identifier fields.
+
+## Are these changes tested?
+
+- `cargo test -p iceberg test_equality_delete_rejects_empty_equality_ids
+--lib`
+- `cargo test -p iceberg
+test_equality_delete_rejects_duplicate_equality_ids --lib`
+- `cargo test -p iceberg
+test_equality_delete_rejects_missing_equality_id --lib`
+- `cargo test -p iceberg test_equality_delete_unreachable_column --lib`
+- `cargo test -p iceberg test_equality_delete_with_nullable_field --lib`
+- `cargo test -p iceberg equality_delete --lib`
+- `cargo fmt --check`
+- `cargo test -p iceberg --lib`
+- `cargo clippy -p iceberg --all-features --lib --tests -- -D warnings`
+- `make check`
+- `make unit-test`
+- Docker-backed integration path:
+  - `docker compose -f dev/docker-compose.yaml up -d --build --wait`
+  - `make nextest` (1832 passed, 0 skipped)",5627a31eb1cc9837d6a4c02d0fdf91ae5638a3c7,2723,false,,1,101,6,crates

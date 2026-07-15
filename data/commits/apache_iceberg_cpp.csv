@@ -5576,3 +5576,31 @@ API, and per-data-file partition/spec in a single DV file.
 
 Co-authored-by: xuan.zhao <xuan.zhao@clickzetta.com>
 Co-authored-by: Gang Wu <ustcwg@gmail.com>",fee18845357aefa570f3aa067061eb204ea33873,777,false,xuan.zhao; Gang Wu,33,1608,68,.clang-tidy; CMakeLists.txt; cmake_modules; src
+apache/iceberg-cpp,697891b03eb1d5b37ae395c3b34a80f7899cad7f,697891b,wzhuo,wngzhuo@gmail.com,2026-07-15T20:28:25+08:00,GitHub,noreply@github.com,2026-07-15T20:28:25+08:00,fix: use kLegacyPartitionDataIdStart as partition field ID baseline (#832),"FreshPartitionSpec and TableMetadataBuilder::Impl both initialized the
+partition field ID counter to `kInvalidPartitionFieldId` (-1), causing
+the first partition field to get ID **0** instead of **1000**. Partition
+field
+ID 0 collides with ManifestEntry internal fields:
+
+| Field | ID |
+|---|---|
+| `ManifestEntry.status` | 0 |
+| `ManifestEntry.snapshot_id` | 1 |
+| `ManifestEntry.data_file` | 2 |
+
+This corrupts manifest file schemas during serialization and breaks
+partition pruning.
+
+## Fix
+
+Change both initializers to `kLegacyPartitionDataIdStart - 1` (999),
+consistent with Java Iceberg's `PARTITION_DATA_ID_START` convention and
+the rest of the C++ codebase (`PartitionSpec` constructor,
+`Unpartitioned()`, `UpdatePartitionSpec`). The first partition field
+now correctly gets ID **1000**.
+
+| Location | Before | After |
+|---|---|---|
+| `FreshPartitionSpec` counter | -1 | 999 |
+| `TableMetadataBuilder::Impl::last_partition_id` | -1 | 999 |
+| First partition field ID | 0 | **1000** |",330de84b1bfba2d79a96f0506b330cc0d8294c7f,832,false,,2,3,3,src
