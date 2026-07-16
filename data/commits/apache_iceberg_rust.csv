@@ -23385,3 +23385,149 @@ test_equality_delete_rejects_missing_equality_id --lib`
 - Docker-backed integration path:
   - `docker compose -f dev/docker-compose.yaml up -d --build --wait`
   - `make nextest` (1832 passed, 0 skipped)",5627a31eb1cc9837d6a4c02d0fdf91ae5638a3c7,2723,false,,1,101,6,crates
+apache/iceberg-rust,4f912a796fb5df5765187ecbce1051fe9e072c84,4f912a7,hsiang-c,137842490+hsiang-c@users.noreply.github.com,2026-07-15T17:50:22-07:00,GitHub,noreply@github.com,2026-07-15T17:50:22-07:00,feat: add support for `_spec_id` metadata column (#2695),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Partially closes https://github.com/apache/iceberg-rust/issues/2607
+
+## What changes are included in this PR?
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+- If a projection includes `_spec_id`, which is a constant like the
+`_file` metadata column for all rows, add it to
+`RecordBatchTransformerBuilder`
+
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->
+
+ - Yes, unit tests.
+ - Iceberg Spark: https://github.com/apache/datafusion-comet/pull/4752
+
+Sample plan
+
+```shell
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- CometSort [id#1247L, data#1248, _spec_id#1249], [id#1247L ASC NULLS FIRST]
+   +- CometExchange rangepartitioning(id#1247L ASC NULLS FIRST, 200), ENSURE_REQUIREMENTS, CometNativeShuffle, [plan_id=3533]
+      +- CometFilter [id#1247L, data#1248, _spec_id#1249], (id#1247L >= 10)
+         +- CometIcebergNativeScan [id#1247L, data#1248, _spec_id#1249], /var/folders/d2/b93h6k7174ddqxltrxgb51040000gn/T/iceberg_warehouse16657344237870771906/iceberg_data/default/table/metadata/00004-70b616c5-1bbe-4e1d-bdd6-e9ac4910674a.metadata.json, testrest.default.table (branch=null) [filters=id IS NOT NULL, id >= 10, groupedBy=], 1
+```",b80ebbf22f7319f62e21a981f05edbec4783e45e,2695,false,,6,534,62,crates
+apache/iceberg-rust,64cb19a4f798634c717773f81afeaead9ef7f757,64cb19a,Xander,zander181@googlemail.com,2026-07-16T02:56:47+01:00,GitHub,noreply@github.com,2026-07-16T09:56:47+08:00,feat(encryption) [9/N] Read encrypted parquet data-files (#2584),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Working towards https://github.com/apache/iceberg-rust/issues/2034
+
+We're currently not able to decrypt PME encrypted files, all that's
+needed for this PR is to wire through the key_metadata from the manifest
+entries into the scan tasks and then configure the parquet reader with
+the correct encryption key and aad.
+
+It's important to note that no encryption manager is needed here since
+the key_metadata on the manifest files contain the plaintext keys.
+
+## What changes are included in this PR?
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+Tests follow the pattern on manually writing an encrypted parquet file
+using the raw arrow-rs writer and then using the FileScanTask and
+iceberg reader to read that tmp file.
+
+I looked at using the [parquet testing
+repo](https://github.com/apache/parquet-testing) but the encrypted files
+there all use column based encryption which isn't supported by the spec.
+I'll separately track adding some files there that we can use here but
+the testing strategy here is consistent with how Java does things so I
+think this should be sufficient for us to continue.
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",4f912a796fb5df5765187ecbce1051fe9e072c84,2584,false,,10,530,12,crates
+apache/iceberg-rust,ababe65912158c8f47ed895e073616ed5b29bc9a,ababe65,Christian,christian@vakamo.com,2026-07-16T11:20:32+02:00,GitHub,noreply@github.com,2026-07-16T17:20:32+08:00,feat: Variant Support (#2188),"## Which issue does this PR close?
+Variant Support.
+Arrow value support is currently missing as I am unsure how we want to
+extend `Literal`
+
+## What changes are included in this PR?
+### Core: Variant Type
+- `crates/iceberg/src/spec/datatypes.rs` — new `Variant` type
+- `crates/iceberg/src/spec/values/literal.rs` — `Variant` literal value
+- `crates/iceberg/src/spec/schema/` — visitor, index, pruning, mod, id
+reassigner all handle `Variant`
+- `crates/iceberg/src/spec/table_metadata.rs` — metadata support
+
+### Avro
+- `crates/iceberg/src/avro/schema.rs` — read/write `Variant` in Avro
+
+### Arrow
+- `crates/iceberg/src/arrow/schema.rs` — map `Variant` to Arrow type
+- `crates/iceberg/src/arrow/reader.rs` — read `Variant` from Arrow
+- `crates/iceberg/src/arrow/value.rs` — Arrow value conversion
+- Minor fixes in `caching_delete_file_loader.rs` and
+`nan_val_cnt_visitor.rs`
+
+### Parquet
+- `crates/iceberg/src/writer/file_writer/parquet_writer.rs` — write
+`Variant` columns
+
+### Tests & Dev
+- `crates/integration_tests/tests/read_variant.rs` — new integration
+test for reading Variant data
+- `dev/spark/provision.py` — Spark provisioning to generate Variant test
+data
+
+
+## Are these changes tested?
+Sure! Even integration tested :)
+
+---------
+
+Co-authored-by: Shawn Chang <yxchang@amazon.com>",64cb19a4f798634c717773f81afeaead9ef7f757,2188,false,Shawn Chang,22,1058,33,crates
+apache/iceberg-rust,743d098e4a2d99a3f65df0c2beca37494de46760,743d098,Christian,christian@vakamo.com,2026-07-16T12:17:06+02:00,GitHub,noreply@github.com,2026-07-16T18:17:06+08:00,feat(spec): read timestamp_ns/timestamptz_ns default values in the Literal JSON codec (#2832),"## Which issue does this PR close?
+We don't have an issue for this. Deserializing Timestamp NS default
+values failed.
+
+## What changes are included in this PR?
+
+`try_into_json` serialized TimestampNs/TimestamptzNs but `try_from_json`
+had no matching arms, so a nanosecond-timestamp single value (e.g. a
+column default) failed to deserialize (fell to the DataInvalid
+catch-all). Add the read arms
+mirroring the microsecond ones, plus `datetime_to_nanoseconds` /
+`datetimetz_to_nanoseconds` helpers. Also adds json_timestamp_ns /
+json_timestamptz_ns tests.
+
+## Are these changes tested?
+
+Yes",ababe65912158c8f47ed895e073616ed5b29bc9a,2832,false,,3,86,0,crates

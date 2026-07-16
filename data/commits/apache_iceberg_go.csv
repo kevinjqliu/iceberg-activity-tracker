@@ -19165,3 +19165,62 @@ apache/iceberg-go,9a87d90cdc05e932968da0508385f33e4aaeaea4,9a87d90,Minh Vu,vuhoa
 apache/iceberg-go,7e339ea1e15eeae0a046bab8437d101d437b4ac0,7e339ea,Revanth,revanthcse1@gmail.com,2026-07-14T10:58:12-05:00,GitHub,noreply@github.com,2026-07-14T11:58:12-04:00,fix(manifest): preserve empty partition list on rewrite (#1464),Closes #1309,9a87d90cdc05e932968da0508385f33e4aaeaea4,1464,false,,3,489,0,manifest.go; manifest_test.go; table
 apache/iceberg-go,b9efc6de5b946f115c427d5b24d0ae2567efad31,b9efc6d,Minh Vu,vuhoangminh97@gmail.com,2026-07-14T17:58:21+02:00,GitHub,noreply@github.com,2026-07-14T11:58:21-04:00,fix: validate retention durations (#1443),,7e339ea1e15eeae0a046bab8437d101d437b4ac0,1443,false,,7,152,11,cmd; table
 apache/iceberg-go,ee3687ced24d194c566579fd3dcc8a574dadb4ac,ee3687c,Revanth,revanthcse1@gmail.com,2026-07-14T10:58:24-05:00,GitHub,noreply@github.com,2026-07-14T11:58:24-04:00,feat(rest): implement scan planning client methods (#1324),,b9efc6de5b946f115c427d5b24d0ae2567efad31,1324,false,,5,1419,64,catalog
+apache/iceberg-go,b53f27ee294a149f4b3adce7d8c199625de353e2,b53f27e,Minh Vu,vuhoangminh97@gmail.com,2026-07-15T17:31:37+02:00,GitHub,noreply@github.com,2026-07-15T11:31:37-04:00,fix(table): protect identifier from external mutation (#1382),,ee3687ced24d194c566579fd3dcc8a574dadb4ac,1382,false,,8,173,12,table
+apache/iceberg-go,47e2ebd4410da36a6b337c5704462506b07ec323,47e2ebd,Minh Vu,vuhoangminh97@gmail.com,2026-07-15T17:31:40+02:00,GitHub,noreply@github.com,2026-07-15T11:31:40-04:00,fix(hive): clean up pending locks after cancellation (#1468),,b53f27ee294a149f4b3adce7d8c199625de353e2,1468,false,,2,74,11,catalog
+apache/iceberg-go,1851ebf7a2d5113fbabed94aec437538f5c0a719,1851ebf,Revanth,revanthcse1@gmail.com,2026-07-15T10:31:44-05:00,GitHub,noreply@github.com,2026-07-15T11:31:44-04:00,feat(rest): implement WaitForPlan poller for scan planning (#1469),,47e2ebd4410da36a6b337c5704462506b07ec323,1469,false,,5,1115,39,catalog
+apache/iceberg-go,364258637cc1c4a379ab04bff9957039a299fb93,3642586,Minh Vu,vuhoangminh97@gmail.com,2026-07-15T17:31:48+02:00,GitHub,noreply@github.com,2026-07-15T11:31:48-04:00,fix(table): avoid mutating binary upper bounds (#1470),,1851ebf7a2d5113fbabed94aec437538f5c0a719,1470,false,,2,31,8,table
+apache/iceberg-go,f2e1dab2ba8ca667d920d804ed667fed31840114,f2e1dab,Minh Vu,vuhoangminh97@gmail.com,2026-07-15T17:31:58+02:00,GitHub,noreply@github.com,2026-07-15T11:31:58-04:00,fix(puffin): clone blob metadata inputs (#1471),,364258637cc1c4a379ab04bff9957039a299fb93,1471,false,,2,37,6,puffin
+apache/iceberg-go,54fbef21cb6f592c2d18056c55bd253c372f266a,54fbef2,Minh Vu,vuhoangminh97@gmail.com,2026-07-15T17:32:01+02:00,GitHub,noreply@github.com,2026-07-15T11:32:01-04:00,fix(io): preprocess names consistently for removal (#1472),,f2e1dab2ba8ca667d920d804ed667fed31840114,1472,false,,2,85,11,io
+apache/iceberg-go,5ab05c3b72bbaec533c469d1eee9a6aaacdb16fb,5ab05c3,Minh Vu,vuhoangminh97@gmail.com,2026-07-15T17:32:05+02:00,GitHub,noreply@github.com,2026-07-15T11:32:05-04:00,fix(cli): fail closed on explicit config errors (#1473),,54fbef21cb6f592c2d18056c55bd253c372f266a,1473,false,,4,154,12,cmd; config
+apache/iceberg-go,3648ea35bd6499f14ecc1e6d46190cd84cd5913d,3648ea3,Minh Vu,vuhoangminh97@gmail.com,2026-07-15T17:32:08+02:00,GitHub,noreply@github.com,2026-07-15T11:32:08-04:00,fix(cli): resolve sort fields by schema name (#1474),,5ab05c3b72bbaec533c469d1eee9a6aaacdb16fb,1474,false,,3,121,16,cmd
+apache/iceberg-go,37ee0276a4eeea41b9c273e45128f072624c6992,37ee027,Matt Topol,zotthewizard@gmail.com,2026-07-15T14:03:31-04:00,GitHub,noreply@github.com,2026-07-15T20:03:31+02:00,test(rest): fix flaky TestWaitForPlanBoundsSlowServerSideCancel (#1475),"## What
+
+`TestWaitForPlanBoundsSlowServerSideCancel` (added in #1469) is flaky.
+It failed on `main` in the `ubuntu-latest go1.25.8` cell of the `Go`
+workflow (run 29428513100 on commit 3648ea3) while passing on every
+other commit and matrix cell.
+
+## Root cause
+
+`WaitForPlan` issues the server-side cancel (`DELETE .../plan/plan-1`)
+on a context **detached** from the caller (bounded by
+`CancelGracePeriod`). When the caller's context is cancelled,
+`WaitForPlan` returns `context.Canceled` immediately, while the detached
+goroutine issues the `DELETE` (which sets `cancelStarted`) concurrently.
+
+The test asserted `cancelStarted.Load()` **immediately** after
+`WaitForPlan` returned, so on a slower runner the assertion could
+execute before the detached cancel had been attempted. This is a race in
+the test, not in the product code.
+
+## Fix
+
+Poll the flag with `assert.Eventually` (1s budget, 5ms tick) instead of
+reading it exactly once, and add a comment explaining why so it isn't
+""simplified"" back.
+
+## Verification
+
+- `go test ./catalog/rest/ -run TestWaitForPlan -race -count=50` → `ok`
+- full `catalog/rest` package (`-count=1`) → `ok`
+- `gofmt` / `go vet` clean",3648ea35bd6499f14ecc1e6d46190cd84cd5913d,1475,false,,1,5,1,catalog
+apache/iceberg-go,909f4693265474cb27a0b34100768d89918dcbc3,909f469,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-07-15T11:55:43-07:00,GitHub,noreply@github.com,2026-07-15T20:55:43+02:00,feat(rest): Add support for Rename View endpoint (#1461),"We were missing support for `renameView` on the REST Catalog. It looks
+we started support and then never finished it?",37ee0276a4eeea41b9c273e45128f072624c6992,1461,false,,5,203,0,README.md; catalog; website
+apache/iceberg-go,43989fe895f31eb881451ba1e76f95b9a948b063,43989fe,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-07-15T11:56:46-07:00,GitHub,noreply@github.com,2026-07-15T20:56:46+02:00,WitMaxConcurrency rewrite (#1462),"(I think we should have a discussion on this one)
+
+We had a ScanOption named `WitMaxConcurrency`, which is obviously a
+typo. But, the correct name conflicts with an option in
+orpan_cleanups.go called `WithMaxConcurrency`.
+
+I've renamed `WithMaxConcurrency` -> `WithScanMaxConcurrency`. Ideally,
+this conflict shouldn't happen in the first place, but we'll have to do
+some package renames to make that happen.",909f4693265474cb27a0b34100768d89918dcbc3,1462,false,,8,50,14,table; website
+apache/iceberg-go,fee8683a8595e73807958515602d0f8205207223,fee8683,Tobias Pütz,tobias@minio.io,2026-07-16T11:13:32+02:00,GitHub,noreply@github.com,2026-07-16T11:13:32+02:00,feat(compaction): add CollectDeadPositionDeletes for leader-side expunge (#1434),"Position-delete cleanup during a rewrite must re-check each delete
+against the full set of rewritten data files, which the per-group
+CollectSafePositionDeletes cannot do on its own.
+CollectDeadPositionDeletes walks the snapshot and returns the position
+deletes the rewrite makes dead: file-scoped ones when their single
+target is rewritten, partition-scoped ones when no surviving data file
+in their partition predates them (deletion vectors stay on the per-group
+path). The file_path/referenced_data_file resolution it shares with
+isFileScoped is folded into a single referencedDataFilePath helper.",43989fe895f31eb881451ba1e76f95b9a948b063,1434,false,,10,757,35,table

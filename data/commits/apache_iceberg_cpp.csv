@@ -5604,3 +5604,21 @@ now correctly gets ID **1000**.
 | `FreshPartitionSpec` counter | -1 | 999 |
 | `TableMetadataBuilder::Impl::last_partition_id` | -1 | 999 |
 | First partition field ID | 0 | **1000** |",330de84b1bfba2d79a96f0506b330cc0d8294c7f,832,false,,2,3,3,src
+apache/iceberg-cpp,c5a5b5c547607ff8c6854e32dad877e228364944,c5a5b5c,Zehua Zou,zehuazou2000@gmail.com,2026-07-16T11:27:58+08:00,GitHub,noreply@github.com,2026-07-16T11:27:58+08:00,feat: merge multiple deletion vectors per data file (#708),"Add support for merging multiple deletion vectors that reference the same data
+file during snapshot updates. Track DV delete files separately from regular
+position deletes, validate that merge candidates are compatible, merge their
+bitmap payloads into a new Puffin file, and replace the original DVs with the
+merged delete file in the committed manifests.
+
+Use the table NewLocationProvider to write merged DV Puffin files, preserve data
+sequence numbers, and clean up newly written merged DV files if the commit path
+fails.
+
+Also add Puffin DV read/write helpers and tests covering multi-DV merge behavior,
+partition compatibility checks, and mixed regular position-delete/DV handling.
+
+Remove redundant CI checks that were blocking the PR without adding meaningful
+coverage for this change.
+
+Co-authored-by: Gang Wu <ustcwg@gmail.com>",697891b03eb1d5b37ae395c3b34a80f7899cad7f,708,false,Gang Wu,16,502,91,.clang-tidy; .github; src
+apache/iceberg-cpp,f9193ad7307b112017bef7de62b1e9b78fb33890,f9193ad,Gang Wu,ustcwg@gmail.com,2026-07-16T13:50:06+08:00,GitHub,noreply@github.com,2026-07-16T13:50:06+08:00,chore: update ASF GitHub collaborators (#830),,c5a5b5c547607ff8c6854e32dad877e228364944,830,false,,1,1,5,.asf.yaml
