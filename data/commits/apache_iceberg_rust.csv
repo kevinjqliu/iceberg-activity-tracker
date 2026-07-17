@@ -23531,3 +23531,70 @@ json_timestamptz_ns tests.
 ## Are these changes tested?
 
 Yes",ababe65912158c8f47ed895e073616ed5b29bc9a,2832,false,,3,86,0,crates
+apache/iceberg-rust,1d499438fd567f29578b000b4111672d19643ca5,1d49943,Xander,zander181@googlemail.com,2026-07-17T07:02:42+01:00,GitHub,noreply@github.com,2026-07-17T14:02:42+08:00,refactor(encryption) standard encryption metadata should store `SecureKey` (#2834),"## Which issue does this PR close?
+Follow up from https://github.com/apache/iceberg-rust/pull/2584
+
+`StandardKeyMetadata` must include encryption keys which have a valid
+size according to the spec. Changing `StandardKeyMetadata` to store
+`SecureKey` rather than just `SecureBytes` means a `StandardKeyMetadata`
+can never exist without it being validated.
+
+## What changes are included in this PR?
+```
+pub struct StandardKeyMetadata {
+    - encryption_key: SensitiveBytes,
+    + encryption_key: SecureKey,
+    aad_prefix: Option<Box<[u8]>>,
+    file_length: Option<u64>,
+}
+```
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",743d098e4a2d99a3f65df0c2beca37494de46760,2834,false,,8,110,56,crates
+apache/iceberg-rust,d472b1948af76446c85a0245085d2d55aa5a0a58,d472b19,Xander,zander181@googlemail.com,2026-07-17T09:30:05+01:00,GitHub,noreply@github.com,2026-07-17T16:30:05+08:00,chore(lint) check unused_qualifications (#2839),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+We have inconsistency across the repo when it comes to using
+`used_qualifications` which makes code harder to read and maintain in a
+consistent style.
+
+I did an audit of some popular crate to see if other folks enforce this
+lint and I found that our friends in the Datafusion community do use
+this https://github.com/apache/datafusion/pull/13086. But also aware
+that repos like tokio choose not to.
+
+- Closes #.
+
+## What changes are included in this PR?
+
+This PR adds `unused_qualifications = ""deny""` to the root `Cargo.toml`
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",1d499438fd567f29578b000b4111672d19643ca5,2839,false,,64,646,941,Cargo.toml; bindings; crates
