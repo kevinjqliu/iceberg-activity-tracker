@@ -19262,3 +19262,23 @@ Added a regression test that passes a nil version and verifies the
 returned sentinel error.
 
 - `go test ./catalog/rest`",af424d3136dc0a0ff0fd706f6c7f1a051f334cff,1488,false,,2,16,0,catalog
+apache/iceberg-go,c39baf45b387e83bef8301ef19617bd9346f8d68,c39baf4,Andrei Tserakhau,laskoviymishka@gmail.com,2026-07-17T17:30:53+02:00,GitHub,noreply@github.com,2026-07-17T11:30:53-04:00,feat(table): add snapshots metadata table (#1476),,b182f516cbabe7598cb4fdbf7e9dd429a11c5ce0,1476,false,,2,359,17,table
+apache/iceberg-go,f1dd0435b7b1f5e0f6bde7b5d80c828494c83e3f,f1dd043,Minh Vu,vuhoangminh97@gmail.com,2026-07-17T17:31:07+02:00,GitHub,noreply@github.com,2026-07-17T11:31:07-04:00,fix(table): honor URI prefix mismatch modes in orphan cleanup (#1437),,c39baf45b387e83bef8301ef19617bd9346f8d68,1437,false,,2,194,29,table
+apache/iceberg-go,6a92f18f746343dbabbc8e83187f0709b956d5df,6a92f18,Minh Vu,vuhoangminh97@gmail.com,2026-07-17T17:31:22+02:00,GitHub,noreply@github.com,2026-07-17T11:31:22-04:00,fix(catalog): reject empty table identifiers (#1441),,f1dd0435b7b1f5e0f6bde7b5d80c828494c83e3f,1441,false,,9,148,12,catalog
+apache/iceberg-go,8f818409de71e17ae4761a4c27b35647115bec26,8f81840,Minh Vu,vuhoangminh97@gmail.com,2026-07-17T17:44:24+02:00,GitHub,noreply@github.com,2026-07-17T11:44:24-04:00,fix(manifest): clone partition and key metadata inputs (#1402),,6a92f18f746343dbabbc8e83187f0709b956d5df,1402,false,,2,74,2,manifest.go; manifest_test.go
+apache/iceberg-go,0968050c7234fc181d995077aca44250a2202f52,0968050,Minh Vu,vuhoangminh97@gmail.com,2026-07-17T21:46:59+02:00,GitHub,noreply@github.com,2026-07-17T21:46:59+02:00,fix(glue): accept empty root namespace identifiers (#1490),"## Problem
+
+Glue treated an allocated empty identifier differently from nil when
+listing the root namespace. Callers using `table.Identifier{}` received
+a hierarchical-namespace error even though it represents the same root.
+
+## Changes
+
+Use identifier length to distinguish the root from unsupported non-empty
+hierarchical namespaces.
+
+## Testing
+
+Added coverage for an allocated empty root identifier.
+
+- `go test ./catalog/glue`",8f818409de71e17ae4761a4c27b35647115bec26,1490,false,,2,14,1,catalog

@@ -23598,3 +23598,27 @@ Specify what test covers (unit test, integration test, etc.).
 If tests are not included in your PR, please explain why (for example,
 are they covered by existing tests)?
 -->",1d499438fd567f29578b000b4111672d19643ca5,2839,false,,64,646,941,Cargo.toml; bindings; crates
+apache/iceberg-rust,db4f6091850814b83989721afe12aa9e4406d6b3,db4f609,Anoop Johnson,git@anoopjohnson.com,2026-07-17T16:34:10-07:00,GitHub,noreply@github.com,2026-07-17T16:34:10-07:00,Return an error instead of panicking in inspect().manifests() when a partition source column was dropped (#2843),"## Which issue does this PR close?
+
+- Closes #2842.
+
+## What changes are included in this PR?
+
+`ManifestsTable::scan` panicked when building the `partition_summaries`
+column for tables whose manifests reference a historical partition spec
+with a source column that has since been dropped from the current
+schema. This is a legal table state in v2+: once a partition field is
+removed from the default spec, its source column may be dropped.
+
+`PartitionSpec::partition_type` returns an error for such specs, and the
+`.unwrap()` turned it into a panic.
+
+The fix makes the failure a clean error rather than a crash. Making the
+manifests table render successfully for such tables (e.g. by resolving
+each spec against a compatible schema, as Java does) is left as a
+follow-up.
+
+## Are these changes tested?
+
+Yes. A new unit test
+(`test_manifests_table_with_dropped_partition_source_column`)",d472b1948af76446c85a0245085d2d55aa5a0a58,2843,false,,1,50,6,crates
