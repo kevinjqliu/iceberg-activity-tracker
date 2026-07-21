@@ -25180,3 +25180,128 @@ is stored on the snapshot.
 
 ## Are these changes tested?
 Encrypted round-trip unit test on the manifest-list writer",b6d7fce2ce20ceca2bcb7cadeedb945d6f6fb96e,2677,false,,3,230,21,crates
+apache/iceberg-rust,8b76dbef86b47417b73e3c3a937f519d586782b9,8b76dbe,hsiang-c,137842490+hsiang-c@users.noreply.github.com,2026-07-20T15:00:22-07:00,GitHub,noreply@github.com,2026-07-20T15:00:22-07:00,feat: add support for `_pos` metadata column (#2746),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Partially closes https://github.com/apache/iceberg-rust/issues/2607
+
+## What changes are included in this PR?
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+- Support `_pos` metadata column by delegating it to the Parquet
+reader's `RowNumber` virtual column, inspired by
+https://github.com/apache/datafusion/pull/22026.
+- Refactor the `compare_schemas` function b/c `_pos` field id exists in
+both `source_schema` and `target_schema` and the original implementation
+might result in `SchemaComparison::NameChangesOnly`, which produces a
+`RecordBatch` with correct content but incorrect column order.
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->
+
+ - Yes, unit tests.
+ - Iceberg Spark: https://github.com/apache/datafusion-comet/pull/4752
+
+Sample plan
+
+```shell
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- CometSort [id#863L, data#864, _pos#868L], [id#863L ASC NULLS FIRST]
+   +- CometExchange rangepartitioning(id#863L ASC NULLS FIRST, 200), ENSURE_REQUIREMENTS, CometNativeShuffle, [plan_id=2634]
+      +- CometFilter [id#863L, data#864, _pos#868L], (id#863L >= 10)
+         +- CometIcebergNativeScan [id#863L, data#864, _pos#868L], file:/var/folders/d2/b93h6k7174ddqxltrxgb51040000gn/T/hive2622216829356851627/table/metadata/00004-95932e2b-bbe6-444e-81b8-069c5e748a20.metadata.json, spark_catalog.default.table (branch=null) [filters=id IS NOT NULL, id >= 10, groupedBy=], 1
+```",3f163f25d5a0afeb8433481780da624f3103db89,2746,false,,3,823,43,crates
+apache/iceberg-rust,7c1e0fa22fb20508894f1eabd176fe206078e9b3,7c1e0fa,Christian,christian@vakamo.com,2026-07-21T00:57:42+02:00,GitHub,noreply@github.com,2026-07-20T15:57:42-07:00,feat(arrow): recognize arrow.parquet.variant on schema import (#2840),"Teach arrow_schema_to_schema to fold a field tagged with the canonical
+arrow.parquet.variant extension into an atomic Type::Variant, the
+inverse of the export path added in #2188. Previously such a schema
+errored with ""Field id not found in metadata"" because the variant's
+metadata/value storage sub-fields carry no field id.
+
+## Which issue does this PR close?
+
+PR 1 of 2 for Variant read support.
+
+## What changes are included in this PR?
+
+Add a defaulted `ArrowSchemaVisitor::variant` dispatched via a new
+`visit_field` helper at each field-dispatch site. The default re-enters
+normal traversal, so the reconstructing visitors (Int96Coercion,
+MetadataStrip) are unchanged; `ArrowSchemaConverter` overrides it to
+fold the struct without descending, guarding that the extension sits on
+Struct storage. Mirrors Java's Parquet reader, which recovers a variant
+from its group-level annotation without visiting the group's children.
+
+Covers top-level, struct-nested, list-element and map-value positions
+plus auto-assigned ids; regenerates the iceberg public-api baseline.
+
+## Are these changes tested?
+
+unit-tested yes.",8b76dbef86b47417b73e3c3a937f519d586782b9,2840,false,,2,154,5,crates
+apache/iceberg-rust,633b8e0485e6ad6fa7afc2acf4cff19216cebdb2,633b8e0,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-07-20T16:17:38-07:00,GitHub,noreply@github.com,2026-07-20T16:17:38-07:00,feat(catalog-rest): enforce negotiated endpoints for exists checks (#2794),"## Which issue does this PR close?
+
+Follow-up to #2692.
+
+## What changes are included in this PR?
+
+#2692 parsed the server-advertised `endpoints` from `GET /v1/config` but
+did not
+yet use them. This PR wires the negotiated set into the catalog and
+starts
+enforcing it:
+
+- **`DEFAULT_ENDPOINTS`** — the base set of namespace/table operations
+assumed
+when a server omits the `endpoints` field or sends an empty list (the
+two are
+  treated alike), mirroring Java's `RESTSessionCatalog`.
+- **Named per-route constants** (`V1_LIST_NAMESPACES`,
+`V1_TABLE_EXISTS`, …) via
+an `endpoints!` macro, so routes are easy to reference without
+rebuilding
+  `Endpoint` values per call.
+- **`RestContext`** stores the negotiated set (advertised list, or the
+default
+  base set); **`RestCatalog::supports_endpoint`** queries it.
+- **`table_exists` / `namespace_exists`** now issue the cheap `HEAD`
+only when
+the server advertises the corresponding endpoint, and otherwise fall
+back to a
+`GET` load (treating not-found as `false`), so they keep working against
+  servers that don't advertise the `HEAD` routes. This mirrors Java's
+  `RESTSessionCatalog.{tableExists,namespaceExists}`.
+
+`supports_endpoint` is intentionally `pub(crate)` — its only consumers
+so far are
+the exists checks inside this crate, so there's no need to expose it
+publicly yet
+(it can be made `pub` when a cross-crate consumer such as scan planning
+needs it).
+**As a result this PR makes no public-API change** (no `public-api.txt`
+update).
+
+Enforcing the negotiated set across the remaining operations can follow
+in
+subsequent PRs.
+
+## Are these changes tested?
+
+Yes — unit tests for negotiation (advertised list, absent field,
+explicit empty
+list) and for `{table,namespace}_exists` on both the HEAD and
+GET-fallback paths.",7c1e0fa22fb20508894f1eabd176fe206078e9b3,2794,false,,2,340,38,crates

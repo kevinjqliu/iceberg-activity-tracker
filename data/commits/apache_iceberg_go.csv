@@ -19282,3 +19282,1029 @@ hierarchical namespaces.
 Added coverage for an allocated empty root identifier.
 
 - `go test ./catalog/glue`",8f818409de71e17ae4761a4c27b35647115bec26,1490,false,,2,14,1,catalog
+apache/iceberg-go,3d8d3cad5bd9fe4a8d6f66b5f43d06dd20603331,3d8d3ca,Minh Vu,vuhoangminh97@gmail.com,2026-07-20T19:27:54+02:00,GitHub,noreply@github.com,2026-07-20T13:27:54-04:00,fix(rest): apply server config to HTTP session (#1440),"REST configuration was fetched with a session constructed from the
+initial client options, and that same session remained active after
+server defaults and overrides were merged. Transport-level configuration
+therefore appeared in catalog properties without affecting later
+requests.
+
+Initialization now uses the initial session only to fetch `/v1/config`,
+then creates the catalog session from the merged options. Session
+construction no longer stores an automatically created OAuth manager in
+the options, preventing bootstrap authentication state from carrying
+into the final session. The final client is created before applying the
+catalog prefix so OAuth endpoints remain rooted at `/v1`.
+
+The regression test supplies a required header through config overrides,
+performs a catalog operation, and verifies that only the post-config
+request receives it.
+
+Tests:
+- `go test ./...`
+- `golangci-lint run --timeout=10m`",0968050c7234fc181d995077aca44250a2202f52,1440,false,,2,180,25,catalog
+apache/iceberg-go,10665a92a49df5817a3f0462c188545c9d3e757e,10665a9,Minh Vu,vuhoangminh97@gmail.com,2026-07-20T19:29:17+02:00,GitHub,noreply@github.com,2026-07-20T13:29:17-04:00,fix(table): validate encryption-key metadata fields (#1406),"## Why
+`add-encryption-key` updates accepted incomplete key payloads and could
+persist invalid metadata (empty key-id or empty encrypted metadata).
+
+## What changed
+- Validate `EncryptionKey` whenever an encryption-key add update is
+applied (both through `MetadataBuilder.AddEncryptionKey` and the update
+object path).
+- Return `ErrInvalidArgument` when required encryption key fields are
+missing or empty.
+- Add coverage for empty `key-id`, empty `encrypted-key-metadata`, and
+malformed update payloads that decode with missing fields.
+
+## Testing
+- `go test ./table -run
+'TestAddEncryptionKeyUpdate_Apply_RejectsMissingKeyID|TestAddEncryptionKeyUpdate_Apply_RejectsMissingEncryptedKeyMetadata|TestAddEncryptionKeyUpdate_UnmarshalMissingFields_ApplyRejects'
+-count=1`",3d8d3cad5bd9fe4a8d6f66b5f43d06dd20603331,1406,false,,3,96,1,table
+apache/iceberg-go,1c5d2a1c9616c8c5798cc8e8cd60391ef07b3149,1c5d2a1,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-20T13:55:16-04:00,GitHub,noreply@github.com,2026-07-20T13:55:16-04:00,build(deps): bump the codeql-action group with 2 updates (#1495),"Bumps the codeql-action group with 2 updates:
+[github/codeql-action/init](https://github.com/github/codeql-action) and
+[github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+Updates `github/codeql-action/init` from 4.36.3 to 4.37.0
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action/init's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.37.0</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action/init's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<p>No user facing changes.</p>
+<h2>4.37.1 - 16 Jul 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.20.6 and earlier. These versions of
+CodeQL were discontinued on 1 July 2026 alongside GitHub Enterprise
+Server 3.16, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3956"">#3956</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.1"">2.26.1</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/4019"">#4019</a></li>
+</ul>
+<h2>4.37.0 - 08 Jul 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+<h2>4.36.3 - 01 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.2 - 04 Jun 2026</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>4.36.1 - 02 Jun 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.0 - 22 May 2026</h2>
+<ul>
+<li><em>Breaking change</em>: Bump the minimum required CodeQL bundle
+version to 2.19.4. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3894"">#3894</a></li>
+<li>Add support for SHA-256 Git object IDs. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3893"">#3893</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.5"">2.25.5</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3926"">#3926</a></li>
+</ul>
+<h2>4.35.5 - 15 May 2026</h2>
+<ul>
+<li>We have improved how the JavaScript bundles for the CodeQL Action
+are generated to avoid duplication across bundles and reduce the size of
+the repository by around 70%. This should have no effect on the runtime
+behaviour of the CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3899"">#3899</a></li>
+<li>For performance and accuracy reasons, <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> will now only be enabled on a pull request when
+diff-informed analysis is also enabled for that run. If diff-informed
+analysis is unavailable (for example, because the PR diff ranges could
+not be computed), the action will fall back to a full analysis. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3791"">#3791</a></li>
+<li>If multiple inputs are provided for the GitHub-internal
+<code>analysis-kinds</code> input, only <code>code-scanning</code> will
+be enabled. The <code>analysis-kinds</code> input is experimental, for
+GitHub-internal use only, and may change without notice at any time. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3892"">#3892</a></li>
+<li>Added an experimental change which, when running a Code Scanning
+analysis for a PR with <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> enabled, prefers CodeQL CLI versions that have
+a cached overlay-base database for the configured languages. This speeds
+up analysis for a repository when there is not yet a cached overlay-base
+database for the latest CLI version. We expect to roll this change out
+to everyone in May. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3880"">#3880</a></li>
+</ul>
+<h2>4.35.4 - 07 May 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.4"">2.25.4</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3881"">#3881</a></li>
+</ul>
+<h2>4.35.3 - 01 May 2026</h2>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/99df26d4f13ea111d4ec1a7dddef6063f76b97e9""><code>99df26d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3996"">#3996</a>
+from github/update-v4.37.0-c7c896d71</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/31c27074fda95256cda077009907f8a6022dd7c0""><code>31c2707</code></a>
+Add changenote for <a
+href=""https://redirect.github.com/github/codeql-action/issues/3973"">#3973</a></li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/72df2181aac054d1f4b44264399d2aac12cf11c6""><code>72df218</code></a>
+Update changelog for v4.37.0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/c7c896d71b3055d36f2aff93b16bcc6c69923b91""><code>c7c896d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3995"">#3995</a>
+from github/update-bundle/codeql-bundle-v2.26.0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/3f34ff0ea3f5153c96071437b7cbf71ea3757146""><code>3f34ff0</code></a>
+Add changelog note</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/43bec09f1dc368b430cab4b5d69799bc904079d1""><code>43bec09</code></a>
+Update default bundle to codeql-bundle-v2.26.0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/f58f0d11ebf5dedd870fab2f999275f7602cfa46""><code>f58f0d1</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3973"">#3973</a>
+from github/mbg/repo-props/config-file-shorthands</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/7dc37cbb5b3e37f0e1cd1f18b61e0ea849898fb8""><code>7dc37cb</code></a>
+Merge remote-tracking branch 'origin/main' into
+mbg/repo-props/config-file-sh...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/8e22350a7e28c34c82a5a499fc241923301c2c4f""><code>8e22350</code></a>
+Thread <code>ActionState</code> to <code>initConfig</code></li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/69c9e8c7d918cf2fee13b8b72fdde15883ff155b""><code>69c9e8c</code></a>
+Mark some <code>status-report</code> imports as <code>type</code>-only
+to avoid circular dependencies</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/54f647b7e1bb85c95cddabcd46b0c578ec92bc1a...99df26d4f13ea111d4ec1a7dddef6063f76b97e9"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github/codeql-action/analyze` from 4.36.3 to 4.37.0
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action/analyze's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.37.0</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action/analyze's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<p>No user facing changes.</p>
+<h2>4.37.1 - 16 Jul 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.20.6 and earlier. These versions of
+CodeQL were discontinued on 1 July 2026 alongside GitHub Enterprise
+Server 3.16, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3956"">#3956</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.1"">2.26.1</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/4019"">#4019</a></li>
+</ul>
+<h2>4.37.0 - 08 Jul 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+<h2>4.36.3 - 01 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.2 - 04 Jun 2026</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>4.36.1 - 02 Jun 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.0 - 22 May 2026</h2>
+<ul>
+<li><em>Breaking change</em>: Bump the minimum required CodeQL bundle
+version to 2.19.4. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3894"">#3894</a></li>
+<li>Add support for SHA-256 Git object IDs. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3893"">#3893</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.5"">2.25.5</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3926"">#3926</a></li>
+</ul>
+<h2>4.35.5 - 15 May 2026</h2>
+<ul>
+<li>We have improved how the JavaScript bundles for the CodeQL Action
+are generated to avoid duplication across bundles and reduce the size of
+the repository by around 70%. This should have no effect on the runtime
+behaviour of the CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3899"">#3899</a></li>
+<li>For performance and accuracy reasons, <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> will now only be enabled on a pull request when
+diff-informed analysis is also enabled for that run. If diff-informed
+analysis is unavailable (for example, because the PR diff ranges could
+not be computed), the action will fall back to a full analysis. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3791"">#3791</a></li>
+<li>If multiple inputs are provided for the GitHub-internal
+<code>analysis-kinds</code> input, only <code>code-scanning</code> will
+be enabled. The <code>analysis-kinds</code> input is experimental, for
+GitHub-internal use only, and may change without notice at any time. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3892"">#3892</a></li>
+<li>Added an experimental change which, when running a Code Scanning
+analysis for a PR with <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> enabled, prefers CodeQL CLI versions that have
+a cached overlay-base database for the configured languages. This speeds
+up analysis for a repository when there is not yet a cached overlay-base
+database for the latest CLI version. We expect to roll this change out
+to everyone in May. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3880"">#3880</a></li>
+</ul>
+<h2>4.35.4 - 07 May 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.4"">2.25.4</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3881"">#3881</a></li>
+</ul>
+<h2>4.35.3 - 01 May 2026</h2>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/99df26d4f13ea111d4ec1a7dddef6063f76b97e9""><code>99df26d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3996"">#3996</a>
+from github/update-v4.37.0-c7c896d71</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/31c27074fda95256cda077009907f8a6022dd7c0""><code>31c2707</code></a>
+Add changenote for <a
+href=""https://redirect.github.com/github/codeql-action/issues/3973"">#3973</a></li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/72df2181aac054d1f4b44264399d2aac12cf11c6""><code>72df218</code></a>
+Update changelog for v4.37.0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/c7c896d71b3055d36f2aff93b16bcc6c69923b91""><code>c7c896d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3995"">#3995</a>
+from github/update-bundle/codeql-bundle-v2.26.0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/3f34ff0ea3f5153c96071437b7cbf71ea3757146""><code>3f34ff0</code></a>
+Add changelog note</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/43bec09f1dc368b430cab4b5d69799bc904079d1""><code>43bec09</code></a>
+Update default bundle to codeql-bundle-v2.26.0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/f58f0d11ebf5dedd870fab2f999275f7602cfa46""><code>f58f0d1</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3973"">#3973</a>
+from github/mbg/repo-props/config-file-shorthands</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/7dc37cbb5b3e37f0e1cd1f18b61e0ea849898fb8""><code>7dc37cb</code></a>
+Merge remote-tracking branch 'origin/main' into
+mbg/repo-props/config-file-sh...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/8e22350a7e28c34c82a5a499fc241923301c2c4f""><code>8e22350</code></a>
+Thread <code>ActionState</code> to <code>initConfig</code></li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/69c9e8c7d918cf2fee13b8b72fdde15883ff155b""><code>69c9e8c</code></a>
+Mark some <code>status-report</code> imports as <code>type</code>-only
+to avoid circular dependencies</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/54f647b7e1bb85c95cddabcd46b0c578ec92bc1a...99df26d4f13ea111d4ec1a7dddef6063f76b97e9"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore <dependency name> major version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's major version (unless you unignore this specific
+dependency's major version or upgrade to it yourself)
+- `@dependabot ignore <dependency name> minor version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's minor version (unless you unignore this specific
+dependency's minor version or upgrade to it yourself)
+- `@dependabot ignore <dependency name>` will close this group update PR
+and stop Dependabot creating any more for the specific dependency
+(unless you unignore this specific dependency or upgrade to it yourself)
+- `@dependabot unignore <dependency name>` will remove all of the ignore
+conditions of the specified dependency
+- `@dependabot unignore <dependency name> <ignore condition>` will
+remove the ignore condition of the specified dependency and ignore
+conditions
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",10665a92a49df5817a3f0462c188545c9d3e757e,1495,false,dependabot[bot],1,2,2,.github
+apache/iceberg-go,938c8c08c4871e13b9a66ffcad901d8d7966c6e3,938c8c0,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-20T13:55:44-04:00,GitHub,noreply@github.com,2026-07-20T13:55:44-04:00,build(deps): bump the gomod_updates group with 6 updates (#1497),"Bumps the gomod_updates group with 6 updates:
+
+| Package | From | To |
+| --- | --- | --- |
+|
+[github.com/aws/aws-sdk-go-v2/config](https://github.com/aws/aws-sdk-go-v2)
+| `1.32.27` | `1.32.29` |
+|
+[github.com/aws/aws-sdk-go-v2/credentials](https://github.com/aws/aws-sdk-go-v2)
+| `1.19.26` | `1.19.28` |
+|
+[github.com/aws/aws-sdk-go-v2/service/glue](https://github.com/aws/aws-sdk-go-v2)
+| `1.147.1` | `1.148.0` |
+|
+[github.com/aws/aws-sdk-go-v2/service/s3](https://github.com/aws/aws-sdk-go-v2)
+| `1.104.2` | `1.105.0` |
+| [golang.org/x/term](https://github.com/golang/term) | `0.44.0` |
+`0.45.0` |
+|
+[google.golang.org/api](https://github.com/googleapis/google-api-go-client)
+| `0.287.0` | `0.288.0` |
+
+Updates `github.com/aws/aws-sdk-go-v2/config` from 1.32.27 to 1.32.29
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/ed75d3d097568d903f639876299d03241605fd7c""><code>ed75d3d</code></a>
+Release 2026-07-08.2</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/d67404a5e5ee30a469b0823fb493ca9961107d92""><code>d67404a</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/8a21e0976a42f7c28934d0782ad49388fdd4c9d3""><code>8a21e09</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/cb69824f6c68e6fe0144def8e757be46ad4cfcbb""><code>cb69824</code></a>
+Release 2026-07-08</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/0f18a1fc3762f1f42337e32c37e4a30a51254f8b""><code>0f18a1f</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/982e0d00ad41cbd01ff073cb46c8358887c31e4b""><code>982e0d0</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2872baecbf12283d444219e48940142ee6f28c08""><code>2872bae</code></a>
+Add missing options.RequestChecksumCalculation (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3470"">#3470</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/ef1f0feba0ff99de62b7dd7916dcd4bd459c766c""><code>ef1f0fe</code></a>
+fix(feature/s3/transfermanager): allow multiple symlinks to share the
+same ta...</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/0df1b91ba8f02e9de847523efed547b2427e4ba6""><code>0df1b91</code></a>
+Release 2026-07-07</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/b4ef7306d81dee7c2a3e4016466f826037298767""><code>b4ef730</code></a>
+Regenerated Clients</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/config/v1.32.27...config/v1.32.29"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/credentials` from 1.19.26 to
+1.19.28
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/ed75d3d097568d903f639876299d03241605fd7c""><code>ed75d3d</code></a>
+Release 2026-07-08.2</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/d67404a5e5ee30a469b0823fb493ca9961107d92""><code>d67404a</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/8a21e0976a42f7c28934d0782ad49388fdd4c9d3""><code>8a21e09</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/cb69824f6c68e6fe0144def8e757be46ad4cfcbb""><code>cb69824</code></a>
+Release 2026-07-08</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/0f18a1fc3762f1f42337e32c37e4a30a51254f8b""><code>0f18a1f</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/982e0d00ad41cbd01ff073cb46c8358887c31e4b""><code>982e0d0</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/2872baecbf12283d444219e48940142ee6f28c08""><code>2872bae</code></a>
+Add missing options.RequestChecksumCalculation (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3470"">#3470</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/ef1f0feba0ff99de62b7dd7916dcd4bd459c766c""><code>ef1f0fe</code></a>
+fix(feature/s3/transfermanager): allow multiple symlinks to share the
+same ta...</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/0df1b91ba8f02e9de847523efed547b2427e4ba6""><code>0df1b91</code></a>
+Release 2026-07-07</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/b4ef7306d81dee7c2a3e4016466f826037298767""><code>b4ef730</code></a>
+Regenerated Clients</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/credentials/v1.19.26...credentials/v1.19.28"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/service/glue` from 1.147.1 to
+1.148.0
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/4334b43c27eeb4c4ecfcba1a87cc08f963fe91a3""><code>4334b43</code></a>
+Release 2024-02-16</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/9e29187dc08c2e9bf8f66166841ca9c75e0624ab""><code>9e29187</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/f672c49fb7b4199becd3ba0a6e9d2b35f215e985""><code>f672c49</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7f935782a0d8ee350736d4515cc05001e4ac3d01""><code>7f93578</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/da7bcdacddcf05ee9c897137fdbcdc8caf501698""><code>da7bcda</code></a>
+feat: add client config passthrough to waiter opts (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/2499"">#2499</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/1bb048272ad54b3cbeb3b6da99f4be8090bea5d2""><code>1bb0482</code></a>
+Release 2024-02-15</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/cc83a2b05532dfe5e6ccba25881887352134fbbd""><code>cc83a2b</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/7f44d9967b75499363425c29a5cf40375e9869a7""><code>7f44d99</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/4280ccb2671145220be23f299bc0db4a2c061ff5""><code>4280ccb</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/a264562983a722b90b7a08e5547de85274006e30""><code>a264562</code></a>
+fix awsjson error deserialization to not expect string code (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/2489"">#2489</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/service/glue/v1.147.1...service/ec2/v1.148.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github.com/aws/aws-sdk-go-v2/service/s3` from 1.104.2 to
+1.105.0
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/fc087ca9c93f355ac25ad7d78cd1f60170424e0c""><code>fc087ca</code></a>
+Release 2026-07-06</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/a0dc66ef2b9f031cb3edefc4c9b20635294537ea""><code>a0dc66e</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/0e93979277a5678f5a47b407745d3b20b2300083""><code>0e93979</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/1e51eb5e75f504acee800c09b21f5b271d62c728""><code>1e51eb5</code></a>
+Update API model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/a4cd1c9dcbc1492cd27b72f2a21682d43dab7f40""><code>a4cd1c9</code></a>
+add serialization snapshot tests (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3463"">#3463</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/8d5a855c81f3a632fcac37fbc67d65e114902efc""><code>8d5a855</code></a>
+set rollout strategy 2 (<a
+href=""https://redirect.github.com/aws/aws-sdk-go-v2/issues/3467"">#3467</a>)</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/bdb96810ded2e8f93c329e2b3380543254b984a1""><code>bdb9681</code></a>
+Release 2026-07-02</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/dad37d5b8a86c70b41ba6eb26114db1b0566218a""><code>dad37d5</code></a>
+Regenerated Clients</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/019a359cb7d5af2e9a8cffdaf5139797d4d382db""><code>019a359</code></a>
+Update endpoints model</li>
+<li><a
+href=""https://github.com/aws/aws-sdk-go-v2/commit/c51ba98fbf1df116d7a9a3770a08788d11f6c480""><code>c51ba98</code></a>
+Update API model</li>
+<li>See full diff in <a
+href=""https://github.com/aws/aws-sdk-go-v2/compare/service/s3/v1.104.2...service/s3/v1.105.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `golang.org/x/term` from 0.44.0 to 0.45.0
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/golang/term/commit/9f69229da31ca6a34b522f59dbe07cad5ea21587""><code>9f69229</code></a>
+go.mod: update golang.org/x dependencies</li>
+<li>See full diff in <a
+href=""https://github.com/golang/term/compare/v0.44.0...v0.45.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `google.golang.org/api` from 0.287.0 to 0.288.0
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/googleapis/google-api-go-client/releases"">google.golang.org/api's
+releases</a>.</em></p>
+<blockquote>
+<h2>v0.288.0</h2>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.287.1...v0.288.0"">0.288.0</a>
+(2026-07-09)</h2>
+<h3>Features</h3>
+<ul>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3647"">#3647</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/510a0c19483ea5631b7b0a453f9d6df1b9ef596a"">510a0c1</a>)</li>
+</ul>
+<h2>v0.287.1</h2>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.287.0...v0.287.1"">0.287.1</a>
+(2026-07-07)</h2>
+<h3>Documentation</h3>
+<ul>
+<li>Remove old TODO file (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3645"">#3645</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/9d7a6b8ba7ca7fda1fda4373714a8aff1e930e6f"">9d7a6b8</a>)</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/googleapis/google-api-go-client/blob/main/CHANGES.md"">google.golang.org/api's
+changelog</a>.</em></p>
+<blockquote>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.287.1...v0.288.0"">0.288.0</a>
+(2026-07-09)</h2>
+<h3>Features</h3>
+<ul>
+<li><strong>all:</strong> Auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3647"">#3647</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/510a0c19483ea5631b7b0a453f9d6df1b9ef596a"">510a0c1</a>)</li>
+</ul>
+<h2><a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.287.0...v0.287.1"">0.287.1</a>
+(2026-07-07)</h2>
+<h3>Documentation</h3>
+<ul>
+<li>Remove old TODO file (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3645"">#3645</a>)
+(<a
+href=""https://github.com/googleapis/google-api-go-client/commit/9d7a6b8ba7ca7fda1fda4373714a8aff1e930e6f"">9d7a6b8</a>)</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/31d2afed7eb393f33e56bdbaf0b17bc7c5345abc""><code>31d2afe</code></a>
+chore(main): release 0.288.0 (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3648"">#3648</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/510a0c19483ea5631b7b0a453f9d6df1b9ef596a""><code>510a0c1</code></a>
+feat(all): auto-regenerate discovery clients (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3647"">#3647</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/93d63e8234f46095c363aff86b433c750ccd7332""><code>93d63e8</code></a>
+chore(main): release 0.287.1 (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3646"">#3646</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/9d7a6b8ba7ca7fda1fda4373714a8aff1e930e6f""><code>9d7a6b8</code></a>
+docs: remove old TODO file (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3645"">#3645</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/576018ff14470f5cf33aa1a1d388d219a5291e40""><code>576018f</code></a>
+chore(all): update all (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3644"">#3644</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/cc70265cdfbc6c3d6ccbd7b068ff70a9c3695893""><code>cc70265</code></a>
+chore(deps): bump golang.org/x/net in /internal/kokoro/discogen (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3642"">#3642</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/9858f66b46ba1fdea7dacf1a02b47c0881e2c27a""><code>9858f66</code></a>
+chore: downgrade go version in go.work (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3641"">#3641</a>)</li>
+<li><a
+href=""https://github.com/googleapis/google-api-go-client/commit/3cb00c0ab3ced21614ceb1f8e3e664f6d8ff7712""><code>3cb00c0</code></a>
+chore: downgrade min Go version (<a
+href=""https://redirect.github.com/googleapis/google-api-go-client/issues/3640"">#3640</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/googleapis/google-api-go-client/compare/v0.287.0...v0.288.0"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore <dependency name> major version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's major version (unless you unignore this specific
+dependency's major version or upgrade to it yourself)
+- `@dependabot ignore <dependency name> minor version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's minor version (unless you unignore this specific
+dependency's minor version or upgrade to it yourself)
+- `@dependabot ignore <dependency name>` will close this group update PR
+and stop Dependabot creating any more for the specific dependency
+(unless you unignore this specific dependency or upgrade to it yourself)
+- `@dependabot unignore <dependency name>` will remove all of the ignore
+conditions of the specified dependency
+- `@dependabot unignore <dependency name> <ignore condition>` will
+remove the ignore condition of the specified dependency and ignore
+conditions
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",1c5d2a1c9616c8c5798cc8e8cd60391ef07b3149,1497,false,dependabot[bot],2,45,45,go.mod; go.sum
+apache/iceberg-go,16e76a354f214c8fd2de4d266847203770397e32,16e76a3,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-20T13:56:20-04:00,GitHub,noreply@github.com,2026-07-20T13:56:20-04:00,build(deps): bump actions/labeler from 6.1.0 to 6.2.0 (#1496),"Bumps [actions/labeler](https://github.com/actions/labeler) from 6.1.0
+to 6.2.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/labeler/releases"">actions/labeler's
+releases</a>.</em></p>
+<blockquote>
+<h2>v6.2.0</h2>
+<h2>What's Changed</h2>
+<h3>Bug Fix</h3>
+<ul>
+<li>Improve PR number validation and warning messages in input handling
+by <a
+href=""https://github.com/chiranjib-swain""><code>@​chiranjib-swain</code></a>
+in <a
+href=""https://redirect.github.com/actions/labeler/pull/939"">actions/labeler#939</a></li>
+</ul>
+<h3>Dependency Updates</h3>
+<ul>
+<li>Bump js-yaml to 4.2.0, apply npm audit fix, and add undici override
+by <a href=""https://github.com/dependabot""><code>@​dependabot</code></a>
+in <a
+href=""https://redirect.github.com/actions/labeler/pull/943"">actions/labeler#943</a></li>
+<li>Bump <code>@​typescript-eslint/eslint-plugin</code> from 8.59.1 to
+8.61.1 by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a> in <a
+href=""https://redirect.github.com/actions/labeler/pull/942"">actions/labeler#942</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/labeler/compare/v6.1.0...v6.2.0"">https://github.com/actions/labeler/compare/v6.1.0...v6.2.0</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/actions/labeler/commit/b8dd2d9be0f68b860e7dae5dae7d772984eacd6d""><code>b8dd2d9</code></a>
+Bump <code>@​typescript-eslint/eslint-plugin</code> from 8.59.1 to
+8.61.1 (<a
+href=""https://redirect.github.com/actions/labeler/issues/942"">#942</a>)</li>
+<li><a
+href=""https://github.com/actions/labeler/commit/53affe8ca4150876fc7eb7d268d3a1f74511a244""><code>53affe8</code></a>
+Bump js-yaml to 4.2.0, apply npm audit fix, and add undici override for
+0 vul...</li>
+<li><a
+href=""https://github.com/actions/labeler/commit/f612d9ad188e81643862c2de70f57fbb1d17abd1""><code>f612d9a</code></a>
+Fix: Improve PR number validation and warning messages in input handling
+(<a
+href=""https://redirect.github.com/actions/labeler/issues/939"">#939</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/actions/labeler/compare/f27b608878404679385c85cfa523b85ccb86e213...b8dd2d9be0f68b860e7dae5dae7d772984eacd6d"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=actions/labeler&package-manager=github_actions&previous-version=6.1.0&new-version=6.2.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",938c8c08c4871e13b9a66ffcad901d8d7966c6e3,1496,false,dependabot[bot],1,1,1,.github
+apache/iceberg-go,9ca7e11f69e7f7bff6459195a093444003cc4009,9ca7e11,Revanth,revanthcse1@gmail.com,2026-07-20T13:01:03-05:00,GitHub,noreply@github.com,2026-07-20T14:01:03-04:00,test(rest): add fake server for REST scan planning (#1494),"Adds a concurrency-safe in-process fake REST scan-planning server under
+catalog/rest/internal/planfake, plus a conformance suite exercising the
+existing low-level REST scan-planning client against independently authored
+wire payloads. Test infrastructure only.
+
+Part of #1178.",16e76a354f214c8fd2de4d266847203770397e32,1494,false,,4,2349,0,catalog
+apache/iceberg-go,825b4f991b01654a787ccacc8627a9d14db4f105,825b4f9,Tanmay Rauth,t_rauth@apple.com,2026-07-20T11:29:20-07:00,GitHub,noreply@github.com,2026-07-20T14:29:20-04:00,"feat(metrics): wire reporter selection through catalog, table, and scan (#1236) (#1430)","Third PR of the metrics reporting framework. Adds reporter selection and
+threads it from catalog to scan:
+
+- metrics: a name->factory registry and FromProperties, selecting a
+reporter via the metrics-reporter-impl property (the Go analogue of
+Java's reflection-based loader); built-in nop and logging reporters.
+- table: a WithMetricsReporter option on New/NewFromLocation (variadic,
+backward compatible), a MetricsReporter accessor, and a WithReporter
+scan option; scans inherit the table's reporter.
+- catalog/{rest,sql,glue,hive,hadoop} resolve the reporter from
+properties when loading or creating a table.
+
+Reporting stays opt-in: the default reporter is no-op, so there is no
+behavior change for existing users. Report emission is added with the
+scan and commit instrumentation in later PRs.
+
+Related: #1236",9ca7e11f69e7f7bff6459195a093444003cc4009,1430,false,,23,1353,36,catalog; cmd; metrics; table
+apache/iceberg-go,60bf5d21a8d59d4d163714b1498672e4ff2e94c9,60bf5d2,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-20T14:40:12-04:00,GitHub,noreply@github.com,2026-07-20T14:40:12-04:00,build(deps): bump zizmorcore/zizmor-action from 0.5.6 to 0.5.7 (#1339),"Bumps
+[zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action)
+from 0.5.6 to 0.5.7.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/zizmorcore/zizmor-action/releases"">zizmorcore/zizmor-action's
+releases</a>.</em></p>
+<blockquote>
+<h2>v0.5.7</h2>
+<p>1.26.1 is now available via the action
+1.26.1 is now the default version of zizmor used by the action</p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/192e21d79ab29983730a13d1382995c2307fbcaa""><code>192e21d</code></a>
+Sync zizmor versions (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/127"">#127</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/2720f2673c0b64a8656d08b009ac239b9383c0ae""><code>2720f26</code></a>
+Update README.md with new actions/checkout version (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/126"">#126</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/40b41b824eab0ad9c19ddf9856be25550729e6d8""><code>40b41b8</code></a>
+chore(deps): bump the github-actions group with 2 updates (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/123"">#123</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/a687b25bf3aa149153e80ed5f45292e47589888c""><code>a687b25</code></a>
+chore(deps): bump github/codeql-action from 4.35.5 to 4.36.0 in the
+github-ac...</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/64a6900ea7f40fab0caa7dcfc77b392d28fe0cb1""><code>64a6900</code></a>
+add note to explain that the default value for
+<code>online-checks</code> is different t...</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/14050abd109fcba34e6e2f31a723280997808e82""><code>14050ab</code></a>
+chore(deps): bump the github-actions group with 2 updates (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/118"">#118</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/ee9b4194a74f093e38908dbcfcb078f63eeef002""><code>ee9b419</code></a>
+chore(deps): bump github/codeql-action in the github-actions group (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/116"">#116</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/fddf2b4aa9bf29290c6bf9866e6d113b0cdf6f67""><code>fddf2b4</code></a>
+Bump pins in README (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/115"">#115</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/zizmorcore/zizmor-action/compare/5f14fd08f7cf1cb1609c1e344975f152c7ee938d...192e21d79ab29983730a13d1382995c2307fbcaa"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=zizmorcore/zizmor-action&package-manager=github_actions&previous-version=0.5.6&new-version=0.5.7)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+---------
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: Matt Topol <matt@columnar.tech>",825b4f991b01654a787ccacc8627a9d14db4f105,1339,false,dependabot[bot]; Matt Topol,2,2,2,.github
