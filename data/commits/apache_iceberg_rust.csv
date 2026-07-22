@@ -25305,3 +25305,109 @@ Yes — unit tests for negotiation (advertised list, absent field,
 explicit empty
 list) and for `{table,namespace}_exists` on both the HEAD and
 GET-fallback paths.",7c1e0fa22fb20508894f1eabd176fe206078e9b3,2794,false,,2,340,38,crates
+apache/iceberg-rust,f019ee147c42283580f9533db13a8a62a322666a,f019ee1,Anoop Johnson,anoop@apache.org,2026-07-21T09:53:06-07:00,GitHub,noreply@github.com,2026-07-21T18:53:06+02:00,Skip partition pruning for manifests whose spec references a dropped source column (#2845),"## Which issue does this PR close?
+
+Closes #2844.
+
+## What changes are included in this PR?
+
+When a scan has a predicate, planning resolves every manifest's spec
+partition type against the snapshot schema. Manifests written under a
+historical spec whose source column was later dropped (which is a legit
+possibility in v2+) fail that resolution, so one such manifest fails the
+whole scan, even when the predicate only references live columns.
+
+This PR is the stopgap described in #2844. The longer-term fix is
+deriving partition types from transforms where possible (as iceberg-java
+does in apache/iceberg#17262), which would also restore pruning on a
+historical spec's still-live partition fields.
+
+## Are these changes tested?
+
+yes. added tests",633b8e0485e6ad6fa7afc2acf4cff19216cebdb2,2845,false,,3,115,7,crates
+apache/iceberg-rust,e8460eee8725c7f66d53e26b89b3fef578f90ce5,e8460ee,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-07-21T17:14:55-04:00,GitHub,noreply@github.com,2026-07-21T14:14:55-07:00,deps: bump to DataFusion 54.1.0 (#2872),"## Which issue does this PR close?
+
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Closes #.
+
+## What changes are included in this PR?
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+Bump cargo deps to DataFusion minor version released today (54.1.0).
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->
+
+Existing tests.",f019ee147c42283580f9533db13a8a62a322666a,2872,false,,2,83,83,Cargo.lock; Cargo.toml
+apache/iceberg-rust,577e51c3c8d01fe802052420a42c8ab0f9249373,577e51c,Zakariya Stasa,zakariyastasa@gmail.com,2026-07-21T23:01:29+01:00,GitHub,noreply@github.com,2026-07-21T15:01:29-07:00,feat: Honor write.metadata.path for metadata file locations (#2776),"## Which issue does this PR close?
+
+- Closes #2775.
+
+## What changes are included in this PR?
+
+Metadata files were always written under `<table-location>/metadata`,
+ignoring the `write.metadata.path` table property. Iceberg Java honors
+it (via `BaseMetastoreTableOperations.metadataFileLocation`); this
+brings iceberg-rust in line and mirrors the existing `write.data.path`
+handling for data files.
+
+- Add `TableMetadata::metadata_location_root()`, returning
+`write.metadata.path` (trailing slash trimmed) when set, otherwise
+`<location>/metadata`.
+- Use it in `SnapshotProducer` for the manifest and manifest-list paths,
+and in `MetadataLocation` for the table metadata JSON.
+- `MetadataLocation` now stores the resolved metadata directory rather
+than the table location. On commit, the directory is re-derived from the
+metadata being committed (the version is still parsed from the previous
+file name), matching Iceberg Java. As a result
+`MetadataLocation::from_str` no longer requires the file to live under a
+`/metadata` directory (a custom `write.metadata.path` does not have to);
+file-name validation is unchanged.
+
+## Are these changes tested?
+
+Unit tests:
+
+- `TableMetadata::metadata_location_root()`: default, configured
+`write.metadata.path`, and trailing-slash trimming.
+- `MetadataLocation`: create (`new_with_metadata`) and commit
+(`with_new_metadata`) honor `write.metadata.path`; `from_str` round-trip
+cases updated for arbitrary metadata dirs.
+- A `fast_append` transaction test asserting the manifest list and
+manifests are written under a configured `write.metadata.path`.
+- Updated `catalog::tests::test_table_commit` to reflect the new
+metadata file following the updated table location.",e8460eee8725c7f66d53e26b89b3fef578f90ce5,2776,false,,14,412,145,crates
+apache/iceberg-rust,252bb601f71491aad6a716c57348935da44214c3,252bb60,Sreeram Garlapati,SreeramGarlapati@users.noreply.github.com,2026-07-22T01:04:13-07:00,GitHub,noreply@github.com,2026-07-22T16:04:13+08:00,fix(transaction): de-duplicate file paths within a FastAppend batch (#2509),"Closes #2507.
+
+A FastAppend batch carrying the same file path twice writes both entries
+into the manifest today, so scans double-count rows and the snapshot
+summary is inflated.
+
+This drops the duplicates and keeps the first occurrence, matching
+Iceberg Java, which de-duplicates by file location via
+[`DataFileSet`](https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/DataFileSet.java)
+(used in
+[`FastAppend`](https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/FastAppend.java)).
+The dedupe is in-memory and always runs, independent of
+`check_duplicate` (which only gates the I/O-bound cross-snapshot check).
+
+Tested: a batch with repeated paths now commits a single manifest entry,
+with and without `check_duplicate`.
+
+Co-authored-by: Aman Rawat <rawataaryan09@gmail.com>",577e51c3c8d01fe802052420a42c8ab0f9249373,2509,false,Aman Rawat,1,96,5,crates
