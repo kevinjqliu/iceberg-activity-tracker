@@ -25411,3 +25411,46 @@ Tested: a batch with repeated paths now commits a single manifest entry,
 with and without `check_duplicate`.
 
 Co-authored-by: Aman Rawat <rawataaryan09@gmail.com>",577e51c3c8d01fe802052420a42c8ab0f9249373,2509,false,Aman Rawat,1,96,5,crates
+apache/iceberg-rust,69609201a08b4defa96e2fd9b6e47218e1065c34,6960920,Matt Faltyn,76570855+mattfaltyn@users.noreply.github.com,2026-07-23T10:16:42+02:00,GitHub,noreply@github.com,2026-07-23T16:16:42+08:00,fix(sql): return errors for invalid pool properties (#2847),"## Which issue does this PR close?
+
+- Closes #2846.
+
+## What changes are included in this PR?
+
+- Parse SQL catalog connection-pool properties without panicking.
+- Return `ErrorKind::DataInvalid` with the invalid property, value, and
+parse error.
+- Add regression coverage for `pool.max-connections`,
+`pool.idle-timeout`, and `pool.test-before-acquire`.
+
+## Are these changes tested?
+
+- `cargo test -p iceberg-catalog-sql --all-features --lib`
+- `cargo fmt --all -- --check`
+- `cargo clippy -p iceberg-catalog-sql --all-targets --all-features --
+-D warnings`
+- Re-ran the issue reproducer and confirmed the malformed value returns
+a structured error while a valid value still initializes the catalog.",252bb601f71491aad6a716c57348935da44214c3,2847,false,,1,53,16,crates
+apache/iceberg-rust,4532da80f3930cdbda1cf2effe05b50165da9875,4532da8,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-07-23T05:23:23-04:00,GitHub,noreply@github.com,2026-07-23T17:23:23+08:00,feat(encryption): support AES-256 keys for reading Parquet data files (#2878),"## Which issue does this PR close?
+
+- Closes #.
+
+Depends on the arrow-rs 58.4.0 release tracked in apache/arrow-rs#10349.
+
+## What changes are included in this PR?
+
+- Bump `arrow`/`parquet` deps from `58` to `58.4`. arrow-rs 58.4.0 adds
+AES-256 for Parquet modular encryption (58.3.0 was AES-128 only), landed
+via apache/arrow-rs#9203.
+- Add an AES-256 encrypted-Parquet read test. Refactored the existing
+128-bit test into a shared `assert_encrypted_parquet_roundtrip(key)`
+helper with `_aes_128` and `_aes_256` callers.
+
+Note: 192-bit is not supported for data files. arrow-rs uses `ring`,
+which has no AES-192-GCM. Can revisit later.
+
+## Are these changes tested?
+
+Yes. Unit test `test_read_encrypted_parquet_aes_256` writes and reads
+back a 256-bit encrypted Parquet file. It fails on arrow-rs 58.3.0
+(`ring` rejects the 32-byte key) and passes on 58.4.0.",69609201a08b4defa96e2fd9b6e47218e1065c34,2878,false,,3,61,50,Cargo.lock; Cargo.toml; crates

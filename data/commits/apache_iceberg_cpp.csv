@@ -6106,3 +6106,105 @@ This contribution was authored with assistance from Claude Opus 4.8, in
 line with the Iceberg guidelines for AI-assisted contributions
 (https://iceberg.apache.org/contribute/#guidelines-for-ai-assisted-contributions).
 All changes were reviewed and tested by the author.",bfc0040f7e771808f31ea4b1e51227784d229d63,836,false,,3,67,30,cmake_modules; src
+apache/iceberg-cpp,955562bdf70cf3eb3dd842ba59d67919eb0e2ccf,955562b,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-07-22T19:09:58-07:00,GitHub,noreply@github.com,2026-07-23T10:09:58+08:00,fix: reject non-finite floating-point default values (#810),"## What
+
+A `float` / `double` column default of `NaN` or `±Infinity` passes
+`SchemaField::Validate` but cannot survive a metadata round-trip: the
+JSON serializer emits a non-finite number as `null`, which reads back as
+an *absent* default. The declared default is silently lost (and, because
+the key is present but null, the reader then errors on it).
+
+## How
+
+`ValidateDefault` now rejects a non-finite floating default with a clear
+""value must be finite"" error, so an unrepresentable default is caught up
+front rather than silently dropped on serialization.
+
+The check uses `std::isfinite`, which is false for **both** `NaN` and
+`±Infinity` — so a single condition covers all three cases (there is no
+separate `IsNaN` branch because `isfinite` already rejects NaN).
+
+## Testing
+
+`SchemaFieldTest.ValidateRejectsNonFiniteFloatingDefault` explicitly
+covers `NaN`, `+Inf` and `-Inf`, and
+`ValidateAcceptsFiniteFloatingDefault` covers a normal value; verified
+fail-without / pass-with. Full `schema_test` passes (551 tests).",9221381ced55bbbb1dbf9b3b9d394d410937b8d5,810,false,,2,50,0,src
+apache/iceberg-cpp,944a544f6bdaa0d5e94e3751884e117830a6a75b,944a544,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-07-22T19:12:16-07:00,GitHub,noreply@github.com,2026-07-23T10:12:16+08:00,feat(logging): add logging macros (#725),"Part 4 of the logging stack (builds on #724). Adds the
+application-facing macros — the part most callers actually use.
+
+**What's here**
+- `ICEBERG_LOG_{TRACE,DEBUG,INFO,WARN,ERROR,CRITICAL,FATAL}`, the
+generic `ICEBERG_LOG(level, …)`, `ICEBERG_LOG_TO(logger, …)`, and
+`ICEBERG_LOG_RUNTIME_FMT` for runtime format strings.
+- `ICEBERG_LOG_ACTIVE_LEVEL` is a compile-time floor: statements below
+it are removed entirely. `ICEBERG_LOG_FATAL` always emits, flushes, then
+aborts.
+- Filtering is decided only by `ShouldLog()`; formatting happens only on
+the taken path and never throws (a bad format falls back safely).
+- Generic/runtime-format macros use the same lock-free fast path as the
+fixed-severity ones (the slot lock is taken only on the fatal/abort
+path).
+- Bare `LOG_*` aliases are opt-in via `ICEBERG_LOG_SHORT_MACROS`.
+
+**Build note** — sets `/Zc:preprocessor` on MSVC, required for the
+`__VA_OPT__` used by the macros.
+
+**Examples** — every macro takes a `std::format` string + args. The
+rendered line depends on the active backend; with the default
+`CerrLogger` it looks like:
+
+```
+ICEBERG_LOG_TRACE(""entering scan for {}"", table);
+  2026-06-16T10:59:41.186Z trace [12345] table_scan.cc:88] entering scan for db.t
+ICEBERG_LOG_DEBUG(""cache miss key={}"", key);
+  2026-06-16T10:59:41.186Z debug [12345] cache.cc:42] cache miss key=manifest-7
+ICEBERG_LOG_INFO(""loaded {} manifests in {} ms"", n, ms);
+  2026-06-16T10:59:41.186Z info [12345] table_scan.cc:91] loaded 5 manifests in 12 ms
+ICEBERG_LOG_WARN(""retry {} after {}"", attempt, err);
+  2026-06-16T10:59:41.186Z warn [12345] io.cc:51] retry 2 after timeout
+ICEBERG_LOG_ERROR(""commit failed: {}"", status);
+  2026-06-16T10:59:41.186Z error [12345] txn.cc:77] commit failed: conflict
+ICEBERG_LOG_CRITICAL(""metadata unreadable at {}"", path);
+  2026-06-16T10:59:41.186Z critical [12345] meta.cc:30] metadata unreadable at s3://b/m.json
+ICEBERG_LOG_FATAL(""unrecoverable: {}"", reason);   // emits, flushes, then std::abort()
+  2026-06-16T10:59:41.186Z fatal [12345] boot.cc:19] unrecoverable: bad config
+```
+
+Less common forms: `ICEBERG_LOG(level, …)` (runtime severity),
+`ICEBERG_LOG_TO(logger, level, …)` (explicit logger),
+`ICEBERG_LOG_RUNTIME_FMT(level, fmt_string, args…)` (non-literal
+format). The same examples are documented inline in `logger.h`.
+
+**Tests** — `macros_test` / `macros_active_level_test`: formatting,
+level gating, ""argument not evaluated when disabled"", compile-time
+stripping, never-throws, and FATAL-aborts death tests. clang/libc++.
+
+This pull request and its description were written by Isaac.",955562bdf70cf3eb3dd842ba59d67919eb0e2ccf,725,false,,11,650,27,meson.build; src
+apache/iceberg-cpp,6c30d3c2ff8ea7b804ebfd30072aa39d994dfe9e,6c30d3c,Minh Vu,vuhoangminh97@gmail.com,2026-07-23T09:41:05+02:00,GitHub,noreply@github.com,2026-07-23T15:41:05+08:00,fix: validate transform parameters in metadata (#757),"## Summary
+- add `Transform::Validate` to reuse bind-time transform checks during
+metadata validation
+- reject invalid bucket/truncate parameters when parsing transform
+strings
+- make partition specs and sort orders reject non-positive
+bucket/truncate parameters during schema-bound validation
+
+## Validation
+- `cmake -S . -B build-transform-params -G Ninja
+-DICEBERG_BUILD_BUNDLE=OFF -DICEBERG_BUILD_REST=OFF
+-DICEBERG_BUILD_SHARED=OFF`
+- `ctest --test-dir build-transform-params -R schema_test
+--output-on-failure`",944a544f6bdaa0d5e94e3751884e117830a6a75b,757,false,,9,78,15,src
+apache/iceberg-cpp,78b659073289e40247bd0b286b6e2a91d8a07ce1,78b6590,Manu Zhang,OwenZhang1990@gmail.com,2026-07-23T18:02:06+08:00,GitHub,noreply@github.com,2026-07-23T18:02:06+08:00,ci: check for duplicate pull requests (#837),"## Summary
+
+- instruct Copilot reviewers to search open pull requests for the same
+issue or change
+- ask reviewers to link any duplicate they find
+
+This helps surface duplicate work earlier in the review process.
+
+## Testing
+
+Not run (documentation-only change, per instruction).
+
+Co-authored-by: Codex <codex@openai.com>",6c30d3c2ff8ea7b804ebfd30072aa39d994dfe9e,837,false,Codex,1,2,0,.github
