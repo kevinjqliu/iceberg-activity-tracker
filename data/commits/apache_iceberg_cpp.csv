@@ -6208,3 +6208,129 @@ This helps surface duplicate work earlier in the review process.
 Not run (documentation-only change, per instruction).
 
 Co-authored-by: Codex <codex@openai.com>",6c30d3c2ff8ea7b804ebfd30072aa39d994dfe9e,837,false,Codex,1,2,0,.github
+apache/iceberg-cpp,f9e83ff9324f1fd7bb9880f318222204ca17117e,f9e83ff,YangJie,yangjie01@baidu.com,2026-07-23T23:58:00+08:00,GitHub,noreply@github.com,2026-07-23T23:58:00+08:00,ci: replace cpp-linter-action with cpp-linter CLI (#838),"## What
+
+`cpp-linter/cpp-linter-action` is frozen at v2.15.1. Its v2.16 release
+pulled in an untrusted dependency and was blocked by ASF Infra
+(apache/infrastructure-actions#325), and the ASF gateway ignores newer
+versions. The pinned action still runs, but it can no longer be updated.
+
+## How
+
+The action is a thin wrapper around the `cpp-linter` PyPI package, and
+the block does not touch that package. This installs it with pip and
+calls the `cpp-linter` CLI to run clang-tidy. Because it is a `run:`
+step and not a `uses:` reference, it adds no new third-party action to
+the ASF allowlist. The `checks-failed` output and the Fail fast step
+stay as they were.
+
+Formatting is left to the pre-commit workflow, which already runs the
+pinned clang-format hook on every PR. So cpp-linter runs tidy-only:
+`--style=''`, and clang-format is not installed here. This keeps the
+clang-format version in one place instead of tracking it in two.
+`--version` points at the setup-python bin directory so clang-tidy
+resolves to the pip-installed version rather than a system clang-tidy on
+PATH.
+
+I also looked at emitting SARIF and uploading it with
+`github/codeql-action/upload-sarif`, which is allowed since it is a
+`github/*` action. That route loses the thread comment and needs an
+extra conversion step, so calling the CLI directly stays closer to what
+we have now.
+
+## Verified
+
+CI ran the job on a temporary probe file seeded with a `NULL` and a
+mis-named member. clang-tidy resolved to the pip-installed 22.1.8 (not a
+system clang-tidy-22), flagged both issues, and set `checks-failed`, so
+the Fail fast step failed as expected. The probe has since been removed.
+
+---
+This contribution was authored with assistance from Claude Opus 4.8, in
+line with the Iceberg guidelines for AI-assisted contributions
+(https://iceberg.apache.org/contribute/#guidelines-for-ai-assisted-contributions).
+All changes were reviewed and tested by the author.
+
+Closes #336",78b659073289e40247bd0b286b6e2a91d8a07ce1,838,false,,1,33,13,.github
+apache/iceberg-cpp,7e47e4d98615b6091499fa7a603dc465b9ab66e3,7e47e4d,Abanoub Doss,abanoubdoss@gmail.com,2026-07-24T00:27:54-05:00,GitHub,noreply@github.com,2026-07-24T13:27:54+08:00,ci: share sccache setup across workflows (#811),"## What
+Add two composite actions for sccache:
+
+- `.github/actions/setup-sccache` sets the sccache environment, restores
+the cache, resolves the MSVC compiler version on Windows, and starts
+`mozilla-actions/sccache-action`.
+- `.github/actions/save-sccache` shows sccache stats for every run and
+saves the cache only on main branch runs.
+
+The Test, SQL Catalog, sanitizer, C++ linter, and AWS workflows now pass
+only their cache key prefix at each call site.
+
+This is part of the CI work discussed in
+https://github.com/apache/iceberg-cpp/issues/799.
+
+## Notes
+The existing cache key shapes are preserved for the current CMake
+workflow legs. The Meson Windows leg now also gets the MSVC-version key
+suffix, matching the other Windows sccache legs and avoids cache misses
+after runner image compiler updates.
+
+The MSVC version source also changes for the existing Windows legs (test
+and SQL catalog): the inline `cl.exe` banner parse is replaced by
+reading `VCToolsVersion.default.txt` via vswhere, which is more reliable
+and does not require `cl.exe` on PATH. This produces a different version
+format (e.g. `14.44.35217` vs `19.44.35217.1`), so all Windows caches
+will miss once and reseed on the first post-merge main run.
+
+Third-party actions stay pinned inside composite `action.yml` files,
+which are covered by the ASF allowlist checker glob.
+
+## Validation
+- Validated builds in fork: Test, AWS, SQL Catalog, ASAN/UBSAN, and
+pre-commit.
+- The C++ linter workflow ignores `.github/**`, so this PR does not
+exercise that workflow until a source-touching run or post-merge.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",f9e83ff9324f1fd7bb9880f318222204ca17117e,811,false,Abanoub Doss,8,222,185,.github
+apache/iceberg-cpp,e7c5e9c7e52727a537296cdac61ceeb52b5d3276,e7c5e9c,wzhuo,wngzhuo@gmail.com,2026-07-24T13:35:27+08:00,GitHub,noreply@github.com,2026-07-24T13:35:27+08:00,fix: compare transform function parameters (#840),"## Summary
+- include bucket counts in BucketTransform equality
+- include truncate widths in TruncateTransform equality
+- cover parameter and source-type differences in transform tests
+
+## Testing
+- build/src/iceberg/test/schema_test
+- pre-commit hooks",7e47e4d98615b6091499fa7a603dc465b9ab66e3,840,false,,4,35,2,src
+apache/iceberg-cpp,88f3c41fe0ccd106494afc5e4d2a2ae3be11c724,88f3c41,Manu Zhang,OwenZhang1990@gmail.com,2026-07-24T14:14:59+08:00,GitHub,noreply@github.com,2026-07-24T14:14:59+08:00,ci: scope pull request checks to relevant paths (#839),"## What
+
+- For pull requests, run ASF allowlist, Actions CodeQL, and zizmor only
+for YAML changes under `.github`.
+- For pull requests, skip AWS, sanitizer, SQL catalog, general test, and
+C++ lint workflows for Markdown, documentation, devcontainer, and
+release-development-only changes.
+- Keep license and pre-commit checks unfiltered.
+
+## Why
+
+These workflows currently run on pull requests even when every changed
+path is unrelated to what they validate. Directory and extension globs
+keep the filters applicable to future files without maintaining filename
+lists, and keeping filters off push triggers avoids duplicate
+maintenance.
+
+## Impact
+
+Documentation and development-only pull requests avoid unrelated CI
+work. Mixed changes still run the relevant workflows, GitHub YAML
+changes still run the Actions validators, and main, tag, and scheduled
+runs remain unfiltered.
+
+---------
+
+Co-authored-by: Codex <codex@openai.com>",e7c5e9c7e52727a537296cdac61ceeb52b5d3276,839,false,Codex,8,33,4,.github
+apache/iceberg-cpp,73252c34e0024876bf99c843a2593436a6026b54,73252c3,liuxiaoyu,45345701+MisterRaindrop@users.noreply.github.com,2026-07-24T18:06:39+08:00,GitHub,noreply@github.com,2026-07-24T18:06:39+08:00,feat(hive): add HmsClient connection lifecycle and URI parsing (#796),"- **`ParseHmsUris()`** — tolerant HMS URI parser: `thrift://host:port`,
+bare `host:port`, default port 9083, and comma-separated HA lists.
+Rejects empty hosts and invalid ports.
+- **`HmsClient::Connect()`** — sets up the `TSocket → TTransport →
+TBinaryProtocol → ThriftHiveMetastoreClient` chain (transport and
+timeouts from `HiveCatalogProperties`), translating Thrift exceptions to
+`kIOError`. Thrift types stay out of the public header via a pImpl.
+- **CI** — new `Ubuntu Hive` job builds with `-DICEBERG_BUILD_HIVE=ON`
+(bundled Thrift) and runs `hive_catalog_test`.",88f3c41fe0ccd106494afc5e4d2a2ae3be11c724,796,false,,8,528,2,.github; cmake_modules; src

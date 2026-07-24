@@ -25454,3 +25454,182 @@ which has no AES-192-GCM. Can revisit later.
 Yes. Unit test `test_read_encrypted_parquet_aes_256` writes and reads
 back a 256-bit encrypted Parquet file. It fails on arrow-rs 58.3.0
 (`ring` rejects the 32-byte key) and passes on 58.4.0.",69609201a08b4defa96e2fd9b6e47218e1065c34,2878,false,,3,61,50,Cargo.lock; Cargo.toml; crates
+apache/iceberg-rust,7decfb22961475965d00bbce6f0eb071e1ad7961,7decfb2,YangJie,yangjie01@baidu.com,2026-07-24T07:04:35+08:00,GitHub,noreply@github.com,2026-07-23T16:04:35-07:00,fix(scan): don't treat data columns named pos or file_path as metadata columns (#2865),"## Which issue does this PR close?
+
+- Closes #2837.
+
+## What changes are included in this PR?
+
+A user data column named `pos` or `file_path` can't be scanned:
+projecting it fails with `field not found`, and renaming the column
+makes it work again. This bites VCF → Iceberg pipelines, where `pos` is
+a common column name.
+
+`pos` and `file_path` are the internal columns of a position-delete
+file, but they were registered in the same reserved name→field-id map
+(`get_metadata_field_id`) that a data-table scan consults through
+`is_metadata_column_name`. Scan planning checks that map first and never
+falls back to the data schema, so a real `pos` column gets mapped to a
+reserved delete-file id and is never looked up in the actual schema.
+
+The Iceberg spec reserves only `_`-prefixed names as metadata columns,
+so they can't collide with user columns. This guards
+`is_metadata_column_name` with a `starts_with('_')` check, and the two
+bare names stop shadowing data columns. `get_metadata_field_id` still
+maps them to their reserved ids, which the delete read path needs via
+the id→field direction; its doc now says it isn't a membership test. No
+public API signature changes.
+
+## Are these changes tested?
+
+Unit tests, no infrastructure needed:
+
+- `metadata_columns`: `is_metadata_column_name` accepts the `_`-prefixed
+names and rejects the bare `pos`/`file_path`, while
+`get_metadata_field_id` still maps them to reserved ids.
+- `scan`: projecting `pos`/`file_path`, both explicitly and via the
+default projection, resolves to the real field id; an absent column
+still fails with `DataInvalid` / ""not found"". Both fail before the fix
+and pass after.
+
+`cargo test -p iceberg --lib`, `cargo fmt --check`, and `cargo clippy -D
+warnings` all pass.
+
+## One open question for reviewers
+
+This is the minimal fix, on the scan side. The bare names still live in
+the shared name→id map, so `get_metadata_field_id(""pos"").is_ok()` stays
+true and the two public predicates now disagree
+(`is_metadata_column_name(""pos"")` is false). Removing the two names from
+that map would be the deeper fix and looks safe in-repo (the delete read
+path uses the untouched id→field direction), but it changes a second
+public function's behavior, so I left it out. Happy to fold it in if
+you'd rather go deeper.",4532da80f3930cdbda1cf2effe05b50165da9875,2865,false,,2,234,10,crates
+apache/iceberg-rust,3d6ebbfef837c47a8d67db0c3c01857b6f1b1c4a,3d6ebbf,Xander,zander181@googlemail.com,2026-07-24T00:12:06+01:00,GitHub,noreply@github.com,2026-07-23T16:12:06-07:00,chore(ci) fix ruff lints failing in CI (#2885),"## Which issue does this PR close?
+
+CI is currently failing because ruff
+https://github.com/astral-sh/ruff/releases/tag/0.16.0 released two hours
+ago
+<!--
+We generally require a GitHub issue to be filed for all bug fixes and
+enhancements and this helps us generate change logs for our releases.
+You can link an issue to this PR using the GitHub syntax. For example
+`Closes #123` indicates that this PR will close issue #123.
+-->
+
+- Closes #.
+
+## What changes are included in this PR?
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",7decfb22961475965d00bbce6f0eb071e1ad7961,2885,false,,5,28,33,bindings
+apache/iceberg-rust,d82481f96dd04d42eaf66d10f480d42131d8d4c3,d82481f,Xander,zander181@googlemail.com,2026-07-24T03:21:39+01:00,GitHub,noreply@github.com,2026-07-24T10:21:39+08:00,feat(encryption) [13/N] Write encrypted manifest files (#2821),"## Which issue does this PR close?
+* Working towards https://github.com/apache/iceberg-rust/issues/2034
+
+## What changes are included in this PR?
+
+Today it is possible to read encrypted manifest files but not write
+them.
+
+https://github.com/apache/iceberg-rust/pull/2568/ adds the foundations
+of what's needed to be able to do these writes but it wasn't wired into
+the actual write path.
+
+<!--
+Provide a summary of the modifications in this PR. List the main changes
+such as new features, bug fixes, refactoring, or any other updates.
+-->
+
+## Are these changes tested?
+
+Yes - added round-trip write path test.
+<!--
+Specify what test covers (unit test, integration test, etc.).
+
+If tests are not included in your PR, please explain why (for example,
+are they covered by existing tests)?
+-->",3d6ebbfef837c47a8d67db0c3c01857b6f1b1c4a,2821,false,,3,142,43,crates
+apache/iceberg-rust,ccf44a2bb1cf5aa1a3694b125a8fc48735899eb1,ccf44a2,Anoop Johnson,anoop@apache.org,2026-07-24T05:05:32-07:00,GitHub,noreply@github.com,2026-07-24T14:05:32+02:00,Cache partition-type resolvability and cover dropped-source-column skip (#2869),"## Which issue does this PR close?
+
+Closes #2844
+
+## What changes are included in this PR?
+
+Follow-up to #2845. The stopgap there computed partition_type once per
+manifest file in get_partition_filter to decide resolvability,
+duplicating the computation the partition filter cache already does on a
+miss. Move the fallback into the cache's miss path so an unresolvable
+spec yields a cached always-true filter keyed by spec id, and drop the
+per-manifest pre-check.
+
+Also add a unit test for the constants_map skip on a dropped identity
+partition source column.
+
+## Are these changes tested?
+
+Yes, added a unit test",d82481f96dd04d42eaf66d10f480d42131d8d4c3,2869,false,,3,206,38,crates
+apache/iceberg-rust,dbbefa41e8ab480024b33b78bf8e6b5ae6db33fa,dbbefa4,Dhruv Arya,dhruv.arya@databricks.com,2026-07-24T07:36:32-07:00,GitHub,noreply@github.com,2026-07-24T16:36:32+02:00,fix: avoid lost-wakeup hang when waiting for a positional delete load (#2859),"## Which issue does this PR close?
+
+<!-- No issue; concurrency bug found while reviewing the delete-file
+loading paths. -->
+
+N/A — a latent concurrency bug in the positional-delete loading path.
+
+## What changes are included in this PR?
+
+Fixes a lost-wakeup hang on the positional-delete wait path
+(`PosDelLoadAction::WaitFor` in `arrow/delete_filter.rs`, awaited in
+`arrow/caching_delete_file_loader.rs`).
+
+`tokio::sync::Notify::notify_waiters()` stores no permit and only wakes
+`Notified` futures that already exist. Previously `WaitFor` carried a
+raw `Arc<Notify>`, and the waiter turned it into a `Notified` only
+later, at `.notified().await` — after releasing the state lock. The
+exact losing interleaving:
+
+1. Loader calls `try_start_pos_del_load(path)` → `Load` (claims the
+load).
+2. Waiter calls `try_start_pos_del_load(path)` → `WaitFor(Arc<Notify>)`
+— a raw notifier, **not yet a `Notified`**. The lock is released as the
+call returns.
+3. Loader calls `finish_pos_del_load(path)` → sets `Loaded`, fires
+`notify_waiters()`. No `Notified` exists yet, so the wakeup is dropped.
+4. Waiter calls `notify.notified().await`, creating its `Notified`
+**after** step 3.
+5. That `Notified` waits for the next `notify_waiters()`, which never
+comes → hangs forever. Since positional-delete retrieval
+(`get_delete_vector`) is synchronous, this waiter must not proceed
+early, so the hang is on the critical path.
+
+**Fix:** create the `Notified` under the state lock in
+`try_start_pos_del_load` and carry it in `WaitFor(OwnedNotified)`. The
+loader cannot fire `notify_waiters()` until it takes the write lock, so
+the waiter's `Notified` is guaranteed to exist before the signal.
+
+This is latent today (the loader does real parquet I/O before signaling,
+so the window is rarely hit), but is one scheduling hiccup from a
+permanent hang. It is the same bug class as the `DeleteFileIndex` site
+in #2696.
+
+## Are these changes tested?
+
+Yes — adds a unit test
+(`wait_for_completes_when_load_finishes_before_await`) that drives the
+exact interleaving above through the real API and asserts the waiter
+completes after `finish_pos_del_load`. It passes with this change and
+hangs (times out) on the old `WaitFor(Arc<Notify>)` contract. No test
+seam is needed because `WaitFor` hands the notifier to the caller.
+
+Signed-off-by: Dhruv Arya <aryadhruv@gmail.com>
+Co-authored-by: Dhruv Arya <aryadhruv@gmail.com>",ccf44a2bb1cf5aa1a3694b125a8fc48735899eb1,2859,false,Dhruv Arya,2,43,6,crates

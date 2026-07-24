@@ -20346,3 +20346,41 @@ registration and normal loading.
 
 - `go test ./catalog/glue`",46cd7cfe949b0f256948f29c3992da194516fa44,1487,false,,2,60,2,catalog
 apache/iceberg-go,582c41f1c8e96cd77942e1146650b259ace4a01b,582c41f,Neelesh Salian,nssalian@users.noreply.github.com,2026-07-22T15:07:15-07:00,GitHub,noreply@github.com,2026-07-22T18:07:15-04:00,feat(table): bounds for shredded variant fields (#1478),Closes #988,116e58c1432eb06a730054428f2fc8c0b8a00123,1478,false,,12,1514,80,table
+apache/iceberg-go,6dae5589ecee8314b7af822b5431bd591d34a807,6dae558,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T14:02:40+02:00,GitHub,noreply@github.com,2026-07-24T14:02:40+02:00,fix(glue): map fixed types to binary (#1519),"## Summary
+
+- map Iceberg fixed types to Glue `binary` instead of the unsupported
+parameterized `binary(n)` form
+- cover fixed types nested inside container types
+- align Glue schema conversion with Iceberg Java and PyIceberg
+
+## Testing
+
+- `go test ./catalog/glue`",582c41f1c8e96cd77942e1146650b259ace4a01b,1519,false,,2,11,2,catalog
+apache/iceberg-go,c44be37e07a33051451dbdc7d1b3253ab7f3110e,c44be37,İrem Çağın Yurttürk,cagin.yurtturk@getbruin.com,2026-07-24T15:08:05+03:00,GitHub,noreply@github.com,2026-07-24T14:08:05+02:00,fix(hive): derive namespace location from the warehouse (#1507),"## Problem
+
+`CreateNamespace` (`catalog/hive/hive.go`) sets the Hive database
+`LocationUri` only from an explicit `location` / `Location` property.
+When none is provided — the common case (e.g. a client calls
+`CreateNamespace` with empty properties) — and the metastore has no
+default warehouse dir configured, the metastore is handed an empty
+location and rejects it:
+
+```
+MetaException: java.lang.IllegalArgumentException: Can not create a Path from an empty string
+```
+
+The catalog already carries the `warehouse` option, but
+`CreateNamespace` never uses it for the namespace location. (pyiceberg's
+Hive catalog derives the database location from the warehouse.)
+
+## Fix
+
+When no explicit location is given, derive `<warehouse>/<db>.db` — the
+metastore's conventional database location — from the catalog's
+`warehouse`. When no warehouse is configured the location stays empty,
+preserving the previous behavior (no regression for setups that rely on
+the metastore's own default warehouse dir).
+
+---------
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>",6dae5589ecee8314b7af822b5431bd591d34a807,1507,false,,2,98,7,catalog
