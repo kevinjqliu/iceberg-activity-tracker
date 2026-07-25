@@ -25633,3 +25633,39 @@ seam is needed because `WaitFor` hands the notifier to the caller.
 
 Signed-off-by: Dhruv Arya <aryadhruv@gmail.com>
 Co-authored-by: Dhruv Arya <aryadhruv@gmail.com>",ccf44a2bb1cf5aa1a3694b125a8fc48735899eb1,2859,false,Dhruv Arya,2,43,6,crates
+apache/iceberg-rust,3a5613fef0a911d43e5c63b4591fe40877a90f36,3a5613f,Gustavo Schneiter,gustavomalleths@gmail.com,2026-07-24T17:09:34-03:00,GitHub,noreply@github.com,2026-07-24T22:09:34+02:00,feat: add history metadata table (#2825),"## Which issue does this PR close?
+
+Part of #823 (metadata tables tracking issue). Follows the pattern of
+the existing `snapshots` and `manifests` tables.
+
+## What changes are included in this PR?
+
+Adds the `history` metadata table, mirroring Java's `HistoryTable`:
+
+- `HistoryTable` in `iceberg::inspect` with the Java schema exactly
+(field ids 1–4: `made_current_at` timestamptz, `snapshot_id`, nullable
+`parent_id`, `is_current_ancestor`).
+- One row per snapshot-log entry. `is_current_ancestor` is computed by
+walking the current snapshot's parent chain — rolled-back snapshots stay
+visible in the log but are flagged `false`, matching
+`SnapshotUtil.currentAncestorIds` semantics.
+- `parent_id` is null when the entry's snapshot has been expired,
+matching Java's null guard.
+- The ancestor walk carries a cycle guard, so corrupt metadata with a
+parent cycle cannot hang the scan.
+- Registered in `MetadataTableType` and the DataFusion provider
+(`table$history`).
+
+## Are these changes tested?
+
+- `test_history_table_with_rolled_back_snapshot`: a table rolled back
+from S2 and re-committed as S3 (parent S1) — asserts S2 remains in
+history with `is_current_ancestor = false` while S1/S3 stay `true`. This
+lineage divergence is what distinguishes `history` from `snapshots`.
+- The same test also covers expired-snapshot log entries (null
+`parent_id`, `false` ancestor flag) and a snapshot appearing twice in
+the log (one row per entry).
+- `test_history_table`: schema + full-row assertions over the shared
+fixture.
+- DataFusion table listing and `SHOW TABLES` sqllogictest updated;
+`public-api.txt` regenerated.",dbbefa41e8ab480024b33b78bf8e6b5ae6db33fa,2825,false,,8,574,1,crates

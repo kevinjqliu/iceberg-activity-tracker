@@ -20384,3 +20384,487 @@ the metastore's own default warehouse dir).
 ---------
 
 Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>",6dae5589ecee8314b7af822b5431bd591d34a807,1507,false,,2,98,7,catalog
+apache/iceberg-go,aada7e3e0724073e6da727e64bbd8eae320207a4,aada7e3,Badal Prasad Singh,badal@datazip.io,2026-07-24T23:34:18+05:30,GitHub,noreply@github.com,2026-07-24T20:04:18+02:00,fix(io): S3 compatibility with GCS HMAC endpoints (#1423),"## Description
+
+When the S3 IO backend (`io/gocloud`) is pointed at a non-AWS
+S3-compatible endpoint that supports the AWS SigV4 HMAC interop API but
+is **not** Amazon S3 itself — most notably **Google Cloud Storage's
+S3-compatible interop endpoint
+(`https://storage.googleapis.com`)** with HMAC keys.
+
+Fixes #1422
+
+## Proposed Fix
+
+* When `props[""s3.endpoint""]` (`io.S3EndpointURL`) is set, configure the
+S3 client to use `aws.RequestChecksumCalculationWhenRequired` so the SDK
+doesn't automatically enable CRC32 for requests where it isn't required.
+* Add an **Initialize** middleware
+(`iceberg-go/strip-s3-input-checksum-algorithm`) **before**
+`AWSChecksum:SetupInputContext` to clear `ChecksumAlgorithm` on
+`PutObject`, `UploadPart`, and `CreateMultipartUpload`, preventing
+chunked encoding from being enabled for compatible S3 endpoints.
+* Add a **Finalize** middleware
+(`iceberg-go/strip-gcs-incompatible-signed-headers`) **before** SigV4
+signing to remove `Amz-Sdk-Invocation-Id`, `Amz-Sdk-Request`, and
+`Accept-Encoding` from the signed request, avoiding signature mismatches
+with GCS S3-compatible endpoints while leaving the AWS S3 code path
+unchanged.
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",c44be37e07a33051451dbdc7d1b3253ab7f3110e,1423,false,,4,292,0,io; website
+apache/iceberg-go,655d3fcf51c140f4923fcce8d64e2ee0071ec205,655d3fc,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T20:06:44+02:00,GitHub,noreply@github.com,2026-07-24T14:06:44-04:00,fix(table): validate snapshot references (#1512),"## Summary
+
+- require `snapshot-id` and `type` when decoding snapshot references
+- reject non-positive retention values
+- reject branch-only retention settings on tags during decoding and
+metadata updates
+
+## Why
+
+The Java `SnapshotRef` builder and parser enforce these invariants, but
+Go only checked the reference type while decoding. Programmatic metadata
+updates also allowed tag references with `min-snapshots-to-keep` or
+`max-snapshot-age-ms`, producing metadata Java rejects.
+
+## Testing
+
+- `go test ./...`
+- `go test -race ./table`
+- `go vet ./...`",aada7e3e0724073e6da727e64bbd8eae320207a4,1512,false,,4,102,6,table
+apache/iceberg-go,7b8883e4fef803342ea89dc0defba7f0424fa827,7b8883e,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T20:07:24+02:00,GitHub,noreply@github.com,2026-07-24T14:07:24-04:00,fix(table): tolerate missing snapshot summary operation (#1513),"## Summary
+
+- default a non-empty snapshot summary without `operation` to
+`overwrite`
+- preserve the remaining summary properties
+
+## Why
+
+Java uses this fallback for compatibility with older snapshot metadata.
+Go returned `ErrMissingOperation` instead, so it could not load metadata
+that Java accepts.
+
+## Testing
+
+- `go test ./...`
+- `go test -race ./table`
+- `go vet ./...`",655d3fcf51c140f4923fcce8d64e2ee0071ec205,1513,false,,2,21,3,table
+apache/iceberg-go,863aa916fa8c5184e1bef6fcf0832658ea8c4900,863aa91,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T20:07:34+02:00,GitHub,noreply@github.com,2026-07-24T14:07:34-04:00,fix(table): avoid mutating sort fields during marshaling (#1515),"## Summary
+
+- compute default sort direction and null order in local variables
+- preserve the existing JSON output without changing the `SortField`
+receiver
+- use a value receiver so both `SortField` values and pointers use the
+custom encoder
+
+## Why
+
+`SortField.MarshalJSON` wrote default values back into the field being
+serialized. Marshaling should be read-only; mutating caller state is
+surprising and can race when a field is serialized concurrently. The
+pointer receiver also meant marshaling a `SortField` value bypassed the
+custom JSON shape entirely.
+
+## Testing
+
+- `go test ./...`
+- `go test -race ./table`
+- `golangci-lint run --timeout=10m`
+- `go vet ./...`",7b8883e4fef803342ea89dc0defba7f0424fa827,1515,false,,2,41,9,table
+apache/iceberg-go,cdb2a8b08abefa4cca8276eecf25e3f4277681ec,cdb2a8b,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T20:07:44+02:00,GitHub,noreply@github.com,2026-07-24T14:07:44-04:00,fix(table): make summary equality nil-safe (#1516),"## Summary
+
+- handle nil snapshot summaries symmetrically in `Summary.Equals`
+- cover direct summary comparison and `Snapshot.Equals` in both operand
+orders
+
+## Why
+
+`Summary.Equals` handled a non-nil receiver with a nil argument, but not
+the reverse. Comparing a snapshot without a summary to one with a
+summary dereferenced the nil receiver and panicked. Equality should
+return false regardless of operand order.
+
+## Testing
+
+- `go test ./...`
+- `go test -race ./table`
+- `golangci-lint run --timeout=10m`
+- `go vet ./...`",863aa916fa8c5184e1bef6fcf0832658ea8c4900,1516,false,,2,19,1,table
+apache/iceberg-go,09dc19dac08739cc53292239ffa399a9a4578385,09dc19d,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T20:07:54+02:00,GitHub,noreply@github.com,2026-07-24T14:07:54-04:00,fix(table): honor parquet row group byte target (#1517),"## Summary
+
+* honor `write.parquet.row-group-size-bytes` when writing buffered
+Parquet row groups
+* start a new row group before the next non-empty batch after the byte
+target is reached
+* avoid creating an empty trailing row group when the file is closed
+* reject invalid and non-positive target values, matching Iceberg Java
+behavior
+* preserve `write.parquet.row-group-limit` as an independent row-count
+ceiling
+
+## Why
+
+`write.parquet.row-group-size-bytes` is exported and documented, but the
+Go Parquet writer did not read it. Changing the property therefore had
+no effect on generated row groups.
+
+Arrow Go v18.7 provides `RowGroupTotalBytesWritten` and
+`NewBufferedRowGroupChecked`, allowing the writer to apply the
+configured uncompressed byte target safely.
+
+Rotation happens before the next non-empty batch instead of immediately
+after reaching the target. This prevents closing the writer from
+producing an empty trailing row group.
+
+## Testing
+
+* added coverage for the default and configured byte targets
+* added coverage for malformed, zero, and negative values
+* added a Parquet metadata regression test verifying that:
+
+  * a small target creates multiple row groups
+  * each row group contains data
+  * no empty trailing row group is produced
+* `git diff --check`
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",cdb2a8b08abefa4cca8276eecf25e3f4277681ec,1517,false,,5,214,22,table
+apache/iceberg-go,6466d3611513daf599ad682f916efe0d5d68daa3,6466d36,Tanmay Rauth,t_rauth@apple.com,2026-07-24T11:08:05-07:00,GitHub,noreply@github.com,2026-07-24T14:08:05-04:00,fix(table): cross-check deletion vector cardinality against manifest record_count (#1510),"ReadDV now validates the decoded bitmap against the manifest entry's
+record_count (field 103) and cross-checks it with the puffin blob's
+cardinality property when present. record_count is a required
+non-nullable long, so it always participates: a manifest zero against a
+nonzero puffin property is a real disagreement, not an absent value, and
+fails fast.
+
+Blobs missing the puffin property are still validated against
+record_count and accepted with a warning. Adds a hand-built fixture to
+exercise the missing-property branch, which the puffin writer otherwise
+forbids.
+
+Closes #1058",09dc19dac08739cc53292239ffa399a9a4578385,1510,false,,4,197,67,table
+apache/iceberg-go,446cba12eb2012f131e5a55bfbaaf62fed3a9612,446cba1,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T20:08:14+02:00,GitHub,noreply@github.com,2026-07-24T14:08:14-04:00,fix(hadoop): validate metadata before dropping tables (#1491),"## Problem
+
+`DropTable` considered a directory to be a table based only on the
+presence of a metadata-shaped filename, then recursively deleted the
+directory. A partial or corrupt metadata file could therefore authorize
+a destructive drop.
+
+## Changes
+
+Load and parse the current table metadata before removing the table
+directory. Invalid metadata now returns an error and leaves the
+directory untouched.
+
+The existing successful-drop tests now create real table metadata rather
+than placeholder JSON.
+
+## Testing
+
+Added a regression test with invalid metadata and a marker file that
+must survive the failed drop.
+
+- `go test ./catalog/hadoop`",6466d3611513daf599ad682f916efe0d5d68daa3,1491,false,,3,37,30,catalog
+apache/iceberg-go,dc30f413cc19d22fb22d463f909fee7981d144e8,dc30f41,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T20:08:24+02:00,GitHub,noreply@github.com,2026-07-24T14:08:24-04:00,fix(glue): reject dropping non-empty namespaces (#1520),"## Summary
+
+- check a Glue database for tables before dropping its namespace
+- return `catalog.ErrNamespaceNotEmpty` when any table exists
+- avoid deleting the database when Glue cannot determine whether it is
+empty
+
+The check includes both Iceberg and non-Iceberg tables because deleting
+a Glue database makes all tables in that database inaccessible.
+
+## Testing
+
+- `go test ./catalog/glue`",446cba12eb2012f131e5a55bfbaaf62fed3a9612,1520,false,,2,97,6,catalog
+apache/iceberg-go,0df1d8b7ebf951d4e3501f717fcad69e257c0cf1,0df1d8b,Badal Prasad Singh,badal@datazip.io,2026-07-24T23:57:27+05:30,GitHub,noreply@github.com,2026-07-24T14:27:27-04:00,feat(table): union schema evolution (#1359),"### Description
+
+In Iceberg-go, `table.UpdateSchema`, right now, does not provide a way
+to evolve a table's schema to the union of its current schema and an
+incoming schema matched by field name.
+
+Iceberg-java's `org.apache.iceberg.UpdateSchema` exposes this as
+`unionByNameWith(Schema)`. This PR solves the same for Iceberg-Go.
+
+Fixes #1187
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",dc30f413cc19d22fb22d463f909fee7981d144e8,1359,false,,2,1293,0,table
+apache/iceberg-go,9736768aea8b79c62f60feaf275c361ca1d95263,9736768,Revanth,revanthcse1@gmail.com,2026-07-24T13:36:18-05:00,GitHub,noreply@github.com,2026-07-24T14:36:18-04:00,feat(rest): decode REST scan-task payloads into FileScanTasks (#1492),"## Summary
+
+Implements REST scan-task payload decoding as part of
+[#1178](https://github.com/apache/iceberg-go/issues/1178).
+
+This converts REST `ScanTasks` responses into `table.FileScanTask`
+values, including data files, delete files, metrics, partitions, bounds,
+and residual filters.
+
+## Changes
+
+- Adds REST wire types for content files, count maps, bounds, data
+files, and delete files. These
+(`RESTContentFile`/`RESTDataFile`/`RESTFileScanTask`/`RESTDeleteFile`)
+are exported as part of the existing `ScanTasks` response surface
+introduced as stubs in #1324.
+- Adds `DecodeScanTasks` with metadata-aware partition and residual
+decoding.
+- Decodes partition values using their partition transform result types.
+- Decodes lower and upper bounds from Java-compatible hexadecimal binary
+values.
+- Resolves envelope-local delete-file references.
+- Classifies positional deletes, equality deletes, and Puffin deletion
+vectors.
+- Supports and validates Java's optional `referenced-data-file` field,
+while deriving the target for deletion vectors when omitted.
+- Validates malformed metrics, references, content variants, file sizes,
+record counts, split offsets, and equality IDs.
+- Adds `Residual` to `table.FileScanTask`.
+- Extends the existing `FileScanTask` codec with an optional framed
+residual extension:
+  - New decoders can read legacy payloads.
+- Existing decoders continue reading the unchanged Avro envelope prefix.
+
+Bounds fixtures mirror Java's authoritative `TestContentFileParser`,
+where values are hexadecimal encodings of raw Iceberg binary values, for
+example:
+
+    ""lower-bounds"":{""keys"":[3,4],""values"":[""01000000"",""02000000""]}
+
+## Scope
+
+This PR implements decoding only. It does not add plan-task fanout,
+`PlanFiles` orchestration, storage-credential handling, capability
+enablement, or the fake REST planning server.
+
+`DecodeScanTasks` is a standalone building block with no production
+caller in this PR; `PlanFiles` will invoke it in a follow-up.
+
+`ReadTasks` currently continues applying the Scan's original row filter
+and does not consume per-task residuals. This preserves correctness for
+scans using their originating `Scan`, but applying task-specific
+residuals remains follow-up work before decoded tasks can be consumed
+independently.
+
+Delete-file references are scoped to each `ScanTasks` response, so
+callers must decode each response before combining results.
+
+## Testing
+
+    go test ./...
+    go test -race ./catalog/rest ./codec ./table
+    go vet ./catalog/rest ./codec ./table
+    git diff --check",0df1d8b7ebf951d4e3501f717fcad69e257c0cf1,1492,false,,9,1497,44,catalog; codec; table
+apache/iceberg-go,9ca3e55c508e51613430266be1c4fc4cf5f3dca8,9ca3e55,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T20:37:01+02:00,GitHub,noreply@github.com,2026-07-24T14:37:01-04:00,fix(schema): prevent AsStruct aliasing (#1415),"## What changed
+- Make `Schema.AsStruct()` return a deep-cloned `StructType` field list
+instead of exposing internal schema state.
+- Add deep-copy helpers for nested struct/list/map types to prevent
+mutable aliasing through returned nested types.
+- Add regression tests covering top-level and nested field aliasing.
+
+This ensures callers cannot mutate schema internals through
+`Schema.AsStruct()`.",9736768aea8b79c62f60feaf275c361ca1d95263,1415,false,,3,149,13,schema.go; schema_test.go; table
+apache/iceberg-go,d250876a8aecb53902dc53a634fb0eb27b09fa5f,d250876,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T20:52:54+02:00,GitHub,noreply@github.com,2026-07-24T14:52:54-04:00,fix(partitions): reject negative PartitionSpec IDs (#1413),"## Summary
+
+- validate `WithSpecID` inputs and reject negative partition spec IDs;
+- return `ErrInvalidPartitionSpec` with the invalid value;
+- add regression coverage for the negative boundary.
+
+## Testing
+
+- `go test . -run TestPartitionSpecRejectsNegativeSpecID -count=1`",9ca3e55c508e51613430266be1c4fc4cf5f3dca8,1413,false,,2,10,0,partitions.go; partitions_test.go
+apache/iceberg-go,aa27f3fe9149d1e1bdff15cebd7c9242475507aa,aa27f3f,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T21:35:45+02:00,GitHub,noreply@github.com,2026-07-24T15:35:45-04:00,fix(glue): use canonical comment property for descriptions (#1521),"## Summary
+
+Glue uses `comment` as the canonical property for namespace and table
+descriptions, while older catalogs may still provide the legacy
+`Description` parameter.
+
+This change:
+
+- writes canonical `comment` properties without leaking description
+fields into Glue parameters;
+- accepts legacy `Description` values when loading namespaces;
+- gives canonical `comment` values deterministic precedence over legacy
+values;
+- preserves native Glue descriptions as the highest-priority namespace
+value;
+- applies the same compatibility behavior to namespace and table
+creation.
+
+## Testing
+
+- `go test ./catalog/glue`
+- `go test ./catalog/...`
+- `git diff --check`",d250876a8aecb53902dc53a634fb0eb27b09fa5f,1521,false,,2,139,7,catalog
+apache/iceberg-go,b3fbfd3c95e99efefb79696d2a37b4cf5caebedf,b3fbfd3,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T21:56:10+02:00,GitHub,noreply@github.com,2026-07-24T21:56:10+02:00,fix(table): validate retry duration properties (#1454),"## Summary
+
+Commit retry properties are validated before unsigned values are
+converted to signed durations or used as retry counts.
+
+- reject durations larger than the maximum safe `time.Duration`;
+- reject reversed minimum/maximum waits;
+- normalize explicit zero waits and total timeout to their defaults;
+- cap retry counts at a practical `math.MaxUint32` limit;
+- keep exponential backoff and jitter arithmetic overflow-safe;
+- report the offending property in configuration errors.
+
+A full-width `PropUInt64` helper preserves values long enough to
+validate them without truncation.
+
+## Testing
+
+- `go test . ./table`
+- boundary coverage for `math.MaxUint64`, `maxRetryDurationMs + 1`,
+reversed waits, zero timeout, and retry-count overflow",aa27f3fe9149d1e1bdff15cebd7c9242475507aa,1454,false,,4,193,28,table; types.go; types_test.go
+apache/iceberg-go,953bb4a63dbab2177bbac419717b7f9c87da534e,953bb4a,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T21:58:11+02:00,GitHub,noreply@github.com,2026-07-24T21:58:11+02:00,fix(manifest): encode decimal partitions with declared width (#1355),"## Summary
+
+Decimal partition values now use the fixed byte width declared by
+partition-schema precision instead of a width inferred from the
+formatted value.
+
+- keep decimal read scale separate from fixed encoding width;
+- sign-extend negative values to the declared width;
+- reject oversized values unless discarded bytes are redundant sign
+extension;
+- apply the declared width in data-file statistics conversion and
+`MarshalAvroEntry`;
+- keep builder-created partition values directly typed; scale
+reconstruction is only required after Avro decoding.
+
+## Testing
+
+- table-driven positive, zero, negative, boundary, padding, and overflow
+vectors
+- manifest write/read decimal round trips
+- `DataFileStatistics.ToDataFile` → manifest round trip
+- `MarshalAvroEntry` → decoder round trip
+- `go test . ./table/internal`",b3fbfd3c95e99efefb79696d2a37b4cf5caebedf,1355,false,,6,464,69,data_file_codec.go; data_file_codec_test.go; manifest.go; manifest_test.go; table
+apache/iceberg-go,885435cf7ec97c34012ad9785c0e8b63115d33d6,885435c,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T21:58:35+02:00,GitHub,noreply@github.com,2026-07-24T21:58:35+02:00,fix(table): return defensive metadata getter copies (#1444),"## Summary
+
+Return defensive copies from table metadata getters so callers cannot
+mutate persisted metadata through returned maps, slices, pointers, or
+nested values.
+
+The clones cover schemas and defaults, partition specs, snapshots and
+refs, sort orders, statistics/blob metadata, partition statistics,
+encryption keys, and properties. Nil slice behavior is preserved.
+
+## Testing
+
+- `go test ./table ./cmd/iceberg`
+- regression coverage mutates every returned getter value—including
+binary defaults, source ID slices, blob metadata, and encryption
+properties—and verifies the underlying metadata remains unchanged",953bb4a63dbab2177bbac419717b7f9c87da534e,1444,false,,2,458,18,table
+apache/iceberg-go,626a322e40b82ce6fc1dfc4605b612245f26c3a2,626a322,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T21:58:57+02:00,GitHub,noreply@github.com,2026-07-24T21:58:57+02:00,fix(cli): execute confirmed orphan cleanup plans (#1452),"## Summary
+
+Split orphan cleanup into an explicit plan and execution phase so
+confirmation applies to the exact files shown to the user.
+
+- capture candidate paths, sizes, and the age cutoff in an immutable
+cleanup plan;
+- show the planned files before confirmation while keeping JSON output
+to one final document;
+- execute only the confirmed plan, without rescanning or adding newly
+appeared files;
+- return the actual deleted-file result and sizes in the final CLI
+output;
+- reject planning-only options when executing an existing plan.
+
+The existing `DeleteOrphanFiles` path uses the same planning and
+execution flow.
+
+## Testing
+
+- `go test ./table ./cmd/iceberg`
+- coordinated plan/execute coverage proves files appearing after
+planning remain untouched
+- CLI coverage verifies preview and final deleted-file output
+- real modification-time coverage verifies the age filter",885435cf7ec97c34012ad9785c0e8b63115d33d6,1452,false,,4,336,42,cmd; table
+apache/iceberg-go,5677a0dc96235376e0e234cc039d000b900fb67b,5677a0d,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T21:59:31+02:00,GitHub,noreply@github.com,2026-07-24T21:59:31+02:00,fix(sql): keep namespace drops atomic (#1466),"## Summary
+
+- check namespace existence, catalog-object emptiness, and property
+deletion in one serializable write transaction
+- treat views and future object types as namespace contents instead of
+relying on the table-only `ListTables` result
+- recheck source and destination namespaces inside serializable create,
+commit, and rename transactions so concurrent drops cannot leave
+orphaned objects
+- reload namespace properties inside the serializable update transaction
+so a concurrent drop cannot recreate a namespace
+- retry recognized serialization, deadlock, and database-lock failures
+with bounded, context-aware backoff
+- keep view-only namespaces intact and return the object-neutral
+`ErrNamespaceNotEmpty` sentinel
+
+## Why
+
+On the V1 SQL schema, `ListTables` intentionally excludes views.
+`DropNamespace` used that filtered result to decide whether a namespace
+was empty, so a namespace containing only a view could report a
+successful drop while the view row—and therefore the namespace—still
+existed.
+
+The old prechecks also left races with object creation, rename, and
+namespace property updates. Drop, creators, renames, and property
+updates now participate in serializable transactions and recheck the
+relevant namespaces in the same transaction as their writes. Property
+updates reload the current rows and recompute their update summary on
+every retry, preventing stale results and namespace resurrection.
+
+Database engines can abort serializable transactions under contention.
+The retry classifier handles PostgreSQL SQL states, typed MySQL deadlock
+and lock-timeout errors, SQLite lock errors from the actual driver, and
+Oracle serialization and deadlock errors. Exhausted retries return the
+database error directly. The `NewCatalog` documentation also calls out
+the WAL and busy-timeout configuration expected for concurrent SQLite
+writers.
+
+## Testing
+
+- view-only namespace regression
+- deterministic drop races covering `CreateTable`, `CreateView`, and the
+create branch of `CommitTable`
+- deterministic drop versus namespace-property-update regression
+- real SQLite driver lock classification plus PostgreSQL, MySQL, and
+Oracle retry classification
+- retry exhaustion and cancellation coverage
+- `go test ./catalog/sql`
+- `go test -race ./catalog/sql`
+- `go vet ./catalog/sql`",626a322e40b82ce6fc1dfc4605b612245f26c3a2,1466,false,,5,636,57,catalog; go.mod; go.sum
+apache/iceberg-go,cab639ec3c997a955537580218eea0bcda88377a,cab639e,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T22:05:16+02:00,GitHub,noreply@github.com,2026-07-24T22:05:16+02:00,fix(hive): synchronize HMS table metadata on commit (#1486),"## Problem
+
+Hive commits only advanced `metadata_location`. The HMS storage
+descriptor and table properties could stay stale after schema, location,
+or property updates. The update helper also reused the original
+parameters map.
+
+## Changes
+
+- refresh HMS columns and location from the committed Iceberg metadata
+- apply property additions, changes, and removals while preserving
+unrelated HMS parameters
+- maintain current and previous metadata pointers and reserved Iceberg
+parameters
+- copy the parameters map and storage descriptor before updating them
+
+## Testing
+
+Added coverage for schema and location changes, property
+synchronization, reserved parameters, preserved HMS fields, and input
+immutability.
+
+- `go test ./catalog/hive`",5677a0dc96235376e0e234cc039d000b900fb67b,1486,false,,4,267,23,catalog
+apache/iceberg-go,9097100f4aa3bae419644e3b1f25d3fe29ce8fb7,9097100,Minh Vu,vuhoangminh97@gmail.com,2026-07-24T22:06:26+02:00,GitHub,noreply@github.com,2026-07-24T22:06:26+02:00,fix(table): reject null position deletes (#1518),"## Motivation
+
+The Iceberg position delete schema requires `pos` values to be non-null.
+The Arrow scanner currently reads the raw `Int64Values` backing slice
+without checking the validity bitmap, so a malformed delete file
+containing a null position may be interpreted as a real row position
+instead of returning an invalid-schema error.
+
+## Changes
+
+- Reject null values in position delete `pos` chunks with
+`iceberg.ErrInvalidSchema`.
+- Add a regression test covering a nullable position array and verifying
+the error contract.",cab639ec3c997a955537580218eea0bcda88377a,1518,false,,2,38,0,table
