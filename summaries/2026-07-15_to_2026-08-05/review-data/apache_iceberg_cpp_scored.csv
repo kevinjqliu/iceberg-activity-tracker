@@ -1,0 +1,2875 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-cpp,c5a5b5c547607ff8c6854e32dad877e228364944,c5a5b5c,Zehua Zou,zehuazou2000@gmail.com,2026-07-16T11:27:58+08:00,GitHub,noreply@github.com,2026-07-16T11:27:58+08:00,feat: merge multiple deletion vectors per data file (#708),"Add support for merging multiple deletion vectors that reference the same data
+file during snapshot updates. Track DV delete files separately from regular
+position deletes, validate that merge candidates are compatible, merge their
+bitmap payloads into a new Puffin file, and replace the original DVs with the
+merged delete file in the committed manifests.
+
+Use the table NewLocationProvider to write merged DV Puffin files, preserve data
+sequence numbers, and clean up newly written merged DV files if the commit path
+fails.
+
+Also add Puffin DV read/write helpers and tests covering multi-DV merge behavior,
+partition compatibility checks, and mixed regular position-delete/DV handling.
+
+Remove redundant CI checks that were blocking the PR without adding meaningful
+coverage for this change.
+
+Co-authored-by: Gang Wu <ustcwg@gmail.com>",697891b03eb1d5b37ae395c3b34a80f7899cad7f,708,false,Gang Wu,16,502,91,.clang-tidy; .github; src,80,9,89,"base; strategic: deletion vector, manifest, puffin; medium file count; medium churn; multi-area change; co-authored; release/security/notice signal; correctness signal; has PR number; LanceDB similarity 0.29",Core: Detect and merge duplicate DVs for a data file and merge them before committing,- feat: merge multiple deletion vectors per data file (#708) (Thanks Zehua Zou and Gang Wu!)
+apache/iceberg-cpp,88f3c41fe0ccd106494afc5e4d2a2ae3be11c724,88f3c41,Manu Zhang,OwenZhang1990@gmail.com,2026-07-24T14:14:59+08:00,GitHub,noreply@github.com,2026-07-24T14:14:59+08:00,ci: scope pull request checks to relevant paths (#839),"## What
+
+- For pull requests, run ASF allowlist, Actions CodeQL, and zizmor only
+for YAML changes under `.github`.
+- For pull requests, skip AWS, sanitizer, SQL catalog, general test, and
+C++ lint workflows for Markdown, documentation, devcontainer, and
+release-development-only changes.
+- Keep license and pre-commit checks unfiltered.
+
+## Why
+
+These workflows currently run on pull requests even when every changed
+path is unrelated to what they validate. Directory and extension globs
+keep the filters applicable to future files without maintaining filename
+lists, and keeping filters off push triggers avoids duplicate
+maintenance.
+
+## Impact
+
+Documentation and development-only pull requests avoid unrelated CI
+work. Mixed changes still run the relevant workflows, GitHub YAML
+changes still run the Actions validators, and main, tag, and scheduled
+runs remain unfiltered.
+
+---------
+
+Co-authored-by: Codex <codex@openai.com>",e7c5e9c7e52727a537296cdac61ceeb52b5d3276,839,false,Codex,8,33,4,.github,71,7,78,"base; strategic: catalog, maintenance; summary signal: maintenance; medium file count; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.25",Bump to Parquet 1.17.0,- ci: scope pull request checks to relevant paths (#839) (Thanks Manu Zhang!)
+apache/iceberg-cpp,73252c34e0024876bf99c843a2593436a6026b54,73252c3,liuxiaoyu,45345701+MisterRaindrop@users.noreply.github.com,2026-07-24T18:06:39+08:00,GitHub,noreply@github.com,2026-07-24T18:06:39+08:00,feat(hive): add HmsClient connection lifecycle and URI parsing (#796),"- **`ParseHmsUris()`** — tolerant HMS URI parser: `thrift://host:port`,
+bare `host:port`, default port 9083, and comma-separated HA lists.
+Rejects empty hosts and invalid ports.
+- **`HmsClient::Connect()`** — sets up the `TSocket → TTransport →
+TBinaryProtocol → ThriftHiveMetastoreClient` chain (transport and
+timeouts from `HiveCatalogProperties`), translating Thrift exceptions to
+`kIOError`. Thrift types stay out of the public header via a pImpl.
+- **CI** — new `Ubuntu Hive` job builds with `-DICEBERG_BUILD_HIVE=ON`
+(bundled Thrift) and runs `hive_catalog_test`.",88f3c41fe0ccd106494afc5e4d2a2ae3be11c724,796,false,,8,528,2,.github; cmake_modules; src,70,7,77,base; feature/api verb; strategic: catalog; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.23,Core: Fix useSnapshotSchema logic and projection in RESTTableScan,- feat(hive): add HmsClient connection lifecycle and URI parsing (#796) (Thanks liuxiaoyu!)
+apache/iceberg-cpp,41435b8983d92ec9a0d463360d67eaa92af61147,41435b8,Xinli Shang,shangx@uber.com,2026-07-29T02:34:42-07:00,GitHub,noreply@github.com,2026-07-29T17:34:42+08:00,feat: add ReplacePartitions core class (#776),"## Summary
+
+Adds the `iceberg::ReplacePartitions` class — the dynamic partition
+overwrite operation. Each `AddFile()` registers the file's partition for
+replacement of all existing data files in that partition. Produces an
+`overwrite` snapshot with `""replace-partitions""=""true""` in the summary.
+Unpartitioned tables replace all existing data files.
+
+**This is PR1 of 2** for #637. See tracking issue #775 for the split
+rationale.
+
+### What's in PR1
+- `iceberg::ReplacePartitions` class extending `MergingSnapshotUpdate`:
+- Builder API: `AddFile`, `ValidateAppendOnly`, `ValidateFromSnapshot`,
+`ValidateNoConflictingData`, `ValidateNoConflictingDeletes`
+  - `Apply` / `Summary` / `CleanUncommitted` overrides
+  - Uses `ManifestFilterManager` for partition-based manifest filtering
+- `SnapshotSummaryFields::kReplacePartitions = ""replace-partitions""`
+constant
+- `ReplacePartitions` forward declaration in `type_fwd.h`
+- CMake + Meson registration
+
+### What's deferred to PR2
+- `Transaction::NewReplacePartitions()` API wiring on `Table` /
+`Transaction`
+- End-to-end test file (`replace_partitions_test.cc`)
+
+### Design notes
+- Follows the Java `ReplacePartitions` semantics: operation type is
+`overwrite`, summary carries `""replace-partitions""=""true""`.
+- Mirrors the existing C++ `FastAppend` / `MergeAppend` patterns
+(factory `Make()`, `MergingSnapshotUpdate` base, builder error
+collector).
+- Unpartitioned table case treated as table-wide replace via
+`DeleteByRowFilter(AlwaysTrue())`, matching Java
+`BaseReplacePartitions`.
+
+## Test plan
+- [x] Clean build (`cmake --build build`)
+- [x] `clang-format` clean
+- [ ] End-to-end behavioral tests land in PR2 alongside the
+`Table`/`Transaction` API wiring
+
+Closes part of #637 (PR2 will close it).
+Tracking: #775
+
+---------
+
+Co-authored-by: Xinli Shang <shangxinli@apache.org>
+Co-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",54423808e51855612a7ac4e47d478710e3b085ce,776,false,Xinli Shang; Claude Opus 4.8 (1M context),13,876,1,src,68,8,76,base; feature/api verb; strategic: manifest; medium file count; medium churn; co-authored; has PR number; LanceDB similarity 0.25,"API, Core: Scan API for partition stats <gaborkaszab>",- feat: add ReplacePartitions core class (#776) (Thanks Xinli Shang and Claude Opus 4.8 (1M context)!)
+apache/iceberg-cpp,944a544f6bdaa0d5e94e3751884e117830a6a75b,944a544,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-07-22T19:12:16-07:00,GitHub,noreply@github.com,2026-07-23T10:12:16+08:00,feat(logging): add logging macros (#725),"Part 4 of the logging stack (builds on #724). Adds the
+application-facing macros — the part most callers actually use.
+
+**What's here**
+- `ICEBERG_LOG_{TRACE,DEBUG,INFO,WARN,ERROR,CRITICAL,FATAL}`, the
+generic `ICEBERG_LOG(level, …)`, `ICEBERG_LOG_TO(logger, …)`, and
+`ICEBERG_LOG_RUNTIME_FMT` for runtime format strings.
+- `ICEBERG_LOG_ACTIVE_LEVEL` is a compile-time floor: statements below
+it are removed entirely. `ICEBERG_LOG_FATAL` always emits, flushes, then
+aborts.
+- Filtering is decided only by `ShouldLog()`; formatting happens only on
+the taken path and never throws (a bad format falls back safely).
+- Generic/runtime-format macros use the same lock-free fast path as the
+fixed-severity ones (the slot lock is taken only on the fatal/abort
+path).
+- Bare `LOG_*` aliases are opt-in via `ICEBERG_LOG_SHORT_MACROS`.
+
+**Build note** — sets `/Zc:preprocessor` on MSVC, required for the
+`__VA_OPT__` used by the macros.
+
+**Examples** — every macro takes a `std::format` string + args. The
+rendered line depends on the active backend; with the default
+`CerrLogger` it looks like:
+
+```
+ICEBERG_LOG_TRACE(""entering scan for {}"", table);
+  2026-06-16T10:59:41.186Z trace [12345] table_scan.cc:88] entering scan for db.t
+ICEBERG_LOG_DEBUG(""cache miss key={}"", key);
+  2026-06-16T10:59:41.186Z debug [12345] cache.cc:42] cache miss key=manifest-7
+ICEBERG_LOG_INFO(""loaded {} manifests in {} ms"", n, ms);
+  2026-06-16T10:59:41.186Z info [12345] table_scan.cc:91] loaded 5 manifests in 12 ms
+ICEBERG_LOG_WARN(""retry {} after {}"", attempt, err);
+  2026-06-16T10:59:41.186Z warn [12345] io.cc:51] retry 2 after timeout
+ICEBERG_LOG_ERROR(""commit failed: {}"", status);
+  2026-06-16T10:59:41.186Z error [12345] txn.cc:77] commit failed: conflict
+ICEBERG_LOG_CRITICAL(""metadata unreadable at {}"", path);
+  2026-06-16T10:59:41.186Z critical [12345] meta.cc:30] metadata unreadable at s3://b/m.json
+ICEBERG_LOG_FATAL(""unrecoverable: {}"", reason);   // emits, flushes, then std::abort()
+  2026-06-16T10:59:41.186Z fatal [12345] boot.cc:19] unrecoverable: bad config
+```
+
+Less common forms: `ICEBERG_LOG(level, …)` (runtime severity),
+`ICEBERG_LOG_TO(logger, level, …)` (explicit logger),
+`ICEBERG_LOG_RUNTIME_FMT(level, fmt_string, args…)` (non-literal
+format). The same examples are documented inline in `logger.h`.
+
+**Tests** — `macros_test` / `macros_active_level_test`: formatting,
+level gating, ""argument not evaluated when disabled"", compile-time
+stripping, never-throws, and FATAL-aborts death tests. clang/libc++.
+
+This pull request and its description were written by Isaac.",955562bdf70cf3eb3dd842ba59d67919eb0e2ccf,725,false,,11,650,27,meson.build; src,70,6,76,base; feature/api verb; strategic: manifest; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.21,"CI: Make CVE scan blocking on PRs, informational on main",- feat(logging): add logging macros (#725) (Thanks kamcheungting-db!)
+apache/iceberg-cpp,87a11de7e83785d925cf3dcc31d84100dccfb62f,87a11de,Innocent Djiofack,djiofack007@gmail.com,2026-07-31T07:09:36-07:00,GitHub,noreply@github.com,2026-07-31T22:09:36+08:00,feat: metrics integration for commit and scan (#701),"This change implements part 2 of the core metrics. it covers RestCatalog
+spec, integration with commit and scan workflows. It leaves the logging
+metrics reporter out of scope, it will be added in a subsequent diff.
+some other differences is that some of the http calls for the
+RestCatalogMetrics reporter is still synchronous a subsequent change
+will cover that.
+
+---------
+
+Co-authored-by: Innocent <idjiofack@jabode.com>",41435b8983d92ec9a0d463360d67eaa92af61147,701,false,Innocent,58,3098,188,example; src,56,7,63,base; strategic: catalog; large file count; large churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.23,Core: Simplify handling of the current planId in client side of remote planning <Eduard Tudenhoefner>,- feat: metrics integration for commit and scan (#701) (Thanks Innocent Djiofack and Innocent!)
+apache/iceberg-cpp,fb7cc835f0e97c233d721a487fdedaf1b7002b06,fb7cc83,Gang Wu,ustcwg@gmail.com,2026-07-17T16:11:22+08:00,GitHub,noreply@github.com,2026-07-17T16:11:22+08:00,feat: read v3 row lineage metadata columns (#822),"Synthesize _row_id and _last_updated_sequence_number when reading data
+files that omit row lineage columns, and preserve physical non-null
+lineage values when present.
+
+Carry inherited data sequence numbers on DataFile metadata so scan
+planning and readers follow the same model as Java.",f9193ad7307b112017bef7de62b1e9b78fb33890,822,false,,22,630,28,src,56,7,63,"base; strategic: row lineage, v3; large file count; medium churn; correctness signal; has PR number; LanceDB similarity 0.22",Spark: Backport Add _row_id and _last_updated_sequence_number raeder in Orc to support lineage,- feat: read v3 row lineage metadata columns (#822) (Thanks Gang Wu!)
+apache/iceberg-cpp,955562bdf70cf3eb3dd842ba59d67919eb0e2ccf,955562b,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-07-22T19:09:58-07:00,GitHub,noreply@github.com,2026-07-23T10:09:58+08:00,fix: reject non-finite floating-point default values (#810),"## What
+
+A `float` / `double` column default of `NaN` or `±Infinity` passes
+`SchemaField::Validate` but cannot survive a metadata round-trip: the
+JSON serializer emits a non-finite number as `null`, which reads back as
+an *absent* default. The declared default is silently lost (and, because
+the key is present but null, the reader then errors on it).
+
+## How
+
+`ValidateDefault` now rejects a non-finite floating default with a clear
+""value must be finite"" error, so an unrepresentable default is caught up
+front rather than silently dropped on serialization.
+
+The check uses `std::isfinite`, which is false for **both** `NaN` and
+`±Infinity` — so a single condition covers all three cases (there is no
+separate `IsNaN` branch because `isfinite` already rejects NaN).
+
+## Testing
+
+`SchemaFieldTest.ValidateRejectsNonFiniteFloatingDefault` explicitly
+covers `NaN`, `+Inf` and `-Inf`, and
+`ValidateAcceptsFiniteFloatingDefault` covers a normal value; verified
+fail-without / pass-with. Full `schema_test` passes (551 tests).",9221381ced55bbbb1dbf9b3b9d394d410937b8d5,810,false,,2,50,0,src,52,5,57,base; fix; strategic: round-trip; summary signal: round-trip; has PR number; LanceDB similarity 0.18,Spark 4.1: Migrate to new version framework in DSv2,- fix: reject non-finite floating-point default values (#810) (Thanks Xin Huang!)
+apache/iceberg-cpp,7e47e4d98615b6091499fa7a603dc465b9ab66e3,7e47e4d,Abanoub Doss,abanoubdoss@gmail.com,2026-07-24T00:27:54-05:00,GitHub,noreply@github.com,2026-07-24T13:27:54+08:00,ci: share sccache setup across workflows (#811),"## What
+Add two composite actions for sccache:
+
+- `.github/actions/setup-sccache` sets the sccache environment, restores
+the cache, resolves the MSVC compiler version on Windows, and starts
+`mozilla-actions/sccache-action`.
+- `.github/actions/save-sccache` shows sccache stats for every run and
+saves the cache only on main branch runs.
+
+The Test, SQL Catalog, sanitizer, C++ linter, and AWS workflows now pass
+only their cache key prefix at each call site.
+
+This is part of the CI work discussed in
+https://github.com/apache/iceberg-cpp/issues/799.
+
+## Notes
+The existing cache key shapes are preserved for the current CMake
+workflow legs. The Meson Windows leg now also gets the MSVC-version key
+suffix, matching the other Windows sccache legs and avoids cache misses
+after runner image compiler updates.
+
+The MSVC version source also changes for the existing Windows legs (test
+and SQL catalog): the inline `cl.exe` banner parse is replaced by
+reading `VCToolsVersion.default.txt` via vswhere, which is more reliable
+and does not require `cl.exe` on PATH. This produces a different version
+format (e.g. `14.44.35217` vs `19.44.35217.1`), so all Windows caches
+will miss once and reseed on the first post-merge main run.
+
+Third-party actions stay pinned inside composite `action.yml` files,
+which are covered by the ASF allowlist checker glob.
+
+## Validation
+- Validated builds in fork: Test, AWS, SQL Catalog, ASAN/UBSAN, and
+pre-commit.
+- The C++ linter workflow ignores `.github/**`, so this PR does not
+exercise that workflow until a source-touching run or post-merge.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",f9e83ff9324f1fd7bb9880f318222204ca17117e,811,false,Abanoub Doss,8,222,185,.github,43,6,49,base; strategic: catalog; medium file count; medium churn; co-authored; has PR number; LanceDB similarity 0.21,Docs: Add informational properties section for table comment,- ci: share sccache setup across workflows (#811) (Thanks Abanoub Doss!)
+apache/iceberg-cpp,54423808e51855612a7ac4e47d478710e3b085ce,5442380,YangJie,yangjie01@baidu.com,2026-07-29T16:50:27+08:00,GitHub,noreply@github.com,2026-07-29T16:50:27+08:00,fix: guard equality delete bounds against missing fields (#857),"## What
+
+`internal::CanContainEqDeletesForFile` crashes with
+`std::bad_optional_access` when an equality delete file has lower/upper
+bounds for some of its equality fields but not others.
+`EqualityDeleteFile::LowerBound`/`UpperBound` return
+`Result<std::optional<...>>` (i.e. `std::expected<std::optional<...>,
+Error>`), and a field with no bound yields an engaged `expected`
+wrapping a disengaged `optional`. The guard checked
+`std::expected::has_value()`, which only reports the error state and
+does not detect the empty inner `optional`, so a missing bound slipped
+past and `->value()` threw at the range check.
+
+The throw is an uncaught exception escaping the `Result`-based call
+chain, so it terminates the caller instead of surfacing as an error. It
+is reachable during scan planning (`ManifestGroup` →
+`DeleteFileIndex::ForEntry`) and commit validation
+(`MergingSnapshotUpdate::ValidateNoNewDeletesForDataFiles` →
+`ForDataFile`). Equality delete files with bounds for only some fields
+are produced legitimately by per-column metrics modes
+(`counts`/`none`/`truncate`) and by cross-engine writers, so this is
+reachable in normal reader use.
+
+Fixes #856.
+
+## How
+
+Unwrap the `expected` with `ICEBERG_ASSIGN_OR_RAISE` before the guard,
+so `has_value()` tests the inner `optional`. This matches the data-side
+guard already used a few lines above in the same function, and matches
+Java's `DeleteFileIndex.canContainEqDeletesForFile`, which guards all
+four bounds uniformly and assumes may-match on any missing bound (it
+never prunes on missing statistics).
+
+As a side effect this propagates a genuine bound-deserialization error
+upward instead of silently treating it as may-match. That is consistent
+with the data-side `Literal::Deserialize` calls in the same function,
+which already propagate via `ICEBERG_ASSIGN_OR_RAISE`.
+
+## Testing
+
+Added `DeleteFileIndexTest.TestEqualityDeletePartialFieldBounds`: an
+equality delete over fields `{1, 2}` with bounds for field 1 only,
+evaluated against a data file that has bounds for both (field 1's range
+overlapping so evaluation reaches field 2). Verified fail-without
+(throws `std::bad_optional_access`) / pass-with (returns the delete file
+as may-match). `null_value_counts` is pinned to 0 for both fields so the
+null short-circuits cannot mask the range-check path if the schema
+fields later change nullability. Full `manifest_test` passes.",72df1005eff0580c1f4130c075b579ef0d094425,857,false,,2,69,4,src,40,8,48,base; fix; strategic: manifest; has PR number; LanceDB similarity 0.28,"Core, Spark 4.1: Fix distributed planning for CoW operations",- fix: guard equality delete bounds against missing fields (#857) (Thanks YangJie!)
+apache/iceberg-cpp,c904c247b3ad3f984da316cd810ad40295eeb7cf,c904c24,Gang Wu,ustcwg@gmail.com,2026-07-20T10:44:54+08:00,GitHub,noreply@github.com,2026-07-20T10:44:54+08:00,ci: enable ASF Copilot code review (#833),"### Rationale for this change
+
+GitHub Copilot code review may help provide preliminary feedback on pull
+requests and reduce reviewer load while keeping human maintainers
+responsible for final review decisions.
+
+### What changes are included in this PR?
+
+- Enable ASF-managed GitHub Copilot code review in `.asf.yaml`
+- Disable automatic reviews for draft PRs
+- Enable automatic reviews on new pushes
+- Add Copilot review instructions to reduce noisy comments
+
+### Are these changes tested?
+
+Yes. `.asf.yaml` was parsed successfully as YAML, and `git diff --check`
+passed.
+
+### Are there any user-facing changes?
+
+No.",fb7cc835f0e97c233d721a487fdedaf1b7002b06,833,false,,3,26,0,.asf.yaml; .github; dev,42,6,48,base; feature/api verb; multi-area change; has PR number; LanceDB similarity 0.20,Add Flink Quickstart docker image,- ci: enable ASF Copilot code review (#833) (Thanks Gang Wu!)
+apache/iceberg-cpp,f3fa485c0a35419ebdc61ad08446f5cfdfc33d4c,f3fa485,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-08-02T20:49:26-07:00,GitHub,noreply@github.com,2026-08-03T11:49:26+08:00,feat(avro): apply column default values when reading missing fields (#800),"## What
+
+Part 3 of 4 of Iceberg v3 column default-value support (POC #731), built
+on the
+schema layer (#746) and the Parquet read path (#792).
+
+When a column is present in the read (table) schema but absent from an
+Avro data
+file — because the column was added after those rows were written — fill
+it with
+the column's v3 `initial-default` instead of `null`.
+
+## Changes
+
+- **Avro projection** (`avro_schema_util.cc`): when a field is missing
+from the
+  file and carries an `initial-default`, project it as
+`FieldProjection::Kind::kDefault`, mirroring the generic / Parquet
+paths.
+- **Avro decode** (`avro_data_util.cc`, `avro_direct_decoder.cc`):
+materialize
+the `kDefault` branch through an Avro-local `AppendDefaultToBuilder`
+helper.
+  It reuses the shared `ToArrowScalar` conversion, while keeping Avro's
+row-by-row `ArrayBuilder` append behavior out of the shared Arrow
+utility.
+
+## Tests
+
+- `avro_data_test`: `AppendDefaultToBuilder` appends a value and casts
+to the
+builder type; `AppendDatumToBuilder` fills missing required and optional
+  default fields.
+- `avro_test`: end-to-end — write an Avro file with an old schema, then
+read it
+through `ReaderFactoryRegistry` with an evolved schema carrying defaults
+  (`ReadMissingFieldsWithDefaults`).
+
+## Stack
+
+1. #746 — schema: represent / serialize / validate (merged)
+2. #792 — read path: Parquet (merged)
+3. **this PR** — read path: Avro
+4. schema evolution: `addColumn` / `updateColumnDefault` (#793)",587fb6989221631044942c621edcd6a810fd6b8c,800,false,,7,446,0,src,40,6,46,base; strategic: v3; medium file count; medium churn; has PR number; LanceDB similarity 0.18,"Core, Spark: Adds a Table Property for Relying on Identifier Fields",- feat(avro): apply column default values when reading missing fields (#800) (Thanks Xin Huang!)
+apache/iceberg-cpp,697891b03eb1d5b37ae395c3b34a80f7899cad7f,697891b,wzhuo,wngzhuo@gmail.com,2026-07-15T20:28:25+08:00,GitHub,noreply@github.com,2026-07-15T20:28:25+08:00,fix: use kLegacyPartitionDataIdStart as partition field ID baseline (#832),"FreshPartitionSpec and TableMetadataBuilder::Impl both initialized the
+partition field ID counter to `kInvalidPartitionFieldId` (-1), causing
+the first partition field to get ID **0** instead of **1000**. Partition
+field
+ID 0 collides with ManifestEntry internal fields:
+
+| Field | ID |
+|---|---|
+| `ManifestEntry.status` | 0 |
+| `ManifestEntry.snapshot_id` | 1 |
+| `ManifestEntry.data_file` | 2 |
+
+This corrupts manifest file schemas during serialization and breaks
+partition pruning.
+
+## Fix
+
+Change both initializers to `kLegacyPartitionDataIdStart - 1` (999),
+consistent with Java Iceberg's `PARTITION_DATA_ID_START` convention and
+the rest of the C++ codebase (`PartitionSpec` constructor,
+`Unpartitioned()`, `UpdatePartitionSpec`). The first partition field
+now correctly gets ID **1000**.
+
+| Location | Before | After |
+|---|---|---|
+| `FreshPartitionSpec` counter | -1 | 999 |
+| `TableMetadataBuilder::Impl::last_partition_id` | -1 | 999 |
+| First partition field ID | 0 | **1000** |",330de84b1bfba2d79a96f0506b330cc0d8294c7f,832,false,,2,3,3,src,40,5,45,base; fix; strategic: manifest; has PR number; LanceDB similarity 0.16,OpenAPI: Include storage credentials for PlanTableScanResponse/FetchPlanningResultResponse on plan completed given include-credentials flag is set,- fix: use kLegacyPartitionDataIdStart as partition field ID baseline (#832) (Thanks wzhuo!)
+apache/iceberg-cpp,ba5e7ce792b19c66f7a882bba12700a25d3687e9,ba5e7ce,Minh Vu,vuhoangminh97@gmail.com,2026-08-03T05:51:09+02:00,GitHub,noreply@github.com,2026-08-03T11:51:09+08:00,fix: reject malformed commit property integers (#843),"## Summary
+
+- require commit property integers to parse completely, matching Java's
+`Integer.parseInt`
+- reject values with alphanumeric or decimal suffixes instead of
+accepting their numeric prefix
+- preserve the existing validation errors for invalid and out-of-range
+values
+
+## Testing
+
+- `ctest --test-dir build -R ^table_test$ --output-on-failure`
+- full CTest suite (17 test binaries)",f3fa485c0a35419ebdc61ad08446f5cfdfc33d4c,843,false,,2,21,8,src,32,7,39,base; fix; correctness signal; has PR number; LanceDB similarity 0.24,Flink: Fix equalityFieldColumns always null in IcebergSink <GuoYu>,- fix: reject malformed commit property integers (#843) (Thanks Minh Vu!)
+apache/iceberg-cpp,882fc175454aa07f70b419248f5f217df8fd4c1b,882fc17,Abanoub Doss,abanoubdoss@gmail.com,2026-07-27T02:01:07-05:00,GitHub,noreply@github.com,2026-07-27T15:01:07+08:00,fix: detect system Thrift in CONFIG mode (#855),"## What
+`REQUIRED_VARS` dereferences its entries as variable names, so passing
+the target `thrift::thrift` resolves to nothing and the module reports
+Thrift as missing. Instead we need to pass a variable holding the
+target.
+
+## Why
+The current behavior breaks `-DICEBERG_BUNDLE_THRIFT=OFF` against any
+Thrift shipping a CMake config, which is 0.13 and later.
+`resolve_thrift_dependency()` calls `find_package(ThriftAlt MODULE
+REQUIRED)`, so the false negative aborts configure, and it is the path
+`iceberg_hive` recommends when the target is missing. It has gone
+unnoticed because Arrow's bundled Thrift defines the target first and
+the module returns early.
+
+## Validation
+- Against a config-mode Thrift install, before: `Could NOT find
+ThriftAlt (missing: thrift::thrift)` and configure aborts. After: `Found
+ThriftAlt: thrift::thrift` and configure completes.
+
+Co-authored-by: Abanoub Doss <abanoub.doss@gmail.com>",9c6c67047e3c15646d76f6d35581b47998028569,855,false,Abanoub Doss,1,2,1,cmake_modules,23,8,31,base; fix; co-authored; has PR number; LanceDB similarity 0.27,Spark: Enable remote scan planning with REST catalog <Eduard Tudenhoefner>,- fix: detect system Thrift in CONFIG mode (#855) (Thanks Abanoub Doss!)
+apache/iceberg-cpp,f9e83ff9324f1fd7bb9880f318222204ca17117e,f9e83ff,YangJie,yangjie01@baidu.com,2026-07-23T23:58:00+08:00,GitHub,noreply@github.com,2026-07-23T23:58:00+08:00,ci: replace cpp-linter-action with cpp-linter CLI (#838),"## What
+
+`cpp-linter/cpp-linter-action` is frozen at v2.15.1. Its v2.16 release
+pulled in an untrusted dependency and was blocked by ASF Infra
+(apache/infrastructure-actions#325), and the ASF gateway ignores newer
+versions. The pinned action still runs, but it can no longer be updated.
+
+## How
+
+The action is a thin wrapper around the `cpp-linter` PyPI package, and
+the block does not touch that package. This installs it with pip and
+calls the `cpp-linter` CLI to run clang-tidy. Because it is a `run:`
+step and not a `uses:` reference, it adds no new third-party action to
+the ASF allowlist. The `checks-failed` output and the Fail fast step
+stay as they were.
+
+Formatting is left to the pre-commit workflow, which already runs the
+pinned clang-format hook on every PR. So cpp-linter runs tidy-only:
+`--style=''`, and clang-format is not installed here. This keeps the
+clang-format version in one place instead of tracking it in two.
+`--version` points at the setup-python bin directory so clang-tidy
+resolves to the pip-installed version rather than a system clang-tidy on
+PATH.
+
+I also looked at emitting SARIF and uploading it with
+`github/codeql-action/upload-sarif`, which is allowed since it is a
+`github/*` action. That route loses the thread comment and needs an
+extra conversion step, so calling the CLI directly stays closer to what
+we have now.
+
+## Verified
+
+CI ran the job on a temporary probe file seeded with a `NULL` and a
+mis-named member. clang-tidy resolved to the pip-installed 22.1.8 (not a
+system clang-tidy-22), flagged both issues, and set `checks-failed`, so
+the Fail fast step failed as expected. The probe has since been removed.
+
+---
+This contribution was authored with assistance from Claude Opus 4.8, in
+line with the Iceberg guidelines for AI-assisted contributions
+(https://iceberg.apache.org/contribute/#guidelines-for-ai-assisted-contributions).
+All changes were reviewed and tested by the author.
+
+Closes #336",78b659073289e40247bd0b286b6e2a91d8a07ce1,838,false,,1,33,13,.github,24,6,30,base; release/security/notice signal; downrank narrow CLI change; has PR number; LanceDB similarity 0.20,Spark 4.1: Introduce modes in SparkWriteBuilder,- ci: replace cpp-linter-action with cpp-linter CLI (#838) (Thanks YangJie!)
+apache/iceberg-cpp,6c30d3c2ff8ea7b804ebfd30072aa39d994dfe9e,6c30d3c,Minh Vu,vuhoangminh97@gmail.com,2026-07-23T09:41:05+02:00,GitHub,noreply@github.com,2026-07-23T15:41:05+08:00,fix: validate transform parameters in metadata (#757),"## Summary
+- add `Transform::Validate` to reuse bind-time transform checks during
+metadata validation
+- reject invalid bucket/truncate parameters when parsing transform
+strings
+- make partition specs and sort orders reject non-positive
+bucket/truncate parameters during schema-bound validation
+
+## Validation
+- `cmake -S . -B build-transform-params -G Ninja
+-DICEBERG_BUILD_BUNDLE=OFF -DICEBERG_BUILD_REST=OFF
+-DICEBERG_BUILD_SHARED=OFF`
+- `ctest --test-dir build-transform-params -R schema_test
+--output-on-failure`",944a544f6bdaa0d5e94e3751884e117830a6a75b,757,false,,9,78,15,src,24,6,30,base; fix; medium file count; has PR number; LanceDB similarity 0.19,API: Optimize NOT IN and != predicates for single-value partition manifests,- fix: validate transform parameters in metadata (#757) (Thanks Minh Vu!)
+apache/iceberg-cpp,e7c5e9c7e52727a537296cdac61ceeb52b5d3276,e7c5e9c,wzhuo,wngzhuo@gmail.com,2026-07-24T13:35:27+08:00,GitHub,noreply@github.com,2026-07-24T13:35:27+08:00,fix: compare transform function parameters (#840),"## Summary
+- include bucket counts in BucketTransform equality
+- include truncate widths in TruncateTransform equality
+- cover parameter and source-type differences in transform tests
+
+## Testing
+- build/src/iceberg/test/schema_test
+- pre-commit hooks",7e47e4d98615b6091499fa7a603dc465b9ab66e3,840,false,,4,35,2,src,20,8,28,base; fix; has PR number; LanceDB similarity 0.28,Core: Include query params into ETag calculation in reference IRC,- fix: compare transform function parameters (#840) (Thanks wzhuo!)
+apache/iceberg-cpp,4b9ff79fda7a66d4cf4c44d759334f5d04ed5eb5,4b9ff79,wzhuo,wngzhuo@gmail.com,2026-08-03T11:55:00+08:00,GitHub,noreply@github.com,2026-08-03T11:55:00+08:00,fix(arrow): release schema after conversion failure (#862),"Release partially initialized ArrowSchema output when internal
+Iceberg-to-Arrow conversion fails. Add coverage using fixed(0), which
+passes compatibility validation but is rejected by nanoarrow, and verify
+the output release callback is cleared. Tests: arrow_test.",bba15b241f014fc7907041c33f23d9c2f29cfe79,862,false,,3,22,3,src,20,7,27,base; fix; has PR number; LanceDB similarity 0.24,Add 404 response for REST catalog config endpoint when warehouse is missing,- fix(arrow): release schema after conversion failure (#862) (Thanks wzhuo!)
+apache/iceberg-cpp,587fb6989221631044942c621edcd6a810fd6b8c,587fb69,YangJie,yangjie01@baidu.com,2026-08-03T00:08:08+08:00,GitHub,noreply@github.com,2026-08-03T00:08:08+08:00,fix: order -NaN below +NaN in Literal comparison (#861),"## What
+
+`Literal::operator<=>` orders a negative NaN as greater than a positive
+NaN, the opposite of the total ordering documented and tested in this
+file. `CompareFloat` returns `lhs_is_negative <=> rhs_is_negative` for
+the both-NaN case, so `-NaN <=> +NaN` is `true <=> false` = `greater`.
+The adjacent comment says ""-NAN < NAN"", and
+`FloatSpecialValuesComparison` / `DoubleSpecialValuesComparison` assert
+`-NaN < -Infinity < ... < +Infinity < +NaN`, both of which this branch
+contradicts.
+
+Fixes #860.
+
+## How
+
+Swap the operands so a negative sign bit sorts below a positive one:
+
+```cpp
+return rhs_is_negative <=> lhs_is_negative;
+```
+
+## Testing
+
+The existing `FloatNaNComparison` / `DoubleNaNComparison` tests only
+cover same-sign NaN pairs (qNaN vs sNaN, which are equivalent), so the
+mixed-sign case was unexercised. Added `FloatSignedNaNComparison` and
+`DoubleSignedNaNComparison` asserting `-NaN < +NaN` and the reverse.
+Verified fail-without (the new tests report `greater`/`less` swapped) /
+pass-with. Full `expression_test` passes (495 tests).",75b7d24c7d8fec02bf89c4eaccb78e3c50b45798,861,false,,2,32,19,src,20,7,27,base; fix; has PR number; LanceDB similarity 0.24,Core: Support parallel execution when scanning entries in ManifestGroup,- fix: order -NaN below +NaN in Literal comparison (#861) (Thanks YangJie!)
+apache/iceberg-cpp,4bdf2ebf428951f1ee591e3d9cb2c39c34559d50,4bdf2eb,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-07-27T19:09:10-07:00,GitHub,noreply@github.com,2026-07-28T10:09:10+08:00,fix: validate decimal default fits the field precision (#809),"## What
+
+`SchemaField::Validate` accepts a decimal default whose unscaled value
+does not fit the field's declared precision, even though the JSON reader
+rejects exactly that value on read-back — so a validated field can
+serialize to metadata that the same reader then refuses to parse.
+
+Example: a `decimal(2, 1)` field with an `initial-default` of
+`Literal::Decimal(999, 2, 1)` (`99.9`, which needs 3 significant
+digits). `ValidateDefault` only checked that the literal's type matches
+the field type (`decimal(2,1) == decimal(2,1)`), so it passed; the value
+was serialized to `""99.9""`; on read-back `Decimal::FromString` yields
+precision 3 > 2 and the decimal literal parser
+(`expression/json_serde.cc`, and `Literal::CastTo`) rejects it. The
+field's own metadata becomes unreadable.
+
+## How
+
+`ValidateDefault` now checks `Decimal::FitsInPrecision(field precision)`
+for decimal defaults after the type-equality check, rejecting an
+out-of-range value up front so it is consistent with what the reader
+accepts. This mirrors the same guard already applied when casting
+defaults during schema evolution.
+
+## Testing
+
+`SchemaFieldTest.ValidateRejectsDecimalDefaultExceedingPrecision`
+(rejects `99.9` for `decimal(2,1)`) and
+`ValidateAcceptsDecimalDefaultWithinPrecision` (accepts a fitting
+value), verified fail-without / pass-with. Full `schema_test` passes
+(551 tests).",882fc175454aa07f70b419248f5f217df8fd4c1b,809,false,,2,34,0,src,20,6,26,base; fix; has PR number; LanceDB similarity 0.19,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- fix: validate decimal default fits the field precision (#809) (Thanks Xin Huang!)
+apache/iceberg-cpp,ab083862eab5ac1a002200bcc174e51697851afc,ab08386,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-08-04T19:26:34-04:00,GitHub,noreply@github.com,2026-08-04T16:26:34-07:00,INFRA: Use PR titles for squash commits (#870),"Context: https://github.com/apache/iceberg/issues/17467
+
+Configure squash merges to always use the pull request title while
+preserving the existing commit-message details in the squash commit
+body.",7e81fa2d96aeff0b9b19d78d9218739db2bb2947,870,false,,1,1,0,.asf.yaml,12,12,24,base; has PR number; LanceDB similarity 0.38,https://github.com/apache/iceberg/milestone/59,- INFRA: Use PR titles for squash commits (#870) (Thanks Kevin Liu!)
+apache/iceberg-cpp,78b659073289e40247bd0b286b6e2a91d8a07ce1,78b6590,Manu Zhang,OwenZhang1990@gmail.com,2026-07-23T18:02:06+08:00,GitHub,noreply@github.com,2026-07-23T18:02:06+08:00,ci: check for duplicate pull requests (#837),"## Summary
+
+- instruct Copilot reviewers to search open pull requests for the same
+issue or change
+- ask reviewers to link any duplicate they find
+
+This helps surface duplicate work earlier in the review process.
+
+## Testing
+
+Not run (documentation-only change, per instruction).
+
+Co-authored-by: Codex <codex@openai.com>",6c30d3c2ff8ea7b804ebfd30072aa39d994dfe9e,837,false,Codex,1,2,0,.github,15,6,21,base; co-authored; has PR number; LanceDB similarity 0.22,JDBC: JDBC Catalog should handle Postgres exception for duplicate keys,- ci: check for duplicate pull requests (#837) (Thanks Manu Zhang!)
+apache/iceberg-cpp,f9193ad7307b112017bef7de62b1e9b78fb33890,f9193ad,Gang Wu,ustcwg@gmail.com,2026-07-16T13:50:06+08:00,GitHub,noreply@github.com,2026-07-16T13:50:06+08:00,chore: update ASF GitHub collaborators (#830),,c5a5b5c547607ff8c6854e32dad877e228364944,830,false,,1,1,5,.asf.yaml,12,5,17,base; has PR number; LanceDB similarity 0.17,Core: Add V4 location relativization utilities,- chore: update ASF GitHub collaborators (#830) (Thanks Gang Wu!)
+apache/iceberg-cpp,7e81fa2d96aeff0b9b19d78d9218739db2bb2947,7e81fa2,Gang Wu,ustcwg@gmail.com,2026-08-04T23:18:31+08:00,GitHub,noreply@github.com,2026-08-04T23:18:31+08:00,test: complete v3 row lineage test coverage (#869),"- enable RewriteFiles V3 coverage and verify DV cleanup
+- cover V2-to-V3 assignment and incremental/changelog lineage
+- verify delete-aware readers preserve lineage",4b9ff79fda7a66d4cf4c44d759334f5d04ed5eb5,869,false,,5,459,28,src,8,3,11,base; medium file count; medium churn; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,Flink: Fix HashKeyGenerator SelectorKey cache ignoring writeParallelism and distributionMode,- test: complete v3 row lineage test coverage (#869) (Thanks Gang Wu!)
+apache/iceberg-cpp,72df1005eff0580c1f4130c075b579ef0d094425,72df100,Zehua Zou,zehuazou2000@gmail.com,2026-07-29T14:30:27+08:00,GitHub,noreply@github.com,2026-07-29T14:30:27+08:00,chore: upgrade arrow to 25.0.0 (#858),,4bdf2ebf428951f1ee591e3d9cb2c39c34559d50,858,false,,1,3,3,cmake_modules,-3,3,0,base; downrank routine build/deps; has PR number; LanceDB similarity 0.27; capped LanceDB boost for routine/low-signal commit,Spark 4.1: Migrate to new version framework in DSv2,- chore: upgrade arrow to 25.0.0 (#858) (Thanks Zehua Zou!)
+apache/iceberg-cpp,9221381ced55bbbb1dbf9b3b9d394d410937b8d5,9221381,YangJie,yangjie01@baidu.com,2026-07-20T15:30:28+08:00,GitHub,noreply@github.com,2026-07-20T15:30:28+08:00,build: move GTest and Google Benchmark setup into IcebergThirdpartyToolchain (#836),"## What
+
+Fixes #829. The GoogleTest and Google Benchmark FetchContent setup lived
+in `src/iceberg/test/CMakeLists.txt` and
+`src/iceberg/benchmark/CMakeLists.txt`, apart from the other third-party
+dependencies. This follows the review discussion on #825, which
+suggested keeping dependency resolution in one place.
+
+## How
+
+- Add `resolve_gtest_dependency()` and `resolve_benchmark_dependency()`
+to `cmake_modules/IcebergThirdpartyToolchain.cmake`, next to the
+existing `resolve_*` functions.
+- Gate them on `ICEBERG_BUILD_TESTS` and `ICEBERG_BUILD_BENCHMARKS`, the
+same conditions that already guard the test and benchmark
+subdirectories.
+- Both functions call `prepare_fetchcontent()` like the other resolvers,
+so a command-line `-DCMAKE_COMPILE_WARNING_AS_ERROR=ON` does not build
+the vendored GTest/Benchmark sources with `-Werror`.
+- Version pins are unchanged. Only CMake is affected; Meson resolves
+these through `subprojects/*.wrap`, so it needs no change.
+
+## Verified
+
+- `-DICEBERG_BUILD_BENCHMARKS=ON`: both dependencies fetch;
+`benchmark_smoke` and `schema_test` build; `ctest -R schema_test`
+passes.
+- Tests and benchmarks both off: neither dependency is fetched.
+- `-DCMAKE_COMPILE_WARNING_AS_ERROR=ON` with benchmarks on: configure
+and build succeed.
+- `pre-commit run -a` clean.
+
+---
+This contribution was authored with assistance from Claude Opus 4.8, in
+line with the Iceberg guidelines for AI-assisted contributions
+(https://iceberg.apache.org/contribute/#guidelines-for-ai-assisted-contributions).
+All changes were reviewed and tested by the author.",bfc0040f7e771808f31ea4b1e51227784d229d63,836,false,,3,67,30,cmake_modules; src,-10,3,-7,base; multi-area change; downrank docs/tests/benchmarks; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,docs: Add CREATE DATABASE step before CREATE TABLE in Spark quickstart,- build: move GTest and Google Benchmark setup into IcebergThirdpartyToolchain (#836) (Thanks YangJie!)
+apache/iceberg-cpp,75b7d24c7d8fec02bf89c4eaccb78e3c50b45798,75b7d24,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-08-02T11:44:02-04:00,GitHub,noreply@github.com,2026-08-02T23:44:02+08:00,chore(ci): Update ASF allowlist check action dependency to track versioned releases (#863),"Updates GH Actions CI to track versioned tags for the ASF allowlist
+check. The ASF allowlist check recently started publishing tagged
+releases, so there is no longer a need to track `main` branch.
+
+Related ASF action change:
+https://github.com/apache/infrastructure-actions/pull/1032
+
+Follows the same change as
+https://github.com/apache/iceberg-rust/pull/2914",87a11de7e83785d925cf3dcc31d84100dccfb62f,863,false,,1,1,1,.github,-48,3,-45,base; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,[SPEC] Add relative paths to v4 spec,- chore(ci): Update ASF allowlist check action dependency to track versioned releases (#863) (Thanks Kevin Liu!)
+apache/iceberg-cpp,068f31c7d95232a5e3ba250a77a81ade59ea92b5,068f31c,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-03T11:52:06+08:00,GitHub,noreply@github.com,2026-08-03T11:52:06+08:00,chore(deps): bump actions/checkout from 7.0.0 to 7.0.1 (#866),"Bumps [actions/checkout](https://github.com/actions/checkout) from 7.0.0
+to 7.0.1.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/checkout/releases"">actions/checkout's
+releases</a>.</em></p>
+<blockquote>
+<h2>v7.0.1</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>skip running unsafe pr check if input is default by <a
+href=""https://github.com/aiqiaoy""><code>@​aiqiaoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2518"">actions/checkout#2518</a></li>
+<li>trim only ascii whitespace for branch by <a
+href=""https://github.com/aiqiaoy""><code>@​aiqiaoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2521"">actions/checkout#2521</a></li>
+<li>escape values passed to --unset by <a
+href=""https://github.com/aiqiaoy""><code>@​aiqiaoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2530"">actions/checkout#2530</a></li>
+<li>Various dependency updates</li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/checkout/compare/v7...v7.0.1"">https://github.com/actions/checkout/compare/v7...v7.0.1</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/checkout/blob/main/CHANGELOG.md"">actions/checkout's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Changelog</h1>
+<h2>v7.0.1</h2>
+<ul>
+<li>Skip running unsafe pr check if input is default by <a
+href=""https://github.com/aiqiaoy""><code>@​aiqiaoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2518"">actions/checkout#2518</a></li>
+<li>Trim only ascii whitespace for branch by <a
+href=""https://github.com/aiqiaoy""><code>@​aiqiaoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2521"">actions/checkout#2521</a></li>
+<li>Escape values passed to --unset by <a
+href=""https://github.com/aiqiaoy""><code>@​aiqiaoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2530"">actions/checkout#2530</a></li>
+<li>Various dependency updates</li>
+</ul>
+<h2>v7.0.0</h2>
+<ul>
+<li>Block checking out fork PR for pull_request_target and workflow_run
+by <a href=""https://github.com/aiqiaoy""><code>@​aiqiaoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2454"">actions/checkout#2454</a></li>
+<li>Various dependency updates</li>
+</ul>
+<h2>v6.0.3</h2>
+<ul>
+<li>Fix checkout init for SHA-256 repositories by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2439"">actions/checkout#2439</a></li>
+<li>fix: expand merge commit SHA regex and add SHA-256 test cases by <a
+href=""https://github.com/yaananth""><code>@​yaananth</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2414"">actions/checkout#2414</a></li>
+</ul>
+<h2>v6.0.2</h2>
+<ul>
+<li>Fix tag handling: preserve annotations and explicit fetch-tags by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2356"">actions/checkout#2356</a></li>
+</ul>
+<h2>v6.0.1</h2>
+<ul>
+<li>Add worktree support for persist-credentials includeIf by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2327"">actions/checkout#2327</a></li>
+</ul>
+<h2>v6.0.0</h2>
+<ul>
+<li>Persist creds to a separate file by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2286"">actions/checkout#2286</a></li>
+<li>Update README to include Node.js 24 support details and requirements
+by <a href=""https://github.com/salmanmkc""><code>@​salmanmkc</code></a>
+in <a
+href=""https://redirect.github.com/actions/checkout/pull/2248"">actions/checkout#2248</a></li>
+</ul>
+<h2>v5.0.1</h2>
+<ul>
+<li>Port v6 cleanup to v5 by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2301"">actions/checkout#2301</a></li>
+</ul>
+<h2>v5.0.0</h2>
+<ul>
+<li>Update actions checkout to use node 24 by <a
+href=""https://github.com/salmanmkc""><code>@​salmanmkc</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2226"">actions/checkout#2226</a></li>
+</ul>
+<h2>v4.3.1</h2>
+<ul>
+<li>Port v6 cleanup to v4 by <a
+href=""https://github.com/ericsciple""><code>@​ericsciple</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2305"">actions/checkout#2305</a></li>
+</ul>
+<h2>v4.3.0</h2>
+<ul>
+<li>docs: update README.md by <a
+href=""https://github.com/motss""><code>@​motss</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1971"">actions/checkout#1971</a></li>
+<li>Add internal repos for checking out multiple repositories by <a
+href=""https://github.com/mouismail""><code>@​mouismail</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1977"">actions/checkout#1977</a></li>
+<li>Documentation update - add recommended permissions to Readme by <a
+href=""https://github.com/benwells""><code>@​benwells</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2043"">actions/checkout#2043</a></li>
+<li>Adjust positioning of user email note and permissions heading by <a
+href=""https://github.com/joshmgross""><code>@​joshmgross</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2044"">actions/checkout#2044</a></li>
+<li>Update README.md by <a
+href=""https://github.com/nebuk89""><code>@​nebuk89</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2194"">actions/checkout#2194</a></li>
+<li>Update CODEOWNERS for actions by <a
+href=""https://github.com/TingluoHuang""><code>@​TingluoHuang</code></a>
+in <a
+href=""https://redirect.github.com/actions/checkout/pull/2224"">actions/checkout#2224</a></li>
+<li>Update package dependencies by <a
+href=""https://github.com/salmanmkc""><code>@​salmanmkc</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/2236"">actions/checkout#2236</a></li>
+</ul>
+<h2>v4.2.2</h2>
+<ul>
+<li><code>url-helper.ts</code> now leverages well-known environment
+variables by <a href=""https://github.com/jww3""><code>@​jww3</code></a>
+in <a
+href=""https://redirect.github.com/actions/checkout/pull/1941"">actions/checkout#1941</a></li>
+<li>Expand unit test coverage for <code>isGhes</code> by <a
+href=""https://github.com/jww3""><code>@​jww3</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1946"">actions/checkout#1946</a></li>
+</ul>
+<h2>v4.2.1</h2>
+<ul>
+<li>Check out other refs/* by commit if provided, fall back to ref by <a
+href=""https://github.com/orhantoy""><code>@​orhantoy</code></a> in <a
+href=""https://redirect.github.com/actions/checkout/pull/1924"">actions/checkout#1924</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/actions/checkout/commit/3d3c42e5aac5ba805825da76410c181273ba90b1""><code>3d3c42e</code></a>
+prep v7.0.1 release (<a
+href=""https://redirect.github.com/actions/checkout/issues/2531"">#2531</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/28802689a136bfcdb721715abd713740beecbe07""><code>2880268</code></a>
+escape values passed to --unset (<a
+href=""https://redirect.github.com/actions/checkout/issues/2530"">#2530</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/12cd2235efa0937479335606d7c3ac9f6c0973b1""><code>12cd223</code></a>
+trim only ascii whitespace for branch (<a
+href=""https://redirect.github.com/actions/checkout/issues/2521"">#2521</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/62661c4e71a304b2823ed026347b8d34c3eac541""><code>62661c4</code></a>
+skip running unsafe pr check if input is default (<a
+href=""https://redirect.github.com/actions/checkout/issues/2518"">#2518</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/e8d4307400f9427dba7cb98e488d6ab85f1cec5f""><code>e8d4307</code></a>
+Bump the minor-actions-dependencies group with 2 updates (<a
+href=""https://redirect.github.com/actions/checkout/issues/2499"">#2499</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/631c942040754b6e095e929c1677c07e10ed4f87""><code>631c942</code></a>
+eslint 9 (<a
+href=""https://redirect.github.com/actions/checkout/issues/2474"">#2474</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/4f1f4aec02e41874fa0262ea8ff5172d7978ad1e""><code>4f1f4ae</code></a>
+Bump actions/upload-artifact from 4 to 7 (<a
+href=""https://redirect.github.com/actions/checkout/issues/2476"">#2476</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/ba097532fb203f7e88c9c3c0b899b49469908a92""><code>ba09753</code></a>
+Bump actions/checkout from 6 to 7 (<a
+href=""https://redirect.github.com/actions/checkout/issues/2488"">#2488</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/b9e0990d219a03df7633c93f6f005a8fecbcab22""><code>b9e0990</code></a>
+Bump docker/login-action from 3.3.0 to 4.2.0 (<a
+href=""https://redirect.github.com/actions/checkout/issues/2479"">#2479</a>)</li>
+<li><a
+href=""https://github.com/actions/checkout/commit/e8cb398be4a550817e382abf69e4c12c76fce1f2""><code>e8cb398</code></a>
+Bump docker/build-push-action from 6.5.0 to 7.2.0 (<a
+href=""https://redirect.github.com/actions/checkout/issues/2478"">#2478</a>)</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/actions/checkout/compare/9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0...3d3c42e5aac5ba805825da76410c181273ba90b1"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",ba5e7ce792b19c66f7a882bba12700a25d3687e9,866,false,dependabot[bot],12,18,18,.github,-66,3,-63,base; medium file count; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,AWS: Add scheduled refresh for the S3FileIO held storage credentials,- chore(deps): bump actions/checkout from 7.0.0 to 7.0.1 (#866) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,bba15b241f014fc7907041c33f23d9c2f29cfe79,bba15b2,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-03T11:53:17+08:00,GitHub,noreply@github.com,2026-08-03T11:53:17+08:00,chore(deps): bump the codeql-action group with 2 updates (#864),"Bumps the codeql-action group with 2 updates:
+[github/codeql-action/init](https://github.com/github/codeql-action) and
+[github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+Updates `github/codeql-action/init` from 4.37.1 to 4.37.3
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action/init's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.37.3</h2>
+<p>No user facing changes.</p>
+<h2>v4.37.2</h2>
+<ul>
+<li>The new address format for the <code>config-file</code> input that
+was introduced in CodeQL Action 4.37.0 is now enabled by default. In
+addition to the format described there, the <code>remote=</code> prefix
+can now be used to explicitly indicate that the input refers to a remote
+file. All previous input formats continue to be accepted as well. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4023"">#4023</a></li>
+<li>The CodeQL Action can now make use of <a
+href=""https://docs.github.com/en/code-security/how-tos/secure-at-scale/configure-organization-security/manage-usage-and-access/giving-org-access-private-registries"">configured
+private registries</a> in Default Setup to retrieve CodeQL configuration
+files from remote repositories that require authentication. This will
+allow customers to store their CodeQL configuration in a single
+repository that can then be referenced by Default Setup workflows in
+other repositories. We expect to roll this and other, related changes
+out to everyone in July. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4007"">#4007</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action/init's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<ul>
+<li>Fixed a bug where a network error while streaming the download of
+the CodeQL bundle could terminate the <code>init</code> Action instead
+of falling back to downloading the bundle before extracting it. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4061"">#4061</a></li>
+</ul>
+<h2>4.37.4 - 29 Jul 2026</h2>
+<ul>
+<li>This version of the CodeQL Action adds support for the
+<code>tools</code> input for the <code>codeql-action/init</code> step to
+be specified using a <code>github-codeql-tools</code> <a
+href=""https://docs.github.com/en/organizations/managing-organization-settings/managing-custom-properties-for-repositories-in-your-organization"">repository
+property</a>. This feature will gradually be rolled out following the
+release of this version. Once rolled out, this allows for the CodeQL CLI
+version that is used in GitHub-managed workflows, such as Default Setup,
+to be set to a custom value. For example, customers who run into issues
+with rate limits when a new CodeQL CLI version is released can set the
+value to <code>toolcache</code> to always use the CodeQL CLI version
+that is available in the runner toolcache. For Advanced Setup workflows,
+the value provided for <code>tools</code> in the workflow definition
+always takes precedence unless the value of the repository property
+starts with <code>!</code>. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4037"">#4037</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.2"">2.26.2</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/4051"">#4051</a></li>
+</ul>
+<h2>4.37.3 - 22 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.37.2 - 21 Jul 2026</h2>
+<ul>
+<li>The new address format for the <code>config-file</code> input that
+was introduced in CodeQL Action 4.37.0 is now enabled by default. In
+addition to the format described there, the <code>remote=</code> prefix
+can now be used to explicitly indicate that the input refers to a remote
+file. All previous input formats continue to be accepted as well. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4023"">#4023</a></li>
+<li>The CodeQL Action can now make use of <a
+href=""https://docs.github.com/en/code-security/how-tos/secure-at-scale/configure-organization-security/manage-usage-and-access/giving-org-access-private-registries"">configured
+private registries</a> in Default Setup to retrieve CodeQL configuration
+files from remote repositories that require authentication. This will
+allow customers to store their CodeQL configuration in a single
+repository that can then be referenced by Default Setup workflows in
+other repositories. We expect to roll this and other, related changes
+out to everyone in July. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4007"">#4007</a></li>
+</ul>
+<h2>4.37.1 - 16 Jul 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.20.6 and earlier. These versions of
+CodeQL were discontinued on 1 July 2026 alongside GitHub Enterprise
+Server 3.16, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3956"">#3956</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.1"">2.26.1</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/4019"">#4019</a></li>
+</ul>
+<h2>4.37.0 - 08 Jul 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+<h2>4.36.3 - 01 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.2 - 04 Jun 2026</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>4.36.1 - 02 Jun 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.0 - 22 May 2026</h2>
+<ul>
+<li><em>Breaking change</em>: Bump the minimum required CodeQL bundle
+version to 2.19.4. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3894"">#3894</a></li>
+<li>Add support for SHA-256 Git object IDs. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3893"">#3893</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81""><code>e4fba86</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4031"">#4031</a>
+from github/update-v4.37.3-72f6a9da0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/fb50ab5d62a274adf3ef3e22cfe750ae87a0ede7""><code>fb50ab5</code></a>
+Update changelog for v4.37.3</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/72f6a9da0def52d9193d6a758f0378b65091f8d1""><code>72f6a9d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4030"">#4030</a>
+from github/mbg/fix/no-proxy</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/3b5ee58597653d9cc6785f3f1277f796d81f3646""><code>3b5ee58</code></a>
+Use default <code>request</code> options instead of
+<code>undefined</code></li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/bfb6be4b5ecd3650f02f530571453e8c64ef0778""><code>bfb6be4</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4028"">#4028</a>
+from github/mergeback/v4.37.2-to-main-e0647621</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/526ab84f9858816d9cf5f7b9df4dd5e2235f0eba""><code>526ab84</code></a>
+Rebuild</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/d6217b9b8c14166e4851db94c11155d03bd13c07""><code>d6217b9</code></a>
+Update changelog and version after v4.37.2</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/e0647621c2984b5ed2f768cb892365bf2a616ad1""><code>e064762</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4027"">#4027</a>
+from github/update-v4.37.2-385bcdc5a</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/e0faed839190caa67a5cd42f1cc16246028ca3df""><code>e0faed8</code></a>
+Add a couple of change notes</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/73aad0eaa9df172668665a150d17b8bc5a650c20""><code>73aad0e</code></a>
+Update changelog for v4.37.2</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/7188fc363630916deb702c7fdcf4e481b751f97a...e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github/codeql-action/analyze` from 4.37.1 to 4.37.3
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action/analyze's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.37.3</h2>
+<p>No user facing changes.</p>
+<h2>v4.37.2</h2>
+<ul>
+<li>The new address format for the <code>config-file</code> input that
+was introduced in CodeQL Action 4.37.0 is now enabled by default. In
+addition to the format described there, the <code>remote=</code> prefix
+can now be used to explicitly indicate that the input refers to a remote
+file. All previous input formats continue to be accepted as well. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4023"">#4023</a></li>
+<li>The CodeQL Action can now make use of <a
+href=""https://docs.github.com/en/code-security/how-tos/secure-at-scale/configure-organization-security/manage-usage-and-access/giving-org-access-private-registries"">configured
+private registries</a> in Default Setup to retrieve CodeQL configuration
+files from remote repositories that require authentication. This will
+allow customers to store their CodeQL configuration in a single
+repository that can then be referenced by Default Setup workflows in
+other repositories. We expect to roll this and other, related changes
+out to everyone in July. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4007"">#4007</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action/analyze's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<ul>
+<li>Fixed a bug where a network error while streaming the download of
+the CodeQL bundle could terminate the <code>init</code> Action instead
+of falling back to downloading the bundle before extracting it. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4061"">#4061</a></li>
+</ul>
+<h2>4.37.4 - 29 Jul 2026</h2>
+<ul>
+<li>This version of the CodeQL Action adds support for the
+<code>tools</code> input for the <code>codeql-action/init</code> step to
+be specified using a <code>github-codeql-tools</code> <a
+href=""https://docs.github.com/en/organizations/managing-organization-settings/managing-custom-properties-for-repositories-in-your-organization"">repository
+property</a>. This feature will gradually be rolled out following the
+release of this version. Once rolled out, this allows for the CodeQL CLI
+version that is used in GitHub-managed workflows, such as Default Setup,
+to be set to a custom value. For example, customers who run into issues
+with rate limits when a new CodeQL CLI version is released can set the
+value to <code>toolcache</code> to always use the CodeQL CLI version
+that is available in the runner toolcache. For Advanced Setup workflows,
+the value provided for <code>tools</code> in the workflow definition
+always takes precedence unless the value of the repository property
+starts with <code>!</code>. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4037"">#4037</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.2"">2.26.2</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/4051"">#4051</a></li>
+</ul>
+<h2>4.37.3 - 22 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.37.2 - 21 Jul 2026</h2>
+<ul>
+<li>The new address format for the <code>config-file</code> input that
+was introduced in CodeQL Action 4.37.0 is now enabled by default. In
+addition to the format described there, the <code>remote=</code> prefix
+can now be used to explicitly indicate that the input refers to a remote
+file. All previous input formats continue to be accepted as well. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4023"">#4023</a></li>
+<li>The CodeQL Action can now make use of <a
+href=""https://docs.github.com/en/code-security/how-tos/secure-at-scale/configure-organization-security/manage-usage-and-access/giving-org-access-private-registries"">configured
+private registries</a> in Default Setup to retrieve CodeQL configuration
+files from remote repositories that require authentication. This will
+allow customers to store their CodeQL configuration in a single
+repository that can then be referenced by Default Setup workflows in
+other repositories. We expect to roll this and other, related changes
+out to everyone in July. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4007"">#4007</a></li>
+</ul>
+<h2>4.37.1 - 16 Jul 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.20.6 and earlier. These versions of
+CodeQL were discontinued on 1 July 2026 alongside GitHub Enterprise
+Server 3.16, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3956"">#3956</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.1"">2.26.1</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/4019"">#4019</a></li>
+</ul>
+<h2>4.37.0 - 08 Jul 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+<h2>4.36.3 - 01 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.2 - 04 Jun 2026</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>4.36.1 - 02 Jun 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.0 - 22 May 2026</h2>
+<ul>
+<li><em>Breaking change</em>: Bump the minimum required CodeQL bundle
+version to 2.19.4. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3894"">#3894</a></li>
+<li>Add support for SHA-256 Git object IDs. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3893"">#3893</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81""><code>e4fba86</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4031"">#4031</a>
+from github/update-v4.37.3-72f6a9da0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/fb50ab5d62a274adf3ef3e22cfe750ae87a0ede7""><code>fb50ab5</code></a>
+Update changelog for v4.37.3</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/72f6a9da0def52d9193d6a758f0378b65091f8d1""><code>72f6a9d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4030"">#4030</a>
+from github/mbg/fix/no-proxy</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/3b5ee58597653d9cc6785f3f1277f796d81f3646""><code>3b5ee58</code></a>
+Use default <code>request</code> options instead of
+<code>undefined</code></li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/bfb6be4b5ecd3650f02f530571453e8c64ef0778""><code>bfb6be4</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4028"">#4028</a>
+from github/mergeback/v4.37.2-to-main-e0647621</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/526ab84f9858816d9cf5f7b9df4dd5e2235f0eba""><code>526ab84</code></a>
+Rebuild</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/d6217b9b8c14166e4851db94c11155d03bd13c07""><code>d6217b9</code></a>
+Update changelog and version after v4.37.2</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/e0647621c2984b5ed2f768cb892365bf2a616ad1""><code>e064762</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4027"">#4027</a>
+from github/update-v4.37.2-385bcdc5a</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/e0faed839190caa67a5cd42f1cc16246028ca3df""><code>e0faed8</code></a>
+Add a couple of change notes</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/73aad0eaa9df172668665a150d17b8bc5a650c20""><code>73aad0e</code></a>
+Update changelog for v4.37.2</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/7188fc363630916deb702c7fdcf4e481b751f97a...e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore <dependency name> major version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's major version (unless you unignore this specific
+dependency's major version or upgrade to it yourself)
+- `@dependabot ignore <dependency name> minor version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's minor version (unless you unignore this specific
+dependency's minor version or upgrade to it yourself)
+- `@dependabot ignore <dependency name>` will close this group update PR
+and stop Dependabot creating any more for the specific dependency
+(unless you unignore this specific dependency or upgrade to it yourself)
+- `@dependabot unignore <dependency name>` will remove all of the ignore
+conditions of the specified dependency
+- `@dependabot unignore <dependency name> <ignore condition>` will
+remove the ignore condition of the specified dependency and ignore
+conditions
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",b5f07d0b43c8006bd328ea2a6651ab64e9ff1db1,864,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#864) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,b5f07d0b43c8006bd328ea2a6651ab64e9ff1db1,b5f07d0,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-03T11:52:25+08:00,GitHub,noreply@github.com,2026-08-03T11:52:25+08:00,chore(deps): bump zizmorcore/zizmor-action from 0.6.0 to 0.6.1 (#865),"Bumps
+[zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action)
+from 0.6.0 to 0.6.1.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/zizmorcore/zizmor-action/releases"">zizmorcore/zizmor-action's
+releases</a>.</em></p>
+<blockquote>
+<h2>v0.6.1</h2>
+<p>zizmor 1.28.0 is now the default version used by the action.</p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/6fc4b006235f201fdab3722e17240ab420d580e5""><code>6fc4b00</code></a>
+Sync zizmor versions (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/145"">#145</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/2596f292a4c446baed7d558a4d351bb694a5d35d""><code>2596f29</code></a>
+chore(deps): bump github/codeql-action/upload-sarif from 4.36.3 to
+4.37.0 in ...</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/1159a0455c60a62a8363ccad554e9ee20b3e5e05""><code>1159a04</code></a>
+Bump pins (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/140"">#140</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/zizmorcore/zizmor-action/compare/6599ee8b7a49aef6a770f63d261d214911a7ce02...6fc4b006235f201fdab3722e17240ab420d580e5"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=zizmorcore/zizmor-action&package-manager=github_actions&previous-version=0.6.0&new-version=0.6.1)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",068f31c7d95232a5e3ba250a77a81ade59ea92b5,865,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,AWS: Add scheduled refresh for the S3FileIO held storage credentials,- chore(deps): bump zizmorcore/zizmor-action from 0.6.0 to 0.6.1 (#865) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,9c6c67047e3c15646d76f6d35581b47998028569,9c6c670,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-27T11:36:40+08:00,GitHub,noreply@github.com,2026-07-27T11:36:40+08:00,chore(deps): bump actions/setup-python from 6.3.0 to 7.0.0 (#852),"Bumps [actions/setup-python](https://github.com/actions/setup-python)
+from 6.3.0 to 7.0.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/setup-python/releases"">actions/setup-python's
+releases</a>.</em></p>
+<blockquote>
+<h2>v7.0.0</h2>
+<h2>What's Changed</h2>
+<h3>Enhancements</h3>
+<ul>
+<li>Migrate to ESM and upgrade dependencies by <a
+href=""https://github.com/priyagupta108""><code>@​priyagupta108</code></a>
+in <a
+href=""https://redirect.github.com/actions/setup-python/pull/1330"">actions/setup-python#1330</a></li>
+<li>Pin SHA commits and update docs with latest versions by <a
+href=""https://github.com/HarithaVattikuti""><code>@​HarithaVattikuti</code></a>
+in <a
+href=""https://redirect.github.com/actions/setup-python/pull/1338"">actions/setup-python#1338</a></li>
+<li>Remove the pip-install input by <a
+href=""https://github.com/gowridurgad""><code>@​gowridurgad</code></a> in
+<a
+href=""https://redirect.github.com/actions/setup-python/pull/1336"">actions/setup-python#1336</a></li>
+</ul>
+<h3>Bug Fix</h3>
+<ul>
+<li>Fix to Classify stderr warning messages as warnings instead of
+errors in annotations by <a
+href=""https://github.com/lmvysakh""><code>@​lmvysakh</code></a> in <a
+href=""https://redirect.github.com/actions/setup-python/pull/1335"">actions/setup-python#1335</a></li>
+<li>Validate and retry manifest fetch to prevent silent failures by <a
+href=""https://github.com/priyagupta108""><code>@​priyagupta108</code></a>
+in <a
+href=""https://redirect.github.com/actions/setup-python/pull/1332"">actions/setup-python#1332</a></li>
+</ul>
+<h3>Dependency Upgrade</h3>
+<ul>
+<li>Bump certifi from 2020.6.20 to 2024.7.4 in
+/<strong>tests</strong>/data by <a
+href=""https://github.com/dependabot""><code>@​dependabot</code></a> in <a
+href=""https://redirect.github.com/actions/setup-python/pull/1328"">actions/setup-python#1328</a></li>
+<li>Remove EOL Python versions and Bumps numpy text fixture by <a
+href=""https://github.com/priya-kinthali""><code>@​priya-kinthali</code></a>
+in <a
+href=""https://redirect.github.com/actions/setup-python/pull/1333"">actions/setup-python#1333</a></li>
+<li>Upgrade <code>@​actions/cache</code> to 6.2.0 by <a
+href=""https://github.com/philip-gai""><code>@​philip-gai</code></a> in <a
+href=""https://redirect.github.com/actions/setup-python/pull/1337"">actions/setup-python#1337</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a href=""https://github.com/lmvysakh""><code>@​lmvysakh</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/actions/setup-python/pull/1335"">actions/setup-python#1335</a></li>
+<li><a
+href=""https://github.com/philip-gai""><code>@​philip-gai</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/actions/setup-python/pull/1337"">actions/setup-python#1337</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/setup-python/compare/v6...v7.0.0"">https://github.com/actions/setup-python/compare/v6...v7.0.0</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/actions/setup-python/commit/5fda3b95a4ea91299a34e894583c3862153e4b97""><code>5fda3b9</code></a>
+Pin SHA commits and update docs with latest versions (<a
+href=""https://redirect.github.com/actions/setup-python/issues/1338"">#1338</a>)</li>
+<li><a
+href=""https://github.com/actions/setup-python/commit/4ab7e95f05e168b4356aebde89dd84f59c283d8e""><code>4ab7e95</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/actions/setup-python/issues/1337"">#1337</a>
+from actions/philip-gai/bump-actions-cache-6-2-0</li>
+<li><a
+href=""https://github.com/actions/setup-python/commit/0f3a009f475dbea83c0371cd85d099690fee8c5c""><code>0f3a009</code></a>
+Remove the pip-install input (<a
+href=""https://redirect.github.com/actions/setup-python/issues/1336"">#1336</a>)</li>
+<li><a
+href=""https://github.com/actions/setup-python/commit/f8cf4291c8b8e273ddd26e569454615c7315d932""><code>f8cf429</code></a>
+Migrate to ESM and upgrade dependencies (<a
+href=""https://redirect.github.com/actions/setup-python/issues/1330"">#1330</a>)</li>
+<li><a
+href=""https://github.com/actions/setup-python/commit/54baeea5b34417d10a7479663a23cca53ea209b5""><code>54baeea</code></a>
+Validate and retry manifest fetch to prevent silent failures (<a
+href=""https://redirect.github.com/actions/setup-python/issues/1332"">#1332</a>)</li>
+<li><a
+href=""https://github.com/actions/setup-python/commit/c7092773a316760f4ecfe498e4af668a4dafeac5""><code>c709277</code></a>
+Annotation code fix (<a
+href=""https://redirect.github.com/actions/setup-python/issues/1335"">#1335</a>)</li>
+<li><a
+href=""https://github.com/actions/setup-python/commit/6849080452e69b330395e8a6d23cf90f56d76a1a""><code>6849080</code></a>
+remove EOL Python versions and Bumps numpy text fixture (<a
+href=""https://redirect.github.com/actions/setup-python/issues/1333"">#1333</a>)</li>
+<li><a
+href=""https://github.com/actions/setup-python/commit/0903b469fbf4441aadfe4f4b249dc5b1fba3a73e""><code>0903b46</code></a>
+Bump certifi from 2020.6.20 to 2024.7.4 in /<strong>tests</strong>/data
+(<a
+href=""https://redirect.github.com/actions/setup-python/issues/1328"">#1328</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/actions/setup-python/compare/ece7cb06caefa5fff74198d8649806c4678c61a1...5fda3b95a4ea91299a34e894583c3862153e4b97"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=actions/setup-python&package-manager=github_actions&previous-version=6.3.0&new-version=7.0.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7fa0fd5c141fbad57aef1bed87df8770c2f082d5,852,false,dependabot[bot],4,4,4,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,AWS: Add scheduled refresh for the S3FileIO held storage credentials,- chore(deps): bump actions/setup-python from 6.3.0 to 7.0.0 (#852) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,7fa0fd5c141fbad57aef1bed87df8770c2f082d5,7fa0fd5,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-27T11:36:25+08:00,GitHub,noreply@github.com,2026-07-27T11:36:25+08:00,chore(deps): bump actions/cache/save from 5.0.5 to 6.1.0 (#851),"Bumps [actions/cache/save](https://github.com/actions/cache) from 5.0.5
+to 6.1.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/cache/releases"">actions/cache/save's
+releases</a>.</em></p>
+<blockquote>
+<h2>v6.1.0</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Bump <code>@​actions/cache</code> to v6.1.0 - handle read-only cache
+access by <a
+href=""https://github.com/jasongin""><code>@​jasongin</code></a> in <a
+href=""https://redirect.github.com/actions/cache/pull/1768"">actions/cache#1768</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/cache/compare/v6...v6.1.0"">https://github.com/actions/cache/compare/v6...v6.1.0</a></p>
+<h2>v6.0.0</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Update packages, migrate to ESM by <a
+href=""https://github.com/Samirat""><code>@​Samirat</code></a> in <a
+href=""https://redirect.github.com/actions/cache/pull/1760"">actions/cache#1760</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/cache/compare/v5...v6.0.0"">https://github.com/actions/cache/compare/v5...v6.0.0</a></p>
+<h2>v5.1.0</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Bump <code>@​actions/cache</code> to v5.1.0 - handle read-only cache
+access by <a
+href=""https://github.com/jasongin""><code>@​jasongin</code></a> in <a
+href=""https://redirect.github.com/actions/cache/pull/1775"">actions/cache#1775</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/cache/compare/v5...v5.1.0"">https://github.com/actions/cache/compare/v5...v5.1.0</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/cache/blob/main/RELEASES.md"">actions/cache/save's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Releases</h1>
+<h2>How to prepare a release</h2>
+<blockquote>
+<p>[!NOTE]
+Relevant for maintainers with write access only.</p>
+</blockquote>
+<ol>
+<li>Switch to a new branch from <code>main</code>.</li>
+<li>Run <code>npm test</code> to ensure all tests are passing.</li>
+<li>Update the version in <a
+href=""https://github.com/actions/cache/blob/main/package.json""><code>https://github.com/actions/cache/blob/main/package.json</code></a>.</li>
+<li>Run <code>npm run build</code> to update the compiled files.</li>
+<li>Update this <a
+href=""https://github.com/actions/cache/blob/main/RELEASES.md""><code>https://github.com/actions/cache/blob/main/RELEASES.md</code></a>
+with the new version and changes in the <code>## Changelog</code>
+section.</li>
+<li>Run <code>licensed cache</code> to update the license report.</li>
+<li>Run <code>licensed status</code> and resolve any warnings by
+updating the <a
+href=""https://github.com/actions/cache/blob/main/.licensed.yml""><code>https://github.com/actions/cache/blob/main/.licensed.yml</code></a>
+file with the exceptions.</li>
+<li>Commit your changes and push your branch upstream.</li>
+<li>Open a pull request against <code>main</code> and get it reviewed
+and merged.</li>
+<li>Draft a new release <a
+href=""https://github.com/actions/cache/releases"">https://github.com/actions/cache/releases</a>
+use the same version number used in <code>package.json</code>
+<ol>
+<li>Create a new tag with the version number.</li>
+<li>Auto generate release notes and update them to match the changes you
+made in <code>RELEASES.md</code>.</li>
+<li>Toggle the set as the latest release option.</li>
+<li>Publish the release.</li>
+</ol>
+</li>
+<li>Navigate to <a
+href=""https://github.com/actions/cache/actions/workflows/release-new-action-version.yml"">https://github.com/actions/cache/actions/workflows/release-new-action-version.yml</a>
+<ol>
+<li>There should be a workflow run queued with the same version
+number.</li>
+<li>Approve the run to publish the new version and update the major tags
+for this action.</li>
+</ol>
+</li>
+</ol>
+<h2>Changelog</h2>
+<h3>6.1.0</h3>
+<ul>
+<li>Bump <code>@actions/cache</code> to v6.1.0 to pick up <a
+href=""https://redirect.github.com/actions/toolkit/pull/2435"">actions/toolkit#2435
+Handle cache write error due to read-only token</a></li>
+<li>Switch redundant &quot;Cache save failed&quot; warning to debug log
+in save-only</li>
+</ul>
+<h3>6.0.0</h3>
+<ul>
+<li>Updated <code>@actions/cache</code> to ^6.0.1,
+<code>@actions/core</code> to ^3.0.1, <code>@actions/exec</code> to
+^3.0.0, <code>@actions/io</code> to ^3.0.2</li>
+<li>Migrated to ESM module system</li>
+<li>Upgraded Jest to v30 and test infrastructure to be ESM
+compatible</li>
+</ul>
+<h3>5.0.4</h3>
+<ul>
+<li>Bump <code>minimatch</code> to v3.1.5 (fixes ReDoS via globstar
+patterns)</li>
+<li>Bump <code>undici</code> to v6.24.1 (WebSocket decompression bomb
+protection, header validation fixes)</li>
+<li>Bump <code>fast-xml-parser</code> to v5.5.6</li>
+</ul>
+<h3>5.0.3</h3>
+<ul>
+<li>Bump <code>@actions/cache</code> to v5.0.5 (Resolves: <a
+href=""https://github.com/actions/cache/security/dependabot/33"">https://github.com/actions/cache/security/dependabot/33</a>)</li>
+<li>Bump <code>@actions/core</code> to v2.0.3</li>
+</ul>
+<h3>5.0.2</h3>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/actions/cache/commit/55cc8345863c7cc4c66a329aec7e433d2d1c52a9""><code>55cc834</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/actions/cache/issues/1768"">#1768</a>
+from jasongin/readonly-cache</li>
+<li><a
+href=""https://github.com/actions/cache/commit/d8cd72f230726cdf4457ebb61ec1b593a8d12337""><code>d8cd72f</code></a>
+Bump <code>@​actions/cache</code> to v6.1.0 - handle cache write error
+due to RO token</li>
+<li><a
+href=""https://github.com/actions/cache/commit/2c8a9bd7457de244a408f35966fab2fb45fda9c8""><code>2c8a9bd</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/actions/cache/issues/1760"">#1760</a>
+from actions/samirat/esm_migration_and_package_update</li>
+<li><a
+href=""https://github.com/actions/cache/commit/e9b91fdc3fea7d79165fceb79042ef45c2d51023""><code>e9b91fd</code></a>
+Prettier fixes</li>
+<li><a
+href=""https://github.com/actions/cache/commit/e4884b8ff7f92ef6b52c79eda480bbc86e685adb""><code>e4884b8</code></a>
+Rebuild dist</li>
+<li><a
+href=""https://github.com/actions/cache/commit/10baf0191a3c426ea0fa4a3253a5c04233b6e18f""><code>10baf01</code></a>
+Fixed licenses</li>
+<li><a
+href=""https://github.com/actions/cache/commit/e39b386c9004d72a15d864ade8c0b3a702d47a37""><code>e39b386</code></a>
+Fix test mock return order</li>
+<li><a
+href=""https://github.com/actions/cache/commit/b6928203372a8571ff984c0c883ef3a1adfb0c06""><code>b692820</code></a>
+PR feedback</li>
+<li><a
+href=""https://github.com/actions/cache/commit/60749128a44d25d3c520a489e576380cf00ff3f1""><code>6074912</code></a>
+Rebuild dist bundles as ESM to match type:module</li>
+<li><a
+href=""https://github.com/actions/cache/commit/5a912e8b4af820fa082a0e75cfd2c782f8fbfe0e""><code>5a912e8</code></a>
+Fix lint and jest issues</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/actions/cache/compare/27d5ce7f107fe9357f9df03efb73ab90386fccae...55cc8345863c7cc4c66a329aec7e433d2d1c52a9"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=actions/cache/save&package-manager=github_actions&previous-version=5.0.5&new-version=6.1.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",71d6b77ebfe53c019988f02ca9a7db5ce219e222,851,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,Core: Convert metrics to Content Stats,- chore(deps): bump actions/cache/save from 5.0.5 to 6.1.0 (#851) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,71d6b77ebfe53c019988f02ca9a7db5ce219e222,71d6b77,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-27T11:36:14+08:00,GitHub,noreply@github.com,2026-07-27T11:36:14+08:00,chore(deps): bump actions/cache/restore from 5.0.5 to 6.1.0 (#850),"Bumps [actions/cache/restore](https://github.com/actions/cache) from
+5.0.5 to 6.1.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/cache/releases"">actions/cache/restore's
+releases</a>.</em></p>
+<blockquote>
+<h2>v6.1.0</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Bump <code>@​actions/cache</code> to v6.1.0 - handle read-only cache
+access by <a
+href=""https://github.com/jasongin""><code>@​jasongin</code></a> in <a
+href=""https://redirect.github.com/actions/cache/pull/1768"">actions/cache#1768</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/cache/compare/v6...v6.1.0"">https://github.com/actions/cache/compare/v6...v6.1.0</a></p>
+<h2>v6.0.0</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Update packages, migrate to ESM by <a
+href=""https://github.com/Samirat""><code>@​Samirat</code></a> in <a
+href=""https://redirect.github.com/actions/cache/pull/1760"">actions/cache#1760</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/cache/compare/v5...v6.0.0"">https://github.com/actions/cache/compare/v5...v6.0.0</a></p>
+<h2>v5.1.0</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>Bump <code>@​actions/cache</code> to v5.1.0 - handle read-only cache
+access by <a
+href=""https://github.com/jasongin""><code>@​jasongin</code></a> in <a
+href=""https://redirect.github.com/actions/cache/pull/1775"">actions/cache#1775</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/actions/cache/compare/v5...v5.1.0"">https://github.com/actions/cache/compare/v5...v5.1.0</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/actions/cache/blob/main/RELEASES.md"">actions/cache/restore's
+changelog</a>.</em></p>
+<blockquote>
+<h1>Releases</h1>
+<h2>How to prepare a release</h2>
+<blockquote>
+<p>[!NOTE]
+Relevant for maintainers with write access only.</p>
+</blockquote>
+<ol>
+<li>Switch to a new branch from <code>main</code>.</li>
+<li>Run <code>npm test</code> to ensure all tests are passing.</li>
+<li>Update the version in <a
+href=""https://github.com/actions/cache/blob/main/package.json""><code>https://github.com/actions/cache/blob/main/package.json</code></a>.</li>
+<li>Run <code>npm run build</code> to update the compiled files.</li>
+<li>Update this <a
+href=""https://github.com/actions/cache/blob/main/RELEASES.md""><code>https://github.com/actions/cache/blob/main/RELEASES.md</code></a>
+with the new version and changes in the <code>## Changelog</code>
+section.</li>
+<li>Run <code>licensed cache</code> to update the license report.</li>
+<li>Run <code>licensed status</code> and resolve any warnings by
+updating the <a
+href=""https://github.com/actions/cache/blob/main/.licensed.yml""><code>https://github.com/actions/cache/blob/main/.licensed.yml</code></a>
+file with the exceptions.</li>
+<li>Commit your changes and push your branch upstream.</li>
+<li>Open a pull request against <code>main</code> and get it reviewed
+and merged.</li>
+<li>Draft a new release <a
+href=""https://github.com/actions/cache/releases"">https://github.com/actions/cache/releases</a>
+use the same version number used in <code>package.json</code>
+<ol>
+<li>Create a new tag with the version number.</li>
+<li>Auto generate release notes and update them to match the changes you
+made in <code>RELEASES.md</code>.</li>
+<li>Toggle the set as the latest release option.</li>
+<li>Publish the release.</li>
+</ol>
+</li>
+<li>Navigate to <a
+href=""https://github.com/actions/cache/actions/workflows/release-new-action-version.yml"">https://github.com/actions/cache/actions/workflows/release-new-action-version.yml</a>
+<ol>
+<li>There should be a workflow run queued with the same version
+number.</li>
+<li>Approve the run to publish the new version and update the major tags
+for this action.</li>
+</ol>
+</li>
+</ol>
+<h2>Changelog</h2>
+<h3>6.1.0</h3>
+<ul>
+<li>Bump <code>@actions/cache</code> to v6.1.0 to pick up <a
+href=""https://redirect.github.com/actions/toolkit/pull/2435"">actions/toolkit#2435
+Handle cache write error due to read-only token</a></li>
+<li>Switch redundant &quot;Cache save failed&quot; warning to debug log
+in save-only</li>
+</ul>
+<h3>6.0.0</h3>
+<ul>
+<li>Updated <code>@actions/cache</code> to ^6.0.1,
+<code>@actions/core</code> to ^3.0.1, <code>@actions/exec</code> to
+^3.0.0, <code>@actions/io</code> to ^3.0.2</li>
+<li>Migrated to ESM module system</li>
+<li>Upgraded Jest to v30 and test infrastructure to be ESM
+compatible</li>
+</ul>
+<h3>5.0.4</h3>
+<ul>
+<li>Bump <code>minimatch</code> to v3.1.5 (fixes ReDoS via globstar
+patterns)</li>
+<li>Bump <code>undici</code> to v6.24.1 (WebSocket decompression bomb
+protection, header validation fixes)</li>
+<li>Bump <code>fast-xml-parser</code> to v5.5.6</li>
+</ul>
+<h3>5.0.3</h3>
+<ul>
+<li>Bump <code>@actions/cache</code> to v5.0.5 (Resolves: <a
+href=""https://github.com/actions/cache/security/dependabot/33"">https://github.com/actions/cache/security/dependabot/33</a>)</li>
+<li>Bump <code>@actions/core</code> to v2.0.3</li>
+</ul>
+<h3>5.0.2</h3>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/actions/cache/commit/55cc8345863c7cc4c66a329aec7e433d2d1c52a9""><code>55cc834</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/actions/cache/issues/1768"">#1768</a>
+from jasongin/readonly-cache</li>
+<li><a
+href=""https://github.com/actions/cache/commit/d8cd72f230726cdf4457ebb61ec1b593a8d12337""><code>d8cd72f</code></a>
+Bump <code>@​actions/cache</code> to v6.1.0 - handle cache write error
+due to RO token</li>
+<li><a
+href=""https://github.com/actions/cache/commit/2c8a9bd7457de244a408f35966fab2fb45fda9c8""><code>2c8a9bd</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/actions/cache/issues/1760"">#1760</a>
+from actions/samirat/esm_migration_and_package_update</li>
+<li><a
+href=""https://github.com/actions/cache/commit/e9b91fdc3fea7d79165fceb79042ef45c2d51023""><code>e9b91fd</code></a>
+Prettier fixes</li>
+<li><a
+href=""https://github.com/actions/cache/commit/e4884b8ff7f92ef6b52c79eda480bbc86e685adb""><code>e4884b8</code></a>
+Rebuild dist</li>
+<li><a
+href=""https://github.com/actions/cache/commit/10baf0191a3c426ea0fa4a3253a5c04233b6e18f""><code>10baf01</code></a>
+Fixed licenses</li>
+<li><a
+href=""https://github.com/actions/cache/commit/e39b386c9004d72a15d864ade8c0b3a702d47a37""><code>e39b386</code></a>
+Fix test mock return order</li>
+<li><a
+href=""https://github.com/actions/cache/commit/b6928203372a8571ff984c0c883ef3a1adfb0c06""><code>b692820</code></a>
+PR feedback</li>
+<li><a
+href=""https://github.com/actions/cache/commit/60749128a44d25d3c520a489e576380cf00ff3f1""><code>6074912</code></a>
+Rebuild dist bundles as ESM to match type:module</li>
+<li><a
+href=""https://github.com/actions/cache/commit/5a912e8b4af820fa082a0e75cfd2c782f8fbfe0e""><code>5a912e8</code></a>
+Fix lint and jest issues</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/actions/cache/compare/27d5ce7f107fe9357f9df03efb73ab90386fccae...55cc8345863c7cc4c66a329aec7e433d2d1c52a9"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=actions/cache/restore&package-manager=github_actions&previous-version=5.0.5&new-version=6.1.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",30de508aa29ba31e97d8beaade104fdf19529e3b,850,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,Core: Convert metrics to Content Stats,- chore(deps): bump actions/cache/restore from 5.0.5 to 6.1.0 (#850) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,30de508aa29ba31e97d8beaade104fdf19529e3b,30de508,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-27T11:35:59+08:00,GitHub,noreply@github.com,2026-07-27T11:35:59+08:00,chore(deps): bump zizmorcore/zizmor-action from 0.5.7 to 0.6.0 (#849),"Bumps
+[zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action)
+from 0.5.7 to 0.6.0.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/zizmorcore/zizmor-action/releases"">zizmorcore/zizmor-action's
+releases</a>.</em></p>
+<blockquote>
+<h2>v0.6.0</h2>
+<p>zizmor 1.27.0 is now the default version used by the action.</p>
+<h2>What's Changed</h2>
+<ul>
+<li>Fold Docker image pull output into a collapsed Actions log group by
+<a href=""https://github.com/woodruffw""><code>@​woodruffw</code></a> with
+<a href=""https://github.com/Copilot""><code>@​Copilot</code></a> in <a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/pull/132"">zizmorcore/zizmor-action#132</a></li>
+<li>Readme: document missing inputs by <a
+href=""https://github.com/staabm""><code>@​staabm</code></a> in <a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/pull/130"">zizmorcore/zizmor-action#130</a></li>
+<li>ci: block version sync workflow on forks by <a
+href=""https://github.com/shaanmajid""><code>@​shaanmajid</code></a> in <a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/pull/129"">zizmorcore/zizmor-action#129</a></li>
+<li>Sync zizmor versions by <a
+href=""https://github.com/github-actions""><code>@​github-actions</code></a>[bot]
+in <a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/pull/137"">zizmorcore/zizmor-action#137</a></li>
+<li>Add <code>collect</code> input by <a
+href=""https://github.com/woodruffw""><code>@​woodruffw</code></a> in <a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/pull/139"">zizmorcore/zizmor-action#139</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a href=""https://github.com/woodruffw""><code>@​woodruffw</code></a>
+with <a href=""https://github.com/Copilot""><code>@​Copilot</code></a>
+made their first contribution in <a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/pull/132"">zizmorcore/zizmor-action#132</a></li>
+<li><a href=""https://github.com/staabm""><code>@​staabm</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/pull/130"">zizmorcore/zizmor-action#130</a></li>
+<li><a
+href=""https://github.com/shaanmajid""><code>@​shaanmajid</code></a> made
+their first contribution in <a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/pull/129"">zizmorcore/zizmor-action#129</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a
+href=""https://github.com/zizmorcore/zizmor-action/compare/v0.5.7...v0.6.0"">https://github.com/zizmorcore/zizmor-action/compare/v0.5.7...v0.6.0</a></p>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/6599ee8b7a49aef6a770f63d261d214911a7ce02""><code>6599ee8</code></a>
+Add <code>collect</code> input (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/139"">#139</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/bec05c80b8586b8cbc030450e4fa4e82b83a9427""><code>bec05c8</code></a>
+Sync zizmor versions (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/137"">#137</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/cf5954948fbc9d5b9460b774e281e3387b989ea6""><code>cf59549</code></a>
+Add issue templates (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/135"">#135</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/f72bf176f67e8007f87b16d80f9880ece648aa65""><code>f72bf17</code></a>
+chore(deps): bump github/codeql-action/upload-sarif (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/134"">#134</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/b2a6fac1a76b42abf3794cd06cef23af2f13e590""><code>b2a6fac</code></a>
+ci: block version sync workflow on forks (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/129"">#129</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/2d88f441dcd818e199d649f55e9a347196a52262""><code>2d88f44</code></a>
+Readme: document missing inputs (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/130"">#130</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/d81e2769a6bdcb1d076bf52b5e7e663c881f94e7""><code>d81e276</code></a>
+Fold Docker image pull output into a collapsed Actions log group (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/132"">#132</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/8c13c5382c13a16f7ece1f965891708b819d28b2""><code>8c13c53</code></a>
+chore(deps): bump the github-actions group with 2 updates (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/133"">#133</a>)</li>
+<li><a
+href=""https://github.com/zizmorcore/zizmor-action/commit/2f8e9c6f609a49998258063502592a555c964847""><code>2f8e9c6</code></a>
+README: bump versions (<a
+href=""https://redirect.github.com/zizmorcore/zizmor-action/issues/128"">#128</a>)</li>
+<li>See full diff in <a
+href=""https://github.com/zizmorcore/zizmor-action/compare/192e21d79ab29983730a13d1382995c2307fbcaa...6599ee8b7a49aef6a770f63d261d214911a7ce02"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility
+score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=zizmorcore/zizmor-action&package-manager=github_actions&previous-version=0.5.7&new-version=0.6.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop
+Dependabot creating any more for this major version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop
+Dependabot creating any more for this minor version (unless you reopen
+the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop
+Dependabot creating any more for this dependency (unless you reopen the
+PR or upgrade to it yourself)
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",9a6bd0dcd18c4b81af23fa9eecbf77f5793412ab,849,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Core: Fix row ID assignment for EXISTING entry during a manifest merge,- chore(deps): bump zizmorcore/zizmor-action from 0.5.7 to 0.6.0 (#849) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,9a6bd0dcd18c4b81af23fa9eecbf77f5793412ab,9a6bd0d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-27T11:35:48+08:00,GitHub,noreply@github.com,2026-07-27T11:35:48+08:00,chore(deps): bump the codeql-action group with 2 updates (#848),"Bumps the codeql-action group with 2 updates:
+[github/codeql-action/init](https://github.com/github/codeql-action) and
+[github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+Updates `github/codeql-action/init` from 4.37.0 to 4.37.1
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action/init's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.37.1</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.20.6 and earlier. These versions of
+CodeQL were discontinued on 1 July 2026 alongside GitHub Enterprise
+Server 3.16, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3956"">#3956</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.1"">2.26.1</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/4019"">#4019</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action/init's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<ul>
+<li>This version of the CodeQL Action adds support for the
+<code>tools</code> input for the <code>codeql-action/init</code> step to
+be specified using a <code>github-codeql-tools</code> <a
+href=""https://docs.github.com/en/organizations/managing-organization-settings/managing-custom-properties-for-repositories-in-your-organization"">repository
+property</a>. This feature will gradually be rolled out following the
+release of this version. Once rolled out, this allows for the CodeQL CLI
+version that is used in GitHub-managed workflows, such as Default Setup,
+to be set to a custom value. For example, customers who run into issues
+with rate limits when a new CodeQL CLI version is released can set the
+value to <code>toolcache</code> to always use the CodeQL CLI version
+that is available in the runner toolcache. For Advanced Setup workflows,
+the value provided for <code>tools</code> in the workflow definition
+always takes precedence unless the value of the repository property
+starts with <code>!</code>. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4037"">#4037</a></li>
+</ul>
+<h2>4.37.3 - 22 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.37.2 - 21 Jul 2026</h2>
+<ul>
+<li>The new address format for the <code>config-file</code> input that
+was introduced in CodeQL Action 4.37.0 is now enabled by default. In
+addition to the format described there, the <code>remote=</code> prefix
+can now be used to explicitly indicate that the input refers to a remote
+file. All previous input formats continue to be accepted as well. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4023"">#4023</a></li>
+<li>The CodeQL Action can now make use of <a
+href=""https://docs.github.com/en/code-security/how-tos/secure-at-scale/configure-organization-security/manage-usage-and-access/giving-org-access-private-registries"">configured
+private registries</a> in Default Setup to retrieve CodeQL configuration
+files from remote repositories that require authentication. This will
+allow customers to store their CodeQL configuration in a single
+repository that can then be referenced by Default Setup workflows in
+other repositories. We expect to roll this and other, related changes
+out to everyone in July. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4007"">#4007</a></li>
+</ul>
+<h2>4.37.1 - 16 Jul 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.20.6 and earlier. These versions of
+CodeQL were discontinued on 1 July 2026 alongside GitHub Enterprise
+Server 3.16, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3956"">#3956</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.1"">2.26.1</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/4019"">#4019</a></li>
+</ul>
+<h2>4.37.0 - 08 Jul 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+<h2>4.36.3 - 01 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.2 - 04 Jun 2026</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>4.36.1 - 02 Jun 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.0 - 22 May 2026</h2>
+<ul>
+<li><em>Breaking change</em>: Bump the minimum required CodeQL bundle
+version to 2.19.4. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3894"">#3894</a></li>
+<li>Add support for SHA-256 Git object IDs. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3893"">#3893</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.5"">2.25.5</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3926"">#3926</a></li>
+</ul>
+<h2>4.35.5 - 15 May 2026</h2>
+<ul>
+<li>We have improved how the JavaScript bundles for the CodeQL Action
+are generated to avoid duplication across bundles and reduce the size of
+the repository by around 70%. This should have no effect on the runtime
+behaviour of the CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3899"">#3899</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/7188fc363630916deb702c7fdcf4e481b751f97a""><code>7188fc3</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4020"">#4020</a>
+from github/update-v4.37.1-9e7c07009</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/c8b5f69be686908c3dfd844428137d56fe80c936""><code>c8b5f69</code></a>
+Update changelog for v4.37.1</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/9e7c070092090e89e8b3d62f977d4456e0732cd7""><code>9e7c070</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4014"">#4014</a>
+from github/mbg/explicit-remote-prefix</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/3492b7e9ab96e28b1d8b971345d30e929c6f8fee""><code>3492b7e</code></a>
+Change <code>REMOTE_PATH_PREFIX</code> to <code>remote=</code></li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/3654baa924bc6456db54002581cb7c1c877548c4""><code>3654baa</code></a>
+Merge remote-tracking branch 'origin/main' into
+mbg/explicit-remote-prefix</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/2d682ac05f1b3588aaff3814826bede39b9ba6bb""><code>2d682ac</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4017"">#4017</a>
+from github/dependabot/github_actions/dot-github/wor...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/23f6a50753a88efd9b7ae8687b29f6bdb65f6250""><code>23f6a50</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4009"">#4009</a>
+from github/mbg/action-state/additions</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/1ee3c75d1988ab8621f01ebb165115c38d56df91""><code>1ee3c75</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4018"">#4018</a>
+from github/dependabot/github_actions/dot-github/wor...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/e053684dc500899b0b5520edc8549ac0f1ed730b""><code>e053684</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4015"">#4015</a>
+from github/dependabot/npm_and_yarn/npm-minor-fd2e83...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/6803c5671d2f87a83ed96e151c441b1cb3bdc66a""><code>6803c56</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4019"">#4019</a>
+from github/update-bundle/codeql-bundle-v2.26.1</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/99df26d4f13ea111d4ec1a7dddef6063f76b97e9...7188fc363630916deb702c7fdcf4e481b751f97a"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github/codeql-action/analyze` from 4.37.0 to 4.37.1
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action/analyze's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.37.1</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.20.6 and earlier. These versions of
+CodeQL were discontinued on 1 July 2026 alongside GitHub Enterprise
+Server 3.16, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3956"">#3956</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.1"">2.26.1</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/4019"">#4019</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action/analyze's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<ul>
+<li>This version of the CodeQL Action adds support for the
+<code>tools</code> input for the <code>codeql-action/init</code> step to
+be specified using a <code>github-codeql-tools</code> <a
+href=""https://docs.github.com/en/organizations/managing-organization-settings/managing-custom-properties-for-repositories-in-your-organization"">repository
+property</a>. This feature will gradually be rolled out following the
+release of this version. Once rolled out, this allows for the CodeQL CLI
+version that is used in GitHub-managed workflows, such as Default Setup,
+to be set to a custom value. For example, customers who run into issues
+with rate limits when a new CodeQL CLI version is released can set the
+value to <code>toolcache</code> to always use the CodeQL CLI version
+that is available in the runner toolcache. For Advanced Setup workflows,
+the value provided for <code>tools</code> in the workflow definition
+always takes precedence unless the value of the repository property
+starts with <code>!</code>. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4037"">#4037</a></li>
+</ul>
+<h2>4.37.3 - 22 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.37.2 - 21 Jul 2026</h2>
+<ul>
+<li>The new address format for the <code>config-file</code> input that
+was introduced in CodeQL Action 4.37.0 is now enabled by default. In
+addition to the format described there, the <code>remote=</code> prefix
+can now be used to explicitly indicate that the input refers to a remote
+file. All previous input formats continue to be accepted as well. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4023"">#4023</a></li>
+<li>The CodeQL Action can now make use of <a
+href=""https://docs.github.com/en/code-security/how-tos/secure-at-scale/configure-organization-security/manage-usage-and-access/giving-org-access-private-registries"">configured
+private registries</a> in Default Setup to retrieve CodeQL configuration
+files from remote repositories that require authentication. This will
+allow customers to store their CodeQL configuration in a single
+repository that can then be referenced by Default Setup workflows in
+other repositories. We expect to roll this and other, related changes
+out to everyone in July. <a
+href=""https://redirect.github.com/github/codeql-action/pull/4007"">#4007</a></li>
+</ul>
+<h2>4.37.1 - 16 Jul 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.20.6 and earlier. These versions of
+CodeQL were discontinued on 1 July 2026 alongside GitHub Enterprise
+Server 3.16, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3956"">#3956</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.1"">2.26.1</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/4019"">#4019</a></li>
+</ul>
+<h2>4.37.0 - 08 Jul 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+<h2>4.36.3 - 01 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.2 - 04 Jun 2026</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>4.36.1 - 02 Jun 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.0 - 22 May 2026</h2>
+<ul>
+<li><em>Breaking change</em>: Bump the minimum required CodeQL bundle
+version to 2.19.4. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3894"">#3894</a></li>
+<li>Add support for SHA-256 Git object IDs. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3893"">#3893</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.5"">2.25.5</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3926"">#3926</a></li>
+</ul>
+<h2>4.35.5 - 15 May 2026</h2>
+<ul>
+<li>We have improved how the JavaScript bundles for the CodeQL Action
+are generated to avoid duplication across bundles and reduce the size of
+the repository by around 70%. This should have no effect on the runtime
+behaviour of the CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3899"">#3899</a></li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/7188fc363630916deb702c7fdcf4e481b751f97a""><code>7188fc3</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4020"">#4020</a>
+from github/update-v4.37.1-9e7c07009</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/c8b5f69be686908c3dfd844428137d56fe80c936""><code>c8b5f69</code></a>
+Update changelog for v4.37.1</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/9e7c070092090e89e8b3d62f977d4456e0732cd7""><code>9e7c070</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4014"">#4014</a>
+from github/mbg/explicit-remote-prefix</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/3492b7e9ab96e28b1d8b971345d30e929c6f8fee""><code>3492b7e</code></a>
+Change <code>REMOTE_PATH_PREFIX</code> to <code>remote=</code></li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/3654baa924bc6456db54002581cb7c1c877548c4""><code>3654baa</code></a>
+Merge remote-tracking branch 'origin/main' into
+mbg/explicit-remote-prefix</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/2d682ac05f1b3588aaff3814826bede39b9ba6bb""><code>2d682ac</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4017"">#4017</a>
+from github/dependabot/github_actions/dot-github/wor...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/23f6a50753a88efd9b7ae8687b29f6bdb65f6250""><code>23f6a50</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4009"">#4009</a>
+from github/mbg/action-state/additions</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/1ee3c75d1988ab8621f01ebb165115c38d56df91""><code>1ee3c75</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4018"">#4018</a>
+from github/dependabot/github_actions/dot-github/wor...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/e053684dc500899b0b5520edc8549ac0f1ed730b""><code>e053684</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4015"">#4015</a>
+from github/dependabot/npm_and_yarn/npm-minor-fd2e83...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/6803c5671d2f87a83ed96e151c441b1cb3bdc66a""><code>6803c56</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/4019"">#4019</a>
+from github/update-bundle/codeql-bundle-v2.26.1</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/99df26d4f13ea111d4ec1a7dddef6063f76b97e9...7188fc363630916deb702c7fdcf4e481b751f97a"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore <dependency name> major version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's major version (unless you unignore this specific
+dependency's major version or upgrade to it yourself)
+- `@dependabot ignore <dependency name> minor version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's minor version (unless you unignore this specific
+dependency's minor version or upgrade to it yourself)
+- `@dependabot ignore <dependency name>` will close this group update PR
+and stop Dependabot creating any more for the specific dependency
+(unless you unignore this specific dependency or upgrade to it yourself)
+- `@dependabot unignore <dependency name>` will remove all of the ignore
+conditions of the specified dependency
+- `@dependabot unignore <dependency name> <ignore condition>` will
+remove the ignore condition of the specified dependency and ignore
+conditions
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",73252c34e0024876bf99c843a2593436a6026b54,848,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#848) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,bfc0040f7e771808f31ea4b1e51227784d229d63,bfc0040,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-07-20T10:55:59+08:00,GitHub,noreply@github.com,2026-07-20T10:55:59+08:00,chore(deps): bump the codeql-action group with 2 updates (#835),"Bumps the codeql-action group with 2 updates:
+[github/codeql-action/init](https://github.com/github/codeql-action) and
+[github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+Updates `github/codeql-action/init` from 4.36.3 to 4.37.0
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action/init's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.37.0</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action/init's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<p>No user facing changes.</p>
+<h2>4.37.1 - 16 Jul 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.20.6 and earlier. These versions of
+CodeQL were discontinued on 1 July 2026 alongside GitHub Enterprise
+Server 3.16, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3956"">#3956</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.1"">2.26.1</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/4019"">#4019</a></li>
+</ul>
+<h2>4.37.0 - 08 Jul 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+<h2>4.36.3 - 01 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.2 - 04 Jun 2026</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>4.36.1 - 02 Jun 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.0 - 22 May 2026</h2>
+<ul>
+<li><em>Breaking change</em>: Bump the minimum required CodeQL bundle
+version to 2.19.4. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3894"">#3894</a></li>
+<li>Add support for SHA-256 Git object IDs. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3893"">#3893</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.5"">2.25.5</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3926"">#3926</a></li>
+</ul>
+<h2>4.35.5 - 15 May 2026</h2>
+<ul>
+<li>We have improved how the JavaScript bundles for the CodeQL Action
+are generated to avoid duplication across bundles and reduce the size of
+the repository by around 70%. This should have no effect on the runtime
+behaviour of the CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3899"">#3899</a></li>
+<li>For performance and accuracy reasons, <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> will now only be enabled on a pull request when
+diff-informed analysis is also enabled for that run. If diff-informed
+analysis is unavailable (for example, because the PR diff ranges could
+not be computed), the action will fall back to a full analysis. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3791"">#3791</a></li>
+<li>If multiple inputs are provided for the GitHub-internal
+<code>analysis-kinds</code> input, only <code>code-scanning</code> will
+be enabled. The <code>analysis-kinds</code> input is experimental, for
+GitHub-internal use only, and may change without notice at any time. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3892"">#3892</a></li>
+<li>Added an experimental change which, when running a Code Scanning
+analysis for a PR with <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> enabled, prefers CodeQL CLI versions that have
+a cached overlay-base database for the configured languages. This speeds
+up analysis for a repository when there is not yet a cached overlay-base
+database for the latest CLI version. We expect to roll this change out
+to everyone in May. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3880"">#3880</a></li>
+</ul>
+<h2>4.35.4 - 07 May 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.4"">2.25.4</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3881"">#3881</a></li>
+</ul>
+<h2>4.35.3 - 01 May 2026</h2>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/99df26d4f13ea111d4ec1a7dddef6063f76b97e9""><code>99df26d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3996"">#3996</a>
+from github/update-v4.37.0-c7c896d71</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/31c27074fda95256cda077009907f8a6022dd7c0""><code>31c2707</code></a>
+Add changenote for <a
+href=""https://redirect.github.com/github/codeql-action/issues/3973"">#3973</a></li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/72df2181aac054d1f4b44264399d2aac12cf11c6""><code>72df218</code></a>
+Update changelog for v4.37.0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/c7c896d71b3055d36f2aff93b16bcc6c69923b91""><code>c7c896d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3995"">#3995</a>
+from github/update-bundle/codeql-bundle-v2.26.0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/3f34ff0ea3f5153c96071437b7cbf71ea3757146""><code>3f34ff0</code></a>
+Add changelog note</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/43bec09f1dc368b430cab4b5d69799bc904079d1""><code>43bec09</code></a>
+Update default bundle to codeql-bundle-v2.26.0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/f58f0d11ebf5dedd870fab2f999275f7602cfa46""><code>f58f0d1</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3973"">#3973</a>
+from github/mbg/repo-props/config-file-shorthands</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/7dc37cbb5b3e37f0e1cd1f18b61e0ea849898fb8""><code>7dc37cb</code></a>
+Merge remote-tracking branch 'origin/main' into
+mbg/repo-props/config-file-sh...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/8e22350a7e28c34c82a5a499fc241923301c2c4f""><code>8e22350</code></a>
+Thread <code>ActionState</code> to <code>initConfig</code></li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/69c9e8c7d918cf2fee13b8b72fdde15883ff155b""><code>69c9e8c</code></a>
+Mark some <code>status-report</code> imports as <code>type</code>-only
+to avoid circular dependencies</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/54f647b7e1bb85c95cddabcd46b0c578ec92bc1a...99df26d4f13ea111d4ec1a7dddef6063f76b97e9"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+Updates `github/codeql-action/analyze` from 4.36.3 to 4.37.0
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/releases"">github/codeql-action/analyze's
+releases</a>.</em></p>
+<blockquote>
+<h2>v4.37.0</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a
+href=""https://github.com/github/codeql-action/blob/main/CHANGELOG.md"">github/codeql-action/analyze's
+changelog</a>.</em></p>
+<blockquote>
+<h1>CodeQL Action Changelog</h1>
+<p>See the <a
+href=""https://github.com/github/codeql-action/releases"">releases
+page</a> for the relevant changes to the CodeQL CLI and language
+packs.</p>
+<h2>[UNRELEASED]</h2>
+<p>No user facing changes.</p>
+<h2>4.37.1 - 16 Jul 2026</h2>
+<ul>
+<li><em>Upcoming breaking change</em>: Add a deprecation warning for
+customers using CodeQL version 2.20.6 and earlier. These versions of
+CodeQL were discontinued on 1 July 2026 alongside GitHub Enterprise
+Server 3.16, and will be unsupported by the next minor release of the
+CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3956"">#3956</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.1"">2.26.1</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/4019"">#4019</a></li>
+</ul>
+<h2>4.37.0 - 08 Jul 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.26.0"">2.26.0</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3995"">#3995</a></li>
+<li>In addition to the existing input format, the
+<code>config-file</code> input for the <code>codeql-action/init</code>
+step will soon support a new <code>[owner/]repo[@ref][:path]</code>
+format. All components except the repository name are optional. If
+omitted, <code>owner</code> defaults to the same owner as the repository
+the analysis is running for, <code>ref</code> to <code>main</code>, and
+<code>path</code> to <code>.github/codeql-action.yaml</code>. Support
+for this format ships in this version of the CodeQL Action, but will
+only be enabled over the coming weeks. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3973"">#3973</a></li>
+</ul>
+<h2>4.36.3 - 01 Jul 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.2 - 04 Jun 2026</h2>
+<ul>
+<li>Cache CodeQL CLI version information across Actions steps. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3943"">#3943</a></li>
+<li>Reduce requests while waiting for analysis processing by using
+exponential backoff when polling SARIF processing status. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3937"">#3937</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.6"">2.25.6</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3948"">#3948</a></li>
+</ul>
+<h2>4.36.1 - 02 Jun 2026</h2>
+<p>No user facing changes.</p>
+<h2>4.36.0 - 22 May 2026</h2>
+<ul>
+<li><em>Breaking change</em>: Bump the minimum required CodeQL bundle
+version to 2.19.4. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3894"">#3894</a></li>
+<li>Add support for SHA-256 Git object IDs. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3893"">#3893</a></li>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.5"">2.25.5</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3926"">#3926</a></li>
+</ul>
+<h2>4.35.5 - 15 May 2026</h2>
+<ul>
+<li>We have improved how the JavaScript bundles for the CodeQL Action
+are generated to avoid duplication across bundles and reduce the size of
+the repository by around 70%. This should have no effect on the runtime
+behaviour of the CodeQL Action. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3899"">#3899</a></li>
+<li>For performance and accuracy reasons, <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> will now only be enabled on a pull request when
+diff-informed analysis is also enabled for that run. If diff-informed
+analysis is unavailable (for example, because the PR diff ranges could
+not be computed), the action will fall back to a full analysis. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3791"">#3791</a></li>
+<li>If multiple inputs are provided for the GitHub-internal
+<code>analysis-kinds</code> input, only <code>code-scanning</code> will
+be enabled. The <code>analysis-kinds</code> input is experimental, for
+GitHub-internal use only, and may change without notice at any time. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3892"">#3892</a></li>
+<li>Added an experimental change which, when running a Code Scanning
+analysis for a PR with <a
+href=""https://redirect.github.com/github/roadmap/issues/1158"">improved
+incremental analysis</a> enabled, prefers CodeQL CLI versions that have
+a cached overlay-base database for the configured languages. This speeds
+up analysis for a repository when there is not yet a cached overlay-base
+database for the latest CLI version. We expect to roll this change out
+to everyone in May. <a
+href=""https://redirect.github.com/github/codeql-action/pull/3880"">#3880</a></li>
+</ul>
+<h2>4.35.4 - 07 May 2026</h2>
+<ul>
+<li>Update default CodeQL bundle version to <a
+href=""https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.25.4"">2.25.4</a>.
+<a
+href=""https://redirect.github.com/github/codeql-action/pull/3881"">#3881</a></li>
+</ul>
+<h2>4.35.3 - 01 May 2026</h2>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a
+href=""https://github.com/github/codeql-action/commit/99df26d4f13ea111d4ec1a7dddef6063f76b97e9""><code>99df26d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3996"">#3996</a>
+from github/update-v4.37.0-c7c896d71</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/31c27074fda95256cda077009907f8a6022dd7c0""><code>31c2707</code></a>
+Add changenote for <a
+href=""https://redirect.github.com/github/codeql-action/issues/3973"">#3973</a></li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/72df2181aac054d1f4b44264399d2aac12cf11c6""><code>72df218</code></a>
+Update changelog for v4.37.0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/c7c896d71b3055d36f2aff93b16bcc6c69923b91""><code>c7c896d</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3995"">#3995</a>
+from github/update-bundle/codeql-bundle-v2.26.0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/3f34ff0ea3f5153c96071437b7cbf71ea3757146""><code>3f34ff0</code></a>
+Add changelog note</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/43bec09f1dc368b430cab4b5d69799bc904079d1""><code>43bec09</code></a>
+Update default bundle to codeql-bundle-v2.26.0</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/f58f0d11ebf5dedd870fab2f999275f7602cfa46""><code>f58f0d1</code></a>
+Merge pull request <a
+href=""https://redirect.github.com/github/codeql-action/issues/3973"">#3973</a>
+from github/mbg/repo-props/config-file-shorthands</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/7dc37cbb5b3e37f0e1cd1f18b61e0ea849898fb8""><code>7dc37cb</code></a>
+Merge remote-tracking branch 'origin/main' into
+mbg/repo-props/config-file-sh...</li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/8e22350a7e28c34c82a5a499fc241923301c2c4f""><code>8e22350</code></a>
+Thread <code>ActionState</code> to <code>initConfig</code></li>
+<li><a
+href=""https://github.com/github/codeql-action/commit/69c9e8c7d918cf2fee13b8b72fdde15883ff155b""><code>69c9e8c</code></a>
+Mark some <code>status-report</code> imports as <code>type</code>-only
+to avoid circular dependencies</li>
+<li>Additional commits viewable in <a
+href=""https://github.com/github/codeql-action/compare/54f647b7e1bb85c95cddabcd46b0c578ec92bc1a...99df26d4f13ea111d4ec1a7dddef6063f76b97e9"">compare
+view</a></li>
+</ul>
+</details>
+<br />
+
+
+Dependabot will resolve any conflicts with this PR as long as you don't
+alter it yourself. You can also trigger a rebase manually by commenting
+`@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits
+that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all
+of the ignore conditions of the specified dependency
+- `@dependabot ignore <dependency name> major version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's major version (unless you unignore this specific
+dependency's major version or upgrade to it yourself)
+- `@dependabot ignore <dependency name> minor version` will close this
+group update PR and stop Dependabot creating any more for the specific
+dependency's minor version (unless you unignore this specific
+dependency's minor version or upgrade to it yourself)
+- `@dependabot ignore <dependency name>` will close this group update PR
+and stop Dependabot creating any more for the specific dependency
+(unless you unignore this specific dependency or upgrade to it yourself)
+- `@dependabot unignore <dependency name>` will remove all of the ignore
+conditions of the specified dependency
+- `@dependabot unignore <dependency name> <ignore condition>` will
+remove the ignore condition of the specified dependency and ignore
+conditions
+
+
+</details>
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",c904c247b3ad3f984da316cd810ad40295eeb7cf,835,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#835) (Thanks dependabot[bot]!)
