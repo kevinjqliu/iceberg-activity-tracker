@@ -5184,3 +5184,12 @@ apache/iceberg,7377afa3909b9e0a229e8d8c2eb2f06ac2f0ee14,7377afa,Kevin Liu,kevinj
 
 Generated-by: Codex",66d1c59a4a8f3baeaee221aa53bb6f4076012eaa,17517,false,,1,1,0,.asf.yaml
 apache/iceberg,181181f9a3c3fe79b052098c02662d1228e5f577,181181f,Daniel Carl Jones,djonesoa@amazon.com,2026-08-05T17:17:15+02:00,GitHub,noreply@github.com,2026-08-05T08:17:15-07:00,Site: Update iceberg-rust 0.10 blog post for 0.10.1 (#17530),,7377afa3909b9e0a229e8d8c2eb2f06ac2f0ee14,17530,false,,1,7,3,site
+apache/iceberg,6938d2191f1a7fb93173b53d783144e2f7a0013a,6938d21,Anoop Johnson,anoop@apache.org,2026-08-05T11:53:43-07:00,GitHub,noreply@github.com,2026-08-05T11:53:43-07:00,Core: Resolve relative paths in V4 manifest reader (#17434),,181181f9a3c3fe79b052098c02662d1228e5f577,17434,false,,4,254,71,core
+apache/iceberg,46f72f7a0b6ce7901be1db90ae708dccad2fd414,46f72f7,Uros Bojanic,221401595+uros-b@users.noreply.github.com,2026-08-05T23:32:35+02:00,GitHub,noreply@github.com,2026-08-05T14:32:35-07:00,Core: Remove dead commented-out code in Avro ValueReaders (#17529),"Delete leftover commented-out manual readInt/readFixed blocks that follow the active readString/readBytes return statements in StringReader, Utf8Reader, BytesReader, and ByteBufferReader.",6938d2191f1a7fb93173b53d783144e2f7a0013a,17529,false,,1,0,14,core
+apache/iceberg,c9afdc64f41e42d4601fb3aa02ebe8cd785f453a,c9afdc6,Eunbin Son,58901024+thswlsqls@users.noreply.github.com,2026-08-06T14:11:16+09:00,GitHub,noreply@github.com,2026-08-06T07:11:16+02:00,Core: Reuse ops in BaseMetastoreViewCatalog.loadView (#17069),"loadView() created a ViewOperations to check existence via
+ops.current(), then discarded it and called newViewOps(identifier)
+again to build the returned BaseView, so every load reloaded view
+metadata from the metastore twice. BaseViewBuilder.create/replace in
+the same file, and the parent BaseMetastoreCatalog.loadTable(), all
+reuse the ops instance used for the existence check. Reuse ops here
+too, matching that pattern and halving the remote calls per loadView.",46f72f7a0b6ce7901be1db90ae708dccad2fd414,17069,false,,1,1,1,core
