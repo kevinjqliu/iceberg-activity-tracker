@@ -8450,3 +8450,22 @@ apache/iceberg-cpp,ab083862eab5ac1a002200bcc174e51697851afc,ab08386,Kevin Liu,ke
 Configure squash merges to always use the pull request title while
 preserving the existing commit-message details in the squash commit
 body.",7e81fa2d96aeff0b9b19d78d9218739db2bb2947,870,false,,1,1,0,.asf.yaml
+apache/iceberg-cpp,f012fcac88f24923286646664990938d352d2ec1,f012fca,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-08-08T09:39:06-07:00,GitHub,noreply@github.com,2026-08-09T00:39:06+08:00,feat: cast numeric literals to decimal type (#805),"## What
+
+Add casting of numeric literals (`int`, `long`, `float`, `double`) to a decimal target type in `Literal::CastTo`, so a numeric value can be used as a default for a decimal column.
+
+Previously `CastFromInt` / `CastFromLong` / `CastFromFloat` / `CastFromDouble` had no `kDecimal` case and fell through to `NotSupported`, so a default like `Literal::Int(12)` or `Literal::Double(9.99)` for a `decimal(9, 2)` column was rejected. Java allows these (`IntegerLiteral.to`, `DoubleLiteral.to`, etc. scale the value to the target scale), so this brings the C++ literal cast layer to parity for numeric sources.
+
+## How
+
+- **Integer → decimal**: `CastIntegerToDecimal` treats the integer as scale 0 and rescales it to the target scale via `RescaleHalfUp` (exact when increasing scale, HALF_UP when decreasing it), then verifies the result fits the target precision (`FitsInPrecision`). Example: `12` → `decimal(9,2)` yields unscaled `1200` (`12.00`).
+- **Float/double → decimal**: `CastRealToDecimal` parses the value's shortest round-tripping decimal representation (matching Java's `BigDecimal.valueOf(double)` via `Double.toString`) into an integer coefficient and exponent-derived scale without expanding scientific notation, then rounds to the target scale with **HALF_UP** rounding (round half away from zero, as Java does — `2.5` → `3`, `-2.5` → `-3`) and checks precision. Non-finite values are rejected.
+- Both paths reject an out-of-range decimal scale before indexing the powers-of-ten table (`DecimalType` does not bound its scale on construction, so `decimal(9, 40)` would otherwise read past the table).
+
+## Scope
+
+Follow-up split out from the v3 default-value work (see the `CastDefaultToType` discussion on #793). It only extends the shared `Literal::CastTo` layer for numeric sources.
+
+## Testing
+
+`LiteralTest.IntegerCastToDecimal` (int/long scaling, out-of-precision rejection, out-of-range scale rejection) and `LiteralTest.RealCastToDecimal` (float/double scaling, HALF_UP rounding incl. negative, round-down, out-of-precision and non-finite rejection, scientific-notation overflow rejection and negative-scale acceptance), all verified fail-without / pass-with. Full `expression_test` passes (495 tests).",ab083862eab5ac1a002200bcc174e51697851afc,805,false,,2,280,0,src
