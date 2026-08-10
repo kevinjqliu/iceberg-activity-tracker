@@ -24919,3 +24919,61 @@ CI runners.
 Same behaviour in fewer lines, and it matches how the rest of the repo spells
 this: catalog/rest/scan_planning.go already uses the builtin for its retry
 delay. Suggested by @zeroshade in review.",bb959163dde5ec2a8455f795b7bbfdfb868868bc,1640,false,,2,254,1,catalog
+apache/iceberg-go,b7828534c83d3e34f6b344c44346bc7362cb3c87,b782853,Santhosh Kumar Somarapu,somarapu.santhosh91@gmail.com,2026-08-09T17:21:00-05:00,GitHub,noreply@github.com,2026-08-10T00:21:00+02:00,fix(hive): tighten the lock-jitter docs and tests from post-merge review (#1714),"Follow-up to #1640, all of it raised by @laskoviymishka after approving.
+
+On whether the downward-spread branch earns its complexity: keeping it, and the
+reason is now a test. At minWait=300ms, maxWait=1s the sequence runs 300ms,
+600ms, then saturates. The last uncapped interval is 600ms but d/2 is 500ms, so
+the flat max(minWait, d/2) floor would let the first capped attempt wait less
+than the one before it. The divergence appears whenever the ratio is not a clean
+power of two, which the previously pinned 100ms/1s case could not show. Removing
+the replay loop makes the new test fail with draws around 560-590ms.
+
+The branch is genuinely unreachable on defaults, so that is now stated at the
+top of it rather than left for a reader to work out.
+
+Doc corrections:
+- The invariant list claimed the result never falls below minWait. That is false
+  when minWait > maxWait, and our own test pins it: the call returns exactly
+  maxWait, which is below the configured minimum, because no value honours both
+  bounds. Qualified rather than deleted.
+- Recorded that the spread here is wider than Java's. Tasks.exponentialBackoff
+  jitters by roughly 10% of the current delay; this draws from [d, 2d]. That is
+  deliberate, but Go and Java clients on the same metastore spread differently
+  and the next reader should not assume otherwise.
+
+Test corrections:
+- The at-cap bounds test asserted >= maxWait/2 when the guaranteed floor is
+  800ms, so a regression to 600ms would have passed. Tightened, and the message
+  reworded since it read as an upper bound on a GreaterOrEqual check.
+- The acquireLocks test asserted wall-clock elapsed time, which sleeps every run
+  and can flake on a loaded runner. It now counts CheckLock calls instead. The
+  additive never-shorter property is already covered without touching the clock.",6500595934bdd55aedba8debaa85e40a0f07452a,1714,false,,2,59,11,catalog
+apache/iceberg-go,517c5dea5ddb5f4a707024004298f36ebfaa44c3,517c5de,Minh Vu,vuhoangminh97@gmail.com,2026-08-10T11:27:27+02:00,GitHub,noreply@github.com,2026-08-10T11:27:27+02:00,fix(table): read legacy property update field names (#1725),"* fix(table): accept legacy property update fields
+
+* test(table): cover legacy property update edge cases",b7828534c83d3e34f6b344c44346bc7362cb3c87,1725,false,,2,102,0,table
+apache/iceberg-go,2e17ff3ca0dc1bc74ef02d845bcd202caf6f90f9,2e17ff3,Tanmay Rauth,t_rauth@apple.com,2026-08-10T05:51:14-07:00,GitHub,noreply@github.com,2026-08-10T14:51:14+02:00,test(table): expand geometry write-path coverage (#1706),"* test(table): expand geometry write-path coverage
+
+Add end-to-end sub-tests around the geometry write path that exercise
+dispatch the internal TestWriteDataFileGeoBounds cannot reach (it feeds
+hand-built StatsCols straight to WriteDataFile):
+
+- non-geo id column keeps ordinary min/max bounds, so an over-eager geo
+  stats suppression on an adjacent column cannot pass unnoticed
+- all-null geometry column drops out of the manifest bounds map
+- write.metadata.metrics.column.geom=none suppresses geo bounds via the
+  stats-plan dispatch, scoped to the geom column
+- checked allocator asserts zero residual to catch allocation escapes in
+  the geo-bounds accumulator wiring
+
+Also reword the geography assertion: leaving bounds unbounded is the
+current conservative implementation, not a spec mandate, and note the
+.String() hex round-trip the JSON parser depends on.
+
+* test(table): address geo write-path review feedback
+
+Drop the double rec.Release() in each test; writeFile already releases
+every batch in task.Batches. Reframe the checked-allocator comment to
+the Arrow write pipeline it actually covers, and assert both geometry
+bounds there. Add breadcrumbs on the all-null positive guard, nested-geo
+gap, and the geography antimeridian decode.",517c5dea5ddb5f4a707024004298f36ebfaa44c3,1706,false,,1,196,32,table
