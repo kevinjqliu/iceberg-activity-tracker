@@ -4403,3 +4403,237 @@ body.
 
 <!-- In the case of user-facing changes, please add the changelog label.
 -->",09a4fcb8655cf5d0af5ebc4548fecbe030b8e653,3755,false,,1,1,0,.asf.yaml
+apache/iceberg-python,e964886d0c73572165b7afcc8aa5d56ef923aee5,e964886,Pucheng Yang,8072956+puchengy@users.noreply.github.com,2026-08-10T08:59:25-07:00,GitHub,noreply@github.com,2026-08-10T08:59:25-07:00,Fix flaky moto_server fixture by using an OS-assigned ephemeral port (#3759),"The `moto_server` session fixture hardcoded port 5001 and pre-bound a
+socket to it purely to detect conflicts (added in #292). This is still
+flaky: when tests run in parallel (e.g. multiple CI jobs on a shared
+runner) or when a previous run leaves the port in TIME_WAIT, the pre-bind
+raises `OSError: [Errno 98] Address already in use`, failing the whole
+test session at fixture setup.
+
+Bind to port 0 instead so the OS assigns a free ephemeral port, and read
+the actual bound port back via moto's `get_host_and_port()`. This removes
+the collision and the now-unnecessary pre-bind check (and the `socket`
+import). The fixture return annotation is corrected to `Generator[...]`
+since it yields.
+
+Co-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",7d0f503106a1f4142e6d315c3501aecccfdd9ba2,3759,false,Claude Opus 4.8 (1M context),1,8,8,tests
+apache/iceberg-python,de743361dd43bb6700ec2e6e992282aaa50379d7,de74336,Yuya Ebihara,ebyhry@gmail.com,2026-08-11T01:05:44+09:00,GitHub,noreply@github.com,2026-08-10T09:05:44-07:00,Docs: Update Iceberg Slack link (#3768),,e964886d0c73572165b7afcc8aa5d56ef923aee5,3768,false,,1,1,1,mkdocs
+apache/iceberg-python,137f4d32c09600f31fb9f5e61dd39f97e22db5ed,137f4d3,jj.lee,63435794+jx2lee@users.noreply.github.com,2026-08-11T01:19:00+09:00,GitHub,noreply@github.com,2026-08-10T09:19:00-07:00,Add `--purge` option to drop table CLI (#3718),"* add flags in drop table cmd
+
+* add drop cmd in cli.md
+
+* include purgable with flags
+
+* modified cli md and default val in purge option
+
+* Apply suggestion
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",de743361dd43bb6700ec2e6e992282aaa50379d7,3718,false,Kevin Liu,3,38,3,mkdocs; pyiceberg; tests
+apache/iceberg-python,995b9ab8bf4ae9e9d832ed2f90ca49306e98269f,995b9ab,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:19:32-07:00,GitHub,noreply@github.com,2026-08-10T09:19:32-07:00,Build: Bump cryptography from 49.0.0 to 50.0.0 (#3752),"Bumps [cryptography](https://github.com/pyca/cryptography) from 49.0.0 to 50.0.0.
+- [Changelog](https://github.com/pyca/cryptography/blob/main/CHANGELOG.rst)
+- [Commits](https://github.com/pyca/cryptography/compare/49.0.0...50.0.0)
+
+---
+updated-dependencies:
+- dependency-name: cryptography
+  dependency-version: 50.0.0
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",137f4d32c09600f31fb9f5e61dd39f97e22db5ed,3752,false,dependabot[bot],1,82,82,uv.lock
+apache/iceberg-python,fd122980e13400662306d47574fd84b3c5d00d0f,fd12298,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:19:56-07:00,GitHub,noreply@github.com,2026-08-10T09:19:56-07:00,Build: Bump pymdown-extensions from 11.0 to 11.0.1 (#3772),"Bumps [pymdown-extensions](https://github.com/facelessuser/pymdown-extensions) from 11.0 to 11.0.1.
+- [Release notes](https://github.com/facelessuser/pymdown-extensions/releases)
+- [Commits](https://github.com/facelessuser/pymdown-extensions/compare/11.0...11.0.1)
+
+---
+updated-dependencies:
+- dependency-name: pymdown-extensions
+  dependency-version: 11.0.1
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",995b9ab8bf4ae9e9d832ed2f90ca49306e98269f,3772,false,dependabot[bot],1,3,3,uv.lock
+apache/iceberg-python,05b78f8ef8ea2bc73ef604a28c6408f6051b4bda,05b78f8,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:20:14-07:00,GitHub,noreply@github.com,2026-08-10T09:20:14-07:00,Build: Bump aiohttp from 3.14.1 to 3.14.3 (#3753),"Bumps [aiohttp](https://github.com/aio-libs/aiohttp) from 3.14.1 to 3.14.3.
+- [Changelog](https://github.com/aio-libs/aiohttp/blob/master/CHANGES.rst)
+- [Commits](https://github.com/aio-libs/aiohttp/compare/v3.14.1...v3.14.3)
+
+---
+updated-dependencies:
+- dependency-name: aiohttp
+  dependency-version: 3.14.3
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",fd122980e13400662306d47574fd84b3c5d00d0f,3753,false,dependabot[bot],1,121,121,uv.lock
+apache/iceberg-python,8e2eead9a1f2564239a2631572a245168370cf0a,8e2eead,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:42:26-07:00,GitHub,noreply@github.com,2026-08-10T09:42:26-07:00,Build: Bump ray from 2.55.1 to 2.56.1 (#3705),"* Build: Bump ray from 2.55.1 to 2.56.1
+
+Bumps [ray](https://github.com/ray-project/ray) from 2.55.1 to 2.56.1.
+- [Release notes](https://github.com/ray-project/ray/releases)
+- [Commits](https://github.com/ray-project/ray/compare/ray-2.55.1...ray-2.56.1)
+
+---
+updated-dependencies:
+- dependency-name: ray
+  dependency-version: 2.56.1
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+* Fix Ray pandas comparison
+
+---------
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>",05b78f8ef8ea2bc73ef604a28c6408f6051b4bda,3705,false,dependabot[bot]; Kevin Liu,2,22,20,tests; uv.lock
+apache/iceberg-python,d7d5adc116e9860fb109931c42e9c9de87afd058,d7d5adc,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:43:28-07:00,GitHub,noreply@github.com,2026-08-10T09:43:28-07:00,Build: Bump protobuf from 6.33.5 to 7.35.1 (#3535),"Bumps [protobuf](https://github.com/protocolbuffers/protobuf) from 6.33.5 to 7.35.1.
+- [Release notes](https://github.com/protocolbuffers/protobuf/releases)
+- [Commits](https://github.com/protocolbuffers/protobuf/commits)
+
+---
+updated-dependencies:
+- dependency-name: protobuf
+  dependency-version: 7.35.1
+  dependency-type: direct:development
+  update-type: version-update:semver-major
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",8e2eead9a1f2564239a2631572a245168370cf0a,3535,false,dependabot[bot],2,11,11,pyproject.toml; uv.lock
+apache/iceberg-python,8386a9ee9ceb44c804d69b7071e2527e57e95870,8386a9e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:43:31-07:00,GitHub,noreply@github.com,2026-08-10T09:43:31-07:00,Build: Bump huggingface-hub from 1.24.0 to 1.26.0 (#3761),"Bumps [huggingface-hub](https://github.com/huggingface/huggingface_hub) from 1.24.0 to 1.26.0.
+- [Release notes](https://github.com/huggingface/huggingface_hub/releases)
+- [Commits](https://github.com/huggingface/huggingface_hub/compare/v1.24.0...v1.26.0)
+
+---
+updated-dependencies:
+- dependency-name: huggingface-hub
+  dependency-version: 1.26.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",d7d5adc116e9860fb109931c42e9c9de87afd058,3761,false,dependabot[bot],1,3,3,uv.lock
+apache/iceberg-python,66d5890d9bc3cf04abbb950d46664d77fd403db6,66d5890,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:43:40-07:00,GitHub,noreply@github.com,2026-08-10T09:43:40-07:00,Build: Bump google-cloud-bigquery from 3.42.2 to 3.42.3 (#3763),"Bumps [google-cloud-bigquery](https://github.com/googleapis/python-bigquery) from 3.42.2 to 3.42.3.
+- [Release notes](https://github.com/googleapis/python-bigquery/releases)
+- [Changelog](https://github.com/googleapis/python-bigquery/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/googleapis/python-bigquery/commits)
+
+---
+updated-dependencies:
+- dependency-name: google-cloud-bigquery
+  dependency-version: 3.42.3
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",8386a9ee9ceb44c804d69b7071e2527e57e95870,3763,false,dependabot[bot],1,3,3,uv.lock
+apache/iceberg-python,d6289906ae2532b74a694fe6fb982e9420d22ac7,d628990,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:43:48-07:00,GitHub,noreply@github.com,2026-08-10T09:43:48-07:00,Build: Bump the codeql-action group with 2 updates (#3764),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.3 to 4.37.4
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81...f205ea1c3313d32999d8d6a48b4f6530d4437b38)
+
+Updates `github/codeql-action/analyze` from 4.37.3 to 4.37.4
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81...f205ea1c3313d32999d8d6a48b4f6530d4437b38)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.37.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.37.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",66d5890d9bc3cf04abbb950d46664d77fd403db6,3764,false,dependabot[bot],1,2,2,.github
+apache/iceberg-python,5fe069781959d9053732fba580159652a65e2fee,5fe0697,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:43:56-07:00,GitHub,noreply@github.com,2026-08-10T09:43:56-07:00,Build: Bump pypa/gh-action-pypi-publish from 1.13.0 to 1.14.2 (#3765),"Bumps [pypa/gh-action-pypi-publish](https://github.com/pypa/gh-action-pypi-publish) from 1.13.0 to 1.14.2.
+- [Release notes](https://github.com/pypa/gh-action-pypi-publish/releases)
+- [Commits](https://github.com/pypa/gh-action-pypi-publish/compare/ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e...dc37677b2e1c63e2034f94d8a5b11f265b73ba33)
+
+---
+updated-dependencies:
+- dependency-name: pypa/gh-action-pypi-publish
+  dependency-version: 1.14.2
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",d6289906ae2532b74a694fe6fb982e9420d22ac7,3765,false,dependabot[bot],1,1,1,.github
+apache/iceberg-python,15f863da20ef25c3cadf22661b93edcb8af05da7,15f863d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:44:08-07:00,GitHub,noreply@github.com,2026-08-10T09:44:08-07:00,Build: Bump mypy-boto3-glue from 1.43.37 to 1.43.59 (#3762),"Bumps [mypy-boto3-glue](https://github.com/youtype/mypy_boto3_builder) from 1.43.37 to 1.43.59.
+- [Release notes](https://github.com/youtype/mypy_boto3_builder/releases)
+- [Commits](https://github.com/youtype/mypy_boto3_builder/commits)
+
+---
+updated-dependencies:
+- dependency-name: mypy-boto3-glue
+  dependency-version: 1.43.59
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",5fe069781959d9053732fba580159652a65e2fee,3762,false,dependabot[bot],1,3,3,uv.lock
+apache/iceberg-python,a3e9af523392cffb9675cf21e9d0f249ceba8c55,a3e9af5,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:45:09-07:00,GitHub,noreply@github.com,2026-08-10T09:45:09-07:00,Build: Bump actions/setup-python from 6.3.0 to 7.0.0 (#3767),"Bumps [actions/setup-python](https://github.com/actions/setup-python) from 6.3.0 to 7.0.0.
+- [Release notes](https://github.com/actions/setup-python/releases)
+- [Commits](https://github.com/actions/setup-python/compare/v6.3.0...5fda3b95a4ea91299a34e894583c3862153e4b97)
+
+---
+updated-dependencies:
+- dependency-name: actions/setup-python
+  dependency-version: 7.0.0
+  dependency-type: direct:production
+  update-type: version-update:semver-major
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",15f863da20ef25c3cadf22661b93edcb8af05da7,3767,false,dependabot[bot],1,1,1,.github
+apache/iceberg-python,34c971fe548bfb2b2a266a1f8c0a2e10bcf84f29,34c971f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T10:00:32-07:00,GitHub,noreply@github.com,2026-08-10T10:00:32-07:00,Build: Bump zizmorcore/zizmor-action from 0.5.6 to 0.6.2 (#3730),"Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.5.6 to 0.6.2.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/5f14fd08f7cf1cb1609c1e344975f152c7ee938d...3dc1ecc9bcb9e94e9b2c709687979e1298497054)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.6.1
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a3e9af523392cffb9675cf21e9d0f249ceba8c55,3730,false,dependabot[bot],1,1,1,.github
+apache/iceberg-python,6294bebbef48ea0efd72c86528e3e738660c74f6,6294beb,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T10:04:08-07:00,GitHub,noreply@github.com,2026-08-10T10:04:08-07:00,Build: Bump tcort/github-action-markdown-link-check from 1.1.2 to 1.1.3 (#3766),"Bumps [tcort/github-action-markdown-link-check](https://github.com/tcort/github-action-markdown-link-check) from 1.1.2 to 1.1.3.
+- [Release notes](https://github.com/tcort/github-action-markdown-link-check/releases)
+- [Changelog](https://github.com/tcort/github-action-markdown-link-check/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/tcort/github-action-markdown-link-check/compare/e7c7a18363c842693fadde5d41a3bd3573a7a225...e047c5b37f24ab722bbef1a27b6fab7f96bc4068)
+
+---
+updated-dependencies:
+- dependency-name: tcort/github-action-markdown-link-check
+  dependency-version: 1.1.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",34c971fe548bfb2b2a266a1f8c0a2e10bcf84f29,3766,false,dependabot[bot],1,1,1,.github
+apache/iceberg-python,3bd462185298c5abffaada431d92530638a83ef7,3bd4621,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-08-10T11:37:11-07:00,GitHub,noreply@github.com,2026-08-10T11:37:11-07:00,Build: Bump setuptools to 83.0.0 (#3774),,6294bebbef48ea0efd72c86528e3e738660c74f6,3774,false,,2,7,4,pyproject.toml; uv.lock
