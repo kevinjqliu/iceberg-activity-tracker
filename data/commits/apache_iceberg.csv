@@ -5436,3 +5436,28 @@ apache/iceberg,f8f8a7425b431c92d5d44b5b9f3e99a427e1ff04,f8f8a74,vishnu prakash,n
 apache/iceberg,ee9288f5d88ebb2f111ca0756ba801946812d321,ee9288f,Vova Kolmakov,wombatukun@gmail.com,2026-08-10T22:10:46+07:00,GitHub,noreply@github.com,2026-08-10T17:10:46+02:00,Flink: Avoid per-row field getter allocation in RowDataWrapper (#16789),,f8f8a7425b431c92d5d44b5b9f3e99a427e1ff04,16789,false,,1,9,5,flink
 apache/iceberg,89e2f887491c1b5fa9f8b9de81b3aa8b31fa6974,89e2f88,vishnu prakash,nvishnuprakash02@gmail.com,2026-08-10T20:41:09+05:30,GitHub,noreply@github.com,2026-08-10T17:11:09+02:00,Flink: Backport read split table properties fix to 2.0 and 1.20 (#17445) (#17591),,ee9288f5d88ebb2f111ca0756ba801946812d321,17591,false,,6,250,26,flink
 apache/iceberg,089adca502693f62e88f6137461a91ff06156be2,089adca,Vova Kolmakov,wombatukun@gmail.com,2026-08-11T11:40:53+07:00,GitHub,noreply@github.com,2026-08-11T06:40:53+02:00,Flink: Backport avoid per-row field getter allocation in RowDataWrapper (#17606),Backports #16789,89e2f887491c1b5fa9f8b9de81b3aa8b31fa6974,17606,false,,2,18,10,flink
+apache/iceberg,81d490881e323abad8327e23c27b22481c156199,81d4908,William Hyun,william@apache.org,2026-08-11T10:15:36-07:00,GitHub,noreply@github.com,2026-08-11T10:15:36-07:00,"Core, REST: Fix delete file references for DVs in the same Puffin file (#17497)","Motivation: Scan planning responses index delete files by position in the delete-files array.
+The index map was keyed on the delete file location alone, but a single Puffin file can hold a deletion vector for each of several data files. Every DV in that file shares a location, so each new DV entry overwrote the previous one and every task referencing a DV in that Puffin file resolved to the same last index.
+
+Changes: Extract DeleteFileSet's private wrapper into a public DeleteFileWrapper, mirroring CharSequenceWrapper, and key the index map on it so serialization uses the same delete file identity that builds the delete-files array.
+Fail with a clear message when a task references a delete file that is not in that array.",089adca502693f62e88f6137461a91ff06156be2,17497,false,,6,376,54,api; core
+apache/iceberg,3cca1d59f1403edfec0c571c62b9d05f4673ff46,3cca1d5,Uros Bojanic,221401595+uros-b@users.noreply.github.com,2026-08-11T19:22:02+02:00,GitHub,noreply@github.com,2026-08-11T10:22:02-07:00,Docs: Document missing read table properties in configuration (#17554),"Add read.split.adaptive-size.enabled, read.data-planning-mode, and read.delete-planning-mode to the read properties table with their defaults and accepted values.",81d490881e323abad8327e23c27b22481c156199,17554,false,,1,3,0,docs
+apache/iceberg,e31bda3c1a04c3c0afab0cd3098f9a976300a4a2,e31bda3,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-11T16:39:07-07:00,GitHub,noreply@github.com,2026-08-11T16:39:07-07:00,Core: Support metrics with nested field in AppendBenchmark and FileGenerationUtil (#17391),"* Core: Add nested field traversal in AppendBenchmark and FileGenerationUtil
+
+* expand testBoundsForNestedTypes to cover all metricsMode
+
+* Core: Resolve metrics mode by field id in FileGenerationUtil
+
+Use MetricsConfig.columnMode(int) instead of manually resolving the
+column name via Schema.findColumnName. The int overload performs the
+same id-to-name lookup internally and correctly handles column aliases,
+removing duplicated logic across the generator and its test.
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+
+* fix schema used in UT
+
+---------
+
+Co-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",3cca1d59f1403edfec0c571c62b9d05f4673ff46,17391,false,Claude Opus 4.8 (1M context),3,80,14,core
+apache/iceberg,515ec6c11b11c54f45ee483bcf20c012f9159d9f,515ec6c,Uros Bojanic,221401595+uros-b@users.noreply.github.com,2026-08-12T12:58:54+02:00,GitHub,noreply@github.com,2026-08-12T12:58:54+02:00,Core: Include CRC values in DV deserialization error message (#17393),,e31bda3c1a04c3c0afab0cd3098f9a976300a4a2,17393,false,,2,26,1,core
