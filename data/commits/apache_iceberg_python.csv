@@ -4637,3 +4637,318 @@ updated-dependencies:
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",34c971fe548bfb2b2a266a1f8c0a2e10bcf84f29,3766,false,dependabot[bot],1,1,1,.github
 apache/iceberg-python,3bd462185298c5abffaada431d92530638a83ef7,3bd4621,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-08-10T11:37:11-07:00,GitHub,noreply@github.com,2026-08-10T11:37:11-07:00,Build: Bump setuptools to 83.0.0 (#3774),,6294bebbef48ea0efd72c86528e3e738660c74f6,3774,false,,2,7,4,pyproject.toml; uv.lock
+apache/iceberg-python,b940c21b6a46313dc9caad9f7c35ef44bbc09d9c,b940c21,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-08-12T09:16:20-07:00,GitHub,noreply@github.com,2026-08-12T09:16:20-07:00,Release verification script (#3777),,3bd462185298c5abffaada431d92530638a83ef7,3777,false,,2,129,4,dev; mkdocs
+apache/iceberg-python,b741169c7ea22e3fb3e5c55396201f2d888d0532,b741169,David,avisonlivingstone@gmail.com,2026-08-12T19:49:23+01:00,GitHub,noreply@github.com,2026-08-12T20:49:23+02:00,Fix SsqlCatalog Iceberg type filter (#3709),filter iceberg_type across all SqlCatalog table operations,b940c21b6a46313dc9caad9f7c35ef44bbc09d9c,3709,false,,2,88,14,pyiceberg; tests
+apache/iceberg-python,63ad2a34e20091dc1f7a27082c34eb6a3690262d,63ad2a3,Aaron Niskode-Dossett,aniskodedossett@etsy.com,2026-08-12T15:29:16-05:00,GitHub,noreply@github.com,2026-08-12T22:29:16+02:00,Make metrics evaluation stateless (#3665),"* Make metrics evaluation stateless
+
+* Use a realistic 15-leaf metrics benchmark
+
+* Simplify metrics evaluator tests
+
+* Consolidate evaluator planning tests",b741169c7ea22e3fb3e5c55396201f2d888d0532,3665,false,,5,394,30,pyiceberg; tests
+apache/iceberg-python,ddd8309888a3df6d9cc1317f5c723ef4795082ef,ddd8309,Sotaro Hikita,70102274+lawofcycles@users.noreply.github.com,2026-08-13T05:46:27+09:00,GitHub,noreply@github.com,2026-08-12T22:46:27+02:00,Add commit retry and concurrency validation for writes (#3320),"* Add commit retry with data conflict validation
+
+Add automatic retry with exponential backoff when catalog commits fail
+due to concurrent transactions (CommitFailedException), and integrate
+the existing validation functions from validate.py into the write path
+to detect incompatible concurrent modifications (ValidationException).
+
+The retry loop is placed in Transaction.commit_transaction(). On each
+retry attempt, table metadata is refreshed, registered snapshot
+producers are re-executed to regenerate manifests, and data conflict
+validation is run. Uncommitted manifests from failed attempts are
+cleaned up after a successful commit.
+
+Validation is performed for _OverwriteFiles and _DeleteFiles based on
+the table's isolation level (serializable/snapshot). _FastAppendFiles
+and _MergeAppendFiles do not require validation since appends never
+conflict.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Add validation guards and isolation level property routing
+
+Skip _validate_no_new_delete_files and _validate_deleted_data_files
+when conflict_detection_filter is None, matching Java's
+BaseOverwriteFiles.validate() behavior for rowFilter == AlwaysFalse().
+
+Route isolation level property based on the calling operation.
+Transaction.delete() uses write.delete.isolation-level (default).
+Transaction.overwrite(), dynamic_partition_overwrite(), and upsert()
+use write.update.isolation-level via _isolation_level_property on
+the snapshot producer.
+
+Remove unused WRITE_MERGE_ISOLATION_LEVEL constant.`
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix mypy errors in test_commit_retry
+
+Use Operation enum instead of string literals for producer
+construction. Use .value for IsolationLevel string comparison
+to avoid unreachable statement warning.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Stabilize test_commit_retry_on_commit_failed
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix case-insensitive delete regression and improve retry loop
+
+Fix _build_delete_files_partition_predicate overwriting _case_sensitive
+to True by passing the current value to delete_by_predicate. This
+caused case-insensitive deletes to fail when _OverwriteFiles was used
+with a user-specified predicate.
+
+Move import random/time to file top level. Add total timeout
+(commit.retry.total-timeout-ms) to the retry loop. Add comments for
+intentional validation duplication and cached_property clearing.
+Stabilize test_commit_retry_on_commit_failed by removing flaky
+patch.object assertion.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Debug: investigate CI-only test failure in memory catalog
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Debug: investigate CI-only test failure in memory catalog
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Debug: investigate CI-only test failure in memory catalog
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix patch.object targeting wrong Transaction class in CI
+
+In CI, pyiceberg.table module is loaded twice, creating two distinct
+Transaction class objects. patch.object on the test-imported Transaction
+does not affect the runtime Transaction used by Table.append(). Fix by
+resolving Transaction from pyiceberg.table module at runtime.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Simplify AssertTableUUID and clean up manifests on abort
+
+AssertTableUUID is constant across retries, so add it once before the
+loop instead of adding/removing on each iteration.
+
+Add _clean_all_uncommitted() that deletes both _uncommitted_manifests
+and _written_manifests on permanent failure, fixing orphaned manifests
+from the last attempt.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix mypy errors in test_commit_retry
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* fix: use starting_snapshot_id for validation window in commit retry
+
+The concurrency validation was using parent_snapshot (current head) for
+both the starting point and ending point of the validation window. When
+multiple concurrent commits occur during retry sleep, the validation
+would only inspect the latest head and miss conflicting commits below it.
+
+Introduce _starting_snapshot_id that is fixed at operation init time and
+does not change on retry. Also fix _validation_history to use exclusive
+semantics for from_snapshot, matching Java Iceberg's ancestorsBetween.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* fix: raise on unresolvable snapshots and fix _starting_snapshot_id propagation
+
+Address review feedback on commit retry validation:
+
+- _validate_concurrency() now raises ValidationException when
+parent_snapshot_id or starting_snapshot_id is non-null but cannot
+be resolved, instead of silently skipping validation.
+- Fix _starting_snapshot_id not being propagated from _DeleteFiles to
+_OverwriteFiles in Transaction.delete(), which caused the conflict
+detection window to collapse when both producers are involved.
+- Move ValidationException import to module level per project convention.
+- Add commit retry and isolation level properties to configuration docs.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Refactor: consolidate _validate_concurrency into base class
+
+Move the duplicated _validate_concurrency logic from _DeleteFiles and
+_OverwriteFiles into _SnapshotProducer. Extract _resolve_parent_snapshot
+and _resolve_starting_snapshot helpers for readability.
+
+_FastAppendFiles overrides with a no-op since appends do not require
+conflict validation.
+
+Also move property_as_int to a top-level import in table/__init__.py.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix mypy and pydocstyle lint errors in snapshot producer
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Introduce CommitWindow to fix validation in multi-producer retry
+
+_validate_concurrency was resolving the catalog HEAD via
+_parent_snapshot_id, which breaks when a Transaction has multiple
+producers (_DeleteFiles + _OverwriteFiles). On retry, the second
+producer's parent points to the first producer's uncommitted snapshot,
+which does not exist in the catalog metadata, causing a spurious
+ValidationException.
+
+CommitWindow explicitly separates the two snapshot references that
+validation needs: starting_snapshot_id (fixed at operation start) and
+catalog_head_snapshot_id (the actual catalog HEAD after refresh).
+_rebuild_snapshot_updates builds one CommitWindow and shares it across
+all producers, so each validates against the real catalog state.
+
+Add test_mixed_delete_overwrite_retries_successfully to cover the
+multi-producer retry path end-to-end.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Track and clean up orphaned manifest list files on retry and abort
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix commit retry validation for non-main branches and add branch tests
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Refactor CommitWindow to resolve snapshots eagerly and consolidate logic
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix mypy and ruff lint errors in CommitWindow refactoring
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Address minor nits: class-level annotation, super().commit(), and type annotations
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Simplify retry property lookups and align jitter with Java (0.1)
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Extract _current_branch_head_id helper for branch head resolution
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Resolve isolation level via TableMetadata.isolation_level()
+
+Add TableMetadata.isolation_level(operation) and drop the
+_isolation_level_property field on the snapshot producer. The producer now
+carries the logical operation (_isolation_operation) and resolves the level
+from the current metadata at validation time.
+
+This moves the property lookup into a single place and still picks up
+refreshed properties on retry. Behavior is unchanged: delete operations use
+write.delete.isolation-level and update operations use
+write.update.isolation-level, matching how Java keys the isolation level off
+the operation rather than the snapshot operation type.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Read the concurrency filter guard from the predicate directly
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Remove unused _resolve_parent_snapshot
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Log a warning before retrying a failed commit
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Clamp commit.retry.num-retries to a minimum of zero
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Validate against full history when starting from an empty table
+
+A writer that started on a table with no snapshots treated the commit
+window as empty and skipped validation. If another writer landed the first
+snapshot concurrently, its rows could be dropped with no error. Treat a None
+base with a live head as a full-history validation, matching Java.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix deleted-file validation for a None starting snapshot
+
+Follow-up to the empty-table validation change: _deleted_data_files still
+returned early on a None parent, and _validate_deleted_data_files still typed
+it as non-optional. Walk the full history for deleted files too, and widen the
+type. Fixes the mypy failure and closes the remaining validation gap.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Only delete written files when the commit definitely failed
+
+The retry loop cleaned up on any exception, deleting manifests that a
+committed snapshot may already reference when the outcome is unknown or the
+commit had already landed. Restrict cleanup to CommitFailedException and
+ValidationException, which guarantee the commit did not happen, and re-raise
+anything else without deleting, matching Java.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Reset producer state on success and invalidate a failed transaction
+
+A committed transaction kept its snapshot producers registered, so a later
+commit replayed them and double-committed the first batch. A failed commit
+left the transaction with staged updates pointing at deleted files. Clear the
+producers after a successful commit, and mark a transaction as failed so
+reusing it raises instead of corrupting the table.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Freeze the delete file set so retries do not drop concurrent rows
+
+Under snapshot isolation, a retried delete recomputed its target files against
+the refreshed head, so a concurrently added file matching the predicate was
+dropped even though the writer never saw it. Freeze the planned delete set at
+plan time and match by membership on retry, mirroring how _OverwriteFiles
+already works. Also corrects test_overwrite_uses_update_isolation_level, which
+asserted the old behavior of dropping the concurrent append.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Keep the snapshot id stable so a landed commit is not repeated
+
+The retry loop minted a new snapshot id on every attempt, so a commit that
+landed but was reported as failed (a lost response the transport layer
+retried) could not be recognized on retry and was committed a second time.
+Keep the snapshot id stable across attempts and, after refreshing, stop if it
+is already present in the metadata. Update test_refresh_for_retry_resets_producer_state
+to reflect the stable id.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Validate empty-plan deletes at commit time and clamp retry wait properties
+
+A delete whose plan matched nothing at staging contributes an empty
+update, so commit_transaction returned before the ref check, retry
+loop, and validation ever ran. A row matching the writer's own
+predicate that landed between staging and commit was silently lost.
+Validation only runs on the retry path after a CAS failure, and an
+empty update set never produces a CAS, so entering the commit loop is
+not enough. Add an explicit validation pass for the case where
+producers are registered but the staged output is empty.
+
+Clamp commit.retry.min-wait-ms, max-wait-ms, and total-timeout-ms to
+non-negative values like num-retries, so a negative wait does not
+raise ValueError from time.sleep and mask the CommitFailedException.
+
+Document the partition_set limitation in concurrent delete file
+validation for tables shared with merge-on-read writers.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+---------
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>",63ad2a34e20091dc1f7a27082c34eb6a3690262d,3320,false,,9,1658,49,mkdocs; pyiceberg; tests

@@ -29608,3 +29608,25 @@ Rename the GCS endpoint property from `gcs.service.path` to
 implementations. The old key never existed in those implementations, so
 endpoints vended by a REST catalog or copied from another engine were
 silently ignored.",f5d8873f785450603f59084d9218b816d3712856,2965,false,,4,8,8,crates
+apache/iceberg-rust,c71965a4632f7a55f75cd2b9ab377864d0dd7361,c71965a,blackmwk,257669749+blackmwk@users.noreply.github.com,2026-08-13T01:43:57+08:00,GitHub,noreply@github.com,2026-08-13T01:43:57+08:00,fix: Address property macro review follow-ups (#2987),"* fix: Address property macro review follow-ups
+
+Address the final inline comments from #2970 by documenting generated-code requirements, correcting the illustrative data path default, and covering the optional custom-parser error path.
+
+* docs: correct data path fallback example
+
+* docs: retain data path getter",9228fdc45ba4d60cb450fe946e9cc243caa409b7,2987,false,,3,24,5,crates
+apache/iceberg-rust,64079fcb7b78cb6540f8099a1e349f797e9c339b,64079fc,Anoop Johnson,anoop@apache.org,2026-08-13T03:53:59-07:00,GitHub,noreply@github.com,2026-08-13T12:53:59+02:00,feat: coalesce physically-stored _last_updated_sequence_number (#2985),"* feat: coalesce physically-stored _last_updated_sequence_number
+
+The prior change rejected files that physically carry a per-row
+_last_updated_sequence_number column.
+
+Read such columns instead and coalesce per the spec. i.e. use the per-row value
+where non-null, fall back to the file's data sequence number only where null.
+
+_row_id, whose fallback is positional, is a later PR.
+
+* fix: correct typo flagged by lint check
+
+* refactor: address review on coalesce _last_updated_sequence_number
+
+* test: index all _last_updated_sequence_number transformer tests by name",c71965a4632f7a55f75cd2b9ab377864d0dd7361,2985,false,,3,517,93,crates

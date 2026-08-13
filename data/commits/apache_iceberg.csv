@@ -5461,3 +5461,30 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 
 Co-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",3cca1d59f1403edfec0c571c62b9d05f4673ff46,17391,false,Claude Opus 4.8 (1M context),3,80,14,core
 apache/iceberg,515ec6c11b11c54f45ee483bcf20c012f9159d9f,515ec6c,Uros Bojanic,221401595+uros-b@users.noreply.github.com,2026-08-12T12:58:54+02:00,GitHub,noreply@github.com,2026-08-12T12:58:54+02:00,Core: Include CRC values in DV deserialization error message (#17393),,e31bda3c1a04c3c0afab0cd3098f9a976300a4a2,17393,false,,2,26,1,core
+apache/iceberg,ad608fec8ff3b4e36d1cd1f6d3d0fcf99eb30a47,ad608fe,Neelesh Salian,nssalian@users.noreply.github.com,2026-08-12T14:34:03-07:00,GitHub,noreply@github.com,2026-08-12T16:34:03-05:00,Site: Add blog post introducing the Variant type (#17537),,515ec6c11b11c54f45ee483bcf20c012f9159d9f,17537,false,,2,145,0,site
+apache/iceberg,671272445d88dd2736186636dced8db6d3057c65,6712724,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-08-12T15:14:08-07:00,GitHub,noreply@github.com,2026-08-13T00:14:08+02:00,Core: Add max-file-group-input-files to valid rewrite options (#17544),"max-file-group-input-files is read and validated by
+SizeBasedFileRewritePlanner but was missing from validOptions(), so
+RewriteDataFilesSparkAction rejected it with ""Cannot use options
+[max-file-group-input-files]"". Flink exposes the option through
+RewriteDataFiles.maxFileGroupInputFiles() where it works, while Spark
+rejected it. The option was added in #14837 without updating validOptions().
+
+Add the option to validOptions() and cover it with a rewrite that sets it,
+which fails without this change, plus a planner test that it caps the number
+of input files per group.",ad608fec8ff3b4e36d1cd1f6d3d0fcf99eb30a47,17544,false,,8,64,2,core; spark
+apache/iceberg,c62a8fc3ee808e95d5493e4ffd19642ac22ea82f,c62a8fc,Thomas Powell,tom-s-powell@hotmail.co.uk,2026-08-13T04:44:19+01:00,GitHub,noreply@github.com,2026-08-13T11:44:19+08:00,API: Respect plaintext files in EncryptingFileIO bulkDecrypt (#17592),"* Respect plaintext files in EncyptingFileIO bulkDecrypt
+
+* unit tests
+
+---------
+
+Co-authored-by: Thomas Powell <tpowell@palantir.com>",671272445d88dd2736186636dced8db6d3057c65,17592,false,Thomas Powell,2,89,5,api
+apache/iceberg,4479852893dd96db54f9512e8b14300eabe5ceb7,4479852,Anas Khan,anxkhn28@gmail.com,2026-08-13T14:08:10+05:30,GitHub,noreply@github.com,2026-08-13T10:38:10+02:00,Core: Fix AvroEncoderUtil header error printing literal %02X (#17125),"AvroEncoderUtil.decode validated the magic bytes with
+Preconditions.checkState(cond, ""Unrecognized header bytes: 0x%02X 0x%02X"",
+header0, header1). Guava's Preconditions formats messages with
+Strings.lenientFormat, which only understands the %s placeholder, so the
+%02X specifiers were emitted verbatim and the two byte arguments were
+appended as decimal in a trailing bracket. A mismatched header therefore
+reported ""Unrecognized header bytes: 0x%02X 0x%02X [16, 32]"" instead of the
+intended hex, obscuring the actual bytes.",c62a8fc3ee808e95d5493e4ffd19642ac22ea82f,17125,false,,2,15,6,core
+apache/iceberg,f610fab08773733dda8e4919d715ae25986cfb51,f610fab,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-13T01:50:29-07:00,GitHub,noreply@github.com,2026-08-13T10:50:29+02:00,Flink: Remove deprecated RewriteDataFiles.Builder.filter(Expression) (#17624),,4479852893dd96db54f9512e8b14300eabe5ceb7,17624,false,,6,3,45,flink

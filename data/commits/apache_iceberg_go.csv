@@ -25291,3 +25291,742 @@ apache/iceberg-go,84080b57dd26bccd0e4ee6308a1b72b07567fdd1,84080b5,Minh Vu,vuhoa
 apache/iceberg-go,63e44c1dfdb256b037e7a09d1431ae6ab930f1b0,63e44c1,Minh Vu,vuhoangminh97@gmail.com,2026-08-11T16:48:20+02:00,GitHub,noreply@github.com,2026-08-11T10:48:20-04:00,fix(types): require list element type during JSON decoding (#1710),,84080b57dd26bccd0e4ee6308a1b72b07567fdd1,1710,false,,2,11,0,types.go; types_test.go
 apache/iceberg-go,19adf463affa617b0ad6cc7118b57fe5eb531bc0,19adf46,Minh Vu,vuhoangminh97@gmail.com,2026-08-11T16:48:32+02:00,GitHub,noreply@github.com,2026-08-11T10:48:32-04:00,fix(types): require map key type during JSON decoding (#1711),,63e44c1dfdb256b037e7a09d1431ae6ab930f1b0,1711,false,,2,11,0,types.go; types_test.go
 apache/iceberg-go,760d6ea953af5fcf75fc14fc92c09ee46550339e,760d6ea,Minh Vu,vuhoangminh97@gmail.com,2026-08-11T16:48:52+02:00,GitHub,noreply@github.com,2026-08-11T10:48:52-04:00,fix(literals): correct below-min marshal error (#1713),,19adf463affa617b0ad6cc7118b57fe5eb531bc0,1713,false,,2,7,1,literals.go; literals_test.go
+apache/iceberg-go,e49dc932c314f3d22a82fa0ccea6594679384b86,e49dc93,Minh Vu,vuhoangminh97@gmail.com,2026-08-12T19:50:43+02:00,GitHub,noreply@github.com,2026-08-12T13:50:43-04:00,fix(types): require map value type during JSON decoding (#1712),,760d6ea953af5fcf75fc14fc92c09ee46550339e,1712,false,,2,11,0,types.go; types_test.go
+apache/iceberg-go,65930fced49db397521cf25592c97d3cdff3d241,65930fc,Matt Faltyn,76570855+mattfaltyn@users.noreply.github.com,2026-08-12T19:50:58+02:00,GitHub,noreply@github.com,2026-08-12T13:50:58-04:00,fix(table): honor initial defaults in read filters (#1558),"* fix(table): honor initial defaults in read filters
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>
+
+* fix(table): address initial-default filter review
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>
+
+* fix: limit default folding to top-level fields
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>
+
+* fix: align default encoding across filters and projection
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>
+
+---------
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>",e49dc932c314f3d22a82fa0ccea6594679384b86,1558,false,,9,684,36,internal; table; types.go; types_test.go; visitors.go; visitors_test.go
+apache/iceberg-go,73222a326afbfad0b9f1379cda3cb7081d6d78a2,73222a3,Minh Vu,vuhoangminh97@gmail.com,2026-08-12T19:55:38+02:00,GitHub,noreply@github.com,2026-08-12T13:55:38-04:00,fix(sql): validate view identifiers at API boundaries (#1571),"* fix(sql): validate view identifiers at API boundaries
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(sql): clarify invalid view identifier cases
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(sql): validate namespace identifiers for view listing
+
+* fix(sql): preserve V0 view semantics during validation
+
+* test(sql): cover invalid view listing namespaces
+
+* style(sql): satisfy lint in view identifier test
+
+* fix(sql): keep view identifier validation at API boundaries
+
+* test(sql): cover nested view listing
+
+* fix(sql): reject empty namespace creation
+
+* fix(sql): validate dropped view identifiers
+
+* fix(sql): allow dropping legacy invalid views
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",65930fced49db397521cf25592c97d3cdff3d241,1571,false,,2,134,0,catalog
+apache/iceberg-go,a00734424daae5bcef16d92c515f1bd15e105126,a007344,Minh Vu,vuhoangminh97@gmail.com,2026-08-12T20:05:57+02:00,GitHub,noreply@github.com,2026-08-12T14:05:57-04:00,fix(table): apply per-task residual filters in ReadTasks (#1676),"* fix(table): apply per-task scan residuals
+
+* test(table): cover per-task residual edge cases",73222a326afbfad0b9f1379cda3cb7081d6d78a2,1676,false,,5,283,25,table
+apache/iceberg-go,a05ea31f22ef609958cb0815d458398850f766ab,a05ea31,Minh Vu,vuhoangminh97@gmail.com,2026-08-12T20:12:13+02:00,GitHub,noreply@github.com,2026-08-12T14:12:13-04:00,fix(table): close stale scan plan IO (#1683),"* fix(table): close stale scan plan IO
+
+* fix(table): transfer scan plan ownership
+
+* fix(table): keep remote scan IO reusable
+
+* style(table): satisfy nlreturn lint",a00734424daae5bcef16d92c515f1bd15e105126,1683,false,,4,457,43,table
+apache/iceberg-go,09810e2899c71d2089109cfb758ca6615405a6c9,09810e2,Digvijay,digvijay.vaghela@yahoo.com,2026-08-12T13:25:54-05:00,GitHub,noreply@github.com,2026-08-12T14:25:54-04:00,fix(hive): use 1.5 lock-check backoff scale to match Java (#1756),"Align calculateBackoff with MetastoreLock's checkLock retry schedule
+(scaleFactor 1.5) and keep the jitter floor replay on the same sequence.",a05ea31f22ef609958cb0815d458398850f766ab,1756,false,,3,84,58,catalog
+apache/iceberg-go,4aaf3b9e61635ff3a40e2f735ac199163c0dc999,4aaf3b9,Dima Kuznetsov,dmitrykuzn@gmail.com,2026-08-12T21:29:49+03:00,GitHub,noreply@github.com,2026-08-12T14:29:49-04:00,feat(dv): add SetRange and RunLengthEncode to RoaringPositionBitmap (#1758),"Set was the only mutator, so range-shaped deletes (dead blocks or row
+groups) cost one call per position and serialized as array or dense
+bitmap containers. SetRange marks [start, end) with one roaring AddRange
+per 2^32-position bucket, and SerializeDV now run-length encodes before
+emitting bytes: 100,000 contiguous positions drop from 8235 to 49 bytes.
+
+Mirrors Java's RoaringPositionBitmap.setRange/runLengthEncode and
+BitmapPositionDeleteIndex.serialize, which run-encodes before writing.
+Deviations: an inverted range is a no-op rather than an exception, and
+RunLengthEncode returns nothing (roaring's RunOptimize reports nothing).
+
+Java golden fixtures still match byte-for-byte, now including
+all-container-types-position-index.bin rebuilt via SetRange (132,561
+positions, 94 bytes). The comment on ...SingleArrayContainer describing
+the old serialize-time divergence from Java is corrected to match.
+
+Signed-off-by: Dima Kuznetsov <dima@eon.io>",09810e2899c71d2089109cfb758ca6615405a6c9,1758,false,,5,391,12,table
+apache/iceberg-go,08ac7cf27215fa0f6ac257df4fde5923729406f0,08ac7cf,jj.lee,63435794+jx2lee@users.noreply.github.com,2026-08-13T03:32:54+09:00,GitHub,noreply@github.com,2026-08-12T14:32:54-04:00,fix(cli): validate refs type before loading table (#1759),check ref types before load table,4aaf3b9e61635ff3a40e2f735ac199163c0dc999,1759,false,,2,36,0,cmd
+apache/iceberg-go,4a0a29174ac27dfd344902abc4ece9edcfefa729,4a0a291,Andrei Tserakhau,laskoviymishka@gmail.com,2026-08-12T20:36:52+02:00,GitHub,noreply@github.com,2026-08-12T14:36:52-04:00,test(catalog): add namespace lifecycle conformance tests (#1761),"* test(catalog): add namespace lifecycle conformance tests
+
+Create/list/drop and their error cases, extending the shared suite from #1694 (#1691). Wired for the SQL catalog.
+
+* fix(rest): return ErrNamespaceNotEmpty on 409 from DropNamespace
+
+The conformance suite's DropNamespaceNotEmpty test caught this: DropNamespace mapped only 404, so a non-empty drop surfaced as a generic REST error instead of catalog.ErrNamespaceNotEmpty.",08ac7cf27215fa0f6ac257df4fde5923729406f0,1761,false,,4,202,1,catalog
+apache/iceberg-go,c41efcc20b2afed0998a7ed23f8578b5197d0dc2,c41efcc,ryanworl,ryantworl@gmail.com,2026-08-12T13:38:18-05:00,GitHub,noreply@github.com,2026-08-12T14:38:18-04:00,fix(manifest): infer manifest list version from the embedded writer schema (#1762),"* fix(manifest): infer manifest list version from writer schema
+
+ReadManifestList selected its reader schema solely from the optional
+""format-version"" metadata key, assuming v1 when the key is absent. A
+valid v2/v3 manifest list from a writer that omits the key (e.g.
+DuckDB's iceberg extension) was silently decoded through the v1 schema,
+zeroing content, sequence_number, min_sequence_number, and first_row_id.
+
+Infer the version from the embedded writer schema instead, keyed on the
+spec field IDs (content 517 / sequence_number 515 imply v2+,
+first_row_id 520 implies v3) with field names as a fallback, and error
+when a present key claims v1 for a schema carrying v2+ fields rather
+than silently dropping them.
+
+Fixes #1760
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+* fix(manifest): address review — shared field-id helper, general version check
+
+Accept both int and float64 ""field-id"" props in schemaFieldID and reuse
+it for the manifest partition-field reader so the two sites can't drift,
+and generalize the format-version cross-check from the v1-only case to
+any key claiming a lower version than the writer schema carries (e.g.
+key=2 over a v3 schema, which would drop first_row_id on a rewrite).
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+---------
+
+Co-authored-by: Cursor <cursoragent@cursor.com>",4a0a29174ac27dfd344902abc4ece9edcfefa729,1762,false,Cursor,4,323,9,dev; manifest.go; manifest_list_version_test.go; testdata
+apache/iceberg-go,faa320c1c019744ad06382a0de5a4884e84ceabf,faa320c,Tanmay Rauth,t_rauth@apple.com,2026-08-12T11:42:49-07:00,GitHub,noreply@github.com,2026-08-12T14:42:49-04:00,feat(metrics): add OpenTelemetry reporter (#1236) (#1767),"Seventh PR of the metrics reporting framework. Adds an in-module
+metrics/otel package with an OpenTelemetry-backed reporter that maps
+every field of a ScanReport's ScanMetricsResult and a CommitReport's
+CommitMetricsResult to an OpenTelemetry instrument, so scan/commit
+metrics can flow to any OTLP backend.
+
+The host owns the OpenTelemetry SDK: the reporter takes a Meter from the
+global MeterProvider (or one supplied via WithMeter); with no SDK
+registered the instruments are no-ops. Durations are histograms (ms);
+every other field is a monotonic counter (bytes carry the By unit,
+counts are unit-less). By default scan metrics carry iceberg.table.name
+and commit metrics carry iceberg.table.name and iceberg.operation;
+iceberg.schema.id is opt-in via WithAttributes and snapshot id is never
+a metric attribute. It is an in-module package rather than a separate
+module because go.opentelemetry.io is already a transitive dependency.
+
+Names, units, and the attribute set mirror Java's OtelMetricsReporter
+(apache/iceberg#16250) so metrics stay consistent across
+implementations; treat them as provisional until that PR merges.",c41efcc20b2afed0998a7ed23f8578b5197d0dc2,1767,false,,3,701,3,go.mod; metrics
+apache/iceberg-go,19befd0a2b9d5858e9b488e4accda05da6b9db5f,19befd0,Badal Prasad Singh,badal@datazip.io,2026-08-13T00:16:49+05:30,GitHub,noreply@github.com,2026-08-12T14:46:49-04:00,fix(table): sort identifier field IDs for deterministic schema updates (#1777),"* fix: sort identifier field ids
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* chore: lint
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",faa320c1c019744ad06382a0de5a4884e84ceabf,1777,false,,2,35,0,table
+apache/iceberg-go,09edd28f13de78622238271bbf24f47d21406104,09edd28,Badal Prasad Singh,badal@datazip.io,2026-08-13T00:18:11+05:30,GitHub,noreply@github.com,2026-08-12T14:48:11-04:00,fix(table): delete column should check the column's own pending update (#1779),"fix: delete col should check the column's own pending update
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",19befd0a2b9d5858e9b488e4accda05da6b9db5f,1779,false,,2,80,2,table
+apache/iceberg-go,7b84e222eb24e8d39df0edad8af842bcdbe73c25,7b84e22,ryanworl,ryantworl@gmail.com,2026-08-12T13:49:46-05:00,GitHub,noreply@github.com,2026-08-12T14:49:46-04:00,fix(table): skip DELETED manifest entries in Snapshot.dataFiles (#1783),"Snapshot.dataFiles read manifest entries with discardDeleted=false and
+applied no status filter, so entries with status DELETED — tombstones
+recording a file's removal — were yielded as if the files were still
+reachable from the snapshot. Every caller wants live files only, so the
+leak turned each of them into a correctness bug:
+
+  - AddFiles' and AddDataFiles' duplicate walks reported false
+    ""already referenced"" conflicts for paths whose previous
+    incarnation was deleted, blocking legitimate re-adds,
+  - the ReplaceFiles-family belong-to-table checks matched
+    already-removed files, silently staging redundant re-deletes,
+  - classifyFilesForDeletions' full-table branch collected
+    tombstoned files as deletion candidates.
+
+Discard DELETED entries when reading each manifest, using the manifest
+reader's existing discardDeleted flag. Regression tests cover the
+iterator level (ADDED and EXISTING entries are yielded, DELETED are
+not, across data and delete manifests) and the caller level (a path
+removed by a rewrite can be re-added without a false duplicate error).
+
+Signed-off-by: ryan worl <ryantworl@gmail.com>
+Co-authored-by: Cursor <cursoragent@cursor.com>",09edd28f13de78622238271bbf24f47d21406104,1783,false,Cursor,3,187,1,table
+apache/iceberg-go,852392f275dfff426225bf86df42bde253d4220d,852392f,ryanworl,ryantworl@gmail.com,2026-08-12T13:51:47-05:00,GitHub,noreply@github.com,2026-08-12T14:51:47-04:00,fix(table): fail commits with delete-file removals instead of replaying (#1784),"* fix(table): fail commits with delete-file removals instead of replaying
+
+Delete-file removals (the deleteFilesToRemove argument of
+Transaction.ReplaceFiles, and the ref-keyed deletion-vector
+supersession performed by v3 merge-on-read deletes) are resolved
+against the snapshot the writer built on — removal identity is
+snapshot-relative. If such a commit hit a CAS conflict and went
+through doCommit's refresh-and-replay, a concurrent replacement could
+be inherited from the fresh base while the stale removal replays as a
+no-op (checkRemovedFiles deliberately treats a superseded entry as
+absent), stranding two live deletion vectors on one data file — which
+the v3 spec forbids — or silently discarding a peer's delete against
+a data file the replay removes.
+
+Snapshot producers now mark the transaction non-replayable when the
+staged snapshot carries delete-file removals (path-keyed delete files
+or ref-keyed deletion vectors); on ErrCommitFailed the commit fails
+immediately instead of entering refresh-and-replay. The caller must
+re-resolve the removal against the current snapshot and try again.
+Data-file removals stay replayable: they are path-keyed and the retry
+rebuild already fails terminally when the path is gone from the fresh
+base.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+* fix(table): address review feedback on no-replay removals
+
+Annotate the fail-fast error so callers can distinguish ""refused to
+replay snapshot-relative removals"" from an exhausted retry budget
+(errors.Is on ErrCommitFailed is preserved), clarify in the
+CommitNumRetriesKey doc that recovery requires a new transaction on a
+reloaded table, and pin that a no-replay conflict leaves the
+transaction retriable rather than latched as committed.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+* docs(table): deduplicate the no-replay rationale
+
+The snapshot-relative-removal argument was repeated at four sites.
+Keep the full explanation at the producer flag site (where the
+decision is made and checkRemovedFiles lives) and the user-facing
+CommitNumRetriesKey doc; the commitOpts field, the doCommit early
+return, and the Transaction field now state the mechanism and point
+there.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+---------
+
+Co-authored-by: Cursor <cursoragent@cursor.com>",7b84e222eb24e8d39df0edad8af842bcdbe73c25,1784,false,Cursor,5,350,0,table
+apache/iceberg-go,5eaa379dea02562eef5d985a26a03ffc1aab8fe4,5eaa379,Badal Prasad Singh,badal@datazip.io,2026-08-13T00:38:21+05:30,GitHub,noreply@github.com,2026-08-12T15:08:21-04:00,hotfix: fix golangci-lint errors (#1789),"* hotfix: lint
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* fix: minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",852392f275dfff426225bf86df42bde253d4220d,1789,false,,2,43,40,table
+apache/iceberg-go,58e2732498280250de766501f05ada49cf1b132b,58e2732,Badal Prasad Singh,badal@datazip.io,2026-08-13T00:49:13+05:30,GitHub,noreply@github.com,2026-08-12T15:19:13-04:00,fix(table): validate write default type in update column (#1788),"fix: validate write default
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",5eaa379dea02562eef5d985a26a03ffc1aab8fe4,1788,false,,2,88,1,table
+apache/iceberg-go,d0f1ff1c3e703c2af31c788d179ab7545a322fd0,d0f1ff1,Roli Bhardwaj,90590085+technicolorbeat@users.noreply.github.com,2026-08-12T15:28:17-04:00,GitHub,noreply@github.com,2026-08-12T15:28:17-04:00,feat(rest): support snapshot-loading-mode catalog property in loadTable (#1749),"* feat(rest): add LoadTableWithSnapshotMode for ?snapshots query parameter
+
+Add support for the optional `snapshots` query parameter on the REST
+catalog loadTable endpoint. The parameter controls which snapshots are
+returned in the table metadata response (`all` or `refs`).
+
+- Export SnapshotMode type with SnapshotModeAll and SnapshotModeRefs
+- Add LoadTableWithSnapshotMode(ctx, identifier, SnapshotMode) on *Catalog
+- Add withQueryParams reqOption and queryParams field to reqConfig so
+  the do() helper can append query parameters to any GET request
+- LoadTable is unchanged (no query param sent, server default applies)
+
+Closes #1748
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+* style(rest): tighten comments on SnapshotMode and related helpers
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>
+
+* style(rest): remove identifier names from comments
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>
+
+* update SnapshotModeRefs comment
+
+* feat(rest): configure snapshot-loading-mode at catalog level
+
+Address reviewer feedback:
+
+- Drop LoadTableWithSnapshotMode; snapshot mode is now a catalog-level
+  property (snapshot-loading-mode=refs|all) read once at initialization,
+  matching the Java RESTSessionCatalog behaviour
+- Fix query-string merging in do(): use u.Query()+q.Add() to preserve
+  any existing params on the base URI instead of overwriting RawQuery
+- Restore Go doc-comment convention: exported identifiers start with
+  their own name
+- Assert ?snapshots is absent in TestLoadTable200
+- Add TestLoadTableWithSnapshotModeAll alongside the existing refs test
+- Extract shared response JSON into loadTableSnapshotModeMetadata const
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>
+
+* test(rest): use distinct multi-snapshot responses in snapshot mode tests
+
+TestLoadTableWithSnapshotModeRefs now returns a single snapshot
+(only the one referenced by main) and asserts len==1.
+TestLoadTableWithSnapshotModeAll returns two snapshots (current +
+an unreferenced historical one) and asserts both are present,
+reflecting the actual semantic difference between the two modes.
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>
+
+* docs(rest): document partial-snapshot limitation for refs mode
+
+Add a note to SnapshotModeRefs and LoadTable that time-travel to an
+unreferenced snapshot will fail when snapshot-loading-mode=refs, and
+direct callers to use ""all"" or omit the property if they need full
+snapshot history.
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>
+
+* validate(rest): client-side snapshot value validation
+
+---------
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>
+Co-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",58e2732498280250de766501f05ada49cf1b132b,1749,false,Claude Sonnet 4.6; Matt Topol,2,181,2,catalog
+apache/iceberg-go,a56ca68bdf56bbf3181506cbb9a7cb2de482e0e2,a56ca68,Minh Vu,vuhoangminh97@gmail.com,2026-08-12T21:29:16+02:00,GitHub,noreply@github.com,2026-08-12T15:29:16-04:00,perf(table): index equality deletes by partition and sequence (#1752),"* perf(table): index equality deletes by partition and sequence
+
+* fix(table): correct equality delete partition matching
+
+* fix(table): preserve equality delete cleanup APIs
+
+---------
+
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",d0f1ff1c3e703c2af31c788d179ab7545a322fd0,1752,false,Matt Topol,14,1008,272,cmd; table
+apache/iceberg-go,8a85911ca53b440bbb2ecfa5353172e67d808057,8a85911,Digvijay,digvijay.vaghela@yahoo.com,2026-08-12T14:35:34-05:00,GitHub,noreply@github.com,2026-08-12T15:35:34-04:00,fix(hive): align lock-check config keys and defaults with Java (#1763),"* fix(hive): align lock-check config keys and defaults with Java
+
+Accept iceberg.hive.lock-check-*-ms as the primary property names, keep
+the Go duration-string keys as aliases, match Java's 50ms/5s defaults,
+and ignore invalid wait/retry values at parse time.
+
+Fixes #1716
+
+Signed-off-by: Digvijay <digvijay.vaghela@yahoo.com>
+
+* fix(hive): correct lock-check default comment after 1.5× rebase
+
+Recompute applyJitter/test narratives for the Java 50ms default under the
+merged 1.5 scale, and stop saying ApplyProperties accepts min>=max.
+
+---------
+
+Signed-off-by: Digvijay <digvijay.vaghela@yahoo.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",a56ca68bdf56bbf3181506cbb9a7cb2de482e0e2,1763,false,Matt Topol,4,168,39,catalog; website
+apache/iceberg-go,3774c9789259ff365e21c9482604113c46d8053b,3774c97,ryanworl,ryantworl@gmail.com,2026-08-12T15:37:17-05:00,GitHub,noreply@github.com,2026-08-12T16:37:17-04:00,feat(table): add Transaction.AssertRefSnapshotID (Java UpdateRequirements parity) (#1786),"* fix(table): reject conflicting same-ref assertions and build ref requirements from the base state
+
+Transaction.apply deduplicated assert-ref-snapshot-id requirements by
+(type, ref) but silently kept the first when two assertions for the
+same ref required different snapshot ids. Both can never hold against
+the catalog: keeping either silently drops a check the caller
+registered, so reject the pair at apply time with a named error
+instead of a confusing catalog rejection. Only requirements actually
+appended are validated against the staged metadata — a deduplicated
+twin re-asserts base state the staged metadata has intentionally
+moved past; its kept twin was validated when first added.
+
+Snapshot producers built their assertion from the staged metadata's
+current snapshot. For the second producer commit in one transaction
+that is an intermediate snapshot the catalog has never seen, which
+the new conflict check would correctly reject (previously masked by
+dedup silently keeping the first assertion). Producers now assert the
+BASE table's branch head — the catalog state the writer actually
+read, and the only assertion that can hold at commit time. This
+matches Java's UpdateRequirements, which accumulates one assertion
+per ref built from the base table state.
+
+RollbackToSnapshot and ExpireSnapshots built their assertions from
+the staged refs the same way and are moved to base-state requirements
+too; refs staged by the transaction itself (absent on the base) get
+no assertion from them, since the update that created such a ref
+already carries its own base-state requirement.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+* feat(table): add Transaction.AssertRefSnapshotID for compare-and-swap commits
+
+Metadata-only transactions (e.g. exactly-once bookkeeping that records
+ingestion progress in table properties) cannot detect that the branch
+changed between their read and their commit: the branch assertion
+Commit builds implicitly is rewritten to the fresh head between
+retries and the commit is replayed, so two such committers silently
+interleave and the later one clobbers the earlier one's properties.
+Expose the existing requirement so a committer can require that the
+branch is unchanged from the head it read:
+
+    func (t *Transaction) AssertRefSnapshotID(branch string) error
+
+An empty branch defaults to the transaction's target branch; a branch
+that does not exist on the base is required to stay absent. The
+requirement asserts the BASE table's branch head — the same state
+snapshot producers assert, matching Java's UpdateRequirements — so an
+explicit requirement and a producer-built one for the same branch
+collapse to one regardless of registration order. The branch is
+marked pinned before the requirement becomes visible so a concurrent
+Commit can never observe the assertion without its pinned status.
+
+doCommit's refresh-and-replay must not rewrite these explicit
+assertions to the fresh head between retries — the caller asked for
+compare-and-swap semantics — so pinned branches are exempted from
+rewriteRefSnapshotRequirements, and once the refreshed metadata shows
+a pinned assertion can no longer hold the commit fails fast with
+ErrCommitFailed instead of burning the remaining retries.
+
+The empty-append test pins the workaround this API replaces: an empty
+AddFiles commits a legal empty snapshot that moves the branch head
+(Java newFastAppend().commit() parity), which writers can use to
+serialize metadata-only commits through a producer's assertion at the
+cost of an empty snapshot per commit.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+---------
+
+Co-authored-by: Cursor <cursoragent@cursor.com>",8a85911ca53b440bbb2ecfa5353172e67d808057,1786,false,Cursor,7,707,69,table
+apache/iceberg-go,19cbebea3c487583d00fe90e2c705aeaf928e95e,19cbebe,ryanworl,ryantworl@gmail.com,2026-08-12T15:59:28-05:00,GitHub,noreply@github.com,2026-08-12T16:59:28-04:00,feat(table): RowDelta.RemoveDeletes for deletion-vector supersession (#1785),"* feat(table): add Positions iterator to RoaringPositionBitmap
+
+RoaringPositionBitmap exposes Set, Contains, and Cardinality but no way
+to enumerate the positions it holds. Consumers that need the contents
+of an existing deletion vector (e.g. to merge it into a superseding DV,
+as the v3 spec requires when a data file's DV is replaced) currently
+have to Serialize() the bitmap and re-parse the Iceberg portable wire
+format by hand.
+
+Add Positions() iter.Seq[uint64], yielding every set position in
+ascending 64-bit order. The yielded values are the same ones passed to
+Set, mirroring Java's RoaringPositionBitmap#forEach.
+
+Tests cover the empty bitmap, a single position above the 32-bit
+boundary, ascending order across multiple bitmap keys with agreement
+against Cardinality, and early termination by the consumer.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+* feat(table): support deletion vector supersession in RowDelta
+
+The v3 spec allows at most one live deletion vector per data file. A
+writer adding a DV for a data file that already carries one must write
+a DV containing the previous DV's positions and remove the previous DV
+entry in the same snapshot. Java's RowDelta supports this through
+removeDeletes; the Go RowDelta could only add delete files, forcing
+consumers into a two-snapshot ReplaceFiles + RowDelta workaround whose
+intermediate snapshot briefly resurrects the previously deleted rows.
+The engine-internal merge-on-read delete path already supersedes DVs
+this way (writePositionDeletesForFiles); this exposes the same
+capability to library users who write their own deletion vectors.
+
+Add RowDelta.RemoveDeletes(files ...iceberg.DataFile), mirroring Java's
+RowDelta#removeDeletes, restricted to deletion vectors. Removal
+identity is (file path, referenced data file), not path alone: a
+multi-blob Puffin file legally carries DVs for several data files under
+one path, one manifest entry each, and superseding one blob must not
+drop its siblings' entries. The snapshot producer's existing
+removeDeletionVector plumbing already keys removals this way, so only
+the matching entry is recorded as DELETED while other live entries at
+the same Puffin path survive.
+
+Commit first resolves every removed file to its live entry in the
+current snapshot's delete manifests — when several live entries share
+the removed file's path, its referenced data file selects among them,
+and the removal is rejected as ambiguous if it does not identify
+exactly one — then validates against the RESOLVED entries, never the
+caller's copies, so a stale or forged DataFile with a real path but a
+wrong referenced_data_file cannot pair a removal with an unrelated
+replacement:
+
+  - every resolved entry must be a DV (Puffin pos-delete with
+    referenced_data_file); expunging plain pos/eq-delete files remains
+    the rewrite path's job,
+  - every removed DV's referenced data file — as recorded by the live
+    entry — gets a replacement DV among the added delete files, so a
+    delta cannot silently resurrect rows (content coverage stays the
+    writer's responsibility, as in Java),
+  - a removed file that does not resolve to a live delete entry is an
+    error, as are two removals resolving to live entries that reference
+    the same data file (the producer keys DV removals by referenced
+    data file, and two live DVs on one data file is a spec violation to
+    surface, not paper over); the DELETED record is produced from the
+    manifest's own entry so it keeps its spec ID, partition, and
+    sequence numbers. Blob offset and size are not part of the
+    identity: the spec's one live DV per data file makes (path,
+    referenced data file) unique among live entries, and every produced
+    record comes from the live entry, so stale caller-side offsets are
+    harmless.
+
+When removals are present the delta commits through the overwrite
+producer, which already drops removed entries from inherited delete
+manifests and records them with status DELETED; the overwrite
+producer's default conflict validator is suppressed in favor of
+RowDelta's own, the same way rewrites do. Without removals the
+fast-append path is unchanged.
+
+Also correct the stale comments on commitOpts.validators and RowDelta
+claiming pre-flight validators run only on the first attempt; doCommit
+runs them on every attempt of the retry loop against the freshly
+refreshed catalog state.
+
+The end-to-end test builds a v3 table with a live DV, commits a
+superseding RowDelta, and asserts single-snapshot shape (operation
+delete, added and removed delete file counts), exactly one live DV
+with the superseded entry marked DELETED, and row visibility at plan
+level (the scanner plans only the replacement DV and its bitmap hides
+the union of positions) and through materialized Arrow records. A
+shared multi-blob Puffin test supersedes one of two DVs sharing a
+Puffin path and asserts the sibling entry stays live (its rows still
+hidden) alongside the DELETED record for the same path, plus
+superseding both blobs in one delta. Validation failures are covered
+for a missing replacement, a non-DV live entry behind a DV-shaped
+caller copy, a forged reference targeting an unrelated DV, stale
+caller metadata pairing correctly per the live entry, ambiguous and
+unmatched shared-path removals, duplicate removals, an unknown file,
+and an empty table.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+* docs(table): pin Positions iteration-safety semantics
+
+Document that RoaringPositionBitmap.Positions captures the key set up
+front while consulting each bucket lazily, so the bitmap must not be
+mutated during iteration — consistent with the rest of the type, which
+is not safe for concurrent use.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+* fix(table): address review feedback on RowDelta DV supersession
+
+Close the converse validation gap: the delta validated that every
+removed DV has a replacement among the added delete files, but not
+that every added replacement's data file has its live DV removed. A
+supersession delta could add a replacement DV for a data file whose
+live DV was not in RemoveDeletes, committing two live DVs on that
+file — a v3 spec violation that scan planning then rejects. The
+manifest walk the removals already perform now also collects every
+live DV whose referenced data file gets a replacement in this delta,
+and validation requires each to be among the resolved removals.
+Deltas without removals do not pay for (or get) this check; plain
+AddDeletes stays unvalidated, matching Java, and is called out as
+follow-up work. The same pass also rejects two added replacement DVs
+referencing one data file — guaranteed corruption regardless of
+removals — and detects tables already corrupted with duplicate live
+DV entries, both at one Puffin path (where the producer would
+tombstone every matching entry while the summary counts one removal)
+and across distinct paths (where the sibling duplicate would survive
+next to the replacement).
+
+Also from review:
+
+  - a removal-only delta now reaches the replacement-required error
+    instead of failing the empty-delta guard with a message that never
+    mentions removals,
+  - removals require format version >= 3 up front, instead of failing
+    resolution with a confusing does-not-belong lookup error on v2,
+  - a live Puffin DV entry without a recorded referenced data file
+    gets its own error instead of being reported as a non-DV,
+  - RemoveDeletes documents that a single live entry at the removed
+    path is selected regardless of the caller copy's reference (the
+    reference only disambiguates shared paths), and both RemoveDeletes
+    and Commit document that removal-carrying commits are
+    non-replayable: a CAS conflict fails with ErrCommitFailed and the
+    caller must rebuild against a reloaded table,
+  - the post-commit validator comment no longer claims the producer is
+    always fast-append.
+
+New tests cover the surviving-live-DV rejection, duplicate
+replacements for one data file, removal-only deltas, both
+duplicate-live-DV corruption shapes, the v2 guard, and an end-to-end
+RowDelta supersession race pinning fail-on-first-CAS-conflict with the
+peer's DV as the sole survivor.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+---------
+
+Co-authored-by: Cursor <cursoragent@cursor.com>",3774c9789259ff365e21c9482604113c46d8053b,1785,false,Cursor,5,1225,19,table
+apache/iceberg-go,af9d6599c63c6eda4c2ff2b67808ef14c60b564d,af9d659,Matt Faltyn,76570855+mattfaltyn@users.noreply.github.com,2026-08-12T23:02:01+02:00,GitHub,noreply@github.com,2026-08-12T17:02:01-04:00,fix(partitions): preserve source-less void tombstones (#1794),"* fix(partitions): preserve source-less void tombstones
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>
+
+* fix(table): preserve source-less tombstone names
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>
+
+* ci: retry failed linter download
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>
+
+---------
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>",19cbebea3c487583d00fe90e2c705aeaf928e95e,1794,false,,4,88,9,partitions.go; partitions_test.go; table
+apache/iceberg-go,10e3b39d5bed819ecb39eac7718c372eeb189463,10e3b39,Minh Vu,vuhoangminh97@gmail.com,2026-08-13T12:56:14+02:00,GitHub,noreply@github.com,2026-08-13T12:56:14+02:00,feat(metrics): include environment context in commit reports (#1680),"* feat(metrics): include environment context in commit reports
+
+* fix(metrics): retain iceberg version metadata
+
+* fix(metrics): align environment context with Java
+
+* fix(metrics): report iceberg-go module version
+
+* fix(table): persist environment context in snapshots",af9d6599c63c6eda4c2ff2b67808ef14c60b564d,1680,false,,11,440,13,environment_context.go; environment_context_test.go; table; utils.go; utils_test.go
+apache/iceberg-go,f85d00c9a644f2da8755e2b7b69a59a91f29e318,f85d00c,Minh Vu,vuhoangminh97@gmail.com,2026-08-13T12:57:24+02:00,GitHub,noreply@github.com,2026-08-13T12:57:24+02:00,fix(table): replace metadata state during JSON decoding (#1648),"* fix(table): replace metadata state during JSON decoding
+
+* test(table): cover required metadata state on reuse
+
+* test(table): cover metadata decode failures
+
+* test(table): cover optional metadata replacement
+
+* test(table): strengthen metadata decode failure coverage
+
+* test(table): complete metadata JSON decode coverage
+
+Cover v1 in all metadata state assertions, exercise malformed JSON failures, and seed receiver reuse with non-zero metadata state.
+
+* fix(table): reject missing sequence numbers in v2 metadata
+
+* style(table): satisfy nlreturn lint",10e3b39d5bed819ecb39eac7718c372eeb189463,1648,false,,4,270,25,table
+apache/iceberg-go,52fba845983c5d0690aa0257793d0f7dd742ab43,52fba84,Minh Vu,vuhoangminh97@gmail.com,2026-08-13T12:57:52+02:00,GitHub,noreply@github.com,2026-08-13T12:57:52+02:00,fix(table): preserve field state on failed JSON decoding (#1647),"* fix(table): preserve field state on failed JSON decoding
+
+* test(table): cover field decode failure paths
+
+* test(table): cover field state replacement
+
+* test: strengthen JSON state replacement coverage
+
+* test: use invalid parameterized transforms
+
+* test: assert decoded partition transform",f85d00c9a644f2da8755e2b7b69a59a91f29e318,1647,false,,4,147,19,partitions.go; partitions_test.go; table
+apache/iceberg-go,3d17b7c419e44789430730c677efc3e5fefc6538,3d17b7c,Badal Prasad Singh,badal@datazip.io,2026-08-13T16:28:22+05:30,GitHub,noreply@github.com,2026-08-13T12:58:22+02:00,fix(table): reuse historical partition field IDs on v2+ tables when re-adding a removed field (#1641),"* fix: resuse historical field id during update spec
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* fix: preserve partition field ID on same-update re-add
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* minor: lint
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",52fba845983c5d0690aa0257793d0f7dd742ab43,1641,false,,2,359,3,table
+apache/iceberg-go,46379b985ca5d825216245c48296c7cef4c58918,46379b9,Minh Vu,vuhoangminh97@gmail.com,2026-08-13T12:59:35+02:00,GitHub,noreply@github.com,2026-08-13T12:59:35+02:00,feat(table): add manifests metadata table (#1697),"* feat(table): add manifests metadata table
+
+* chore: fix lint findings
+
+* fix: match manifest partition summary schema
+
+* test(table): cover manifest metadata inspection
+
+* fix(table): validate manifest metadata inspection
+
+* fix(table): decode promoted manifest partition bounds
+
+* fix(table): satisfy manifest inspection formatter
+
+* fix(table): validate manifest list counts
+
+* fix(table): address manifests inspection review
+
+* fix(table): preserve manifest metadata semantics
+
+* fix(table): validate v1 manifest count sentinel",3d17b7c419e44789430730c677efc3e5fefc6538,1697,false,,2,786,0,table
+apache/iceberg-go,96be8837cd1923367f88f437ef757c731d16772e,96be883,Digvijay,digvijay.vaghela@yahoo.com,2026-08-13T06:01:31-05:00,GitHub,noreply@github.com,2026-08-13T13:01:31+02:00,fix(cli): support SQL catalog and validate DynamoDB type (#1707),"* fix(cli): support SQL catalog and validate DynamoDB type
+
+Wire --catalog sql through catalog.Load with sql-driver/sql-dialect
+flags (and matching config keys). Recognize dynamodb with a clear
+not-implemented error instead of unrecognized catalog type.
+
+Signed-off-by: Digvijay <digvijay.vaghela@yahoo.com>
+
+* fix(cli): prevent EnvConfig URI bleed into SQL catalog
+
+Always pass uri/warehouse from CLI args into catalog.Load so an empty
+--uri does not inherit a REST (or other) URI from EnvConfig.
+
+Signed-off-by: Digvijay <digvijay.vaghela@yahoo.com>
+
+* fix(cli): address SQL catalog review feedback
+
+Narrow SQL driver/dialect docs to the drivers compiled into the default
+binary, keep config-file URI/warehouse/credential values while blocking
+EnvConfig bleed, route the DynamoDB error through the output path, and
+cover a missing --sql-driver path through catalog.Load.
+
+Signed-off-by: Digvijay <digvijay.vaghela@yahoo.com>
+
+---------
+
+Signed-off-by: Digvijay <digvijay.vaghela@yahoo.com>",46379b985ca5d825216245c48296c7cef4c58918,1707,false,,6,192,4,cmd; config; website
+apache/iceberg-go,dd09e32f2d8da5edf786158297af153a6aa571ec,dd09e32,Minh Vu,vuhoangminh97@gmail.com,2026-08-13T13:26:48+02:00,GitHub,noreply@github.com,2026-08-13T13:26:48+02:00,feat(table): add data files metadata table (#1698),"* feat(table): add data files metadata table
+
+* chore: fix lint findings
+
+* fix: support evolved partition specs in data files
+
+* chore: fix lint findings
+
+* fix(table): support decimal partition metadata values
+
+* perf(table): stream metadata file inspection batches
+
+* fix(table): validate evolved partition fields
+
+* fix(table): satisfy lint for partition metadata tests
+
+* fix(table): harden data files metadata inspection
+
+* fix(table): remove deprecated distinct counts
+
+* fix(table): validate inspect partition transforms
+
+* fix(table): preserve streamed record ownership",96be8837cd1923367f88f437ef757c731d16772e,1698,false,,2,1234,0,table
+apache/iceberg-go,5f44b7d6f2c2fe9c0209df9d658c6b50c0c63257,5f44b7d,Minh Vu,vuhoangminh97@gmail.com,2026-08-13T13:28:46+02:00,GitHub,noreply@github.com,2026-08-13T13:28:46+02:00,fix(manifest): protect DataFile metadata from external mutation (#1575),"* fix(manifest): protect DataFile metadata from external mutation
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(manifest): strengthen DataFile builder isolation
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(manifest): avoid defensive copies in internal evaluators
+
+Signed-off-by: Hoang Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(manifest): benchmark borrowed file statistics
+
+* perf(manifest): avoid duplicate partition value clone
+
+* fix(manifest): complete DataFile metadata isolation
+
+* test(manifest): verify decoded metadata ownership
+
+* docs(manifest): clarify borrowed data file stats
+
+* perf(table): borrow partition data during planning
+
+* fix(manifest): isolate mutable data file metadata
+
+* perf(manifest): avoid defensive copies on trusted paths
+
+* fix(table): complete DataFile defensive access paths
+
+* fix(table): keep borrowed DV metadata on rebases
+
+* fix(manifest): copy retained partition data
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Signed-off-by: Hoang Minh Vu <vuhoangminh97@gmail.com>",dd09e32f2d8da5edf786158297af153a6aa571ec,1575,false,,24,1121,82,data_file_codec.go; data_file_refs.go; internal; manifest.go; manifest_test.go; table
