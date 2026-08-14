@@ -29630,3 +29630,40 @@ _row_id, whose fallback is positional, is a later PR.
 * refactor: address review on coalesce _last_updated_sequence_number
 
 * test: index all _last_updated_sequence_number transformer tests by name",c71965a4632f7a55f75cd2b9ab377864d0dd7361,2985,false,,3,517,93,crates
+apache/iceberg-rust,c1f45f88338ec17056db2c478cb3cfe522c08e36,c1f45f8,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-08-14T01:25:20+08:00,GitHub,noreply@github.com,2026-08-13T10:25:20-07:00,feat!(rest): introduce AuthManager/AuthSession and migrate OAuth2 (#2838),"* feat(rest): introduce AuthManager/AuthSession and migrate OAuth2
+
+* docs(rest): tighten auth comments
+
+* fix(rest): address auth review feedback
+
+- hold the token lock across the OAuth2 exchange (single flight)
+- three-state AuthRequestBody: Empty/Buffered/Streaming; pub AuthRequest::new
+- zeroize OAuth2 secrets via a redacting SensitiveString
+- split the OAuth2 session into static-token and client-credentials types
+- init_session returns Box<dyn AuthSession>; catalog_session stays Arc
+
+* chore: sort rest catalog dependencies for taplo
+
+* refactor(rest): address committer review
+
+- unset rest.auth.type resolves to oauth2 only when a token, credential
+  or oauth2-server-uri is configured, none otherwise
+- drop RestCatalog::invalidate_token/regenerate_token and
+  AuthSession::invalidate/refresh (out-of-box refresh tracked separately)
+- hint at with_auth_manager for unknown auth types
+
+* feat(rest): warn when inferring oauth2 from legacy auth properties
+
+* refactor(rest): use iceberg::Credential for OAuth2 secrets
+
+Replaces the crate-private SensitiveString with the equivalent
+iceberg::Credential introduced in #2836.
+
+* refactor(rest): move auth out of HttpClient, hand managers the client and props
+
+* test(rest): move the oauth2 session test next to its module",64079fcb7b78cb6540f8099a1e349f797e9c339b,2838,false,,9,2177,585,Cargo.lock; crates
+apache/iceberg-rust,04b07e8c118ef45730d383ed749f80174abdd46b,04b07e8,Jannik Steinmann,jannik.steinmann@datadoghq.com,2026-08-13T21:25:54+02:00,GitHub,noreply@github.com,2026-08-13T12:25:54-07:00,Rename RestContext to RestClient (#2994),"* Rename RestContext to RestClient
+
+* Specify AuthSession variables names to auth_session
+
+Re-generate public API",c1f45f88338ec17056db2c478cb3cfe522c08e36,2994,false,,3,129,126,crates
