@@ -26030,3 +26030,267 @@ Signed-off-by: Hoang Minh Vu <vuhoangminh97@gmail.com>
 
 Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
 Signed-off-by: Hoang Minh Vu <vuhoangminh97@gmail.com>",dd09e32f2d8da5edf786158297af153a6aa571ec,1575,false,,24,1121,82,data_file_codec.go; data_file_refs.go; internal; manifest.go; manifest_test.go; table
+apache/iceberg-go,5674257d05a18fe0918f6c43c4f55ea38d0e1e1b,5674257,Badal Prasad Singh,badal@datazip.io,2026-08-14T21:26:19+05:30,GitHub,noreply@github.com,2026-08-14T11:56:19-04:00,fix(table): resolve write parent snapshot from target branch head instead of main (#1637),"* fix: resolve parent snapshot from target branch head
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* fix: complete branch-aware snapshot resolution for write planning
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* chore: lint
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* fix: snapshot chaining
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* add: guard
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",5f44b7d6f2c2fe9c0209df9d658c6b50c0c63257,1637,false,,9,896,23,table
+apache/iceberg-go,f7363c333d294c329a71ed35c4ec1d1e9fa78698,f7363c3,Badal Prasad Singh,badal@datazip.io,2026-08-14T21:26:39+05:30,GitHub,noreply@github.com,2026-08-14T11:56:39-04:00,fix(table): update spec reading stale metadata in chained transactions (#1651),"* fix: update spec reading stale metadata in chained transactions
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* chore: minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* fix: resolve chained partition spec update requirements
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* fix: minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* fix: minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* chore: minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",5674257d05a18fe0918f6c43c4f55ea38d0e1e1b,1651,false,,4,312,32,table
+apache/iceberg-go,d3698ab8ae43f095cabd31386fb8326660a4c457,d3698ab,Minh Vu,vuhoangminh97@gmail.com,2026-08-14T17:57:00+02:00,GitHub,noreply@github.com,2026-08-14T11:57:00-04:00,feat(table): add refs metadata table (#1695),"* feat(table): add refs metadata table
+
+* fix(table): guard refs retention conversion
+
+* test(table): pin refs int32 boundary
+
+* fix(table): address refs metadata review
+
+* test(table): preserve history fixture identifier",f7363c333d294c329a71ed35c4ec1d1e9fa78698,1695,false,,2,273,2,table
+apache/iceberg-go,494cfbe4e8412414f04f64f015b391aa6c563f12,494cfbe,Minh Vu,vuhoangminh97@gmail.com,2026-08-14T17:57:27+02:00,GitHub,noreply@github.com,2026-08-14T11:57:27-04:00,feat(table): add incremental append scan (#1702),"* fix(table): apply per-task scan residuals
+
+* test(table): cover per-task residual edge cases
+
+* feat(table): add incremental append scan
+
+* chore: fix lint findings
+
+* fix: deduplicate incremental append manifests
+
+* fix(table): honor incremental scan snapshot options
+
+* test(table): cover expired incremental scan parents
+
+* fix(table): preserve incremental scan contracts
+
+* fix(table): align incremental planning semantics
+
+* fix(table): preserve incremental scan residuals
+
+* fix(table): repair scanner residual test setup
+
+* fix(table): format scan filter visitor
+
+* fix(table): address incremental append scan review
+
+* fix(table): validate incremental snapshot operations
+
+* fix(table): preserve incremental residual binding",d3698ab8ae43f095cabd31386fb8326660a4c457,1702,false,,9,1168,6,table
+apache/iceberg-go,3382dbb334ba2b34fb87f6599e3823f343214499,3382dbb,Minh Vu,vuhoangminh97@gmail.com,2026-08-14T17:57:48+02:00,GitHub,noreply@github.com,2026-08-14T11:57:48-04:00,fix(table): preserve embedded v1 snapshot manifests (#1727),"* fix(table): preserve v1 embedded manifests
+
+* fix(table): preserve v1 manifest metadata
+
+* fix(table): replace snapshot state during JSON decode
+
+* fix(table): normalize snapshot manifest representations
+
+* fix(table): preserve embedded snapshot sequence numbers
+
+* test(table): cover embedded v1 manifest inheritance",494cfbe4e8412414f04f64f015b391aa6c563f12,1727,false,,5,365,9,table
+apache/iceberg-go,a47faed5cc0bdc010397d22bfcdd5bc5d06b12d8,a47faed,Minh Vu,vuhoangminh97@gmail.com,2026-08-14T17:58:09+02:00,GitHub,noreply@github.com,2026-08-14T11:58:09-04:00,perf(table): reuse equality-delete key sets across scan tasks (#1754),perf(table): reuse equality delete sets across tasks,3382dbb334ba2b34fb87f6599e3823f343214499,1754,false,,4,469,32,table
+apache/iceberg-go,7821545a4493ad3176b327cefbeeeccdad5b216b,7821545,Minh Vu,vuhoangminh97@gmail.com,2026-08-14T17:58:37+02:00,GitHub,noreply@github.com,2026-08-14T11:58:37-04:00,perf(table): batch concurrent manifest entry collection (#1755),"* perf(table): batch concurrent manifest entry collection
+
+* test(table): align manifest benchmark concurrency
+
+* test(table): cover larger manifest batches",a47faed5cc0bdc010397d22bfcdd5bc5d06b12d8,1755,false,,3,207,45,table
+apache/iceberg-go,7c9059cc0da2aca462c732e279d354286c672afd,7c9059c,Minh Vu,vuhoangminh97@gmail.com,2026-08-14T17:58:58+02:00,GitHub,noreply@github.com,2026-08-14T11:58:58-04:00,perf(table): reuse partition extraction plans (#1765),"* perf(table): reuse partition extraction plans
+
+* test(table): cover partition plan schema matching",7821545a4493ad3176b327cefbeeeccdad5b216b,1765,false,,4,286,11,table
+apache/iceberg-go,0bad1414ba7aef16afffc9852e73acfebd2284a9,0bad141,Badal Prasad Singh,badal@datazip.io,2026-08-14T21:29:19+05:30,GitHub,noreply@github.com,2026-08-14T11:59:19-04:00,fix(partitions): reject redundant time transforms on the same source column (#1797),"* fix: reject redundant time transforms
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* fix: backward compatibility
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",7c9059cc0da2aca462c732e279d354286c672afd,1797,false,,4,407,64,partitions.go; partitions_test.go; table
+apache/iceberg-go,6e678465d6722a3f7e8783257448a12dbe9238d2,6e67846,Badal Prasad Singh,badal@datazip.io,2026-08-14T21:29:45+05:30,GitHub,noreply@github.com,2026-08-14T11:59:45-04:00,fix(table): guard nil base in snapshot timestamp check (#1799),"* fix: guard the nil base
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* fix: nil base
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",0bad1414ba7aef16afffc9852e73acfebd2284a9,1799,false,,2,158,3,table
+apache/iceberg-go,a1582057bbbc43efedac595803a7c89a8b5dfefb,a158205,Minh Vu,vuhoangminh97@gmail.com,2026-08-14T18:00:09+02:00,GitHub,noreply@github.com,2026-08-14T12:00:09-04:00,perf(expr): short-circuit boolean evaluator traversal (#1800),"* perf(expr): short-circuit boolean evaluator traversal
+
+* test expr evaluator short circuit cases",6e678465d6722a3f7e8783257448a12dbe9238d2,1800,false,,4,286,5,table; visitors.go; visitors_bench_test.go; visitors_test.go
+apache/iceberg-go,673876aceb4624f0ce25826a638fb11b0338b384,673876a,Minh Vu,vuhoangminh97@gmail.com,2026-08-14T18:00:31+02:00,GitHub,noreply@github.com,2026-08-14T12:00:31-04:00,perf(puffin): reuse prefetched footer payload (#1809),"* perf(puffin): reuse prefetched footer payload
+
+* test(puffin): verify large footer payload read",a1582057bbbc43efedac595803a7c89a8b5dfefb,1809,false,,2,59,1,puffin
+apache/iceberg-go,42ccd46350de4c192dc6370d80afe494a2abde39,42ccd46,Minh Vu,vuhoangminh97@gmail.com,2026-08-14T18:01:02+02:00,GitHub,noreply@github.com,2026-08-14T12:01:02-04:00,perf(io): delete GoCloud files concurrently (#1811),perf(io): delete gocloud files concurrently,673876aceb4624f0ce25826a638fb11b0338b384,1811,false,,2,186,17,io
+apache/iceberg-go,3a21b192b5facc6cfbb99b5603ecc4eec802bdd9,3a21b19,Minh Vu,vuhoangminh97@gmail.com,2026-08-14T18:01:23+02:00,GitHub,noreply@github.com,2026-08-14T12:01:23-04:00,perf(expr): pre-size literal sets (#1812),,42ccd46350de4c192dc6370d80afe494a2abde39,1812,false,,3,69,2,exprs.go; exprs_literal_set_bench_test.go; utils.go
+apache/iceberg-go,a6f08ca9102427fd83901dc2cf9438f53f75b311,a6f08ca,anchor,codeanqiang@gmail.com,2026-08-15T00:01:45+08:00,GitHub,noreply@github.com,2026-08-14T12:01:45-04:00,fix(table): look up removed-file partition specs by ID (#1816),"accumulateSummaryDelta resolved partition specs two different ways.
+Added files went through sp.spec(int(df.SpecID())), a by-ID lookup over
+GetSpecByID, while removed data files, delete files and deletion
+vectors indexed the spec slice directly with specs[df.SpecID()].
+
+Spec ID is an identifier, not a slice position. RemovePartitionSpecs
+filters the slice without renumbering the survivors, and specs loaded
+from metadata keep the partition-specs array order, so the two come
+apart on ordinary tables. The index expression is evaluated as a call
+argument, so it fails before removeFile ever runs: a Delete, Overwrite
+or RewriteFiles commit that removes files panics with index out of
+range, or silently attributes the change to the wrong partition when
+the ID stays in bounds but points at the wrong entry.
+
+Use sp.spec() in the three removal loops so both halves of the function
+agree, and drop the now-unused local. Unknown IDs then yield an empty
+unpartitioned spec instead of panicking, matching the add path.
+
+The regression test evolves specs 0/1/2, removes spec 1 so the slice
+becomes [id0, id2], then sends the same spec-2 data file down both
+branches and asserts they report the same changed partition.
+
+Fixes #1815
+
+Signed-off-by: codeAnqiang-ma <273298913+codeAnqiang-ma@users.noreply.github.com>
+Co-authored-by: codeAnqiang-ma <273298913+codeAnqiang-ma@users.noreply.github.com>
+Co-authored-by: Cursor <cursoragent@cursor.com>",3a21b192b5facc6cfbb99b5603ecc4eec802bdd9,1816,false,codeAnqiang-ma; Cursor,2,59,4,table
+apache/iceberg-go,8fcf4d4b57188d5cb6b15dbf07f82faea51245a9,8fcf4d4,ryanworl,ryantworl@gmail.com,2026-08-14T11:02:14-05:00,GitHub,noreply@github.com,2026-08-14T12:02:14-04:00,feat(table): allow added data files to target any registered partition spec (#1818),"* feat(table): allow added data files to target any registered partition spec
+
+The snapshot producer already groups added files by their SpecID and
+writes one manifest per spec, but AddDataFiles rejected any DataFile
+whose spec id was not the current default, making the producer's
+multi-spec add path unreachable. It also resolved each group's spec
+through the sp.spec helper, which silently substitutes an empty spec on
+lookup failure — a manifest whose declared spec disagrees with its
+entries' partition tuples.
+
+Validate each file's partition tuple against its own registered spec —
+the shape of Java's MergingSnapshotProducer — error on unregistered
+spec ids in both the validation and the producer, and iterate spec
+groups in sorted order for deterministic manifest output. This lets
+writers keep producing under a previous spec after a partition
+evolution and lets rewrites migrate files between specs.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+* test(table): use Entries iterator instead of deprecated FetchEntries
+
+staticcheck (SA1019) rejects FetchEntries; stream the manifest entries
+via the Entries iterator like the neighboring tests.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+---------
+
+Co-authored-by: Cursor <cursoragent@cursor.com>",a6f08ca9102427fd83901dc2cf9438f53f75b311,1818,false,Cursor,3,177,10,table
+apache/iceberg-go,1c72c86a676ce891e5c45201cf98a4abe0801c95,1c72c86,Badal Prasad Singh,badal@datazip.io,2026-08-14T21:32:36+05:30,GitHub,noreply@github.com,2026-08-14T12:02:36-04:00,fix(table): release owned nested element refs in list / map projection (#1826),"* fix: release nested element refs
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* fix: prevent nested array result leaks during schema conversion
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",8fcf4d4b57188d5cb6b15dbf07f82faea51245a9,1826,false,,2,215,2,table
+apache/iceberg-go,940ed19b68574cd4f34f6f03340cb1d657d54909,940ed19,Badal Prasad Singh,badal@datazip.io,2026-08-14T21:32:59+05:30,GitHub,noreply@github.com,2026-08-14T12:02:59-04:00,fix(table): scope RollbackToSnapshot to the transaction's target branch (#1828),"* fix: scope to the txn's target branch
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* chore: lint
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",1c72c86a676ce891e5c45201cf98a4abe0801c95,1828,false,,2,322,9,table
+apache/iceberg-go,02c94ed590495025efac057f54bd2695cd4b660b,02c94ed,ryanworl,ryantworl@gmail.com,2026-08-14T11:03:25-05:00,GitHub,noreply@github.com,2026-08-14T12:03:25-04:00,fix(table): skip reserved lineage columns missing from the metrics plan (#1830),"DataFileStatsFromMeta panics on Parquet files that materialize the
+reserved v3 row-lineage columns (_row_id / field-id 2147483540,
+_last_updated_sequence_number / field-id 2147483539). Writers write
+those columns without adding them to the table schema or the metrics
+plan (Iceberg spec, Reserved Field IDs). Skip only iceberg.IsMetadataColumn
+ids; any other field id missing from the plan is a plan/file mismatch
+and still panics, rather than aggregating through a zero-value collector.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>",940ed19b68574cd4f34f6f03340cb1d657d54909,1830,false,Cursor,2,84,2,table
+apache/iceberg-go,a3aa6b75511fa4b434a13701807270cfc10fb935,a3aa6b7,ryanworl,ryantworl@gmail.com,2026-08-14T11:03:46-05:00,GitHub,noreply@github.com,2026-08-14T12:03:46-04:00,fix(table): do not emit add-sort-order for an existing sort order id (#1831),"REST catalogs reject commits that add a sort order under an ID that
+already exists. MetadataBuilder.AddSortOrder still emitted
+add-sort-order on reuse — the existing value-compare only suppressed a
+second add in the same builder, not reuse of an order already in the
+base metadata. Reuse now records the id without emitting an update, and
+SetDefaultSortOrderID encodes the concrete id instead of -1 when no add
+update precedes it so the payload stays self-contained.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>",02c94ed590495025efac057f54bd2695cd4b660b,1831,false,Cursor,2,150,7,table
+apache/iceberg-go,53a20318cc8e616057adbf87a6779e9f64084d15,53a2031,ryanworl,ryantworl@gmail.com,2026-08-14T11:04:09-05:00,GitHub,noreply@github.com,2026-08-14T12:04:09-04:00,fix(catalog/rest): keep status override when error body is malformed (#1832),"handleNon200 returned early on a decode failure before applying the
+per-status override map, so a 5xx commit whose body a proxy garbled
+surfaced as a bare ErrRESTError instead of ErrCommitStateUnknown.
+Callers retry on that sentinel; stripping it turns an ambiguous
+commit into a fatal decode error. Apply the override even when the
+body cannot be decoded, wrapping the decode failure for diagnostics.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>",a3aa6b75511fa4b434a13701807270cfc10fb935,1832,false,Cursor,3,168,2,catalog
+apache/iceberg-go,1eed1af3721a0a14fa6259b77146f3a33e574380,1eed1af,ryanworl,ryantworl@gmail.com,2026-08-14T11:04:36-05:00,GitHub,noreply@github.com,2026-08-14T12:04:36-04:00,feat(table): add Transaction.ReplaceSortOrder (Java Table.replaceSortOrder parity) (#1833),"Java's Table.replaceSortOrder / BaseReplaceSortOrder replaces the
+default write order and UpdateRequirements.forUpdateTable fences the
+commit with AssertDefaultSortOrderID. This adds the same operation:
+AddSortOrder + SetDefaultSortOrder(-1), no-oping when the staged
+default already has identical fields.
+
+FileToDataFile exports the parquet-footer-to-DataFile conversion used
+by AddFiles. Upstream's unexported fileToDataFile dropped the
+sortOrderID parameter and claimed no sort_order_id; the export restores
+it so callers converting foreign parquet footers can convey the file's
+sort layout (spec data-file field sort_order_id). AddFiles still
+passes 0 so it does not claim sort on files it did not write.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>",53a20318cc8e616057adbf87a6779e9f64084d15,1833,false,Cursor,4,231,4,table
+apache/iceberg-go,6258c98d9454b579c9b07caa08189f8baca46c67,6258c98,Tanmay Rauth,t_rauth@apple.com,2026-08-14T09:05:06-07:00,GitHub,noreply@github.com,2026-08-14T12:05:06-04:00,feat(table): add CommitEqualityDeletes convenience API (#1835),"Thin wrapper over WriteEqualityDeletes + RowDelta for delete-only CDC
+commits. Inherits the v2 gate, equality-field-ID validation, and
+isolation-level conflict detection; adds no new validation path. Empty
+record streams are a no-op.
+
+Closes #1207",1eed1af3721a0a14fa6259b77146f3a33e574380,1835,false,,3,309,1,table; website
+apache/iceberg-go,85d517e5dc8c601b1b405ebb67b3e0d9391f3596,85d517e,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-08-14T09:17:47-07:00,GitHub,noreply@github.com,2026-08-14T12:17:47-04:00,Namespace properties conformance tests (#1795),,6258c98d9454b579c9b07caa08189f8baca46c67,1795,false,,5,202,6,catalog
+apache/iceberg-go,02b3fe9f251937c02010032a4d54fb22652539ac,02b3fe9,Minh Vu,vuhoangminh97@gmail.com,2026-08-14T20:15:50+02:00,GitHub,noreply@github.com,2026-08-14T14:15:50-04:00,perf(table): prebind metadata partition builders (#1821),,85d517e5dc8c601b1b405ebb67b3e0d9391f3596,1821,false,,3,180,16,table

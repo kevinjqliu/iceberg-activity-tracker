@@ -29667,3 +29667,36 @@ apache/iceberg-rust,04b07e8c118ef45730d383ed749f80174abdd46b,04b07e8,Jannik Stei
 * Specify AuthSession variables names to auth_session
 
 Re-generate public API",c1f45f88338ec17056db2c478cb3cfe522c08e36,2994,false,,3,129,126,crates
+apache/iceberg-rust,e50a094cb119766b8371e402ba2dd40d085f829d,e50a094,Anoop Johnson,anoop@apache.org,2026-08-14T11:16:14-07:00,GitHub,noreply@github.com,2026-08-14T11:16:14-07:00,fix: avoid full scan for metadata-only projections with _pos (#2995),"A projection of only metadata columns leaves the data field-id list empty,
+which get_arrow_projection_mask maps to reading all columns (so a bare
+COUNT(*) still gets a row count). When _pos is projected, the RowNumber
+virtual column supplies the row count independently of the data columns, so
+read no data columns instead of all of them. Pure-constant and empty
+projections keep the read-all behavior, since they have no other row source.",04b07e8c118ef45730d383ed749f80174abdd46b,2995,false,,1,467,1,crates
+apache/iceberg-rust,a500a2e731ac0f1c9bf43d6613a8dbe08417465f,a500a2e,Jannik Steinmann,jannik.steinmann@datadoghq.com,2026-08-15T00:32:13+02:00,GitHub,noreply@github.com,2026-08-14T15:32:13-07:00,refactor: Move SensitiveBytes and Credential into shared module (#2971),"* Add SensitiveString
+
+Signed-off-by: Jannik Steinmann <jannik.steinmann@datadoghq.com>
+
+* Replace session::Credential with SensitiveString
+
+Signed-off-by: Jannik Steinmann <jannik.steinmann@datadoghq.com>
+
+* Move SensitiveBytes to sensitive mod
+
+Signed-off-by: Jannik Steinmann <jannik.steinmann@datadoghq.com>
+
+* Add redaction tests for SensitiveBytes
+
+Signed-off-by: Jannik Steinmann <jannik.steinmann@datadoghq.com>
+
+* Add additional SensitiveBytes API to SensitiveString
+
+Signed-off-by: Jannik Steinmann <jannik.steinmann@datadoghq.com>
+
+Re-generate public API
+
+* Remove export test
+
+---------
+
+Signed-off-by: Jannik Steinmann <jannik.steinmann@datadoghq.com>",e50a094cb119766b8371e402ba2dd40d085f829d,2971,false,,8,261,153,crates

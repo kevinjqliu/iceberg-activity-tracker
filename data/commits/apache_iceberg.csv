@@ -5500,3 +5500,36 @@ apache/iceberg,b8b92aba28bf36b39f1759e16a755327fa84558b,b8b92ab,Hongyue/Steve Zh
 Spark 3.5 is unaffected: these overloads were never deprecated there.",7e56d30d30d203b5e07274dacc3f3f5a9ce277f5,17626,false,,4,1,111,spark
 apache/iceberg,35889387c8c6ff0a3f57d17a304709dc1b7d9340,3588938,Neelesh Salian,nssalian@users.noreply.github.com,2026-08-13T18:04:49-07:00,GitHub,noreply@github.com,2026-08-13T21:04:49-04:00,Site: Update the variant blog with Apache Arrow variant support (#17640),,b8b92aba28bf36b39f1759e16a755327fa84558b,17640,false,,1,4,1,site
 apache/iceberg,cd758fcda88ec86d23aab52023b3fbc5e6cbd43f,cd758fc,GuoYu,511955993@qq.com,2026-08-14T18:58:46+08:00,GitHub,noreply@github.com,2026-08-14T12:58:46+02:00,Data: Add Variant Support for file format tck (#17617),,35889387c8c6ff0a3f57d17a304709dc1b7d9340,17617,false,,10,129,44,data; flink; spark
+apache/iceberg,7ea84238443b57d5383581fd8f063ba1c6977c04,7ea8423,Sergei Nikolaev,kinolaev@gmail.com,2026-08-14T16:24:42+02:00,GitHub,noreply@github.com,2026-08-14T16:24:42+02:00,Core: Call close on iterables returned by ManifestReader.liveEntries() in ManifestFilterManager (#15713),,cd758fcda88ec86d23aab52023b3fbc5e6cbd43f,15713,false,,2,129,73,core
+apache/iceberg,74a1252693dc219a8f7b79927eece99469e355ce,74a1252,Neelesh Salian,nssalian@users.noreply.github.com,2026-08-14T09:30:40-07:00,GitHub,noreply@github.com,2026-08-14T11:30:40-05:00,"Parquet, Spark, Flink: Type uniformity for variant shredding (#17424)",,7ea84238443b57d5383581fd8f063ba1c6977c04,17424,false,,7,432,216,flink; parquet; spark
+apache/iceberg,9db68ae5ae8cd6e197765f41536be164cf8e0a97,9db68ae,Anoop Johnson,anoop@apache.org,2026-08-14T10:25:06-07:00,GitHub,noreply@github.com,2026-08-14T12:25:06-05:00,API: Avoid intermediate collections in IN predicate metrics evaluation (#17659),,74a1252693dc219a8f7b79927eece99469e355ce,17659,false,,2,16,39,api
+apache/iceberg,bce935c9e1860f5a37248135f2a537c0e7afca13,bce935c,Eduard Tudenhoefner,etudenhoefner@gmail.com,2026-08-14T19:53:48+02:00,GitHub,noreply@github.com,2026-08-14T10:53:48-07:00,"Core: Always track null count in content stats, add evaluator (#17413)",,9db68ae5ae8cd6e197765f41536be164cf8e0a97,17413,false,,15,1242,559,.palantir; api; core
+apache/iceberg,ccb37e5d3c5df6c164a4d972fa4a696474bd71f8,ccb37e5,Anoop Johnson,anoop@apache.org,2026-08-14T11:52:07-07:00,GitHub,noreply@github.com,2026-08-14T11:52:07-07:00,API: Avoid intermediate collections in NOT IN strict metrics evaluation (#17661),,bce935c9e1860f5a37248135f2a537c0e7afca13,17661,false,,1,23,26,api
+apache/iceberg,3b7e424fd628862528299303bf0a30ca13ae36a0,3b7e424,Eduard Tudenhoefner,etudenhoefner@gmail.com,2026-08-14T21:22:51+02:00,GitHub,noreply@github.com,2026-08-14T12:22:51-07:00,Core: Use TrackedFile constants for partition and content_stats fields (#17649),"Replace the duplicated field ID and name literals with the constants that
+TrackedFile already declares, which both files use elsewhere.",ccb37e5d3c5df6c164a4d972fa4a696474bd71f8,17649,false,,2,2,2,core
+apache/iceberg,ff80d1191116c861f96067369438588e93f91122,ff80d11,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-14T22:25:44-07:00,GitHub,noreply@github.com,2026-08-15T13:25:44+08:00,Kafka Connect: Remove deprecated TableReference and IcebergWriterResult members (#17623),"Deprecated for removal in 1.12.0:
+- TableReference.of(String, TableIdentifier) and the
+  TableReference(String, List<String>, String) constructor
+- IcebergWriterResult(TableIdentifier, List, List, StructType) and
+  IcebergWriterResult.tableIdentifier()
+
+Callers now construct a TableReference with an explicit table UUID; the
+two tests pass null to preserve their previous behavior.",3b7e424fd628862528299303bf0a30ca13ae36a0,17623,false,,4,5,54,kafka-connect
+apache/iceberg,b544005b64fcc0907bb324d588080481e49751c5,b544005,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-14T22:28:04-07:00,GitHub,noreply@github.com,2026-08-15T13:28:04+08:00,BigQuery: Remove deprecated catalog property constants (#17625),"PROJECT_ID, GCP_LOCATION and LIST_ALL_TABLES on
+BigQueryMetastoreCatalog were deprecated for removal in 1.12.0 in favor
+of the equivalents on BigQueryProperties. No remaining callers.",ff80d1191116c861f96067369438588e93f91122,17625,false,,1,0,18,bigquery
+apache/iceberg,50100e46242864113579639f61eecf85545b185f,50100e4,Uros Bojanic,221401595+uros-b@users.noreply.github.com,2026-08-15T07:39:25+02:00,GitHub,noreply@github.com,2026-08-15T13:39:25+08:00,API: Add Javadoc for the Metrics constructor parameters (#17608),"* API: Add Javadoc for the Metrics constructor parameters
+
+Document each parameter of the canonical Metrics constructor, including that the maps and counts may be null when unknown.
+
+* Update api/src/main/java/org/apache/iceberg/Metrics.java
+
+Co-authored-by: Anoop Johnson <git@anoopjohnson.com>
+
+* Fix format
+
+* Followup changes
+
+---------
+
+Co-authored-by: Anoop Johnson <git@anoopjohnson.com>",b544005b64fcc0907bb324d588080481e49751c5,17608,false,Anoop Johnson,1,42,0,api
