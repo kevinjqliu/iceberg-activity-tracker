@@ -8542,3 +8542,61 @@ apache/iceberg-cpp,31274f5fd1b5f6b34ca18f833e4b25ea76faf1cd,31274f5,kamcheungtin
 **Tests** — logging tests cover default-backend selection, level filtering and mapping including fatal→critical, source-location forwarding, the `pattern` property, and runtime fatal-handler routing.
 
 This pull request and its description were written by Isaac.",6dff5ac8f743647add9e2c6d91ccb4b4555c745f,726,false,,17,450,65,CMakeLists.txt; README.md; cmake_modules; meson.options; src
+apache/iceberg-cpp,3165b58090b5ca647b0a0aa642aace9267dbc7f1,3165b58,YangJie,yangjie01@baidu.com,2026-08-16T00:41:48+08:00,GitHub,noreply@github.com,2026-08-16T00:41:48+08:00,fix: reject out-of-range integers when parsing JSON literals (#878),"## What
+
+`LiteralFromJson` accepted JSON integers beyond the signed 64-bit range and produced a wrong literal instead of a parse error. nlohmann reports unsigned integers as `is_number_integer()`, and `get<int64_t>()` converts values above INT64_MAX silently rather than throwing. So the `kInt` branch ran its int32 range check on the already-wrapped value, and the `kLong` branch had no range check at all: `18446744073709551615` parsed as `Literal::Int(-1)`, and `9223372036854775808` as `Literal::Long(INT64_MIN)`. The untyped overload had the same hole.
+
+Table metadata is the path where this changes returned data. `initial-default` / `write-default` go through this parser, `ValidateDefault` does not check integer range, and the value later gets materialized into a column. A metadata file that Java rejects reads back as `-1` here. The expression path is latent for now, since nothing evaluates `ReaderOptions::filter` yet.
+
+Fixes #877.
+
+## How
+
+`GetInt64Checked` rejects unsigned nodes above INT64_MAX before the conversion, and the `kInt` branch, the `kLong` branch and the untyped overload all go through it. Java guards the same paths with `canConvertToInt()` / `canConvertToLong()` in `SingleValueParser` and `ExpressionParser`.
+
+The `is_number_unsigned()` half of the guard is load-bearing: `get<uint64_t>()` on a negative node yields its two's-complement value, which compares above INT64_MAX and would reject every negative literal.
+
+Two smaller things on lines this fix already touches: the int32 narrowing on the `kInt` path gained the coverage it never had, and the two out-of-range messages now use the same wording instead of saying ""int"" in one and ""long"" in the other.
+
+## Testing
+
+`expression_test` (526 tests) and the full `ctest` suite (18/18) pass. Each new test was checked against a mutation of the code it guards:
+
+- `>` to `>=` in the guard: only `LongMax` fails. The `ULL` suffix there matters, since a signed INT64_MAX node skips the unsigned branch entirely.
+- `is_number_unsigned() &&` dropped: `LongMin`, `IntNegative` and `AcceptsNegativeIntegerUntyped` fail.
+- int32 range check deleted: `IntAboveInt32Max` and `IntBelowInt32Min` fail.
+
+The three overflow-rejection cases were also confirmed to fail without the fix and pass with it.
+
+## Out of scope
+
+`GetTypedJsonValue` in `src/iceberg/util/json_util_internal.h` truncates out-of-range integers the same way, so `FieldFromJson({""id"": 2147483648, ...})` yields `field_id = -2147483648` silently. That helper has roughly 80 call sites, so it belongs in its own PR.",31274f5fd1b5f6b34ca18f833e4b25ea76faf1cd,878,false,,2,78,6,src
+apache/iceberg-cpp,9d9ef8c8686d8ebe03d95c9866310f47200d90ba,9d9ef8c,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-16T21:20:04+08:00,GitHub,noreply@github.com,2026-08-16T21:20:04+08:00,chore(deps): bump the codeql-action group with 2 updates (#888),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.4 to 4.37.6
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/f205ea1c3313d32999d8d6a48b4f6530d4437b38...5595ccaf912efad79be6eef63a5619ff05969be3)
+
+Updates `github/codeql-action/analyze` from 4.37.4 to 4.37.6
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/f205ea1c3313d32999d8d6a48b4f6530d4437b38...5595ccaf912efad79be6eef63a5619ff05969be3)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.37.6
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.37.6
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",3165b58090b5ca647b0a0aa642aace9267dbc7f1,888,false,dependabot[bot],1,2,2,.github
