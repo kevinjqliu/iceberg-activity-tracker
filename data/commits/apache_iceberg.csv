@@ -5703,3 +5703,27 @@ updated-dependencies:
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",b4d5d6f328b0de13293ecad1b0789dd3d57494f0,17687,false,dependabot[bot],3,10,4,gcp; gcp-bundle; gradle
+apache/iceberg,a2db6815fb54877a98bc7a13f9325ea27c0bfd07,a2db681,Sepuri Sai Krishna,saik20533@gmail.com,2026-08-17T23:29:04+05:30,GitHub,noreply@github.com,2026-08-17T11:59:04-06:00,Parquet: Fix notStartsWith skipping row groups with null values (#17656),"The dictionary row group filter only sees non-null values, so a column whose
+  dictionary entries all start with the prefix was reported as unmatchable even
+  when the column contained nulls. Null values match notStartsWith, so those row
+  groups were skipped and their rows dropped from scan results.",97f9827c8d5fca9e1e6c5d01274e987da72f60d0,17656,false,,2,11,1,parquet
+apache/iceberg,b1ff3b99e83fedf38f07088a9ba80c86c6c5cd6b,b1ff3b9,Eduard Tudenhoefner,etudenhoefner@gmail.com,2026-08-17T20:43:15+02:00,GitHub,noreply@github.com,2026-08-17T20:43:15+02:00,API: Extract superclass from StrictMetricsEvaluator (#17511),"Extract the strict evaluation logic from StrictMetricsEvaluator into a new
+superclass, StrictEvalVisitor. StrictMetricsEvaluator now uses the visitor
+superclass and implements methods to access metrics by ID. This is in
+preparation for adding a strict stats visitor that consumes ContentStats
+directly.",a2db6815fb54877a98bc7a13f9325ea27c0bfd07,17511,false,,2,508,444,api
+apache/iceberg,aba51cf4782eb7bd15ac6e80296a56b11435c27f,aba51cf,yangshangqing,50940701+yangshangqing95@users.noreply.github.com,2026-08-17T17:23:29-04:00,GitHub,noreply@github.com,2026-08-17T14:23:29-07:00,Core: Preserve snapshot pruning when ignoring residuals in AllManifestsTable (#17522),,b1ff3b99e83fedf38f07088a9ba80c86c6c5cd6b,17522,false,,2,24,3,core
+apache/iceberg,38c1e2315f13ee1099fa6aae8bdbc14b0d32e01d,38c1e23,Anoop Johnson,anoop@apache.org,2026-08-17T15:19:07-07:00,GitHub,noreply@github.com,2026-08-17T15:19:07-07:00,Core: Simplify PartitionData.hashCode to avoid per-call allocations (#17666),,aba51cf4782eb7bd15ac6e80296a56b11435c27f,17666,false,,1,2,8,core
+apache/iceberg,2da21c550710e2f90aa1b9cfec0b3b92fed6ad9b,2da21c5,Uros,221401595+uros-b@users.noreply.github.com,2026-08-18T01:11:55+02:00,GitHub,noreply@github.com,2026-08-17T16:11:55-07:00,Core: Simplify list handling in manifest read and write paths (#17581),,38c1e2315f13ee1099fa6aae8bdbc14b0d32e01d,17581,false,,2,3,15,core
+apache/iceberg,0fb64eaea5443c6440ea541bb2f5ce1943ff34fd,0fb64ea,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-17T23:14:27-07:00,GitHub,noreply@github.com,2026-08-18T14:14:27+08:00,Spark: Remove deprecated SparkFilters (#17702),"SparkFilters converted Spark DSv1 filters into Iceberg expressions and was
+deprecated as a class for removal in 1.12.0 in favor of SparkV2Filters,
+which converts DSv2 predicates.
+
+Nothing uses it. The only remaining references were its own test,
+TestSparkFilters, which is removed with it, and a TODO comment in
+TestRewriteDataFilesProcedure that named the class; that comment now points
+at SparkV2Filters.
+
+Applies to Spark 3.5, 4.0 and 4.1.",2da21c550710e2f90aa1b9cfec0b3b92fed6ad9b,17702,false,,9,3,1470,spark
+apache/iceberg,d27b77f272fb7a98c300c26e2d55c3a9d8ecb9ed,d27b77f,David Dallakyan,131261521+daviddallakyan2005@users.noreply.github.com,2026-08-18T11:04:46+04:00,GitHub,noreply@github.com,2026-08-18T09:04:46+02:00,Docs: Align Flink docs with current engine (#17695),,0fb64eaea5443c6440ea541bb2f5ce1943ff34fd,17695,false,,5,11,11,docs; site
+apache/iceberg,1b27e2d7cc6ff1393220d3fa5b19c3fbfbfffd0f,1b27e2d,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-18T00:49:47-07:00,GitHub,noreply@github.com,2026-08-18T09:49:47+02:00,Data: Remove deprecated GenericAppenderFactory and BaseFileWriterFactory (#17696),,d27b77f272fb7a98c300c26e2d55c3a9d8ecb9ed,17696,false,,4,9,860,.palantir; data
