@@ -29860,3 +29860,24 @@ apache/iceberg-rust,4908b0b1d160043c9b8a4e1da160e72e85610812,4908b0b,aarushigupt
 * refactor(encryption): gate encryption on the encryption manager alone
 
 * refactor(encryption): drop redundant doc lines",e486a8b18eab37e34c4113e4260b0f7ca94b1f61,2701,false,,10,374,29,crates
+apache/iceberg-rust,b00c460ff1828dcd9c82865d27cd363c617893ba,b00c460,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-08-18T18:55:38-04:00,GitHub,noreply@github.com,2026-08-18T15:55:38-07:00,feat(delete-vector): [1/N] decode deletion-vector-v1 puffin blobs (#2866),"* feat(delete-vector): decode deletion-vector-v1 puffin blobs
+
+Add DeleteVector::deserialize to parse a deletion-vector-v1 blob
+([length][magic][roaring][crc32], portable 64-bit roaring) into a
+DeleteVector. Verifies the length prefix, CRC-32, and magic before
+decoding, and leaves cardinality validation to the caller that holds the
+delete file's record_count.
+
+Tests cover round-trips (including a run-optimized bitmap that exercises
+the RUN-container decode path) and the length, magic, and CRC error paths.
+
+Refs #2792.
+
+* cargo fmt
+
+* address PR feedback. renamed tests to be consistent, and sorted decoded bytes once.
+
+* address PR feedback
+
+* address PR feedback",4908b0b1d160043c9b8a4e1da160e72e85610812,2866,false,,4,332,1,Cargo.lock; Cargo.toml; crates
+apache/iceberg-rust,7d2dfce494c94e75f726fe52c6c96272b6cc5b32,7d2dfce,Jannik Steinmann,jannik.steinmann@datadoghq.com,2026-08-19T00:56:35+02:00,GitHub,noreply@github.com,2026-08-18T15:56:35-07:00,fix: update h2 to 0.4.16 (#3020),,b00c460ff1828dcd9c82865d27cd363c617893ba,3020,false,,1,2,2,Cargo.lock

@@ -5727,3 +5727,47 @@ at SparkV2Filters.
 Applies to Spark 3.5, 4.0 and 4.1.",2da21c550710e2f90aa1b9cfec0b3b92fed6ad9b,17702,false,,9,3,1470,spark
 apache/iceberg,d27b77f272fb7a98c300c26e2d55c3a9d8ecb9ed,d27b77f,David Dallakyan,131261521+daviddallakyan2005@users.noreply.github.com,2026-08-18T11:04:46+04:00,GitHub,noreply@github.com,2026-08-18T09:04:46+02:00,Docs: Align Flink docs with current engine (#17695),,0fb64eaea5443c6440ea541bb2f5ce1943ff34fd,17695,false,,5,11,11,docs; site
 apache/iceberg,1b27e2d7cc6ff1393220d3fa5b19c3fbfbfffd0f,1b27e2d,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-18T00:49:47-07:00,GitHub,noreply@github.com,2026-08-18T09:49:47+02:00,Data: Remove deprecated GenericAppenderFactory and BaseFileWriterFactory (#17696),,d27b77f272fb7a98c300c26e2d55c3a9d8ecb9ed,17696,false,,4,9,860,.palantir; data
+apache/iceberg,45f8595e173062f4783d15b6c2fcea61c446b1cf,45f8595,Vova Kolmakov,wombatukun@gmail.com,2026-08-19T00:25:46+07:00,GitHub,noreply@github.com,2026-08-18T12:25:46-05:00,Spark: Reduce TestRewriteDataFilesAction data volume to speed up CI (#16565),,1b27e2d7cc6ff1393220d3fa5b19c3fbfbfffd0f,16565,false,,3,48,33,spark
+apache/iceberg,96373ad1d2a5f76d08385430730483a5ed9c72af,96373ad,Uros,221401595+uros-b@users.noreply.github.com,2026-08-19T00:09:49+02:00,GitHub,noreply@github.com,2026-08-18T15:09:49-07:00,Build: Remove unused Avro dependency from iceberg-orc (#17694),,45f8595e173062f4783d15b6c2fcea61c446b1cf,17694,false,,1,0,3,build.gradle
+apache/iceberg,a561c8be60bff1ba6e3a326191b74c6f7c392ac0,a561c8b,Uros,221401595+uros-b@users.noreply.github.com,2026-08-19T00:18:39+02:00,GitHub,noreply@github.com,2026-08-18T15:18:39-07:00,Core: Treat path prefixes as literals in RewriteTablePathUtil.replacePaths (#17521),,96373ad1d2a5f76d08385430730483a5ed9c72af,17521,false,,2,90,1,core
+apache/iceberg,07b6fa6cdebd7ee78fa6deac2a40ea8b2b298c7a,07b6fa6,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-18T15:26:43-07:00,GitHub,noreply@github.com,2026-08-18T15:26:43-07:00,Spark 4.0/4.1: Remove deprecated SparkTableUtil methods (#17703),,a561c8be60bff1ba6e3a326191b74c6f7c392ac0,17703,false,,2,0,608,spark
+apache/iceberg,bb9b9a06b3fb320c3496f4bac9fbf455f7a773b2,bb9b9a0,Uros,221401595+uros-b@users.noreply.github.com,2026-08-19T01:57:34+02:00,GitHub,noreply@github.com,2026-08-18T16:57:34-07:00,"Docs: Fix ""refer"" grammar in maintenance, AWS, and Nessie docs (#17580)",,07b6fa6cdebd7ee78fa6deac2a40ea8b2b298c7a,17580,false,,3,5,5,docs
+apache/iceberg,ef99839c2ec2f4fb7e4eb80a21a43d83bd90e0fc,ef99839,Neelesh Salian,nssalian@users.noreply.github.com,2026-08-18T23:39:08-07:00,GitHub,noreply@github.com,2026-08-19T08:39:08+02:00,"Data, Kafka Connect: Enable Parquet variant shredding for Kafka Connect and generic Record writes (#17520)",,bb9b9a06b3fb320c3496f4bac9fbf455f7a773b2,17520,false,,8,868,5,data; docs; kafka-connect
+apache/iceberg,6fccfd93f03441759c9a86ff30db5a29934ffd33,6fccfd9,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-19T00:41:33-07:00,GitHub,noreply@github.com,2026-08-19T15:41:33+08:00,Core: Remove deprecated methods and fields scheduled for 1.12.0 removal (#17700),"* Core: Remove deprecated methods and fields scheduled for 1.12.0 removal
+
+Removes the remaining core API marked for removal in 1.12.0 that has no
+callers left:
+
+- SystemProperties (class) -> SystemConfigs
+- ThreadPools.newWorkerPool(String) and newWorkerPool(String, int) ->
+  newExitingWorkerPool or newFixedThreadPool depending on pool lifetime
+- ContentCache.invalidateAll(), which was only best-effort and racy
+- TableProperties.MANIFEST_LISTS_ENABLED and MANIFEST_LISTS_ENABLED_DEFAULT;
+  writing manifest lists is always enabled
+- AvroSchemaUtil.pruneColumns(Schema, Set, NameMapping) -> applyNameMapping
+  plus pruneColumns(Schema, Set)
+- SnapshotUtil.newFiles and newFilesBetween -> SnapshotChanges with
+  ancestorsBetween
+- TableScanUtil.hasDeletes(CombinedScanTask) and hasEqDeletes(CombinedScanTask)
+- StandardEncryptionManager(String, int, KeyManagementClient), wrapKey and
+  unwrapKey
+- ManifestFiles.read(ManifestFile, FileIO), readPaths(ManifestFile, FileIO)
+  and open(ManifestFile, FileIO) -> the overloads taking a specs map
+- BaseScan.io() -> table().io(); DataScan and BaseDistributedDataScan are
+  migrated to call table().io() directly
+
+Generated-by: Claude Code
+
+* rename unit test in TestManifestReader",ef99839c2ec2f4fb7e4eb80a21a43d83bd90e0fc,17700,false,,14,117,303,.palantir; core
+apache/iceberg,4a226ce87e3a6dd78fbf25eecf230384918805ee,4a226ce,David Dallakyan,131261521+daviddallakyan2005@users.noreply.github.com,2026-08-19T11:47:53+04:00,GitHub,noreply@github.com,2026-08-19T09:47:53+02:00,Docs: Align Spark docs with current engine (#17688),,6fccfd93f03441759c9a86ff30db5a29934ffd33,17688,false,,2,5,5,docs; site
+apache/iceberg,ef7148db38be4ead4fe0df878d8b11f90cda16b7,ef7148d,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-19T01:31:16-07:00,GitHub,noreply@github.com,2026-08-19T10:31:16+02:00,AWS: Remove deprecated S3 signer classes and properties (#17627),"AWS: Remove deprecated S3 signer request/response classes
+
+These five classes were deprecated for removal in 1.12.0 and are now
+orphaned: they reference only each other and have no remaining callers
+in main or test sources. S3V4RestSignerClient uses the RemoteSign*
+equivalents.
+
+- S3SignRequest, S3SignResponse
+- S3SignRequestParser, S3SignResponseParser
+- S3ObjectMapper",4a226ce87e3a6dd78fbf25eecf230384918805ee,17627,false,,5,0,307,aws
+apache/iceberg,c52032ab63aca3ce4aaeb89e7e9872e734b562a3,c52032a,Manu Zhang,OwenZhang1990@gmail.com,2026-08-19T20:46:19+08:00,GitHub,noreply@github.com,2026-08-19T14:46:19+02:00,Build: Fix OpenAPI test fixtures runtime dependency (#17519),,ef7148db38be4ead4fe0df878d8b11f90cda16b7,17519,false,,1,6,0,build.gradle
