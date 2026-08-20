@@ -5771,3 +5771,18 @@ equivalents.
 - S3SignRequestParser, S3SignResponseParser
 - S3ObjectMapper",4a226ce87e3a6dd78fbf25eecf230384918805ee,17627,false,,5,0,307,aws
 apache/iceberg,c52032ab63aca3ce4aaeb89e7e9872e734b562a3,c52032a,Manu Zhang,OwenZhang1990@gmail.com,2026-08-19T20:46:19+08:00,GitHub,noreply@github.com,2026-08-19T14:46:19+02:00,Build: Fix OpenAPI test fixtures runtime dependency (#17519),,ef7148db38be4ead4fe0df878d8b11f90cda16b7,17519,false,,1,6,0,build.gradle
+apache/iceberg,6aa43afe5394587e975b79de61ecd65e7b059635,6aa43af,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-19T16:20:48-07:00,GitHub,noreply@github.com,2026-08-20T07:20:48+08:00,Core: Remove deprecated DataReader in favor of PlannedDataReader (#17699),"DataReader was deprecated for removal in 1.12.0; PlannedDataReader is the
+replacement. Also removes the deprecated RawDecoder constructor that took
+a read schema and reader function, superseded by
+RawDecoder.create(Schema, Function, Schema).
+
+No remaining references to either. TestDataReader is removed along with
+the class it covered; PlannedDataReader has its own coverage in
+TestPlannedDataReader.",c52032ab63aca3ce4aaeb89e7e9872e734b562a3,17699,false,,4,10,423,.palantir; core
+apache/iceberg,555bd9469bf15bd236dde320eaf75ab1b3a5681b,555bd94,Uros,221401595+uros-b@users.noreply.github.com,2026-08-20T01:22:18+02:00,GitHub,noreply@github.com,2026-08-20T07:22:18+08:00,API: Add tests for BinaryUtil (#17692),"* API: Add tests for BinaryUtil
+
+Cover truncateBinary (partial, full, zero-length, and negative-length guard), the previously untested truncateBinaryUnsafe view, and truncateBinaryMax including the all-bytes-overflow case.
+
+* More changes",6aa43afe5394587e975b79de61ecd65e7b059635,17692,false,,1,122,0,api
+apache/iceberg,660f2328a7ba045c2b5f0a945f07d4fa8bab0a2a,660f232,Raunaq Morarka,raunaqmorarka@users.noreply.github.com,2026-08-20T17:43:13+05:30,GitHub,noreply@github.com,2026-08-20T14:13:13+02:00,Arrow: Fix vectorized read of all-null DELTA-encoded Parquet pages (#17017),"An all-null page decodes to a length stream with totalValueCount 0, so
+readValues wrote firstValue into a zero-length array.",555bd9469bf15bd236dde320eaf75ab1b3a5681b,17017,false,,4,129,1,arrow; spark

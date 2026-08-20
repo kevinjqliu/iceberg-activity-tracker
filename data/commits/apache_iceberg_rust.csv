@@ -29881,3 +29881,31 @@ Refs #2792.
 
 * address PR feedback",4908b0b1d160043c9b8a4e1da160e72e85610812,2866,false,,4,332,1,Cargo.lock; Cargo.toml; crates
 apache/iceberg-rust,7d2dfce494c94e75f726fe52c6c96272b6cc5b32,7d2dfce,Jannik Steinmann,jannik.steinmann@datadoghq.com,2026-08-19T00:56:35+02:00,GitHub,noreply@github.com,2026-08-18T15:56:35-07:00,fix: update h2 to 0.4.16 (#3020),,b00c460ff1828dcd9c82865d27cd363c617893ba,3020,false,,1,2,2,Cargo.lock
+apache/iceberg-rust,3c6c966f755a8f1ce062c70e329a7bec135d0597,3c6c966,blackmwk,yxchang@amazon.com,2026-08-20T05:13:39+08:00,GitHub,noreply@github.com,2026-08-19T14:13:39-07:00,feat: Derive TableProperties parsing (#2988),"* feat: Derive TableProperties parsing
+
+Port the existing TableProperties keys, defaults, and custom parsers to the Properties derive macro while preserving the TryFrom API and public fields for compatibility. Add generated getters and update the public API snapshot.\n\nCloses #2968.
+
+* fix: Address TableProperties review feedback
+
+* fix: Keep TableProperties constants associated",7d2dfce494c94e75f726fe52c6c96272b6cc5b32,2988,false,,8,278,254,Cargo.lock; Cargo.toml; crates
+apache/iceberg-rust,a48c32aadbb47cad632a06d4ba1ff7780b70448a,a48c32a,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-08-20T05:19:43+08:00,GitHub,noreply@github.com,2026-08-19T14:19:43-07:00,feat(rest): wrap catalog responses in HttpResponse (#2996),"* feat(rest): wrap catalog responses in HttpResponse
+
+* docs(rest): refresh the query_catalog comment for the wrapper types",3c6c966f755a8f1ce062c70e329a7bec135d0597,2996,false,,6,285,79,crates
+apache/iceberg-rust,03a9e71b7246148f4e523e5a35269b9525b05c9b,03a9e71,Anoop Johnson,anoop@apache.org,2026-08-19T14:39:16-07:00,GitHub,noreply@github.com,2026-08-19T14:39:16-07:00,perf(manifest): reuse the partition type across entries instead of rebuilding (#3028),"perf(manifest): reuse the partition type across entries instead of rebuilding it
+
+Reading or writing a manifest wrapped the partition type as Type::Struct(partition_type.clone()) once per entry. Because StructType's field-name lookup is a lazily built OnceLock that the clone leaves empty, every entry re-cloned the field vector and rebuilt the whole name lookup (cloning each partition field name) only to discard it.",a48c32aadbb47cad632a06d4ba1ff7780b70448a,3028,false,,4,45,27,crates
+apache/iceberg-rust,b5cb7eb1d53663950765350796bcb14966317828,b5cb7eb,Kurtis Wright,Kurtiscwright@users.noreply.github.com,2026-08-19T15:34:31-07:00,GitHub,noreply@github.com,2026-08-19T15:34:31-07:00,Feat Positional Delete by file path (#3024),"feat(scan): Add Pos_Delete file by path
+
+Co-authored-by: Kurtis Wright <kurwrigh@amazon.com>",03a9e71b7246148f4e523e5a35269b9525b05c9b,3024,false,Kurtis Wright,1,372,34,crates
+apache/iceberg-rust,48965dc8cd54bc6e2029205fec617ac66b5ee40e,48965dc,Matt Faltyn,76570855+mattfaltyn@users.noreply.github.com,2026-08-20T11:36:26+02:00,GitHub,noreply@github.com,2026-08-20T17:36:26+08:00,fix(transform): support hour transform for nanosecond arrays (#3026),,b5cb7eb1d53663950765350796bcb14966317828,3026,false,,1,21,1,crates
+apache/iceberg-rust,1ecd497774612405f0af0dc9e1dc2bd6da3c3311,1ecd497,Xander,zander181@googlemail.com,2026-08-20T11:19:13+01:00,GitHub,noreply@github.com,2026-08-20T18:19:13+08:00,refactor: Add manifest reader (#2884),"* Refactor manifest reader into its own struct
+
+* pub api
+
+* make crate pub
+
+* remove doc
+
+* remove load method
+
+* fix up",48965dc8cd54bc6e2029205fec617ac66b5ee40e,2884,false,,10,474,237,crates
