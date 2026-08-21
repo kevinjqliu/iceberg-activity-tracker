@@ -8609,3 +8609,33 @@ apache/iceberg-cpp,1d6e7b9ae01691811ca4e980b5d223d4a6cafd08,1d6e7b9,Gang Wu,ustc
 apache/iceberg-cpp,e0399c6945326dd5281da07de8ed14a61c9f2cac,e0399c6,Gang Wu,ustcwg@gmail.com,2026-08-19T18:03:56+08:00,GitHub,noreply@github.com,2026-08-19T18:03:56+08:00,refactor(io): make FileIO resolution registry-driven (#889),"Add scheme-aware FileIO factories with deterministic registration precedence,
 route ResolvingFileIO by location scheme, and forward vended storage
 credentials through registered delegates.",1d6e7b9ae01691811ca4e980b5d223d4a6cafd08,889,false,,22,452,307,mkdocs; src; util
+apache/iceberg-cpp,a43d4ad7766e0aac0ad436c95ac994ff533f167e,a43d4ad,Manu Zhang,OwenZhang1990@gmail.com,2026-08-21T15:55:43+08:00,GitHub,noreply@github.com,2026-08-21T15:55:43+08:00,refactor: protect merging snapshot update hooks (#885),Co-authored-by: Codex <codex@openai.com>,e0399c6945326dd5281da07de8ed14a61c9f2cac,885,false,Codex,2,7,1,src
+apache/iceberg-cpp,3d68aa70aeacd60c6e5d30cdb44ba26221c11c2d,3d68aa7,Minh Vu,vuhoangminh97@gmail.com,2026-08-21T10:33:26+02:00,GitHub,noreply@github.com,2026-08-21T16:33:26+08:00,fix: parse boolean properties case-insensitively (#847),,a43d4ad7766e0aac0ad436c95ac994ff533f167e,847,false,,4,21,7,src
+apache/iceberg-cpp,53f6a3e31b4ef71ec9483d62cb9e129e9ee6dcef,53f6a3e,Zehua Zou,zehuazou2000@gmail.com,2026-08-21T16:44:37+08:00,GitHub,noreply@github.com,2026-08-21T16:44:37+08:00,feat: add lru cache (#891),,3d68aa70aeacd60c6e5d30cdb44ba26221c11c2d,891,false,,9,385,102,LICENSE; src
+apache/iceberg-cpp,be374513e32df393030f604c375bc792949cee27,be37451,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-08-21T06:16:30-07:00,GitHub,noreply@github.com,2026-08-21T21:16:30+08:00,feat(logging): add Loggers registry (#737),"Part 6 of the logging stack (builds on #726). Lets applications pick a logging backend from configuration and install it as the process default — the same pattern as `MetricsReporters`.
+
+**How it works**
+
+Choose a backend with the `logger-impl` property; built-ins are `noop`, `cerr`, and `spdlog` (when compiled in).
+
+```cpp
+// Build a logger from properties and install it as the process default.
+auto logger = iceberg::Loggers::Load({{""logger-impl"", ""spdlog""}, {""level"", ""info""}});
+if (logger) {
+  iceberg::SetDefaultLogger(
+      std::shared_ptr<iceberg::Logger>(std::move(*logger)));
+}
+
+// ...then anywhere in the code:
+ICEBERG_LOG_INFO(""scan planned: {} files"", n);
+```
+
+**API**
+- `Loggers::Load(properties)` — build a logger, choosing the type from `logger-impl`.
+- `Loggers::Register(type, factory)` — register a custom backend under a new name.
+
+With no `logger-impl` set, the default is `spdlog` when compiled in, otherwise `cerr` — so logging works out of the box.
+
+**Tests** — `loggers_test` drives the full path an app uses: configure a backend + level via properties, install it, log through the macros, and check the real output. Covers configured level handling and a macro reaching a real spdlog sink, with spdlog ON and OFF.
+
+This pull request and its description were written by Isaac.",53f6a3e31b4ef71ec9483d62cb9e129e9ee6dcef,737,false,,10,417,1,src

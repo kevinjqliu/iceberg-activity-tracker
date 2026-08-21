@@ -5786,3 +5786,58 @@ Cover truncateBinary (partial, full, zero-length, and negative-length guard), th
 * More changes",6aa43afe5394587e975b79de61ecd65e7b059635,17692,false,,1,122,0,api
 apache/iceberg,660f2328a7ba045c2b5f0a945f07d4fa8bab0a2a,660f232,Raunaq Morarka,raunaqmorarka@users.noreply.github.com,2026-08-20T17:43:13+05:30,GitHub,noreply@github.com,2026-08-20T14:13:13+02:00,Arrow: Fix vectorized read of all-null DELTA-encoded Parquet pages (#17017),"An all-null page decodes to a length stream with totalValueCount 0, so
 readValues wrote firstValue into a zero-length array.",555bd9469bf15bd236dde320eaf75ab1b3a5681b,17017,false,,4,129,1,arrow; spark
+apache/iceberg,84cfd6f4485bbbfcd7d267e48a646bed3a0f6e43,84cfd6f,Joy Haldar,joyno.23@gmail.com,2026-08-20T22:10:33+05:30,GitHub,noreply@github.com,2026-08-20T18:40:33+02:00,Data: Split BaseFormatModelTests into read and read-write test classes (#17711),,660f2328a7ba045c2b5f0a945f07d4fa8bab0a2a,17711,false,,2,2494,2431,data
+apache/iceberg,5fbbd68c80aa023aa5125d545c0f94641435dfcb,5fbbd68,Alexandre Dutra,adutra@apache.org,2026-08-20T22:11:39+02:00,GitHub,noreply@github.com,2026-08-20T13:11:39-07:00,"AWS, Core: Implement RemoteSigningConfig  (#17709)","* Core, REST, AWS: Implement RemoteSigningConfig",84cfd6f4485bbbfcd7d267e48a646bed3a0f6e43,17709,false,,14,619,108,aws; core
+apache/iceberg,3d8532e101b89077b475801b1ea282488ffadbc9,3d8532e,GuoYu,511955993@qq.com,2026-08-21T14:06:34+08:00,GitHub,noreply@github.com,2026-08-21T08:06:34+02:00,Flink: Support variant for Avro readers and writers (#17737),,5fbbd68c80aa023aa5125d545c0f94641435dfcb,17737,false,,7,87,2,data; flink
+apache/iceberg,a12b0d90ca6fefb93d1114f84079556bf409ae1b,a12b0d9,Uros,221401595+uros-b@users.noreply.github.com,2026-08-21T08:10:02+02:00,GitHub,noreply@github.com,2026-08-20T23:10:02-07:00,Docs: Fix duplicated word in Spark merge-schema description (#17746),,3d8532e101b89077b475801b1ea282488ffadbc9,17746,false,,1,1,1,docs
+apache/iceberg,c07a081c8ab8687cd0531101db64922f6dbb2de6,c07a081,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-21T02:23:37-07:00,GitHub,noreply@github.com,2026-08-21T17:23:37+08:00,Core: Remove deprecated REST namespace encoding helpers (#17697),"* Core: Remove deprecated REST namespace encoding helpers
+
+Removes REST API deprecated for removal in 1.12.0:
+
+- RESTUtil.NAMESPACE_JOINER / NAMESPACE_SPLITTER, superseded by
+  namespaceToQueryParam(Namespace) / namespaceFromQueryParam(String)
+- RESTUtil.encodeNamespace(Namespace) / decodeNamespace(String), superseded
+  by the two-arg overloads that take an explicit separator
+- RESTSessionCatalog.REST_PAGE_SIZE, superseded by
+  RESTCatalogProperties.PAGE_SIZE
+- CatalogHandlers.loadTable(Catalog, TableIdentifier), superseded by the
+  overload taking a SnapshotMode
+
+Javadoc on namespaceToQueryParam and encodeNamespace no longer cross-links
+the removed single-arg encodeNamespace; the wording now describes the raw
+versus percent-encoded separator directly.
+
+* Core: Remove deprecated public ResourcePaths(String) constructor
+
+The deprecation notice said this constructor would be made private in
+1.12.0. It had no callers anywhere in the repo, so making it private
+would leave an unused private constructor; remove it instead. Removal
+and privatization are indistinguishable to external callers.
+
+* Core: Address review feedback on deprecated REST API removal
+
+Review feedback from nastra and singhpk234:
+
+- Keep the decode separator in encodeAsOldClientAndDecodeAsNewServer
+  hardcoded as ""%2E"". The test only needs a separator that differs from
+  the legacy one; it does not have to be the one RESTCatalogAdapter
+  advertises.
+- Use ""Removed deprecated functionality scheduled for removal in 1.12.0""
+  as the revapi justification for all seven accepted breaks. The previous
+  text claimed every break was part of the namespace encoding API, which
+  was not true for REST_PAGE_SIZE, CatalogHandlers.loadTable and the
+  ResourcePaths constructor.
+- Drop the javadoc note on namespaceToQueryParam(Namespace, String). The
+  separator is an explicit argument there, so warning that it differs from
+  encodeNamespace adds nothing.
+- Keep the note on the no-arg namespaceToQueryParam, which hides the
+  separator, but point it at the surviving encodeNamespace(Namespace,
+  String) overload. The distinction it warns about is real:
+  namespaceToQueryParam joins raw levels, while encodeNamespace
+  URL-encodes each level.",a12b0d90ca6fefb93d1114f84079556bf409ae1b,17697,false,,7,36,84,.palantir; core
+apache/iceberg,900e88215797a84adcadd3e0d53f7c8e0d17455f,900e882,Raunaq Morarka,raunaqmorarka@users.noreply.github.com,2026-08-21T17:59:34+05:30,GitHub,noreply@github.com,2026-08-21T14:29:34+02:00,Core: Use transaction metadata for post-commit file cleanup (#17708),"BaseTransaction resolved its newly committed snapshots through
+ops.current(), a catalog re-read that can be stale when the catalog
+caches table pointers. A missing snapshot made committedFiles return
+null, skipping clean-up of all uncommitted files and leaking one stale
+manifest list per commit retry attempt. The transaction's own committed
+metadata always contains the new snapshots, so resolve them there.",c07a081c8ab8687cd0531101db64922f6dbb2de6,17708,false,,2,80,29,core
