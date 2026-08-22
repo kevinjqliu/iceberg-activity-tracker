@@ -26930,3 +26930,92 @@ Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
 ---------
 
 Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",80630b4df4a4c43d175f6669dcd37202be082ca0,1746,false,,3,272,28,table
+apache/iceberg-go,a6cf20efb1ff675da2fa50ad0bba90b68921419d,a6cf20e,Badal Prasad Singh,badal@datazip.io,2026-08-21T21:54:26+05:30,GitHub,noreply@github.com,2026-08-21T12:24:26-04:00,fix(manifest): inherit writer content when creating manifest files (#1853) (#1854),"fix: inherit the writer content
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",25ecd81ec9c53bcc7e395b3972cf225af5c955a8,1854,false,,2,178,3,manifest.go; manifest_test.go
+apache/iceberg-go,5d8cb20132407672a9029fa278f992531cebcc22,5d8cb20,Minh Vu,vuhoangminh97@gmail.com,2026-08-21T21:16:31+02:00,GitHub,noreply@github.com,2026-08-21T15:16:31-04:00,perf(table): reuse scan invariants across Arrow reads (#1780),,a6cf20efb1ff675da2fa50ad0bba90b68921419d,1780,false,,5,351,36,table
+apache/iceberg-go,b4a3e9d1eec16e88baddc61f008ed4960e5cb6f5,b4a3e9d,Minh Vu,vuhoangminh97@gmail.com,2026-08-21T21:33:29+02:00,GitHub,noreply@github.com,2026-08-21T15:33:29-04:00,perf(table): group deletion vector reads by Puffin file (#1764),,5d8cb20132407672a9029fa278f992531cebcc22,1764,false,,4,321,31,table
+apache/iceberg-go,aaf8a07ee49357432037040d94220cd6763e4b6f,aaf8a07,Minh Vu,vuhoangminh97@gmail.com,2026-08-21T22:56:51+02:00,GitHub,noreply@github.com,2026-08-21T16:56:51-04:00,perf(table): size partition row indices adaptively (#1769),"* perf(table): size partition row indices adaptively
+
+* perf(table): make adaptive row capacities growth-safe
+
+* test(table): lock down late partition capacity growth
+
+* perf(table): compute safe row capacity directly",b4a3e9d1eec16e88baddc61f008ed4960e5cb6f5,1769,false,,3,251,5,table
+apache/iceberg-go,df6465207f0319003d303729b0275745e541b219,df64652,Tobias Pütz,tobias@minio.io,2026-08-21T23:11:22+02:00,GitHub,noreply@github.com,2026-08-21T23:11:22+02:00,"fix(partitions,sort): accept ordinal source IDs when decoding (#1665)","* fix(partitions,sort): accept ordinal source IDs when decoding
+
+Decoding rejected source-id 0 in partition specs and sort orders, but
+positivity is only an invariant for specs already bound to a schema.
+Create-table and commit requests carry unbound specs whose source IDs
+are the client's ordinal placeholders: Spark numbers the root struct's
+fields from zero, so partitioning or sorting by a table's first column
+sends source-id 0. Those requests failed with ""source ID must be
+positive: 0"".
+
+Reject only negative IDs during decoding and leave positivity to schema
+binding, which is where Java enforces it. TableMetadata.newTableMetadata
+assigns fresh IDs and remaps each spec field by looking the source name
+up in the request schema; reassignIDs already does the same, so ordinal
+IDs were handled correctly once past decoding. Non-resolvable IDs are
+still caught: AddPartitionFieldBySourceID and SortOrder.CheckCompatibility
+report source IDs missing from the schema.
+
+Regression tests cover a create-table request numbered from zero through
+NewMetadata and a metadata round trip, for both partition specs and sort
+orders.
+
+Signed-off-by: Tobias Pütz <tobias@min.io>
+
+* fixes
+
+* Address review comments
+
+---------
+
+Signed-off-by: Tobias Pütz <tobias@min.io>
+Signed-off-by: Tobias Pütz <tobias@minio.io>
+Co-authored-by: Tobias Pütz <tobias@min.io>",aaf8a07ee49357432037040d94220cd6763e4b6f,1665,false,Tobias Pütz,7,661,36,catalog; partitions.go; partitions_test.go; table
+apache/iceberg-go,7844dac637d8dfa9dbda54335a0dafde661c9a6d,7844dac,Alex Normand,alex.normand@datadoghq.com,2026-08-21T14:22:54-07:00,GitHub,noreply@github.com,2026-08-21T23:22:54+02:00,improve(rest): add load table response json decoding benchmark (#1654),"* [improve] Use goccy/go-json instead of encoding/json for faster catalog response decoding
+
+* Revert swap goccy on anything but catalog/rest
+
+* Add benchmark to compare json decoding between encoding/json and goccy/go-json
+
+* Fix formatting errors
+
+* Add test coverage for decodeJSONInteger boundaries
+
+* Undo goccy/go-json migration and keep only test improvements and benchmark
+
+* Clean up duplicate test case",df6465207f0319003d303729b0275745e541b219,1654,false,,2,224,20,catalog
+apache/iceberg-go,0f08e66e59cc1ec9b40898823d9eb991409bd080,0f08e66,Minh Vu,vuhoangminh97@gmail.com,2026-08-21T23:23:55+02:00,GitHub,noreply@github.com,2026-08-21T23:23:55+02:00,fix(table): normalize orphan paths independently of host OS (#1644),"* fix(table): normalize orphan paths independently of host OS
+
+* fix(table): preserve Windows volume roots during path normalization
+
+* fix(table): satisfy orphan path lint
+
+* test(table): harden portable path normalization
+
+* fix(table): preserve path identity during orphan cleanup
+
+* fix(table): satisfy orphan cleanup lint
+
+* fix(table): propagate invalid version hint URLs
+
+* fix(table): address orphan path review
+
+* fix(table): preserve ambiguous orphan paths
+
+* fix(table): preserve opaque object paths
+
+* fix(table): preserve orphan prefix identity
+
+* fix(table): align orphan paths with LocalFS
+
+* fix(table): canonicalize UNC share roots
+
+* fix(table): preserve UNC case during orphan cleanup
+
+* fix(table): align local path aliases with FileIO
+
+* test(table): cover uppercase Windows file URI keys",7844dac637d8dfa9dbda54335a0dafde661c9a6d,1644,false,,5,1410,138,internal; io; table
