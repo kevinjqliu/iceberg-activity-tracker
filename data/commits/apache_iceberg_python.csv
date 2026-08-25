@@ -5470,3 +5470,9 @@ apache/iceberg-python,75396614a5f093cf24e93c7d916ee2cda0bdf44e,7539661,Alex Step
 ---------
 
 Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>",6d814edf69bdc8aedcec5646f2ddb26a6c38b5b5,3818,false,Kevin Liu,2,113,4,pyiceberg; tests
+apache/iceberg-python,7de348436451c25190730d74d07067eeb7bb07e1,7de3484,Luca Falsina,lfalsina@gmail.com,2026-08-24T23:39:15+02:00,GitHub,noreply@github.com,2026-08-24T14:39:15-07:00,feat: Add async REST scan planning poll and plan storage credentials (#3724),"Implement async REST fetchPlanningResult / cancelPlanning polling when planTableScan returns status=submitted
+Apply completed-plan storage-credentials to the scan-scoped FileIO (layered on existing IO properties)
+Keep public RestCatalog.plan_scan(...) -> list[FileScanTask] unchanged; credentials flow through internal _plan_scan_result / _file_io_from_plan
+Honor per-table scan-planning-mode from LoadTableResponse.config, which takes precedence over the catalog-level / GET /v1/config setting (same precedence as Java)
+Related: #2775, #3495
+Java reference: apache/iceberg#13400 (async planning), apache/iceberg#15572 (table-level scan planning override)",75396614a5f093cf24e93c7d916ee2cda0bdf44e,3724,false,,10,589,39,mkdocs; pyiceberg; tests

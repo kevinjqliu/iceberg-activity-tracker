@@ -8640,3 +8640,9 @@ With no `logger-impl` set, the default is `spdlog` when compiled in, otherwise `
 
 This pull request and its description were written by Isaac.",53f6a3e31b4ef71ec9483d62cb9e129e9ee6dcef,737,false,,10,417,1,src
 apache/iceberg-cpp,268883e57019634da0873c64f4a606f81e0a18c9,268883e,Minh Vu,vuhoangminh97@gmail.com,2026-08-21T17:16:49+02:00,GitHub,noreply@github.com,2026-08-21T23:16:49+08:00,fix: reject malformed metadata file versions (#846),,be374513e32df393030f604c375bc792949cee27,846,false,,2,25,3,src
+apache/iceberg-cpp,2377328156cf6678b99a54211bd59fabda163a7d,2377328,lishuxu,lishuxu@gmail.com,2026-08-25T00:59:44+08:00,GitHub,noreply@github.com,2026-08-25T00:59:44+08:00,feat(rest): support OAuth2 token exchange sessions (#867),"Add RFC 8693 token exchange support, including OAuth2 endpoint handling and response parsing. Create contextual and table child sessions from direct tokens, credentials, or typed tokens.
+
+Keep OAuth2 metadata in one synchronized session snapshot. Use shared `HttpClient` ownership so refresh tasks can safely keep the client alive. Align token expiry with Java by preferring JWT `exp` and otherwise using the request start time plus `expires_in`.
+
+Move OAuth2 helpers into `OAuth2Util` and update unit and integration tests. Leave catalog token refresh, token exchange during refresh, and child session caching as follow-up work.",268883e57019634da0873c64f4a606f81e0a18c9,867,false,,18,1129,331,src
+apache/iceberg-cpp,8959a1400a2ed10aaae527a3e62f7a747fbcd1f4,8959a14,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-08-25T21:13:25+08:00,GitHub,noreply@github.com,2026-08-25T21:13:25+08:00,test(io): stop probing the EC2 metadata service in S3 tests (#897),,2377328156cf6678b99a54211bd59fabda163a7d,897,false,,1,9,0,src

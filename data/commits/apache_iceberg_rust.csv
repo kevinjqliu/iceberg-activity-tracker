@@ -30069,3 +30069,24 @@ updated-dependencies:
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",87deeb858a43797b5b1993afd1a1d80bd3259c9c,3047,false,dependabot[bot],1,44,44,bindings
 apache/iceberg-rust,ea3c0e2320a36ec7577939b3161621b037b07167,ea3c0e2,Xander,zander181@googlemail.com,2026-08-24T11:12:15+01:00,GitHub,noreply@github.com,2026-08-24T18:12:15+08:00,fix(scan) case sensitive column resolution (#3059),,74188744c9fb584d3bed72f6f6f0af9dda29ff95,3059,false,,1,82,24,crates
+apache/iceberg-rust,7b33321f34d9322ce5ede780ba3bc1f4e3741f47,7b33321,Anoop Johnson,anoop@apache.org,2026-08-24T09:38:07-07:00,GitHub,noreply@github.com,2026-08-24T18:38:07+02:00,perf(arrow): buffer positional-delete runs to drop per-row key allocation (#3015),"parse_positional_deletes_record_batch_stream called
+result.entry(file_path.to_string()) for every deleted row, allocating
+and hashing a fresh path string per row even though a positional
+delete file repeats the same data-file path across all of its rows
+(the records are sorted by (file_path, pos)).
+
+Within each Arrow batch, buffer the contiguous run of positions for one
+path and merge it into the map in a single entry lookup, so the key is
+allocated and hashed once per run instead of once per row. Grouping is
+per batch, not across the whole stream (the run buffer is scoped to the
+batch), so a path spanning batches is flushed once per batch it appears
+in. Behavior is unchanged: positions are still inserted one-by-one (no
+ordering precondition), and a path that recurs merges into its existing
+delete vector, so results are identical regardless of ordering. Also
+drops an unused schema binding.
+
+Microbenchmark filling HashMap<String, RoaringTreemap> from 500k rows
+in 8192-row batches: one data file 32.9 -> 8.5 ns/row (3.9x); 50 data
+files 36.8 -> 10.0 ns/row (3.7x).
+
+Replace the single grouping test with two: one spec-compliant case (rows sorted by (file_path, pos), covering multi-position runs, several files in a batch, and a run spanning the batch boundary), and one deliberately spec-noncompliant unsorted case that proves the reader does not depend on the spec sort order. A path split into non-contiguous runs still merges into one delete vector rather than dropping positions. The non-compliance is called out in the test name and doc comment so the input is not mistaken for a realistic one.",ea3c0e2320a36ec7577939b3161621b037b07167,3015,false,,2,173,6,crates
