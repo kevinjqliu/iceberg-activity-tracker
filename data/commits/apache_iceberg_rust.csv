@@ -30090,3 +30090,26 @@ in 8192-row batches: one data file 32.9 -> 8.5 ns/row (3.9x); 50 data
 files 36.8 -> 10.0 ns/row (3.7x).
 
 Replace the single grouping test with two: one spec-compliant case (rows sorted by (file_path, pos), covering multi-position runs, several files in a batch, and a run spanning the batch boundary), and one deliberately spec-noncompliant unsorted case that proves the reader does not depend on the spec sort order. A path split into non-contiguous runs still merges into one delete vector rather than dropping positions. The non-compliance is called out in the test name and doc comment so the input is not mistaken for a realistic one.",ea3c0e2320a36ec7577939b3161621b037b07167,3015,false,,2,173,6,crates
+apache/iceberg-rust,1203f2c43166fbc3c0b28114aaec8a927e2a706e,1203f2c,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-08-26T04:55:10+08:00,GitHub,noreply@github.com,2026-08-25T13:55:10-07:00,build: allow the whole DataFusion 54 line (#3033),"* build: allow the DataFusion 54.0.x line
+
+* build: use the 54 line rather than pinning a patch version",7b33321f34d9322ce5ede780ba3bc1f4e3741f47,3033,false,,1,4,4,Cargo.toml
+apache/iceberg-rust,4adf961e9239e984e4709bd0cd1a7ffd36c7315f,4adf961,Daniel Carl Jones,djonesoa@amazon.com,2026-08-26T07:13:48+01:00,GitHub,noreply@github.com,2026-08-26T14:13:48+08:00,fix: Correct exempt list for issue staleness (#3067),,1203f2c43166fbc3c0b28114aaec8a927e2a706e,3067,false,,1,2,2,.github
+apache/iceberg-rust,4168a0b2950dc5f85588e5cb3ab6796e5228b309,4168a0b,Joseph Lenton,JosephLenton@users.noreply.github.com,2026-08-26T10:37:24+01:00,GitHub,noreply@github.com,2026-08-26T17:37:24+08:00,docs: fix references in public docs (#2937),"* docs: fix references in public docs
+
+* chore: make private items that are publicly referenced public
+
+* feat: make TransactionAction public and correct more issues with docs
+
+* docs: change Schema method docs to be worded more naturally
+
+* docs: fix incorrect links when rendering docs
+
+* feat: make actions public again
+
+* chore: remove default from transactions
+
+* Remove default implementation on actions, remove public visibility of TransactionAction
+
+---------
+
+Co-authored-by: Daniel Carl Jones <djonesoa@amazon.com>",4adf961e9239e984e4709bd0cd1a7ffd36c7315f,2937,false,Daniel Carl Jones,33,115,116,crates
