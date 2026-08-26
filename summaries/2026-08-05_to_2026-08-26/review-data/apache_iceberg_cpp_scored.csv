@@ -1,0 +1,197 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-cpp,1d6e7b9ae01691811ca4e980b5d223d4a6cafd08,1d6e7b9,Gang Wu,ustcwg@gmail.com,2026-08-19T17:43:39+08:00,GitHub,noreply@github.com,2026-08-19T17:43:39+08:00,feat: add v3 geometry and geography support (#880),"- align geospatial type semantics and schema JSON with the v3 spec
+- add bound encoding and Java-compatible intersection evaluation
+- represent WKB as Arrow binary and support Avro byte round trips
+- generate and validate Parquet geospatial logical types
+- preserve count metrics while omitting geospatial byte-order bounds",7c38bd4643c6df1ebf2faabec5b982762e149cde,880,false,,23,1283,283,src,103,8,111,"base; feature/api verb; strategic: v3; community signal: geography, geometry, geospatial; large file count; large churn; correctness signal; has PR number; LanceDB similarity 0.27",Flink: Support UUID type in Avro and Parquet readers and writers,- feat: add v3 geometry and geography support (#880) (Thanks Gang Wu!)
+apache/iceberg-cpp,7c38bd4643c6df1ebf2faabec5b982762e149cde,7c38bd4,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-08-16T22:10:56+08:00,GitHub,noreply@github.com,2026-08-16T22:10:56+08:00,feat(io): add ResolvingFileIO to resolve FileIO by location scheme and forward vended credentials (#828),,9d9ef8c8686d8ebe03d95c9866310f47200d90ba,828,false,,16,676,162,src,86,7,93,base; feature/api verb; fix; important area: io; community signal: fileio; medium file count; medium churn; has PR number; LanceDB similarity 0.23,Flink: Add branch support to RewriteDataFiles maintenance task,- feat(io): add ResolvingFileIO to resolve FileIO by location scheme and forward vended credentials (#828) (Thanks Jiajia Li!)
+apache/iceberg-cpp,2377328156cf6678b99a54211bd59fabda163a7d,2377328,lishuxu,lishuxu@gmail.com,2026-08-25T00:59:44+08:00,GitHub,noreply@github.com,2026-08-25T00:59:44+08:00,feat(rest): support OAuth2 token exchange sessions (#867),"Add RFC 8693 token exchange support, including OAuth2 endpoint handling and response parsing. Create contextual and table child sessions from direct tokens, credentials, or typed tokens.
+
+Keep OAuth2 metadata in one synchronized session snapshot. Use shared `HttpClient` ownership so refresh tasks can safely keep the client alive. Align token expiry with Java by preferring JWT `exp` and otherwise using the request start time plus `expires_in`.
+
+Move OAuth2 helpers into `OAuth2Util` and update unit and integration tests. Leave catalog token refresh, token exchange during refresh, and child session caching as follow-up work.",268883e57019634da0873c64f4a606f81e0a18c9,867,false,,18,1129,331,src,84,7,91,base; feature/api verb; important area: rest; strategic: catalog; medium file count; large churn; has PR number; LanceDB similarity 0.22,Spark: Add ExecutorService support to RewriteTablePath,- feat(rest): support OAuth2 token exchange sessions (#867) (Thanks lishuxu!)
+apache/iceberg-cpp,e0399c6945326dd5281da07de8ed14a61c9f2cac,e0399c6,Gang Wu,ustcwg@gmail.com,2026-08-19T18:03:56+08:00,GitHub,noreply@github.com,2026-08-19T18:03:56+08:00,refactor(io): make FileIO resolution registry-driven (#889),"Add scheme-aware FileIO factories with deterministic registration precedence,
+route ResolvingFileIO by location scheme, and forward vended storage
+credentials through registered delegates.",1d6e7b9ae01691811ca4e980b5d223d4a6cafd08,889,false,,22,452,307,mkdocs; src; util,82,6,88,base; important area: io; strategic: storage; community signal: fileio; large file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.22,GCP: Add scheduled refresh for storage credentials held by GCSFileIO,- refactor(io): make FileIO resolution registry-driven (#889) (Thanks Gang Wu!)
+apache/iceberg-cpp,31274f5fd1b5f6b34ca18f833e4b25ea76faf1cd,31274f5,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-08-15T06:10:14-07:00,GitHub,noreply@github.com,2026-08-15T21:10:14+08:00,feat(logging): add spdlog backend behind ICEBERG_SPDLOG (#726),"Part 5 of the logging stack (builds on #725). Adds the spdlog backend and the build option that selects it — the default in production builds.
+
+**What's here**
+- `SpdLogger` wraps `spdlog::logger` (synchronous), maps levels (fatal/critical → spdlog critical; the abort stays in the macro layer), and forwards source location. Default sink is a colored stderr sink.
+- New `ICEBERG_SPDLOG` CMake option and matching Meson `spdlog` feature option (enabled by default). When disabled, the build has no spdlog dependency and `CerrLogger` is the default.
+- `pattern` property is honored here via `spdlog set_pattern` (the cerr backend keeps its fixed layout); `level` works on both backends.
+- `SpdLogger` lives in `logging/spdlog_logger_internal.h` and is not installed — apps get it via the default logger.
+- Runtime `kFatal` macro paths now use the same fatal-handler and abort sequence as `ICEBERG_LOG_FATAL`.
+
+**Tests** — logging tests cover default-backend selection, level filtering and mapping including fatal→critical, source-location forwarding, the `pattern` property, and runtime fatal-handler routing.
+
+This pull request and its description were written by Isaac.",6dff5ac8f743647add9e2c6d91ccb4b4555c745f,726,false,,17,450,65,CMakeLists.txt; README.md; cmake_modules; meson.options; src,50,7,57,base; feature/api verb; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.24,OpenAPI: Promote the S3 signing endpoint to the main spec,- feat(logging): add spdlog backend behind ICEBERG_SPDLOG (#726) (Thanks kamcheungting-db!)
+apache/iceberg-cpp,53f6a3e31b4ef71ec9483d62cb9e129e9ee6dcef,53f6a3e,Zehua Zou,zehuazou2000@gmail.com,2026-08-21T16:44:37+08:00,GitHub,noreply@github.com,2026-08-21T16:44:37+08:00,feat: add lru cache (#891),,3d68aa70aeacd60c6e5d30cdb44ba26221c11c2d,891,false,,9,385,102,LICENSE; src,50,6,56,base; feature/api verb; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.20,"CI: Make CVE scan blocking on PRs, informational on main",- feat: add lru cache (#891) (Thanks Zehua Zou!)
+apache/iceberg-cpp,81008e74720127a4061074cba727f2c9e5e2a27f,81008e7,Manu Zhang,OwenZhang1990@gmail.com,2026-08-15T18:14:27+08:00,GitHub,noreply@github.com,2026-08-15T18:14:27+08:00,ci: enable Copilot draft reviews and skip unrelated checks (#886),Co-authored-by: Codex <codex@openai.com>,cd7dbe266f2f896a4e17d9f38d8f86b392dc75d8,886,false,Codex,6,6,1,.asf.yaml; .github,49,4,53,base; feature/api verb; medium file count; multi-area change; co-authored; has PR number; LanceDB similarity 0.14,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- ci: enable Copilot draft reviews and skip unrelated checks (#886) (Thanks Manu Zhang!)
+apache/iceberg-cpp,be374513e32df393030f604c375bc792949cee27,be37451,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-08-21T06:16:30-07:00,GitHub,noreply@github.com,2026-08-21T21:16:30+08:00,feat(logging): add Loggers registry (#737),"Part 6 of the logging stack (builds on #726). Lets applications pick a logging backend from configuration and install it as the process default — the same pattern as `MetricsReporters`.
+
+**How it works**
+
+Choose a backend with the `logger-impl` property; built-ins are `noop`, `cerr`, and `spdlog` (when compiled in).
+
+```cpp
+// Build a logger from properties and install it as the process default.
+auto logger = iceberg::Loggers::Load({{""logger-impl"", ""spdlog""}, {""level"", ""info""}});
+if (logger) {
+  iceberg::SetDefaultLogger(
+      std::shared_ptr<iceberg::Logger>(std::move(*logger)));
+}
+
+// ...then anywhere in the code:
+ICEBERG_LOG_INFO(""scan planned: {} files"", n);
+```
+
+**API**
+- `Loggers::Load(properties)` — build a logger, choosing the type from `logger-impl`.
+- `Loggers::Register(type, factory)` — register a custom backend under a new name.
+
+With no `logger-impl` set, the default is `spdlog` when compiled in, otherwise `cerr` — so logging works out of the box.
+
+**Tests** — `loggers_test` drives the full path an app uses: configure a backend + level via properties, install it, log through the macros, and check the real output. Covers configured level handling and a macro reaching a real spdlog sink, with spdlog ON and OFF.
+
+This pull request and its description were written by Isaac.",53f6a3e31b4ef71ec9483d62cb9e129e9ee6dcef,737,false,,10,417,1,src,45,6,51,base; feature/api verb; medium file count; medium churn; has PR number; LanceDB similarity 0.18,"CI: Make CVE scan blocking on PRs, informational on main",- feat(logging): add Loggers registry (#737) (Thanks kamcheungting-db!)
+apache/iceberg-cpp,f012fcac88f24923286646664990938d352d2ec1,f012fca,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-08-08T09:39:06-07:00,GitHub,noreply@github.com,2026-08-09T00:39:06+08:00,feat: cast numeric literals to decimal type (#805),"## What
+
+Add casting of numeric literals (`int`, `long`, `float`, `double`) to a decimal target type in `Literal::CastTo`, so a numeric value can be used as a default for a decimal column.
+
+Previously `CastFromInt` / `CastFromLong` / `CastFromFloat` / `CastFromDouble` had no `kDecimal` case and fell through to `NotSupported`, so a default like `Literal::Int(12)` or `Literal::Double(9.99)` for a `decimal(9, 2)` column was rejected. Java allows these (`IntegerLiteral.to`, `DoubleLiteral.to`, etc. scale the value to the target scale), so this brings the C++ literal cast layer to parity for numeric sources.
+
+## How
+
+- **Integer → decimal**: `CastIntegerToDecimal` treats the integer as scale 0 and rescales it to the target scale via `RescaleHalfUp` (exact when increasing scale, HALF_UP when decreasing it), then verifies the result fits the target precision (`FitsInPrecision`). Example: `12` → `decimal(9,2)` yields unscaled `1200` (`12.00`).
+- **Float/double → decimal**: `CastRealToDecimal` parses the value's shortest round-tripping decimal representation (matching Java's `BigDecimal.valueOf(double)` via `Double.toString`) into an integer coefficient and exponent-derived scale without expanding scientific notation, then rounds to the target scale with **HALF_UP** rounding (round half away from zero, as Java does — `2.5` → `3`, `-2.5` → `-3`) and checks precision. Non-finite values are rejected.
+- Both paths reject an out-of-range decimal scale before indexing the powers-of-ten table (`DecimalType` does not bound its scale on construction, so `decimal(9, 40)` would otherwise read past the table).
+
+## Scope
+
+Follow-up split out from the v3 default-value work (see the `CastDefaultToType` discussion on #793). It only extends the shared `Literal::CastTo` layer for numeric sources.
+
+## Testing
+
+`LiteralTest.IntegerCastToDecimal` (int/long scaling, out-of-precision rejection, out-of-range scale rejection) and `LiteralTest.RealCastToDecimal` (float/double scaling, HALF_UP rounding incl. negative, round-down, out-of-precision and non-finite rejection, scientific-notation overflow rejection and negative-scale acceptance), all verified fail-without / pass-with. Full `expression_test` passes (495 tests).",ab083862eab5ac1a002200bcc174e51697851afc,805,false,,2,280,0,src,36,6,42,"base; strategic: round-trip, v3; medium churn; has PR number; LanceDB similarity 0.20",Flink: Support Variant to Flink 2.1,- feat: cast numeric literals to decimal type (#805) (Thanks Xin Huang!)
+apache/iceberg-cpp,268883e57019634da0873c64f4a606f81e0a18c9,268883e,Minh Vu,vuhoangminh97@gmail.com,2026-08-21T17:16:49+02:00,GitHub,noreply@github.com,2026-08-21T23:16:49+08:00,fix: reject malformed metadata file versions (#846),,be374513e32df393030f604c375bc792949cee27,846,false,,2,25,3,src,20,7,27,base; fix; has PR number; LanceDB similarity 0.24,Fix incorrect partition bounds calculation in manifest on deletion,- fix: reject malformed metadata file versions (#846) (Thanks Minh Vu!)
+apache/iceberg-cpp,3d68aa70aeacd60c6e5d30cdb44ba26221c11c2d,3d68aa7,Minh Vu,vuhoangminh97@gmail.com,2026-08-21T10:33:26+02:00,GitHub,noreply@github.com,2026-08-21T16:33:26+08:00,fix: parse boolean properties case-insensitively (#847),,a43d4ad7766e0aac0ad436c95ac994ff533f167e,847,false,,4,21,7,src,20,6,26,base; fix; has PR number; LanceDB similarity 0.20,Spark 4.1: Rename expectedSchema to projection for clarity,- fix: parse boolean properties case-insensitively (#847) (Thanks Minh Vu!)
+apache/iceberg-cpp,3165b58090b5ca647b0a0aa642aace9267dbc7f1,3165b58,YangJie,yangjie01@baidu.com,2026-08-16T00:41:48+08:00,GitHub,noreply@github.com,2026-08-16T00:41:48+08:00,fix: reject out-of-range integers when parsing JSON literals (#878),"## What
+
+`LiteralFromJson` accepted JSON integers beyond the signed 64-bit range and produced a wrong literal instead of a parse error. nlohmann reports unsigned integers as `is_number_integer()`, and `get<int64_t>()` converts values above INT64_MAX silently rather than throwing. So the `kInt` branch ran its int32 range check on the already-wrapped value, and the `kLong` branch had no range check at all: `18446744073709551615` parsed as `Literal::Int(-1)`, and `9223372036854775808` as `Literal::Long(INT64_MIN)`. The untyped overload had the same hole.
+
+Table metadata is the path where this changes returned data. `initial-default` / `write-default` go through this parser, `ValidateDefault` does not check integer range, and the value later gets materialized into a column. A metadata file that Java rejects reads back as `-1` here. The expression path is latent for now, since nothing evaluates `ReaderOptions::filter` yet.
+
+Fixes #877.
+
+## How
+
+`GetInt64Checked` rejects unsigned nodes above INT64_MAX before the conversion, and the `kInt` branch, the `kLong` branch and the untyped overload all go through it. Java guards the same paths with `canConvertToInt()` / `canConvertToLong()` in `SingleValueParser` and `ExpressionParser`.
+
+The `is_number_unsigned()` half of the guard is load-bearing: `get<uint64_t>()` on a negative node yields its two's-complement value, which compares above INT64_MAX and would reject every negative literal.
+
+Two smaller things on lines this fix already touches: the int32 narrowing on the `kInt` path gained the coverage it never had, and the two out-of-range messages now use the same wording instead of saying ""int"" in one and ""long"" in the other.
+
+## Testing
+
+`expression_test` (526 tests) and the full `ctest` suite (18/18) pass. Each new test was checked against a mutation of the code it guards:
+
+- `>` to `>=` in the guard: only `LongMax` fails. The `ULL` suffix there matters, since a signed INT64_MAX node skips the unsigned branch entirely.
+- `is_number_unsigned() &&` dropped: `LongMin`, `IntNegative` and `AcceptsNegativeIntegerUntyped` fail.
+- int32 range check deleted: `IntAboveInt32Max` and `IntBelowInt32Min` fail.
+
+The three overflow-rejection cases were also confirmed to fail without the fix and pass with it.
+
+## Out of scope
+
+`GetTypedJsonValue` in `src/iceberg/util/json_util_internal.h` truncates out-of-range integers the same way, so `FieldFromJson({""id"": 2147483648, ...})` yields `field_id = -2147483648` silently. That helper has roughly 80 call sites, so it belongs in its own PR.",31274f5fd1b5f6b34ca18f833e4b25ea76faf1cd,878,false,,2,78,6,src,20,5,25,base; fix; has PR number; LanceDB similarity 0.17,"Data, Spark, Flink: Add TCK for File Format API",- fix: reject out-of-range integers when parsing JSON literals (#878) (Thanks YangJie!)
+apache/iceberg-cpp,a43d4ad7766e0aac0ad436c95ac994ff533f167e,a43d4ad,Manu Zhang,OwenZhang1990@gmail.com,2026-08-21T15:55:43+08:00,GitHub,noreply@github.com,2026-08-21T15:55:43+08:00,refactor: protect merging snapshot update hooks (#885),Co-authored-by: Codex <codex@openai.com>,e0399c6945326dd5281da07de8ed14a61c9f2cac,885,false,Codex,2,7,1,src,15,4,19,base; co-authored; has PR number; LanceDB similarity 0.13,OpenAPI: Add SetPartitionStatisticsUpdate/RemovePartitionStatisticsUpdate to TableUpdate,- refactor: protect merging snapshot update hooks (#885) (Thanks Manu Zhang!)
+apache/iceberg-cpp,8959a1400a2ed10aaae527a3e62f7a747fbcd1f4,8959a14,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-08-25T21:13:25+08:00,GitHub,noreply@github.com,2026-08-25T21:13:25+08:00,test(io): stop probing the EC2 metadata service in S3 tests (#897),,2377328156cf6678b99a54211bd59fabda163a7d,897,false,,1,9,0,src,15,3,18,base; important area: io; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,Include key metadata in manifest tables (Spark 4.1),- test(io): stop probing the EC2 metadata service in S3 tests (#897) (Thanks Jiajia Li!)
+apache/iceberg-cpp,6dff5ac8f743647add9e2c6d91ccb4b4555c745f,6dff5ac,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-08-15T04:29:14-07:00,GitHub,noreply@github.com,2026-08-15T19:29:14+08:00,"test: cover write, evolve and read back of a defaulted column end to end (#874)",,d998c8f0d285eb0d4bae60bd286976390996f5ba,874,false,,2,267,0,src,4,3,7,base; medium churn; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.16; capped LanceDB boost for routine/low-signal commit,Core: Add properties to InMemoryFileIO,"- test: cover write, evolve and read back of a defaulted column end to end (#874) (Thanks Xin Huang!)"
+apache/iceberg-cpp,da05226c8ac8ccfb16fc7f6bb1c14e3ac5282093,da05226,Manu Zhang,OwenZhang1990@gmail.com,2026-08-15T18:16:03+08:00,GitHub,noreply@github.com,2026-08-15T18:16:03+08:00,test: verify MergingSnapshotUpdate commit reports (#884),Co-authored-by: Codex <codex@openai.com>,81008e74720127a4061074cba727f2c9e5e2a27f,884,false,Codex,2,40,6,src,3,3,6,base; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Core: v4 table metadata location should be optional,- test: verify MergingSnapshotUpdate commit reports (#884) (Thanks Manu Zhang!)
+apache/iceberg-cpp,cd7dbe266f2f896a4e17d9f38d8f86b392dc75d8,cd7dbe2,Zehua Zou,zehuazou2000@gmail.com,2026-08-13T15:00:16+08:00,GitHub,noreply@github.com,2026-08-13T15:00:16+08:00,chore: upgrade nanoarrow from 0.8.0 to 0.9.0 (#871),,f012fcac88f24923286646664990938d352d2ec1,871,false,,2,8,8,cmake_modules; subprojects,2,3,5,base; multi-area change; downrank routine build/deps; has PR number; LanceDB similarity 0.28; capped LanceDB boost for routine/low-signal commit,Spark 4.0/4.1: Display write metrics on SQL UI,- chore: upgrade nanoarrow from 0.8.0 to 0.9.0 (#871) (Thanks Zehua Zou!)
+apache/iceberg-cpp,9d9ef8c8686d8ebe03d95c9866310f47200d90ba,9d9ef8c,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-16T21:20:04+08:00,GitHub,noreply@github.com,2026-08-16T21:20:04+08:00,chore(deps): bump the codeql-action group with 2 updates (#888),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.4 to 4.37.6
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/f205ea1c3313d32999d8d6a48b4f6530d4437b38...5595ccaf912efad79be6eef63a5619ff05969be3)
+
+Updates `github/codeql-action/analyze` from 4.37.4 to 4.37.6
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/f205ea1c3313d32999d8d6a48b4f6530d4437b38...5595ccaf912efad79be6eef63a5619ff05969be3)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.37.6
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.37.6
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",3165b58090b5ca647b0a0aa642aace9267dbc7f1,888,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#888) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,d998c8f0d285eb0d4bae60bd286976390996f5ba,d998c8f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T18:17:12+08:00,GitHub,noreply@github.com,2026-08-15T18:17:12+08:00,chore(deps): bump the codeql-action group with 2 updates (#881),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.3 to 4.37.4
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81...f205ea1c3313d32999d8d6a48b4f6530d4437b38)
+
+Updates `github/codeql-action/analyze` from 4.37.3 to 4.37.4
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81...f205ea1c3313d32999d8d6a48b4f6530d4437b38)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.37.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.37.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",3f23f6750a8ca2436be73980d29c16c94b453737,881,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#881) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,3f23f6750a8ca2436be73980d29c16c94b453737,3f23f67,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T18:16:44+08:00,GitHub,noreply@github.com,2026-08-15T18:16:44+08:00,chore(deps): bump zizmorcore/zizmor-action from 0.6.1 to 0.6.2 (#882),"Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.6.1 to 0.6.2.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/6fc4b006235f201fdab3722e17240ab420d580e5...3dc1ecc9bcb9e94e9b2c709687979e1298497054)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.6.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",dbcde5d2528561c9654d9976a1cabfa5db012422,882,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Add 404 response for REST catalog config endpoint when warehouse is missing,- chore(deps): bump zizmorcore/zizmor-action from 0.6.1 to 0.6.2 (#882) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,dbcde5d2528561c9654d9976a1cabfa5db012422,dbcde5d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T18:16:23+08:00,GitHub,noreply@github.com,2026-08-15T18:16:23+08:00,chore(deps): bump mozilla-actions/sccache-action from 0.0.10 to 0.0.11 (#883),"Bumps [mozilla-actions/sccache-action](https://github.com/mozilla-actions/sccache-action) from 0.0.10 to 0.0.11.
+- [Release notes](https://github.com/mozilla-actions/sccache-action/releases)
+- [Commits](https://github.com/mozilla-actions/sccache-action/compare/9e7fa8a12102821edf02ca5dbea1acd0f89a2696...fc920bf0ec8de6ee65d409111f7ec508035751ba)
+
+---
+updated-dependencies:
+- dependency-name: mozilla-actions/sccache-action
+  dependency-version: 0.0.11
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",da05226c8ac8ccfb16fc7f6bb1c14e3ac5282093,883,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump mozilla-actions/sccache-action from 0.0.10 to 0.0.11 (#883) (Thanks dependabot[bot]!)

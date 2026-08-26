@@ -1,0 +1,1074 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-python,ddd8309888a3df6d9cc1317f5c723ef4795082ef,ddd8309,Sotaro Hikita,70102274+lawofcycles@users.noreply.github.com,2026-08-13T05:46:27+09:00,GitHub,noreply@github.com,2026-08-12T22:46:27+02:00,Add commit retry and concurrency validation for writes (#3320),"* Add commit retry with data conflict validation
+
+Add automatic retry with exponential backoff when catalog commits fail
+due to concurrent transactions (CommitFailedException), and integrate
+the existing validation functions from validate.py into the write path
+to detect incompatible concurrent modifications (ValidationException).
+
+The retry loop is placed in Transaction.commit_transaction(). On each
+retry attempt, table metadata is refreshed, registered snapshot
+producers are re-executed to regenerate manifests, and data conflict
+validation is run. Uncommitted manifests from failed attempts are
+cleaned up after a successful commit.
+
+Validation is performed for _OverwriteFiles and _DeleteFiles based on
+the table's isolation level (serializable/snapshot). _FastAppendFiles
+and _MergeAppendFiles do not require validation since appends never
+conflict.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Add validation guards and isolation level property routing
+
+Skip _validate_no_new_delete_files and _validate_deleted_data_files
+when conflict_detection_filter is None, matching Java's
+BaseOverwriteFiles.validate() behavior for rowFilter == AlwaysFalse().
+
+Route isolation level property based on the calling operation.
+Transaction.delete() uses write.delete.isolation-level (default).
+Transaction.overwrite(), dynamic_partition_overwrite(), and upsert()
+use write.update.isolation-level via _isolation_level_property on
+the snapshot producer.
+
+Remove unused WRITE_MERGE_ISOLATION_LEVEL constant.`
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix mypy errors in test_commit_retry
+
+Use Operation enum instead of string literals for producer
+construction. Use .value for IsolationLevel string comparison
+to avoid unreachable statement warning.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Stabilize test_commit_retry_on_commit_failed
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix case-insensitive delete regression and improve retry loop
+
+Fix _build_delete_files_partition_predicate overwriting _case_sensitive
+to True by passing the current value to delete_by_predicate. This
+caused case-insensitive deletes to fail when _OverwriteFiles was used
+with a user-specified predicate.
+
+Move import random/time to file top level. Add total timeout
+(commit.retry.total-timeout-ms) to the retry loop. Add comments for
+intentional validation duplication and cached_property clearing.
+Stabilize test_commit_retry_on_commit_failed by removing flaky
+patch.object assertion.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Debug: investigate CI-only test failure in memory catalog
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Debug: investigate CI-only test failure in memory catalog
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Debug: investigate CI-only test failure in memory catalog
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix patch.object targeting wrong Transaction class in CI
+
+In CI, pyiceberg.table module is loaded twice, creating two distinct
+Transaction class objects. patch.object on the test-imported Transaction
+does not affect the runtime Transaction used by Table.append(). Fix by
+resolving Transaction from pyiceberg.table module at runtime.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Simplify AssertTableUUID and clean up manifests on abort
+
+AssertTableUUID is constant across retries, so add it once before the
+loop instead of adding/removing on each iteration.
+
+Add _clean_all_uncommitted() that deletes both _uncommitted_manifests
+and _written_manifests on permanent failure, fixing orphaned manifests
+from the last attempt.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix mypy errors in test_commit_retry
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* fix: use starting_snapshot_id for validation window in commit retry
+
+The concurrency validation was using parent_snapshot (current head) for
+both the starting point and ending point of the validation window. When
+multiple concurrent commits occur during retry sleep, the validation
+would only inspect the latest head and miss conflicting commits below it.
+
+Introduce _starting_snapshot_id that is fixed at operation init time and
+does not change on retry. Also fix _validation_history to use exclusive
+semantics for from_snapshot, matching Java Iceberg's ancestorsBetween.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* fix: raise on unresolvable snapshots and fix _starting_snapshot_id propagation
+
+Address review feedback on commit retry validation:
+
+- _validate_concurrency() now raises ValidationException when
+parent_snapshot_id or starting_snapshot_id is non-null but cannot
+be resolved, instead of silently skipping validation.
+- Fix _starting_snapshot_id not being propagated from _DeleteFiles to
+_OverwriteFiles in Transaction.delete(), which caused the conflict
+detection window to collapse when both producers are involved.
+- Move ValidationException import to module level per project convention.
+- Add commit retry and isolation level properties to configuration docs.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Refactor: consolidate _validate_concurrency into base class
+
+Move the duplicated _validate_concurrency logic from _DeleteFiles and
+_OverwriteFiles into _SnapshotProducer. Extract _resolve_parent_snapshot
+and _resolve_starting_snapshot helpers for readability.
+
+_FastAppendFiles overrides with a no-op since appends do not require
+conflict validation.
+
+Also move property_as_int to a top-level import in table/__init__.py.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix mypy and pydocstyle lint errors in snapshot producer
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Introduce CommitWindow to fix validation in multi-producer retry
+
+_validate_concurrency was resolving the catalog HEAD via
+_parent_snapshot_id, which breaks when a Transaction has multiple
+producers (_DeleteFiles + _OverwriteFiles). On retry, the second
+producer's parent points to the first producer's uncommitted snapshot,
+which does not exist in the catalog metadata, causing a spurious
+ValidationException.
+
+CommitWindow explicitly separates the two snapshot references that
+validation needs: starting_snapshot_id (fixed at operation start) and
+catalog_head_snapshot_id (the actual catalog HEAD after refresh).
+_rebuild_snapshot_updates builds one CommitWindow and shares it across
+all producers, so each validates against the real catalog state.
+
+Add test_mixed_delete_overwrite_retries_successfully to cover the
+multi-producer retry path end-to-end.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Track and clean up orphaned manifest list files on retry and abort
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix commit retry validation for non-main branches and add branch tests
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Refactor CommitWindow to resolve snapshots eagerly and consolidate logic
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix mypy and ruff lint errors in CommitWindow refactoring
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Address minor nits: class-level annotation, super().commit(), and type annotations
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Simplify retry property lookups and align jitter with Java (0.1)
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Extract _current_branch_head_id helper for branch head resolution
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Resolve isolation level via TableMetadata.isolation_level()
+
+Add TableMetadata.isolation_level(operation) and drop the
+_isolation_level_property field on the snapshot producer. The producer now
+carries the logical operation (_isolation_operation) and resolves the level
+from the current metadata at validation time.
+
+This moves the property lookup into a single place and still picks up
+refreshed properties on retry. Behavior is unchanged: delete operations use
+write.delete.isolation-level and update operations use
+write.update.isolation-level, matching how Java keys the isolation level off
+the operation rather than the snapshot operation type.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Read the concurrency filter guard from the predicate directly
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Remove unused _resolve_parent_snapshot
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Log a warning before retrying a failed commit
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Clamp commit.retry.num-retries to a minimum of zero
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Validate against full history when starting from an empty table
+
+A writer that started on a table with no snapshots treated the commit
+window as empty and skipped validation. If another writer landed the first
+snapshot concurrently, its rows could be dropped with no error. Treat a None
+base with a live head as a full-history validation, matching Java.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Fix deleted-file validation for a None starting snapshot
+
+Follow-up to the empty-table validation change: _deleted_data_files still
+returned early on a None parent, and _validate_deleted_data_files still typed
+it as non-optional. Walk the full history for deleted files too, and widen the
+type. Fixes the mypy failure and closes the remaining validation gap.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Only delete written files when the commit definitely failed
+
+The retry loop cleaned up on any exception, deleting manifests that a
+committed snapshot may already reference when the outcome is unknown or the
+commit had already landed. Restrict cleanup to CommitFailedException and
+ValidationException, which guarantee the commit did not happen, and re-raise
+anything else without deleting, matching Java.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Reset producer state on success and invalidate a failed transaction
+
+A committed transaction kept its snapshot producers registered, so a later
+commit replayed them and double-committed the first batch. A failed commit
+left the transaction with staged updates pointing at deleted files. Clear the
+producers after a successful commit, and mark a transaction as failed so
+reusing it raises instead of corrupting the table.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Freeze the delete file set so retries do not drop concurrent rows
+
+Under snapshot isolation, a retried delete recomputed its target files against
+the refreshed head, so a concurrently added file matching the predicate was
+dropped even though the writer never saw it. Freeze the planned delete set at
+plan time and match by membership on retry, mirroring how _OverwriteFiles
+already works. Also corrects test_overwrite_uses_update_isolation_level, which
+asserted the old behavior of dropping the concurrent append.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Keep the snapshot id stable so a landed commit is not repeated
+
+The retry loop minted a new snapshot id on every attempt, so a commit that
+landed but was reported as failed (a lost response the transport layer
+retried) could not be recognized on retry and was committed a second time.
+Keep the snapshot id stable across attempts and, after refreshing, stop if it
+is already present in the metadata. Update test_refresh_for_retry_resets_producer_state
+to reflect the stable id.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+* Validate empty-plan deletes at commit time and clamp retry wait properties
+
+A delete whose plan matched nothing at staging contributes an empty
+update, so commit_transaction returned before the ref check, retry
+loop, and validation ever ran. A row matching the writer's own
+predicate that landed between staging and commit was silently lost.
+Validation only runs on the retry path after a CAS failure, and an
+empty update set never produces a CAS, so entering the commit loop is
+not enough. Add an explicit validation pass for the case where
+producers are registered but the staged output is empty.
+
+Clamp commit.retry.min-wait-ms, max-wait-ms, and total-timeout-ms to
+non-negative values like num-retries, so a negative wait does not
+raise ValueError from time.sleep and mask the CommitFailedException.
+
+Document the partition_set limitation in concurrent delete file
+validation for tables shared with merge-on-read writers.
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>
+
+---------
+
+Signed-off-by: Sotaro Hikita <bering1814@gmail.com>",63ad2a34e20091dc1f7a27082c34eb6a3690262d,3320,false,,9,1658,49,mkdocs; pyiceberg; tests,106,8,114,"base; feature/api verb; fix; strategic: catalog, conflict validation, manifest, occ; summary signal: conflict validation; medium file count; large churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.27",Docs: Add blog post about File Format API,- Add commit retry and concurrency validation for writes (#3320) (Thanks Sotaro Hikita!)
+apache/iceberg-python,7de348436451c25190730d74d07067eeb7bb07e1,7de3484,Luca Falsina,lfalsina@gmail.com,2026-08-24T23:39:15+02:00,GitHub,noreply@github.com,2026-08-24T14:39:15-07:00,feat: Add async REST scan planning poll and plan storage credentials (#3724),"Implement async REST fetchPlanningResult / cancelPlanning polling when planTableScan returns status=submitted
+Apply completed-plan storage-credentials to the scan-scoped FileIO (layered on existing IO properties)
+Keep public RestCatalog.plan_scan(...) -> list[FileScanTask] unchanged; credentials flow through internal _plan_scan_result / _file_io_from_plan
+Honor per-table scan-planning-mode from LoadTableResponse.config, which takes precedence over the catalog-level / GET /v1/config setting (same precedence as Java)
+Related: #2775, #3495
+Java reference: apache/iceberg#13400 (async planning), apache/iceberg#15572 (table-level scan planning override)",75396614a5f093cf24e93c7d916ee2cda0bdf44e,3724,false,,10,589,39,mkdocs; pyiceberg; tests,88,7,95,"base; feature/api verb; strategic: catalog, storage; community signal: fileio; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.23","CI: Make CVE scan blocking on PRs, informational on main",- feat: Add async REST scan planning poll and plan storage credentials (#3724) (Thanks Luca Falsina!)
+apache/iceberg-python,2612f28a3c06c3d27764bcc69ed132297e5e2d90,2612f28,David Dallakyan,131261521+daviddallakyan2005@users.noreply.github.com,2026-08-15T22:35:06+04:00,GitHub,noreply@github.com,2026-08-15T20:35:06+02:00,Add docstrings to pyiceberg/table/inspect.py (#3802),"* Add docstrings to InspectTable in pyiceberg/table/inspect.py
+
+The inspect API had no docstrings. This ports the review-approved
+text from #3457 onto current main, including key_metadata on
+all_manifests which landed after that PR.
+
+Co-authored-by: RyukR1 <biplovsingh785@gmail.com>
+
+* Document partitions() raising when the table has no snapshots
+
+entries() already documents this ValueError from _get_snapshot();
+partitions() uses the same helper.
+
+---------
+
+Co-authored-by: RyukR1 <biplovsingh785@gmail.com>",1b9f250cdb62a5fab3b585289039a96ddb0f4bc6,3802,false,RyukR1,1,276,0,pyiceberg,64,8,72,base; feature/api verb; strategic: manifest; medium churn; co-authored; has PR number; LanceDB similarity 0.25,Core: Add properties to InMemoryFileIO,- Add docstrings to pyiceberg/table/inspect.py (#3802) (Thanks David Dallakyan and RyukR1!)
+apache/iceberg-python,ccefb86d7e7eab5ceaf8d531a993929f80851e51,ccefb86,Anas Khan,anxkhn28@gmail.com,2026-08-16T02:04:24+05:30,GitHub,noreply@github.com,2026-08-15T22:34:24+02:00,fix: pad sub-microsecond digits when parsing nanosecond (#3614),"timestamp_to_nanos and timestamptz_to_nanos read the sub-microsecond
+digits of the fraction (regex group 3 of ISO_TIMESTAMP_NANO /
+ISO_TIMESTAMPTZ_NANO) as a bare integer. For a 7- or 8-digit fraction
+that group is 1 or 2 digits and represents positions 7-8 of the
+fraction, so it must be right-padded to 3 digits before being
+interpreted as nanoseconds. Without padding, .1234567 was parsed as
++7 ns instead of +700 ns, silently corrupting the value.
+
+Right-pad the group to 3 digits with ljust so all fraction widths
+round-trip correctly, and add 7- and 8-digit cases to the tests, which
+previously only covered 6- and 9-digit fractions.
+
+Signed-off-by: Anas Khan <83116240+anxkhn@users.noreply.github.com>",800b56add019dfbc10c53679ebe61d49b57dbcd9,3614,false,,2,10,2,pyiceberg; tests,57,6,63,base; fix; strategic: round-trip; summary signal: round-trip; multi-area change; has PR number; LanceDB similarity 0.19,OpenAPI: Promote the S3 signing endpoint to the main spec,- fix: pad sub-microsecond digits when parsing nanosecond (#3614) (Thanks Anas Khan!)
+apache/iceberg-python,d142bd133a4ebec067c87fa783637ceb7477fd0c,d142bd1,Anas Khan,anxkhn28@gmail.com,2026-08-16T01:53:08+05:30,GitHub,noreply@github.com,2026-08-15T22:23:08+02:00,fix: Compare timestamps for partitions metadata (#3603),"* fix: compare timestamps for partitions metadata last_updated_at
+
+`InspectTable._update_partitions_map_from_manifest_entry` aggregates
+per-partition stats over manifest entries, which are iterated in manifest
+order rather than chronologically. The guard that keeps the most recently
+committed snapshot per partition compared the stored `last_updated_snapshot_id`
+(a snapshot id) against `snapshot.timestamp_ms` (a commit timestamp). Snapshot
+ids are large positive 63-bit integers, so `id < timestamp_ms` is effectively
+always false and the row keeps whichever entry was visited first instead of the
+newest one, reporting the wrong `last_updated_at` / `last_updated_snapshot_id`
+for any partition touched by more than one snapshot.
+
+Compare the stored `last_updated_at` timestamp against the incoming
+`snapshot.timestamp_ms`, matching the Java `PartitionsTable.Partition.update`
+which uses `snapshotCommitTime > this.lastUpdatedAt`.
+
+* test: reuse data file in partitions regression test
+
+Signed-off-by: Anas Khan <83116240+anxkhn@users.noreply.github.com>
+
+---------
+
+Signed-off-by: Anas Khan <83116240+anxkhn@users.noreply.github.com>",d63d4865ba14804874aafd0d9bd642dfc7c6af70,3603,false,,2,27,2,pyiceberg; tests,45,8,53,base; fix; strategic: manifest; multi-area change; has PR number; LanceDB similarity 0.27,Spark: Fix javadoc mentioning Spark 3.3 in Spark 3.4 benchmark classes,- fix: Compare timestamps for partitions metadata (#3603) (Thanks Anas Khan!)
+apache/iceberg-python,b741169c7ea22e3fb3e5c55396201f2d888d0532,b741169,David,avisonlivingstone@gmail.com,2026-08-12T19:49:23+01:00,GitHub,noreply@github.com,2026-08-12T20:49:23+02:00,Fix SsqlCatalog Iceberg type filter (#3709),filter iceberg_type across all SqlCatalog table operations,b940c21b6a46313dc9caad9f7c35ef44bbc09d9c,3709,false,,2,88,14,pyiceberg; tests,45,5,50,base; fix; strategic: catalog; multi-area change; has PR number; LanceDB similarity 0.17,Core: Fix metadata table scans with useRef by preserving metadata schema,- Fix SsqlCatalog Iceberg type filter (#3709) (Thanks David!)
+apache/iceberg-python,75396614a5f093cf24e93c7d916ee2cda0bdf44e,7539661,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-08-22T21:24:19-07:00,GitHub,noreply@github.com,2026-08-22T21:24:19-07:00,Fail when explicitly deleted data file is missing (#3818),"* Fail when explicitly deleted data file is missing
+
+* Avoid writing manifests before overwrite validation
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>",6d814edf69bdc8aedcec5646f2ddb26a6c38b5b5,3818,false,Kevin Liu,2,113,4,pyiceberg; tests,40,9,49,base; strategic: manifest; multi-area change; co-authored; has PR number; LanceDB similarity 0.31,"Core, Data: File Format API interfaces",- Fail when explicitly deleted data file is missing (#3818) (Thanks Alex Stephen and Kevin Liu!)
+apache/iceberg-python,30cf177aa57f0b628c92614c577cecf66046ea7d,30cf177,achasnovskiy,57291710+achasnovskiy@users.noreply.github.com,2026-08-15T21:52:31+03:00,GitHub,noreply@github.com,2026-08-15T20:52:31+02:00,feat: Add S3 SSE configs (#3173),,2612f28a3c06c3d27764bcc69ed132297e5e2d90,3173,false,,4,52,0,mkdocs; pyiceberg; tests,42,6,48,base; feature/api verb; multi-area change; has PR number; LanceDB similarity 0.19,Core: Add implementations of v4 TrackedFile interfaces,- feat: Add S3 SSE configs (#3173) (Thanks achasnovskiy!)
+apache/iceberg-python,137f4d32c09600f31fb9f5e61dd39f97e22db5ed,137f4d3,jj.lee,63435794+jx2lee@users.noreply.github.com,2026-08-11T01:19:00+09:00,GitHub,noreply@github.com,2026-08-10T09:19:00-07:00,Add `--purge` option to drop table CLI (#3718),"* add flags in drop table cmd
+
+* add drop cmd in cli.md
+
+* include purgable with flags
+
+* modified cli md and default val in purge option
+
+* Apply suggestion
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",de743361dd43bb6700ec2e6e992282aaa50379d7,3718,false,Kevin Liu,3,38,3,mkdocs; pyiceberg; tests,37,8,45,base; feature/api verb; multi-area change; co-authored; downrank narrow CLI change; has PR number; LanceDB similarity 0.26,Docs: Add informational properties section for table comment,- Add `--purge` option to drop table CLI (#3718) (Thanks jj.lee and Kevin Liu!)
+apache/iceberg-python,e43be1ec5938335111c624902961601651152319,e43be1e,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-08-20T13:05:56-07:00,GitHub,noreply@github.com,2026-08-20T13:05:56-07:00,Infra: Enable pull request auto-merge (#3815),,0d81ea6eb8f6daeddf0c84fc050c1664f9b5d726,3815,false,,1,2,0,.asf.yaml,37,5,42,base; feature/api verb; has PR number; LanceDB similarity 0.17,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- Infra: Enable pull request auto-merge (#3815) (Thanks Kevin Liu!)
+apache/iceberg-python,df0e73e31bfab155dc802002ca77cee0b91fa767,df0e73e,BharatDeva,bharatdevagir@gmail.com,2026-08-21T12:31:44-05:00,GitHub,noreply@github.com,2026-08-21T10:31:44-07:00,Fix residual NotNaN for null partition values (#3689),"* Fix residual NotNaN for null partition values
+
+* test: cover residual NotNaN with NaN values
+
+---------
+
+Co-authored-by: BharatDeva <278575558+BharatDeva@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>",8544bb40964cc9f6ae8f9ef92b605abf910ff0fe,3689,false,BharatDeva; Kevin Liu,2,9,3,pyiceberg; tests,28,8,36,base; fix; multi-area change; co-authored; has PR number; LanceDB similarity 0.27,Spark 4.1: Fix async microbatch plan bugs,- Fix residual NotNaN for null partition values (#3689) (Thanks BharatDeva and Kevin Liu!)
+apache/iceberg-python,6d814edf69bdc8aedcec5646f2ddb26a6c38b5b5,6d814ed,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-08-22T20:30:32-07:00,GitHub,noreply@github.com,2026-08-22T20:30:32-07:00,Fix strict evaluation for negative record counts (#3831),Fix strict evaluation for unknown record counts,30730987d43db2081692646a8f19506bd78a3f32,3831,false,,2,7,5,pyiceberg; tests,25,9,34,base; fix; multi-area change; has PR number; LanceDB similarity 0.28,"Core, REST: Add support for overwrite in RegisterTableRequest",- Fix strict evaluation for negative record counts (#3831) (Thanks Kevin Liu!)
+apache/iceberg-python,8544bb40964cc9f6ae8f9ef92b605abf910ff0fe,8544bb4,vishnu prakash,nvishnuprakash02@gmail.com,2026-08-21T01:39:50+05:30,GitHub,noreply@github.com,2026-08-20T13:09:50-07:00,fix(decimal): use minimal byte length for negative powers of two (#3746),"* fix(decimal): use minimal byte length for negative powers of two
+
+* test(decimal): add positive Decimal case to
+  bytes_required
+
+* test(decimal): cover negative boundary bucketing
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>",e43be1ec5938335111c624902961601651152319,3746,false,Kevin Liu,3,29,5,pyiceberg; tests,28,4,32,base; fix; multi-area change; co-authored; has PR number; LanceDB similarity 0.14,REST Spec: clarify uniqueness of ETags for table metadata responses,- fix(decimal): use minimal byte length for negative powers of two (#3746) (Thanks vishnu prakash and Kevin Liu!)
+apache/iceberg-python,d0ee9d86b445ed4dc6f1d4d536a1367a85ed9ab4,d0ee9d8,Gabriel Igliozzi,gaboiglio@gmail.com,2026-08-19T07:30:45+02:00,GitHub,noreply@github.com,2026-08-18T22:30:45-07:00,bug: fix delete_data_file on partitioned tables (#3780),,c86eb8e5cd65d0bb0b91c88d0434ce07012fb664,3780,false,,4,79,13,pyiceberg; tests,25,6,31,base; fix; multi-area change; has PR number; LanceDB similarity 0.20,Spark: Validate Z-order rewrite does not conflict with internal ICEZVALUE column name,- bug: fix delete_data_file on partitioned tables (#3780) (Thanks Gabriel Igliozzi!)
+apache/iceberg-python,731e21a4938ed9d56ceee3b4694a28f1acdd298f,731e21a,Minh Vu,vuhoangminh97@gmail.com,2026-08-15T21:56:55+02:00,GitHub,noreply@github.com,2026-08-15T21:56:55+02:00,fix(fsspec): parse S3 virtual addressing as a boolean (#3492),Fix fsspec S3 virtual addressing boolean parsing,32529efc696ea98c07c39a88c174d0fd38ad8b96,3492,false,,4,31,11,pyiceberg; tests,25,6,31,base; fix; multi-area change; has PR number; LanceDB similarity 0.19,Core: Fix useSnapshotSchema logic and projection in RESTTableScan,- fix(fsspec): parse S3 virtual addressing as a boolean (#3492) (Thanks Minh Vu!)
+apache/iceberg-python,32529efc696ea98c07c39a88c174d0fd38ad8b96,32529ef,Anas Khan,anxkhn28@gmail.com,2026-08-16T01:08:10+05:30,GitHub,noreply@github.com,2026-08-15T21:38:10+02:00,"fix: Long`{AboveMax,BelowMin}` type-change error (#3634)","* fix: correct class name in Long{AboveMax,BelowMin} type-change error
+
+LongAboveMax.to() and LongBelowMin.to() raised a TypeError whose message
+named IntAboveMax/IntBelowMin, a copy-paste leftover from the Int singletons
+above them. When a long overflow literal is asked to convert to an unsupported
+type, the diagnostic misidentified it as an int literal, which is misleading
+when debugging.
+
+Point each message at its own class and add regression tests covering both the
+successful conversion and the corrected error message for the long singletons.
+
+Signed-off-by: Anas Khan <83116240+anxkhn@users.noreply.github.com>
+
+* test: focus long bound error assertions
+
+Signed-off-by: Anas Khan <83116240+anxkhn@users.noreply.github.com>
+
+---------
+
+Signed-off-by: Anas Khan <83116240+anxkhn@users.noreply.github.com>",3cce3d3046e38219bb02e86212fa738ac1d65193,3634,false,,2,14,2,pyiceberg; tests,25,6,31,base; fix; multi-area change; has PR number; LanceDB similarity 0.20,"API, Core: Add FileIO to Scan API","- fix: Long`{AboveMax,BelowMin}` type-change error (#3634) (Thanks Anas Khan!)"
+apache/iceberg-python,63ad2a34e20091dc1f7a27082c34eb6a3690262d,63ad2a3,Aaron Niskode-Dossett,aniskodedossett@etsy.com,2026-08-12T15:29:16-05:00,GitHub,noreply@github.com,2026-08-12T22:29:16+02:00,Make metrics evaluation stateless (#3665),"* Make metrics evaluation stateless
+
+* Use a realistic 15-leaf metrics benchmark
+
+* Simplify metrics evaluator tests
+
+* Consolidate evaluator planning tests",b741169c7ea22e3fb3e5c55396201f2d888d0532,3665,false,,5,394,30,pyiceberg; tests,25,6,31,base; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.20,Flink: Fix HashKeyGenerator SelectorKey cache ignoring writeParallelism and distributionMode,- Make metrics evaluation stateless (#3665) (Thanks Aaron Niskode-Dossett!)
+apache/iceberg-python,e964886d0c73572165b7afcc8aa5d56ef923aee5,e964886,Pucheng Yang,8072956+puchengy@users.noreply.github.com,2026-08-10T08:59:25-07:00,GitHub,noreply@github.com,2026-08-10T08:59:25-07:00,Fix flaky moto_server fixture by using an OS-assigned ephemeral port (#3759),"The `moto_server` session fixture hardcoded port 5001 and pre-bound a
+socket to it purely to detect conflicts (added in #292). This is still
+flaky: when tests run in parallel (e.g. multiple CI jobs on a shared
+runner) or when a previous run leaves the port in TIME_WAIT, the pre-bind
+raises `OSError: [Errno 98] Address already in use`, failing the whole
+test session at fixture setup.
+
+Bind to port 0 instead so the OS assigns a free ephemeral port, and read
+the actual bound port back via moto's `get_host_and_port()`. This removes
+the collision and the now-unnecessary pre-bind check (and the `socket`
+import). The fixture return annotation is corrected to `Generator[...]`
+since it yields.
+
+Co-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",7d0f503106a1f4142e6d315c3501aecccfdd9ba2,3759,false,Claude Opus 4.8 (1M context),1,8,8,tests,23,8,31,base; fix; co-authored; has PR number; LanceDB similarity 0.25,Core: Fix rewriting delete manifests in RewriteTablePathUtil,- Fix flaky moto_server fixture by using an OS-assigned ephemeral port (#3759) (Thanks Pucheng Yang and Claude Opus 4.8 (1M context)!)
+apache/iceberg-python,3170c4fdd04eaf64e7c42c853afb918337e81fcb,3170c4f,Anas Khan,anxkhn28@gmail.com,2026-08-16T01:31:12+05:30,GitHub,noreply@github.com,2026-08-15T22:01:12+02:00,fix: Removeprefix for namespace property keys (#3602),"fix: decode DynamoDB namespace property keys with removeprefix
+
+Use str.removeprefix directly when decoding namespace properties so the literal p. prefix is removed without stripping leading property-key characters.
+
+Signed-off-by: Anas Khan <83116240+anxkhn@users.noreply.github.com>",731e21a4938ed9d56ceee3b4694a28f1acdd298f,3602,false,,1,4,5,pyiceberg,20,10,30,base; fix; has PR number; LanceDB similarity 0.34,Core: Add test for freshness-aware table loading with lazy snapshot loading,- fix: Removeprefix for namespace property keys (#3602) (Thanks Anas Khan!)
+apache/iceberg-python,3cce3d3046e38219bb02e86212fa738ac1d65193,3cce3d3,Noritaka Sekiyama,moomindani@gmail.com,2026-08-16T04:29:46+09:00,GitHub,noreply@github.com,2026-08-15T21:29:46+02:00,Add Spark interop test for reading Puffin deletion vectors (#3476),"* Add Spark interop test for reading Puffin deletion vectors
+
+* Address review comments: move Puffin DV interop test to test_deletes.py
+
+- Move test_read_spark_written_puffin_dv from test_puffin_spark_interop.py
+  to test_deletes.py; delete the old file
+- Replace run_spark_commands helper calls with direct spark.sql() calls
+- Tighten entries assertion from > 0 to == 1
+
+* Tighten delete manifest assertion to == 1
+
+Co-authored-by: Isaac",30cf177aa57f0b628c92614c577cecf66046ea7d,3476,false,,1,65,1,tests,25,3,28,base; feature/api verb; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.34; capped LanceDB boost for routine/low-signal commit,"Data, Spark, Flink: Add TCK for File Format API",- Add Spark interop test for reading Puffin deletion vectors (#3476) (Thanks Noritaka Sekiyama!)
+apache/iceberg-python,d63d4865ba14804874aafd0d9bd642dfc7c6af70,d63d486,Anas Khan,anxkhn28@gmail.com,2026-08-16T01:50:07+05:30,GitHub,noreply@github.com,2026-08-15T22:20:07+02:00,fix: raise `TypeError` for unsupported partition source type (#3617),"* fix: raise TypeError for unsupported partition source type
+
+The singledispatch fallback of _to_partition_representation used
+return TypeError(...) instead of raise TypeError(...). For an
+unsupported (non-primitive) partition source type this returned the
+exception instance as the partition value instead of raising, so the
+error would surface far from its cause. Raise it, and add a regression
+test covering the base handler.
+
+Signed-off-by: Anas Khan <83116240+anxkhn@users.noreply.github.com>
+
+* test: remove base handler regression test
+
+Signed-off-by: Anas Khan <83116240+anxkhn@users.noreply.github.com>
+
+---------
+
+Signed-off-by: Anas Khan <83116240+anxkhn@users.noreply.github.com>",3170c4fdd04eaf64e7c42c853afb918337e81fcb,3617,false,,1,1,1,pyiceberg,20,7,27,base; fix; has PR number; LanceDB similarity 0.22,Evaluating dependency changes,- fix: raise `TypeError` for unsupported partition source type (#3617) (Thanks Anas Khan!)
+apache/iceberg-python,0d81ea6eb8f6daeddf0c84fc050c1664f9b5d726,0d81ea6,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-08-20T10:01:33-07:00,GitHub,noreply@github.com,2026-08-20T10:01:33-07:00,Validate replaced data files during commit retries (#3811),,d0ee9d86b445ed4dc6f1d4d536a1367a85ed9ab4,3811,false,,3,102,0,pyiceberg; tests,17,7,24,base; multi-area change; has PR number; LanceDB similarity 0.22,"Core, Data: File Format API interfaces",- Validate replaced data files during commit retries (#3811) (Thanks Kevin Liu!)
+apache/iceberg-python,b940c21b6a46313dc9caad9f7c35ef44bbc09d9c,b940c21,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-08-12T09:16:20-07:00,GitHub,noreply@github.com,2026-08-12T09:16:20-07:00,Release verification script (#3777),,3bd462185298c5abffaada431d92530638a83ef7,3777,false,,2,129,4,dev; mkdocs,17,5,22,base; multi-area change; has PR number; LanceDB similarity 0.17,Site: Updates for 1.10.1 Release <Huaxin Gao>,- Release verification script (#3777) (Thanks Alex Stephen!)
+apache/iceberg-python,c86eb8e5cd65d0bb0b91c88d0434ce07012fb664,c86eb8e,David Dallakyan,131261521+daviddallakyan2005@users.noreply.github.com,2026-08-18T20:41:00+04:00,GitHub,noreply@github.com,2026-08-18T09:41:00-07:00,fix: stop calling deprecated PuffinFile.to_vector in Spark DV test (#3804),,03ad0d6cdd1e01a9f0b43f64ef618214e4d62c03,3804,false,,1,5,4,tests,8,3,11,base; fix; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.28; capped LanceDB boost for routine/low-signal commit,Spark: Fix javadoc mentioning Spark 3.3 in Spark 3.4 benchmark classes,- fix: stop calling deprecated PuffinFile.to_vector in Spark DV test (#3804) (Thanks David Dallakyan!)
+apache/iceberg-python,800b56add019dfbc10c53679ebe61d49b57dbcd9,800b56a,Anas Khan,anxkhn28@gmail.com,2026-08-16T01:58:28+05:30,GitHub,noreply@github.com,2026-08-15T22:28:28+02:00,test: fix operator precedence in manifest v2 assertions (#3612),"Six assertions in test_write_manifest and test_write_manifest_list used
+the form `assert x == a if format_version == 1 else b`. Because a
+conditional expression binds looser than `==`, Python parses this as
+`assert (x == a) if (format_version == 1) else b`, so for the
+format_version == 2 parametrization the whole statement collapses to
+`assert b`, where b is a truthy constant (3, or ManifestContent.DELETES).
+The v2 branch therefore always passed and never compared the actual
+value read back from the manifest.
+
+Wrap the right-hand side in parentheses so the conditional expression is
+the comparison target. This restores verification of the v2
+sequence_number, content, min_sequence_number, and file_sequence_number
+on the manifest read/round-trip path. Test-only change; all parametrized
+cases (v1 and v2) pass.
+
+Signed-off-by: Anas Khan <83116240+anxkhn@users.noreply.github.com>",d142bd133a4ebec067c87fa783637ceb7477fd0c,3612,false,,1,6,6,tests,8,3,11,base; fix; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,AWS: Add scheduled refresh for the S3FileIO held storage credentials,- test: fix operator precedence in manifest v2 assertions (#3612) (Thanks Anas Khan!)
+apache/iceberg-python,de743361dd43bb6700ec2e6e992282aaa50379d7,de74336,Yuya Ebihara,ebyhry@gmail.com,2026-08-11T01:05:44+09:00,GitHub,noreply@github.com,2026-08-10T09:05:44-07:00,Docs: Update Iceberg Slack link (#3768),,e964886d0c73572165b7afcc8aa5d56ef923aee5,3768,false,,1,1,1,mkdocs,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Flink: Fix equalityFieldColumns always null in IcebergSink <GuoYu>,- Docs: Update Iceberg Slack link (#3768) (Thanks Yuya Ebihara!)
+apache/iceberg-python,3bd462185298c5abffaada431d92530638a83ef7,3bd4621,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-08-10T11:37:11-07:00,GitHub,noreply@github.com,2026-08-10T11:37:11-07:00,Build: Bump setuptools to 83.0.0 (#3774),,6294bebbef48ea0efd72c86528e3e738660c74f6,3774,false,,2,7,4,pyproject.toml; uv.lock,-43,3,-40,base; multi-area change; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.29; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump setuptools to 83.0.0 (#3774) (Thanks Kevin Liu!)
+apache/iceberg-python,a5dd0767d6364062bcba116fb7e231f6822c39f6,a5dd076,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-22T10:35:10-07:00,GitHub,noreply@github.com,2026-08-22T10:35:10-07:00,Build: Bump pytest-lazy-fixtures from 1.4.0 to 1.4.1 (#3822),"Bumps [pytest-lazy-fixtures](https://github.com/dev-petrov/pytest-lazy-fixtures) from 1.4.0 to 1.4.1.
+- [Release notes](https://github.com/dev-petrov/pytest-lazy-fixtures/releases)
+- [Commits](https://github.com/dev-petrov/pytest-lazy-fixtures/compare/1.4.0...1.4.1)
+
+---
+updated-dependencies:
+- dependency-name: pytest-lazy-fixtures
+  dependency-version: 1.4.1
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",fe3960c5a2bd15fcca0bd3262ea4af3a585f164e,3822,false,dependabot[bot],2,5,5,pyproject.toml; uv.lock,-65,3,-62,base; multi-area change; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.31; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- Build: Bump pytest-lazy-fixtures from 1.4.0 to 1.4.1 (#3822) (Thanks dependabot[bot]!)
+apache/iceberg-python,d7d5adc116e9860fb109931c42e9c9de87afd058,d7d5adc,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:43:28-07:00,GitHub,noreply@github.com,2026-08-10T09:43:28-07:00,Build: Bump protobuf from 6.33.5 to 7.35.1 (#3535),"Bumps [protobuf](https://github.com/protocolbuffers/protobuf) from 6.33.5 to 7.35.1.
+- [Release notes](https://github.com/protocolbuffers/protobuf/releases)
+- [Commits](https://github.com/protocolbuffers/protobuf/commits)
+
+---
+updated-dependencies:
+- dependency-name: protobuf
+  dependency-version: 7.35.1
+  dependency-type: direct:development
+  update-type: version-update:semver-major
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",8e2eead9a1f2564239a2631572a245168370cf0a,3535,false,dependabot[bot],2,11,11,pyproject.toml; uv.lock,-65,3,-62,base; multi-area change; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Spark 4.1: Set data file sort_order_id in manifest for writes from Spark,- Build: Bump protobuf from 6.33.5 to 7.35.1 (#3535) (Thanks dependabot[bot]!)
+apache/iceberg-python,8e2eead9a1f2564239a2631572a245168370cf0a,8e2eead,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:42:26-07:00,GitHub,noreply@github.com,2026-08-10T09:42:26-07:00,Build: Bump ray from 2.55.1 to 2.56.1 (#3705),"* Build: Bump ray from 2.55.1 to 2.56.1
+
+Bumps [ray](https://github.com/ray-project/ray) from 2.55.1 to 2.56.1.
+- [Release notes](https://github.com/ray-project/ray/releases)
+- [Commits](https://github.com/ray-project/ray/compare/ray-2.55.1...ray-2.56.1)
+
+---
+updated-dependencies:
+- dependency-name: ray
+  dependency-version: 2.56.1
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+* Fix Ray pandas comparison
+
+---------
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>",05b78f8ef8ea2bc73ef604a28c6408f6051b4bda,3705,false,dependabot[bot]; Kevin Liu,2,22,20,tests; uv.lock,-65,3,-62,base; multi-area change; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.36; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump ray from 2.55.1 to 2.56.1 (#3705) (Thanks dependabot[bot] and Kevin Liu!)
+apache/iceberg-python,05b78f8ef8ea2bc73ef604a28c6408f6051b4bda,05b78f8,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:20:14-07:00,GitHub,noreply@github.com,2026-08-10T09:20:14-07:00,Build: Bump aiohttp from 3.14.1 to 3.14.3 (#3753),"Bumps [aiohttp](https://github.com/aio-libs/aiohttp) from 3.14.1 to 3.14.3.
+- [Changelog](https://github.com/aio-libs/aiohttp/blob/master/CHANGES.rst)
+- [Commits](https://github.com/aio-libs/aiohttp/compare/v3.14.1...v3.14.3)
+
+---
+updated-dependencies:
+- dependency-name: aiohttp
+  dependency-version: 3.14.3
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",fd122980e13400662306d47574fd84b3c5d00d0f,3753,false,dependabot[bot],1,121,121,uv.lock,-66,3,-63,base; medium churn; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,OpenAPI: Add CatalogObjectIdentifier schema,- Build: Bump aiohttp from 3.14.1 to 3.14.3 (#3753) (Thanks dependabot[bot]!)
+apache/iceberg-python,30730987d43db2081692646a8f19506bd78a3f32,3073098,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-22T10:35:36-07:00,GitHub,noreply@github.com,2026-08-22T10:35:36-07:00,Build: Bump the codeql-action group with 2 updates (#3823),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.6 to 4.37.7
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/5595ccaf912efad79be6eef63a5619ff05969be3...ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd)
+
+Updates `github/codeql-action/analyze` from 4.37.6 to 4.37.7
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/5595ccaf912efad79be6eef63a5619ff05969be3...ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.37.7
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.37.7
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",b0def3e8067057a35e65097505035531da136845,3823,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.13; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- Build: Bump the codeql-action group with 2 updates (#3823) (Thanks dependabot[bot]!)
+apache/iceberg-python,b0def3e8067057a35e65097505035531da136845,b0def3e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-22T10:35:24-07:00,GitHub,noreply@github.com,2026-08-22T10:35:24-07:00,Build: Bump mypy-boto3-glue from 1.43.65 to 1.43.72 (#3826),"Bumps [mypy-boto3-glue](https://github.com/youtype/mypy_boto3_builder) from 1.43.65 to 1.43.72.
+- [Release notes](https://github.com/youtype/mypy_boto3_builder/releases)
+- [Commits](https://github.com/youtype/mypy_boto3_builder/commits)
+
+---
+updated-dependencies:
+- dependency-name: mypy-boto3-glue
+  dependency-version: 1.43.72
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",5590ae46349a04e9a75126716a89145c2b9d57e2,3826,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,Core: Convert metrics to Content Stats,- Build: Bump mypy-boto3-glue from 1.43.65 to 1.43.72 (#3826) (Thanks dependabot[bot]!)
+apache/iceberg-python,5590ae46349a04e9a75126716a89145c2b9d57e2,5590ae4,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-22T10:35:18-07:00,GitHub,noreply@github.com,2026-08-22T10:35:18-07:00,Build: Bump prek from 0.4.12 to 0.4.13 (#3819),"Bumps [prek](https://github.com/j178/prek) from 0.4.12 to 0.4.13.
+- [Release notes](https://github.com/j178/prek/releases)
+- [Changelog](https://github.com/j178/prek/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/j178/prek/compare/v0.4.12...v0.4.13)
+
+---
+updated-dependencies:
+- dependency-name: prek
+  dependency-version: 0.4.13
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",06baf146a2445473b742ca22495f72677fb0fc00,3819,false,dependabot[bot],1,20,20,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump prek from 0.4.12 to 0.4.13 (#3819) (Thanks dependabot[bot]!)
+apache/iceberg-python,06baf146a2445473b742ca22495f72677fb0fc00,06baf14,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-22T10:35:16-07:00,GitHub,noreply@github.com,2026-08-22T10:35:16-07:00,Build: Bump setuptools from 83.0.0 to 84.0.0 (#3820),"Bumps [setuptools](https://github.com/pypa/setuptools) from 83.0.0 to 84.0.0.
+- [Release notes](https://github.com/pypa/setuptools/releases)
+- [Changelog](https://github.com/pypa/setuptools/blob/main/NEWS.rst)
+- [Commits](https://github.com/pypa/setuptools/compare/v83.0.0...v84.0.0)
+
+---
+updated-dependencies:
+- dependency-name: setuptools
+  dependency-version: 84.0.0
+  dependency-type: direct:development
+  update-type: version-update:semver-major
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",1136055f9516f84bf686e3edb17baa16c06827a1,3820,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Spec: Add v4 content stats representation,- Build: Bump setuptools from 83.0.0 to 84.0.0 (#3820) (Thanks dependabot[bot]!)
+apache/iceberg-python,1136055f9516f84bf686e3edb17baa16c06827a1,1136055,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-22T10:35:14-07:00,GitHub,noreply@github.com,2026-08-22T10:35:14-07:00,Build: Bump ray from 2.56.1 to 2.57.0 (#3821),"Bumps [ray](https://github.com/ray-project/ray) from 2.56.1 to 2.57.0.
+- [Release notes](https://github.com/ray-project/ray/releases)
+- [Commits](https://github.com/ray-project/ray/compare/ray-2.56.1...ray-2.57.0)
+
+---
+updated-dependencies:
+- dependency-name: ray
+  dependency-version: 2.57.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a5dd0767d6364062bcba116fb7e231f6822c39f6,3821,false,dependabot[bot],1,19,19,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Core: Invalidate ShreddedObject serialization cache on remove,- Build: Bump ray from 2.56.1 to 2.57.0 (#3821) (Thanks dependabot[bot]!)
+apache/iceberg-python,fe3960c5a2bd15fcca0bd3262ea4af3a585f164e,fe3960c,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-22T10:35:06-07:00,GitHub,noreply@github.com,2026-08-22T10:35:06-07:00,Build: Bump sqlalchemy from 2.0.51 to 2.0.52 (#3824),"Bumps [sqlalchemy](https://github.com/sqlalchemy/sqlalchemy) from 2.0.51 to 2.0.52.
+- [Release notes](https://github.com/sqlalchemy/sqlalchemy/releases)
+- [Changelog](https://github.com/sqlalchemy/sqlalchemy/blob/main/CHANGES.rst)
+- [Commits](https://github.com/sqlalchemy/sqlalchemy/commits)
+
+---
+updated-dependencies:
+- dependency-name: sqlalchemy
+  dependency-version: 2.0.52
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",9053313428520ebb4e12605d3ce4744f2974fb41,3824,false,dependabot[bot],1,40,46,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,Fix Internal to Generic conversion of TIMESTAMP_NANO,- Build: Bump sqlalchemy from 2.0.51 to 2.0.52 (#3824) (Thanks dependabot[bot]!)
+apache/iceberg-python,9053313428520ebb4e12605d3ce4744f2974fb41,9053313,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-22T10:35:03-07:00,GitHub,noreply@github.com,2026-08-22T10:35:03-07:00,Build: Bump pyarrow from 24.0.0 to 25.0.1 (#3825),"Bumps [pyarrow](https://github.com/apache/arrow) from 24.0.0 to 25.0.1.
+- [Release notes](https://github.com/apache/arrow/releases)
+- [Commits](https://github.com/apache/arrow/compare/apache-arrow-24.0.0...apache-arrow-25.0.1)
+
+---
+updated-dependencies:
+- dependency-name: pyarrow
+  dependency-version: 25.0.1
+  dependency-type: direct:production
+  update-type: version-update:semver-major
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7d261fff31490115c74f2d7b0952da95ded5c23a,3825,false,dependabot[bot],1,73,80,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.38; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- Build: Bump pyarrow from 24.0.0 to 25.0.1 (#3825) (Thanks dependabot[bot]!)
+apache/iceberg-python,7d261fff31490115c74f2d7b0952da95ded5c23a,7d261ff,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-22T10:34:56-07:00,GitHub,noreply@github.com,2026-08-22T10:34:56-07:00,Build: Bump jupyterlab from 4.6.2 to 4.6.3 (#3827),"Bumps [jupyterlab](https://github.com/jupyterlab/jupyterlab) from 4.6.2 to 4.6.3.
+- [Release notes](https://github.com/jupyterlab/jupyterlab/releases)
+- [Changelog](https://github.com/jupyterlab/jupyterlab/blob/main/RELEASE.md)
+- [Commits](https://github.com/jupyterlab/jupyterlab/compare/@jupyterlab/lsp@4.6.2...@jupyterlab/lsp@4.6.3)
+
+---
+updated-dependencies:
+- dependency-name: jupyterlab
+  dependency-version: 4.6.3
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",daabf9ec4c9e18db8e916a895b051feac997d52b,3827,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump jupyterlab from 4.6.2 to 4.6.3 (#3827) (Thanks dependabot[bot]!)
+apache/iceberg-python,daabf9ec4c9e18db8e916a895b051feac997d52b,daabf9e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-22T10:34:53-07:00,GitHub,noreply@github.com,2026-08-22T10:34:53-07:00,Build: Bump adlfs from 2026.5.0 to 2026.8.0 (#3828),"Bumps [adlfs](https://github.com/fsspec/adlfs) from 2026.5.0 to 2026.8.0.
+- [Release notes](https://github.com/fsspec/adlfs/releases)
+- [Changelog](https://github.com/fsspec/adlfs/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/fsspec/adlfs/compare/2026.5.0...2026.8.0)
+
+---
+updated-dependencies:
+- dependency-name: adlfs
+  dependency-version: 2026.8.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",df0e73e31bfab155dc802002ca77cee0b91fa767,3828,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- Build: Bump adlfs from 2026.5.0 to 2026.8.0 (#3828) (Thanks dependabot[bot]!)
+apache/iceberg-python,03ad0d6cdd1e01a9f0b43f64ef618214e4d62c03,03ad0d6,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T22:35:32+02:00,GitHub,noreply@github.com,2026-08-15T22:35:32+02:00,Build: Bump mypy-boto3-dynamodb from 1.43.0 to 1.43.64 (#3800),"Bumps [mypy-boto3-dynamodb](https://github.com/youtype/mypy_boto3_builder) from 1.43.0 to 1.43.64.
+- [Release notes](https://github.com/youtype/mypy_boto3_builder/releases)
+- [Commits](https://github.com/youtype/mypy_boto3_builder/commits)
+
+---
+updated-dependencies:
+- dependency-name: mypy-boto3-dynamodb
+  dependency-version: 1.43.64
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",e2430f30d1227b1dc0a1e8f5980bf97f2044ca01,3800,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump mypy-boto3-dynamodb from 1.43.0 to 1.43.64 (#3800) (Thanks dependabot[bot]!)
+apache/iceberg-python,e2430f30d1227b1dc0a1e8f5980bf97f2044ca01,e2430f3,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T22:35:20+02:00,GitHub,noreply@github.com,2026-08-15T22:35:20+02:00,Build: Bump huggingface-hub from 1.26.0 to 1.27.0 (#3799),"Bumps [huggingface-hub](https://github.com/huggingface/huggingface_hub) from 1.26.0 to 1.27.0.
+- [Release notes](https://github.com/huggingface/huggingface_hub/releases)
+- [Commits](https://github.com/huggingface/huggingface_hub/compare/v1.26.0...v1.27.0)
+
+---
+updated-dependencies:
+- dependency-name: huggingface-hub
+  dependency-version: 1.27.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",24a68faa1aaa5df5d2e8ff1a778a69db1301409e,3799,false,dependabot[bot],1,22,30,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump huggingface-hub from 1.26.0 to 1.27.0 (#3799) (Thanks dependabot[bot]!)
+apache/iceberg-python,24a68faa1aaa5df5d2e8ff1a778a69db1301409e,24a68fa,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T22:34:56+02:00,GitHub,noreply@github.com,2026-08-15T22:34:56+02:00,Build: Bump mypy-boto3-glue from 1.43.59 to 1.43.65 (#3789),"Bumps [mypy-boto3-glue](https://github.com/youtype/mypy_boto3_builder) from 1.43.59 to 1.43.65.
+- [Release notes](https://github.com/youtype/mypy_boto3_builder/releases)
+- [Commits](https://github.com/youtype/mypy_boto3_builder/commits)
+
+---
+updated-dependencies:
+- dependency-name: mypy-boto3-glue
+  dependency-version: 1.43.65
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",ccefb86d7e7eab5ceaf8d531a993929f80851e51,3789,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,Core: Convert metrics to Content Stats,- Build: Bump mypy-boto3-glue from 1.43.59 to 1.43.65 (#3789) (Thanks dependabot[bot]!)
+apache/iceberg-python,1b9f250cdb62a5fab3b585289039a96ddb0f4bc6,1b9f250,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T20:22:48+02:00,GitHub,noreply@github.com,2026-08-15T20:22:48+02:00,Build: Bump nbformat from 5.10.4 to 5.11.0 (#3798),"Bumps [nbformat](https://github.com/jupyter/nbformat) from 5.10.4 to 5.11.0.
+- [Release notes](https://github.com/jupyter/nbformat/releases)
+- [Changelog](https://github.com/jupyter/nbformat/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/jupyter/nbformat/compare/v5.10.4...v5.11.0)
+
+---
+updated-dependencies:
+- dependency-name: nbformat
+  dependency-version: 5.11.0
+  dependency-type: direct:development
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",f478beb6766579c11353990a94ed182f10ace87b,3798,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- Build: Bump nbformat from 5.10.4 to 5.11.0 (#3798) (Thanks dependabot[bot]!)
+apache/iceberg-python,f478beb6766579c11353990a94ed182f10ace87b,f478beb,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T20:22:29+02:00,GitHub,noreply@github.com,2026-08-15T20:22:29+02:00,Build: Bump google-auth from 2.56.2 to 2.56.3 (#3797),"Bumps [google-auth](https://github.com/googleapis/google-cloud-python) from 2.56.2 to 2.56.3.
+- [Release notes](https://github.com/googleapis/google-cloud-python/releases)
+- [Changelog](https://github.com/googleapis/google-cloud-python/blob/main/packages/google-cloud-documentai/CHANGELOG.md)
+- [Commits](https://github.com/googleapis/google-cloud-python/compare/google-auth-v2.56.2...google-auth-v2.56.3)
+
+---
+updated-dependencies:
+- dependency-name: google-auth
+  dependency-version: 2.56.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",dc311cdbbf0d30db476e2b0949e37164c8063420,3797,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.29; capped LanceDB boost for routine/low-signal commit,Core: Remove deprecation from ViewProperties.WRITE_METADATA_LOCATION,- Build: Bump google-auth from 2.56.2 to 2.56.3 (#3797) (Thanks dependabot[bot]!)
+apache/iceberg-python,dc311cdbbf0d30db476e2b0949e37164c8063420,dc311cd,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T20:22:12+02:00,GitHub,noreply@github.com,2026-08-15T20:22:12+02:00,Build: Bump prek from 0.4.11 to 0.4.12 (#3796),"Bumps [prek](https://github.com/j178/prek) from 0.4.11 to 0.4.12.
+- [Release notes](https://github.com/j178/prek/releases)
+- [Changelog](https://github.com/j178/prek/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/j178/prek/compare/v0.4.11...v0.4.12)
+
+---
+updated-dependencies:
+- dependency-name: prek
+  dependency-version: 0.4.12
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",9b1db530da7254ab588db87208205d820a6cb38e,3796,false,dependabot[bot],1,20,20,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump prek from 0.4.11 to 0.4.12 (#3796) (Thanks dependabot[bot]!)
+apache/iceberg-python,9b1db530da7254ab588db87208205d820a6cb38e,9b1db53,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T20:21:52+02:00,GitHub,noreply@github.com,2026-08-15T20:21:52+02:00,Build: Bump pypa/cibuildwheel from 4.1.1 to 4.2.0 (#3795),"Bumps [pypa/cibuildwheel](https://github.com/pypa/cibuildwheel) from 4.1.1 to 4.2.0.
+- [Release notes](https://github.com/pypa/cibuildwheel/releases)
+- [Changelog](https://github.com/pypa/cibuildwheel/blob/main/docs/changelog.md)
+- [Commits](https://github.com/pypa/cibuildwheel/compare/4726cd35bb13f7bde50cf2761f2499ac7b3aa32c...1828c10ab37f080699c7b81cea34097c684a7074)
+
+---
+updated-dependencies:
+- dependency-name: pypa/cibuildwheel
+  dependency-version: 4.2.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",b7012c4618289ea2aca103549400036818e01b51,3795,false,dependabot[bot],2,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Licenses / Notices / Dependencies / Bundles <Thanks Blue and Kevin>,- Build: Bump pypa/cibuildwheel from 4.1.1 to 4.2.0 (#3795) (Thanks dependabot[bot]!)
+apache/iceberg-python,b7012c4618289ea2aca103549400036818e01b51,b7012c4,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T20:21:36+02:00,GitHub,noreply@github.com,2026-08-15T20:21:36+02:00,Build: Bump polars from 1.43.0 to 1.43.2 (#3794),"Bumps [polars](https://github.com/pola-rs/polars) from 1.43.0 to 1.43.2.
+- [Release notes](https://github.com/pola-rs/polars/releases)
+- [Commits](https://github.com/pola-rs/polars/compare/py-1.43.0...py-1.43.2)
+
+---
+updated-dependencies:
+- dependency-name: polars
+  dependency-version: 1.43.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",1a18d05a3160c6bc42fdf32f52c0ffe7bb5c9b63,3794,false,dependabot[bot],1,15,15,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,"Core, Spark: Rename RequiresRemoteScanPlanning to SupportsDistributedScanPlanning",- Build: Bump polars from 1.43.0 to 1.43.2 (#3794) (Thanks dependabot[bot]!)
+apache/iceberg-python,1a18d05a3160c6bc42fdf32f52c0ffe7bb5c9b63,1a18d05,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T20:21:22+02:00,GitHub,noreply@github.com,2026-08-15T20:21:22+02:00,Build: Bump actions/stale from 10.4.0 to 11.0.0 (#3793),"Bumps [actions/stale](https://github.com/actions/stale) from 10.4.0 to 11.0.0.
+- [Release notes](https://github.com/actions/stale/releases)
+- [Changelog](https://github.com/actions/stale/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/actions/stale/compare/1e223db275d687790206a7acac4d1a11bd6fe629...4391f3da665fdf50b6810c1a66712fb9ba21aa93)
+
+---
+updated-dependencies:
+- dependency-name: actions/stale
+  dependency-version: 11.0.0
+  dependency-type: direct:production
+  update-type: version-update:semver-major
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",fd13e465eb8a7adf4255cd3626a8261972d9cb7a,3793,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- Build: Bump actions/stale from 10.4.0 to 11.0.0 (#3793) (Thanks dependabot[bot]!)
+apache/iceberg-python,fd13e465eb8a7adf4255cd3626a8261972d9cb7a,fd13e46,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T20:21:02+02:00,GitHub,noreply@github.com,2026-08-15T20:21:02+02:00,Build: Bump the codeql-action group with 2 updates (#3792),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.4 to 4.37.6
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/f205ea1c3313d32999d8d6a48b4f6530d4437b38...5595ccaf912efad79be6eef63a5619ff05969be3)
+
+Updates `github/codeql-action/analyze` from 4.37.4 to 4.37.6
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/f205ea1c3313d32999d8d6a48b4f6530d4437b38...5595ccaf912efad79be6eef63a5619ff05969be3)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.37.6
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.37.6
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",21aacb87494e2e8c8643d3a667afafa9a462547c,3792,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- Build: Bump the codeql-action group with 2 updates (#3792) (Thanks dependabot[bot]!)
+apache/iceberg-python,21aacb87494e2e8c8643d3a667afafa9a462547c,21aacb8,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T20:20:50+02:00,GitHub,noreply@github.com,2026-08-15T20:20:50+02:00,Build: Bump cachetools from 7.1.6 to 7.1.7 (#3791),"Bumps [cachetools](https://github.com/tkem/cachetools) from 7.1.6 to 7.1.7.
+- [Changelog](https://github.com/tkem/cachetools/blob/master/CHANGELOG.rst)
+- [Commits](https://github.com/tkem/cachetools/compare/v7.1.6...v7.1.7)
+
+---
+updated-dependencies:
+- dependency-name: cachetools
+  dependency-version: 7.1.7
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",e336de953fbc724dd46e9cbd7f52de96c4200623,3791,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,Core: Propagate Avro compression settings to manifest writers,- Build: Bump cachetools from 7.1.6 to 7.1.7 (#3791) (Thanks dependabot[bot]!)
+apache/iceberg-python,e336de953fbc724dd46e9cbd7f52de96c4200623,e336de9,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T20:20:10+02:00,GitHub,noreply@github.com,2026-08-15T20:20:10+02:00,Build: Bump google-cloud-bigquery from 3.42.3 to 3.43.0 (#3790),"Bumps [google-cloud-bigquery](https://github.com/googleapis/python-bigquery) from 3.42.3 to 3.43.0.
+- [Release notes](https://github.com/googleapis/python-bigquery/releases)
+- [Changelog](https://github.com/googleapis/python-bigquery/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/googleapis/python-bigquery/commits)
+
+---
+updated-dependencies:
+- dependency-name: google-cloud-bigquery
+  dependency-version: 3.43.0
+  dependency-type: direct:development
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",ead6d5efee74693133845d041fd744a0005ea246,3790,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,Core: Fix row ID assignment for EXISTING entry during a manifest merge,- Build: Bump google-cloud-bigquery from 3.42.3 to 3.43.0 (#3790) (Thanks dependabot[bot]!)
+apache/iceberg-python,ead6d5efee74693133845d041fd744a0005ea246,ead6d5e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-15T20:19:51+02:00,GitHub,noreply@github.com,2026-08-15T20:19:51+02:00,Build: Bump daft from 0.7.21 to 0.7.23 (#3788),"Bumps [daft](https://github.com/Eventual-Inc/Daft) from 0.7.21 to 0.7.23.
+- [Release notes](https://github.com/Eventual-Inc/Daft/releases)
+- [Commits](https://github.com/Eventual-Inc/Daft/compare/v0.7.21...v0.7.23)
+
+---
+updated-dependencies:
+- dependency-name: daft
+  dependency-version: 0.7.23
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",ddd8309888a3df6d9cc1317f5c723ef4795082ef,3788,false,dependabot[bot],1,6,6,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.31; capped LanceDB boost for routine/low-signal commit,Core: Convert metrics to Content Stats,- Build: Bump daft from 0.7.21 to 0.7.23 (#3788) (Thanks dependabot[bot]!)
+apache/iceberg-python,6294bebbef48ea0efd72c86528e3e738660c74f6,6294beb,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T10:04:08-07:00,GitHub,noreply@github.com,2026-08-10T10:04:08-07:00,Build: Bump tcort/github-action-markdown-link-check from 1.1.2 to 1.1.3 (#3766),"Bumps [tcort/github-action-markdown-link-check](https://github.com/tcort/github-action-markdown-link-check) from 1.1.2 to 1.1.3.
+- [Release notes](https://github.com/tcort/github-action-markdown-link-check/releases)
+- [Changelog](https://github.com/tcort/github-action-markdown-link-check/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/tcort/github-action-markdown-link-check/compare/e7c7a18363c842693fadde5d41a3bd3573a7a225...e047c5b37f24ab722bbef1a27b6fab7f96bc4068)
+
+---
+updated-dependencies:
+- dependency-name: tcort/github-action-markdown-link-check
+  dependency-version: 1.1.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",34c971fe548bfb2b2a266a1f8c0a2e10bcf84f29,3766,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,Flink: Allow arbitrary post-commit maintenance tasks via IcebergSink Builder,- Build: Bump tcort/github-action-markdown-link-check from 1.1.2 to 1.1.3 (#3766) (Thanks dependabot[bot]!)
+apache/iceberg-python,34c971fe548bfb2b2a266a1f8c0a2e10bcf84f29,34c971f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T10:00:32-07:00,GitHub,noreply@github.com,2026-08-10T10:00:32-07:00,Build: Bump zizmorcore/zizmor-action from 0.5.6 to 0.6.2 (#3730),"Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.5.6 to 0.6.2.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/5f14fd08f7cf1cb1609c1e344975f152c7ee938d...3dc1ecc9bcb9e94e9b2c709687979e1298497054)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.6.1
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a3e9af523392cffb9675cf21e9d0f249ceba8c55,3730,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Add 404 response for REST catalog config endpoint when warehouse is missing,- Build: Bump zizmorcore/zizmor-action from 0.5.6 to 0.6.2 (#3730) (Thanks dependabot[bot]!)
+apache/iceberg-python,a3e9af523392cffb9675cf21e9d0f249ceba8c55,a3e9af5,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:45:09-07:00,GitHub,noreply@github.com,2026-08-10T09:45:09-07:00,Build: Bump actions/setup-python from 6.3.0 to 7.0.0 (#3767),"Bumps [actions/setup-python](https://github.com/actions/setup-python) from 6.3.0 to 7.0.0.
+- [Release notes](https://github.com/actions/setup-python/releases)
+- [Commits](https://github.com/actions/setup-python/compare/v6.3.0...5fda3b95a4ea91299a34e894583c3862153e4b97)
+
+---
+updated-dependencies:
+- dependency-name: actions/setup-python
+  dependency-version: 7.0.0
+  dependency-type: direct:production
+  update-type: version-update:semver-major
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",15f863da20ef25c3cadf22661b93edcb8af05da7,3767,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Core: Convert metrics to Content Stats,- Build: Bump actions/setup-python from 6.3.0 to 7.0.0 (#3767) (Thanks dependabot[bot]!)
+apache/iceberg-python,15f863da20ef25c3cadf22661b93edcb8af05da7,15f863d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:44:08-07:00,GitHub,noreply@github.com,2026-08-10T09:44:08-07:00,Build: Bump mypy-boto3-glue from 1.43.37 to 1.43.59 (#3762),"Bumps [mypy-boto3-glue](https://github.com/youtype/mypy_boto3_builder) from 1.43.37 to 1.43.59.
+- [Release notes](https://github.com/youtype/mypy_boto3_builder/releases)
+- [Commits](https://github.com/youtype/mypy_boto3_builder/commits)
+
+---
+updated-dependencies:
+- dependency-name: mypy-boto3-glue
+  dependency-version: 1.43.59
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",5fe069781959d9053732fba580159652a65e2fee,3762,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,Core: Convert metrics to Content Stats,- Build: Bump mypy-boto3-glue from 1.43.37 to 1.43.59 (#3762) (Thanks dependabot[bot]!)
+apache/iceberg-python,5fe069781959d9053732fba580159652a65e2fee,5fe0697,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:43:56-07:00,GitHub,noreply@github.com,2026-08-10T09:43:56-07:00,Build: Bump pypa/gh-action-pypi-publish from 1.13.0 to 1.14.2 (#3765),"Bumps [pypa/gh-action-pypi-publish](https://github.com/pypa/gh-action-pypi-publish) from 1.13.0 to 1.14.2.
+- [Release notes](https://github.com/pypa/gh-action-pypi-publish/releases)
+- [Commits](https://github.com/pypa/gh-action-pypi-publish/compare/ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e...dc37677b2e1c63e2034f94d8a5b11f265b73ba33)
+
+---
+updated-dependencies:
+- dependency-name: pypa/gh-action-pypi-publish
+  dependency-version: 1.14.2
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",d6289906ae2532b74a694fe6fb982e9420d22ac7,3765,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,Spark 4.1: Add Merge WriteSummary to Snapshot Summary,- Build: Bump pypa/gh-action-pypi-publish from 1.13.0 to 1.14.2 (#3765) (Thanks dependabot[bot]!)
+apache/iceberg-python,d6289906ae2532b74a694fe6fb982e9420d22ac7,d628990,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:43:48-07:00,GitHub,noreply@github.com,2026-08-10T09:43:48-07:00,Build: Bump the codeql-action group with 2 updates (#3764),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.3 to 4.37.4
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81...f205ea1c3313d32999d8d6a48b4f6530d4437b38)
+
+Updates `github/codeql-action/analyze` from 4.37.3 to 4.37.4
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81...f205ea1c3313d32999d8d6a48b4f6530d4437b38)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.37.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.37.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",66d5890d9bc3cf04abbb950d46664d77fd403db6,3764,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- Build: Bump the codeql-action group with 2 updates (#3764) (Thanks dependabot[bot]!)
+apache/iceberg-python,66d5890d9bc3cf04abbb950d46664d77fd403db6,66d5890,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:43:40-07:00,GitHub,noreply@github.com,2026-08-10T09:43:40-07:00,Build: Bump google-cloud-bigquery from 3.42.2 to 3.42.3 (#3763),"Bumps [google-cloud-bigquery](https://github.com/googleapis/python-bigquery) from 3.42.2 to 3.42.3.
+- [Release notes](https://github.com/googleapis/python-bigquery/releases)
+- [Changelog](https://github.com/googleapis/python-bigquery/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/googleapis/python-bigquery/commits)
+
+---
+updated-dependencies:
+- dependency-name: google-cloud-bigquery
+  dependency-version: 3.42.3
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",8386a9ee9ceb44c804d69b7071e2527e57e95870,3763,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,Core: v4 table metadata location should be optional,- Build: Bump google-cloud-bigquery from 3.42.2 to 3.42.3 (#3763) (Thanks dependabot[bot]!)
+apache/iceberg-python,8386a9ee9ceb44c804d69b7071e2527e57e95870,8386a9e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:43:31-07:00,GitHub,noreply@github.com,2026-08-10T09:43:31-07:00,Build: Bump huggingface-hub from 1.24.0 to 1.26.0 (#3761),"Bumps [huggingface-hub](https://github.com/huggingface/huggingface_hub) from 1.24.0 to 1.26.0.
+- [Release notes](https://github.com/huggingface/huggingface_hub/releases)
+- [Commits](https://github.com/huggingface/huggingface_hub/compare/v1.24.0...v1.26.0)
+
+---
+updated-dependencies:
+- dependency-name: huggingface-hub
+  dependency-version: 1.26.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",d7d5adc116e9860fb109931c42e9c9de87afd058,3761,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Spark: Enable remote scan planning with REST catalog <Eduard Tudenhoefner>,- Build: Bump huggingface-hub from 1.24.0 to 1.26.0 (#3761) (Thanks dependabot[bot]!)
+apache/iceberg-python,fd122980e13400662306d47574fd84b3c5d00d0f,fd12298,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:19:56-07:00,GitHub,noreply@github.com,2026-08-10T09:19:56-07:00,Build: Bump pymdown-extensions from 11.0 to 11.0.1 (#3772),"Bumps [pymdown-extensions](https://github.com/facelessuser/pymdown-extensions) from 11.0 to 11.0.1.
+- [Release notes](https://github.com/facelessuser/pymdown-extensions/releases)
+- [Commits](https://github.com/facelessuser/pymdown-extensions/compare/11.0...11.0.1)
+
+---
+updated-dependencies:
+- dependency-name: pymdown-extensions
+  dependency-version: 11.0.1
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",995b9ab8bf4ae9e9d832ed2f90ca49306e98269f,3772,false,dependabot[bot],1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- Build: Bump pymdown-extensions from 11.0 to 11.0.1 (#3772) (Thanks dependabot[bot]!)
+apache/iceberg-python,995b9ab8bf4ae9e9d832ed2f90ca49306e98269f,995b9ab,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-10T09:19:32-07:00,GitHub,noreply@github.com,2026-08-10T09:19:32-07:00,Build: Bump cryptography from 49.0.0 to 50.0.0 (#3752),"Bumps [cryptography](https://github.com/pyca/cryptography) from 49.0.0 to 50.0.0.
+- [Changelog](https://github.com/pyca/cryptography/blob/main/CHANGELOG.rst)
+- [Commits](https://github.com/pyca/cryptography/compare/49.0.0...50.0.0)
+
+---
+updated-dependencies:
+- dependency-name: cryptography
+  dependency-version: 50.0.0
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",137f4d32c09600f31fb9f5e61dd39f97e22db5ed,3752,false,dependabot[bot],1,82,82,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- Build: Bump cryptography from 49.0.0 to 50.0.0 (#3752) (Thanks dependabot[bot]!)
