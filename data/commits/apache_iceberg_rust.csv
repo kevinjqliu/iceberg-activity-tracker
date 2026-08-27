@@ -30113,3 +30113,43 @@ apache/iceberg-rust,4168a0b2950dc5f85588e5cb3ab6796e5228b309,4168a0b,Joseph Lent
 ---------
 
 Co-authored-by: Daniel Carl Jones <djonesoa@amazon.com>",4adf961e9239e984e4709bd0cd1a7ffd36c7315f,2937,false,Daniel Carl Jones,33,115,116,crates
+apache/iceberg-rust,ffaf049ef8beaecdd67f86be2576c40e881f8623,ffaf049,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-08-26T18:26:25-04:00,GitHub,noreply@github.com,2026-08-26T15:26:25-07:00,feat(scan): [2/N] carry deletion-vector coordinates on FileScanTaskDeleteFile (#2868),"* feat(scan): carry deletion-vector coordinates on FileScanTaskDeleteFile
+
+Add referenced_data_file, content_offset, and content_size_in_bytes to
+FileScanTaskDeleteFile, populated from the delete file's manifest entry.
+These locate a deletion-vector blob and scope it to its data file, which
+the delete loader needs to read and apply V3 deletion vectors.
+
+Refs #2792.
+
+* fix after merging in main
+
+* fix public-api.txt
+
+* fix test name
+
+* update
+
+* Address PR feedback",4168a0b2950dc5f85588e5cb3ab6796e5228b309,2868,false,,5,85,1,crates
+apache/iceberg-rust,a5f162fed26d7b63bcc25ec8ed08a00d48ab229e,a5f162f,Anoop Johnson,anoop@apache.org,2026-08-27T11:26:48-07:00,GitHub,noreply@github.com,2026-08-27T20:26:48+02:00,perf(arrow): build repeated constant string/binary columns without per-row clones (#3080),"* perf(arrow): build repeated constant string/binary columns without per-row clones
+
+create_primitive_array_repeated built a throwaway `vec![value.clone(); num_rows]`
+for the Utf8/Binary/LargeBinary/FixedSizeBinary arms before handing it to the array
+constructor. For strings that clones the value into num_rows separate heap
+allocations per batch; the binary arms allocate a throwaway intermediate Vec.
+
+Stream the single value straight into the Arrow buffer via `from_iter_values` with
+`std::iter::repeat_n` instead.
+
+Benchmarks (release, throwaway harness, old vs new toggled on this file only):
+- leaf create_primitive_array_repeated (Utf8, 8192-row batch): 23.0 -> 4.1 ns/row (5.6x)
+- full scan select(x, _partition) over a real manifest + 262k-row parquet file,
+  string-partitioned: 20.9 -> 5.7 ns/row (3.7x)
+
+Note that the gain is allocation-counts and scales with how much of the
+projection is the string partition column.
+
+Fixes #3079
+
+* Feedback",ffaf049ef8beaecdd67f86be2576c40e881f8623,3080,false,,1,118,15,crates
+apache/iceberg-rust,4382ebe12fd746b6796d6113497a9e3d6c6ec975,4382ebe,Daniel Carl Jones,djonesoa@amazon.com,2026-08-27T23:32:05+01:00,GitHub,noreply@github.com,2026-08-27T15:32:05-07:00,chore: Update MSRV to Rust 1.95 (#3083),,a5f162fed26d7b63bcc25ec8ed08a00d48ab229e,3083,false,,21,110,96,Cargo.toml; crates; rust-toolchain.toml
