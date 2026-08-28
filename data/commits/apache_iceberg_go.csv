@@ -27786,3 +27786,153 @@ apache/iceberg-go,f1f16dbf494cd07c7d6b50aed68830c79a705df2,f1f16db,Minh Vu,vuhoa
 apache/iceberg-go,02161c11175bf100e5f6e02af289a63457fd7358,02161c1,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T00:48:25+02:00,GitHub,noreply@github.com,2026-08-27T18:48:25-04:00,perf(table): deduplicate equality-delete conflict partitions (#1917),"* perf(table): deduplicate equality-delete conflict partitions
 
 * lint(table): use integer ranges in conflict benchmark",f1f16dbf494cd07c7d6b50aed68830c79a705df2,1917,false,,3,409,22,table
+apache/iceberg-go,306332423ccad91c06127646bce163a31912cbbc,3063324,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T10:51:11+02:00,GitHub,noreply@github.com,2026-08-28T10:51:11+02:00,perf(table): avoid cloning schema history for snapshot scans (#1916),,02161c11175bf100e5f6e02af289a63457fd7358,1916,false,,4,205,11,table
+apache/iceberg-go,45ec796c49625fd656eedec5e7ec2990434b29dd,45ec796,Matt Faltyn,76570855+mattfaltyn@users.noreply.github.com,2026-08-28T10:52:03+02:00,GitHub,noreply@github.com,2026-08-28T10:52:03+02:00,fix(table): reject deleted schema move targets (#1905),"* fix(table): reject deleted schema move targets
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>
+
+* fix(table): fail closed on invalid schema moves
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>
+
+---------
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>",306332423ccad91c06127646bce163a31912cbbc,1905,false,,2,99,2,table
+apache/iceberg-go,69cc6792189907143ea38c9fd2f98f991b552e08,69cc679,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T10:53:14+02:00,GitHub,noreply@github.com,2026-08-28T10:53:14+02:00,perf(table): classify manifest entries outside merge lock (#1913),"* perf(table): classify manifest entries outside merge lock
+
+* chore: satisfy lint
+
+* fix(table): harden manifest entry merge",45ec796c49625fd656eedec5e7ec2990434b29dd,1913,false,,2,199,19,table
+apache/iceberg-go,569794e5887f95f89e13aedb45fba1fb3bf50d88,569794e,Tobias Pütz,tobias@minio.io,2026-08-28T15:28:49+02:00,GitHub,noreply@github.com,2026-08-28T15:28:49+02:00,fix(updates): decode add-spec and add-sort-order unbound (#1873),"* fix(updates): decode add-spec and add-sort-order unbound
+
+A commit request's add-spec and add-sort-order payloads are bound to a
+schema by Apply, not by the decoder: AddPartitionSpec calls BindToSchema
+and AddSortOrder calls CheckCompatibility, both against the table's
+current schema. Decoding them into the bound types therefore enforced an
+invariant the wire form does not carry.
+
+That rejected a spec a client is entitled to send. A dropped partition
+field is a void transform over source ID 0, which BindToSchema preserves
+as a tombstone, so re-sending a spec after dropping a partition column
+failed with ""partition source ID must be positive: 0"" before binding ran.
+
+Decode into UnboundPartitionSpec and UnboundSortOrder, and hand the
+embedded bound values to the builder. Source IDs that do not resolve are
+still rejected, now by binding, which reports them against the schema
+that decides. The constructors keep taking bound values, so callers are
+unaffected, and Apply reports a nil payload rather than dereferencing it.
+
+* fix(updates): exercise the add-spec and add-sort-order assertions
+
+TestUnmarshalUpdates cast both sides of every comparison from the decoded
+slice, so each update was compared against itself and the add-spec and
+add-sort-order assertions passed vacuously. The add-spec branch was also
+labelled ""add-partition-spec"", which no action matches, so it fell
+through to the default branch and never ran at all.
+
+Iterate over the expected updates, switch on the action constants, and
+compare the expected value against the decoded one. The sort order
+fixture disagreed with its JSON on the null order of the second field,
+which the self-comparison hid; the JSON is the source of truth, so the
+fixture now says nulls-last.
+
+Assert the binding error the unresolvable source ID test expects, rather
+than only the absence of the old decode error, and align the nil payload
+guards with the ""update %q requires field %q"" template that
+validateRequiredUpdateFields uses, so both paths read alike.
+
+The addSortOrderUpdate comment claimed a parity with the partition spec
+that does not hold. CheckCompatibility still requires every sort source
+ID to resolve against the current schema, so decoding unbound defers the
+error rather than accepting the field; say that instead.
+
+Signed-off-by: Tobias Pütz <tobias@minio.io>
+
+* docs(partitions,sort): cover the commit path in the unbound types
+
+The unbound spec and sort order types documented themselves as the
+create-table request's decode target and told readers to use the bound
+types for anything read from table metadata. An add-spec or
+add-sort-order commit payload is neither: its source IDs are the current
+schema's field IDs, but nothing resolves them until the update is
+applied, so decoding it bound enforces an invariant the wire form does
+not carry. The types were already right for that payload; only their
+docs excluded it.
+
+Describe both wire forms, keep the create-table binding caveat scoped to
+the form it applies to, and say that decoding unbound defers the check
+rather than dropping it. Note as well that a bound spec's source IDs are
+positive apart from the void tombstone a dropped field leaves behind,
+which is the one case the bound decoder already lets through.
+
+Also address the review's smaller points: comment that the builder
+aliases the update's embedded sort order, because AddSortOrder writes the
+fresh order ID into it and keeps a pointer to that field; use
+require.ErrorContains where a test pins BindToSchema's wording, so a
+regression stops with a useful message; and add the missing happy-path
+round trip for the add-sort-order decode, which until now was only
+covered on the reject path.
+
+Signed-off-by: Tobias Pütz <tobias@minio.io>
+
+* review comments
+
+---------
+
+Signed-off-by: Tobias Pütz <tobias@minio.io>",69cc6792189907143ea38c9fd2f98f991b552e08,1873,false,,4,205,47,partitions.go; table
+apache/iceberg-go,1a711b1aa2e060b91c6d492b6f112e1f536bbc2e,1a711b1,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T15:31:54+02:00,GitHub,noreply@github.com,2026-08-28T15:31:54+02:00,perf(dv): serialize deletion vectors in one buffer (#1909),,569794e5887f95f89e13aedb45fba1fb3bf50d88,1909,false,,4,143,11,table
+apache/iceberg-go,57e0d8b66679fe1202f96d554aff4e510a410497,57e0d8b,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T15:33:24+02:00,GitHub,noreply@github.com,2026-08-28T15:33:24+02:00,perf(manifest): remove reflection from partition summary updates (#1895),"* perf(manifest): remove reflection from partition summary updates
+
+* fix(manifest): preserve partition conversion parity",1a711b1aa2e060b91c6d492b6f112e1f536bbc2e,1895,false,,2,468,20,manifest.go; manifest_test.go
+apache/iceberg-go,aed314336c251cfdfc74430fb3fb2ad44758a460,aed3143,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T15:33:55+02:00,GitHub,noreply@github.com,2026-08-28T15:33:55+02:00,perf(table): bypass no-op writer schema projection (#1912),"* perf(table): bypass no-op writer schema projection
+
+* chore: satisfy lint
+
+* test(table): address writer schema projection review",57e0d8b66679fe1202f96d554aff4e510a410497,1912,false,,5,596,4,table
+apache/iceberg-go,ab14df51c09c059f37cb6f8f6a1b98877fe82d02,ab14df5,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T15:35:01+02:00,GitHub,noreply@github.com,2026-08-28T15:35:01+02:00,perf(table): cache equality delete field groups (#1902),"* perf(table): cache equality delete field groups
+
+* test(table): cover equality delete group promotion",aed314336c251cfdfc74430fb3fb2ad44758a460,1902,false,,3,116,70,table
+apache/iceberg-go,64f75da1a4471e8eb782177cdb3aa744597d2d97,64f75da,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T15:35:36+02:00,GitHub,noreply@github.com,2026-08-28T15:35:36+02:00,perf(table): precompute IN predicate extrema (#1911),"* perf(table): precompute IN predicate extrema
+
+* chore: satisfy lint
+
+* fix(table): complete IN predicate extrema pruning",ab14df51c09c059f37cb6f8f6a1b98877fe82d02,1911,false,,7,477,14,bound_set_extrema_internal_test.go; bound_set_literal_view.go; exprs.go; table; visitors.go
+apache/iceberg-go,ed926c2222aea1101ec1a517d9464a2bc6ce8c77,ed926c2,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T15:37:29+02:00,GitHub,noreply@github.com,2026-08-28T15:37:29+02:00,perf(table): reuse row-group metrics maps (#1899),"* perf(table): reuse row-group metrics maps
+
+* fix(table): preserve row-group null metric semantics",64f75da1a4471e8eb782177cdb3aa744597d2d97,1899,false,,3,276,4,table
+apache/iceberg-go,b91740f196f225cc92be2f953bbb855b99b79872,b91740f,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T15:38:08+02:00,GitHub,noreply@github.com,2026-08-28T15:38:08+02:00,perf(table): reuse field ID scratch in files metadata (#1919),,ed926c2222aea1101ec1a517d9464a2bc6ce8c77,1919,false,,1,14,11,table
+apache/iceberg-go,84aaecc0ce6be6cf6cff1bd87033134e36b41990,84aaecc,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T16:56:18+02:00,GitHub,noreply@github.com,2026-08-28T10:56:18-04:00,perf(table): borrow partitions in positional delete index (#1915),"* perf(table): borrow partitions in positional delete index
+
+* chore: satisfy lint",b91740f196f225cc92be2f953bbb855b99b79872,1915,false,,3,175,3,table
+apache/iceberg-go,3858a68b840adaf0187b961492c7645aab4f25dc,3858a68,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T18:26:08+02:00,GitHub,noreply@github.com,2026-08-28T12:26:08-04:00,perf(table): reuse schema fields when resolving sort keys (#1947),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,84aaecc0ce6be6cf6cff1bd87033134e36b41990,1947,false,,2,178,3,table
+apache/iceberg-go,0454e3fb1386961a001b5033c148faf4563109f4,0454e3f,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T18:55:48+02:00,GitHub,noreply@github.com,2026-08-28T12:55:48-04:00,perf(table): borrow source fields during DataFile finalization (#1945),perf(table): borrow source fields during datafile finalization,3858a68b840adaf0187b961492c7645aab4f25dc,1945,false,,2,133,5,table
+apache/iceberg-go,f3848aa7ba9a703fd70c317e3ba42e76c5a6500b,f3848aa,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T19:17:46+02:00,GitHub,noreply@github.com,2026-08-28T13:17:46-04:00,perf(table): collect fanout partitions into one slice (#1948),perf(table): avoid intermediate partition slices,0454e3fb1386961a001b5033c148faf4563109f4,1948,false,,3,100,6,table
+apache/iceberg-go,91566b526041a53f69e44aaa73775ba36c43e272,91566b5,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T19:42:03+02:00,GitHub,noreply@github.com,2026-08-28T13:42:03-04:00,perf(table): reuse Parquet schema metadata across file writers (#1949),perf(table): reuse Parquet schema metadata,f3848aa7ba9a703fd70c317e3ba42e76c5a6500b,1949,false,,7,203,18,table
+apache/iceberg-go,801eb97cba48283d0654bd2ba366b8fa644ce5ed,801eb97,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T20:00:07+02:00,GitHub,noreply@github.com,2026-08-28T14:00:07-04:00,perf(table): lazily materialize dictionary columns (#1950),,91566b526041a53f69e44aaa73775ba36c43e272,1950,false,,3,91,5,table
+apache/iceberg-go,0bf8092c8586baa279a5378afddb678baafed4a8,0bf8092,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T20:09:58+02:00,GitHub,noreply@github.com,2026-08-28T14:09:58-04:00,perf(table): avoid schema clones in remote wildcard projection (#1944),,801eb97cba48283d0654bd2ba366b8fa644ce5ed,1944,false,,2,114,1,table
+apache/iceberg-go,1b1a98ffc7240d379c66996e13277d1a005db15d,1b1a98f,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T20:29:04+02:00,GitHub,noreply@github.com,2026-08-28T14:29:04-04:00,perf(manifest): fuse partition conversion with Avro remapping (#1942),perf(manifest): fuse partition conversion with avro remapping,0bf8092c8586baa279a5378afddb678baafed4a8,1942,false,,3,100,23,data_file_codec.go; manifest.go; manifest_partition_bench_test.go
+apache/iceberg-go,c38228d15409f8db9a986640dd1c72f6a0321dff,c38228d,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T20:36:40+02:00,GitHub,noreply@github.com,2026-08-28T14:36:40-04:00,perf(table): reuse staged schema in UpdateSpec (#1941),"* perf(table): reuse staged schema in UpdateSpec
+
+* perf(table): cache historical partition fields",1b1a98ffc7240d379c66996e13277d1a005db15d,1941,false,,2,180,41,table
+apache/iceberg-go,7b2c2f929ffbbed8f7662498ba9d1584026d56b9,7b2c2f9,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T22:00:37+02:00,GitHub,noreply@github.com,2026-08-28T16:00:37-04:00,perf(table): cache compiled filter and pruning plans (#1936),"* perf(table): cache compiled filter plans
+
+* chore: satisfy gofumpt
+
+* perf(table): skip no-op row-group evaluators",c38228d15409f8db9a986640dd1c72f6a0321dff,1936,false,,5,689,77,table
+apache/iceberg-go,fabd7bafffabe9774bb83fecf776c72a853d01a8,fabd7ba,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T22:30:56+02:00,GitHub,noreply@github.com,2026-08-28T16:30:56-04:00,perf(table): honor row limits during local planning (#1935),"* perf(table): honor row limits during local planning
+
+* perf(table): skip singleton row-limit scans",7b2c2f929ffbbed8f7662498ba9d1584026d56b9,1935,false,,3,446,0,table
+apache/iceberg-go,778be71568fc9567bebc301b1954f96cb355a704,778be71,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T22:45:38+02:00,GitHub,noreply@github.com,2026-08-28T16:45:38-04:00,perf(table): avoid full rune allocation for truncated bounds (#1934),"* perf(table): avoid full rune allocation for truncated bounds
+
+* fix(table): handle negative binary truncation width",fabd7bafffabe9774bb83fecf776c72a853d01a8,1934,false,,5,137,14,table
+apache/iceberg-go,94cedde6741f026eccd1178d921a4a2f18807d4b,94cedde,Minh Vu,vuhoangminh97@gmail.com,2026-08-28T23:44:27+02:00,GitHub,noreply@github.com,2026-08-28T17:44:27-04:00,perf(table): avoid redundant MetadataBuilderFromBase copies (#1932),"* perf(table): avoid redundant metadata builder copies
+
+* perf(table): preserve nil snapshot refs",778be71568fc9567bebc301b1954f96cb355a704,1932,false,,3,388,33,table
+apache/iceberg-go,0c32656c834f6da283359ae398f414cb170194be,0c32656,Minh Vu,vuhoangminh97@gmail.com,2026-08-29T00:02:09+02:00,GitHub,noreply@github.com,2026-08-28T18:02:09-04:00,perf(dv): coalesce shared Puffin range reads (#1906),"* perf(dv): coalesce shared Puffin range reads
+
+* fix(dv): tighten coalesced range reads",94cedde6741f026eccd1178d921a4a2f18807d4b,1906,false,,3,438,18,table
+apache/iceberg-go,38a5b38761168095698f5d6fd3b65e58263625f4,38a5b38,Minh Vu,vuhoangminh97@gmail.com,2026-08-29T00:02:24+02:00,GitHub,noreply@github.com,2026-08-28T18:02:24-04:00,perf(table): deduplicate conflict-validation manifest reads (#1904),"* perf(table): deduplicate conflict validation manifest reads
+
+* chore: satisfy lint
+
+* fix(table): bound conflict manifest cache",0c32656c834f6da283359ae398f414cb170194be,1904,false,,3,651,32,table
