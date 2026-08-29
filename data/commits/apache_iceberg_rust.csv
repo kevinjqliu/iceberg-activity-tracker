@@ -30168,3 +30168,23 @@ apache/iceberg-rust,6678583b4c07c2812107d1aee239864a4cf515b0,6678583,Matt Faltyn
 apache/iceberg-rust,76572cf58ef255201b95816e5f8178a7b351b8d8,76572cf,Joseph Lenton,JosephLenton@users.noreply.github.com,2026-08-28T07:42:57+01:00,GitHub,noreply@github.com,2026-08-28T14:42:57+08:00,refactor: change from serialising a u64 to i64 (#3065),,6678583b4c07c2812107d1aee239864a4cf515b0,3065,false,,1,3,3,crates
 apache/iceberg-rust,57a5612e0ae5327c04daa2b2b616849822aa3e6d,57a5612,blackmwk,257669749+blackmwk@users.noreply.github.com,2026-08-28T17:29:17+08:00,GitHub,noreply@github.com,2026-08-28T17:29:17+08:00,feat: add lazy property view macro (#3044),,76572cf58ef255201b95816e5f8178a7b351b8d8,3044,false,,40,890,41,crates; derive-properties}; properties_derive.rs
 apache/iceberg-rust,5266f7dd3241b6b94843e85f10771d2452c8b874,5266f7d,blackmwk,257669749+blackmwk@users.noreply.github.com,2026-08-28T18:36:25+08:00,GitHub,noreply@github.com,2026-08-28T18:36:25+08:00,refactor: parse table properties lazily (#3030),,57a5612e0ae5327c04daa2b2b616849822aa3e6d,3030,false,,14,524,487,crates
+apache/iceberg-rust,30574bf2e7a8b4659a9260405766e231d2d4e32f,30574bf,Anoop Johnson,anoop@apache.org,2026-08-28T19:16:40-07:00,GitHub,noreply@github.com,2026-08-29T10:16:40+08:00,feat: synthesize _row_id metadata column on read (#3058),"* Refs https://github.com/apache/iceberg-rust/issues/2879
+
+Read-side synthesis of the v3 _row_id metadata column, similar to the _last_updated_sequence_number materialization. We do a per-row coalesce of the physically-stored column against a per-row positional fallback of first_row_id plus the row position, gated on first_row_id (null first_row_id nulls the whole column). The positional fallback consumes the RowNumber virtual column, which is now added whenever _row_id is synthesized.
+
+Added tests
+
+* Fix CI failure
+
+* Fix typo flagged by lint
+
+* Synthesize _row_id in a reader-level stream step
+
+Reject a name-only physical _row_id column unconditionally (it never
+threads), fixing a false reject of user columns named _row_id under
+positional fallback. Add tests for global position across row groups,
+survival through positional deletes, and name collision under fallback.
+
+* Fix pr feedback
+
+* Fix merge collision",5266f7dd3241b6b94843e85f10771d2452c8b874,3058,false,,4,1183,37,crates
