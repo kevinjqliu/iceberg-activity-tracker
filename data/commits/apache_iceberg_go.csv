@@ -27936,3 +27936,119 @@ apache/iceberg-go,38a5b38761168095698f5d6fd3b65e58263625f4,38a5b38,Minh Vu,vuhoa
 * chore: satisfy lint
 
 * fix(table): bound conflict manifest cache",0c32656c834f6da283359ae398f414cb170194be,1904,false,,3,651,32,table
+apache/iceberg-go,295527b9be3a395083b1b11d5655fd568fac240f,295527b,Ferhat Elmas,elmas.ferhat@gmail.com,2026-08-30T21:45:47+03:00,GitHub,noreply@github.com,2026-08-30T20:45:47+02:00,fix(table): trim carried binary upper bounds (#1928),"resolves #1927
+
+Signed-off-by: Ferhat Elmas <elmas.ferhat@gmail.com>",38a5b38761168095698f5d6fd3b65e58263625f4,1928,false,,2,9,2,table
+apache/iceberg-go,ffa9df382155a5b74a452fa8be041d8bd5d0fc4a,ffa9df3,Minh Vu,vuhoangminh97@gmail.com,2026-08-30T20:46:11+02:00,GitHub,noreply@github.com,2026-08-30T20:46:11+02:00,perf(table): borrow manifest partition summaries (#1908),"* perf(table): borrow manifest partition summaries
+
+* test(table): tighten manifest partition borrow checks",295527b9be3a395083b1b11d5655fd568fac240f,1908,false,,6,317,1,internal; manifest_file_ref.go; table
+apache/iceberg-go,a4c4dcd436262e117daae0fa4fa7b1a004d8db65,a4c4dcd,Minh Vu,vuhoangminh97@gmail.com,2026-08-30T20:46:35+02:00,GitHub,noreply@github.com,2026-08-30T20:46:35+02:00,perf(dv): add single-position append fast path (#1889),"* perf(dv): add single-position append fast path
+
+* chore: satisfy lint
+
+* fix(dv): tighten single-position writer semantics",ffa9df382155a5b74a452fa8be041d8bd5d0fc4a,1889,false,,4,169,37,table
+apache/iceberg-go,22f31057a8a3c3243691d31b19ffb3bea6f94ce8,22f3105,Minh Vu,vuhoangminh97@gmail.com,2026-08-30T20:47:06+02:00,GitHub,noreply@github.com,2026-08-30T20:47:06+02:00,perf(table): avoid per-file partition materialization in partitions metadata (#1914),"* perf(table): avoid per-file partition materialization in partitions metadata
+
+* fix(table): address partition metadata review feedback",a4c4dcd436262e117daae0fa4fa7b1a004d8db65,1914,false,,3,232,7,table
+apache/iceberg-go,99fa478ee5c038ca542f34f546b87c7ae21c9365,99fa478,Minh Vu,vuhoangminh97@gmail.com,2026-08-30T20:48:40+02:00,GitHub,noreply@github.com,2026-08-30T20:48:40+02:00,perf(transforms): avoid regexp matching in ParseTransform (#1931),"* perf(transforms): avoid regexp matching in ParseTransform
+
+* perf(transforms): case-fold built-in transform parsing",22f31057a8a3c3243691d31b19ffb3bea6f94ce8,1931,false,,3,190,24,transforms.go; transforms_parse_bench_test.go; transforms_test.go
+apache/iceberg-go,7bb0312d1df94e05630d22b3f2f6288ec5a05d0c,7bb0312,Minh Vu,vuhoangminh97@gmail.com,2026-08-30T21:24:30+02:00,GitHub,noreply@github.com,2026-08-30T21:24:30+02:00,perf(table): skip equality-delete filtering for untouched batches (#1900),"* perf(table): skip equality-delete filtering for untouched batches
+
+* test(table): tighten equality delete mask checks",99fa478ee5c038ca542f34f546b87c7ae21c9365,1900,false,,3,215,28,table
+apache/iceberg-go,f11afa7c016d8afda59dbdd0a2d0387779afcc9c,f11afa7,Andrei Tserakhau,laskoviymishka@gmail.com,2026-08-30T23:45:47+02:00,GitHub,noreply@github.com,2026-08-30T23:45:47+02:00,test(table): fix TruncateUpperBoundBinary guard for negative width (#1980),"The negative-width test case (""negative width keeps bound"") was added in
+#1934 while the stricter truncation-invariant guard was added in #1928.
+Each PR was green on its own base, but the rebase-merge combined them:
+the guard `tt.truncate < len(tt.value)` matches a negative width (-1 < 2),
+so the negative case (where the bound is kept, not truncated) wrongly
+falls into the truncation asserts and fails deterministically:
+
+    utils_test.go:128: ""2"" is not less than or equal to ""-1""
+    utils_test.go:129: ""0"" is not greater than ""0""
+
+Only assert the shrink/increment invariants when a truncation actually
+happened by additionally requiring a non-negative width. The production
+TruncateUpperBoundBinary already handles negative widths correctly.",7bb0312d1df94e05630d22b3f2f6288ec5a05d0c,1980,false,,1,1,1,table
+apache/iceberg-go,ad748dabc67799e54d38997933e5f8c6f7d55b67,ad748da,Badal Prasad Singh,badal@datazip.io,2026-08-31T13:17:08+05:30,GitHub,noreply@github.com,2026-08-31T09:47:08+02:00,feat(io): split io/gocloud into per-cloud backend packages (#1961),"* feat: split into per-cloud backend packages
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* fix: minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* fix: remove of fileio
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",f11afa7c016d8afda59dbdd0a2d0387779afcc9c,1961,false,,31,999,315,azure}; blobfs}; catalog; gcs}; internal; io; s3}; website
+apache/iceberg-go,387131f9cde8deca074bfe3e079169342adb1754,387131f,Minh Vu,vuhoangminh97@gmail.com,2026-08-31T09:49:07+02:00,GitHub,noreply@github.com,2026-08-31T09:49:07+02:00,perf(table): speed up bulk schema and partition spec removals (#1930),"* perf(table): index bulk schema and partition-spec removals
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(table): skip singleton removal index
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(schema): avoid copying lazy caches during JSON encoding
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(table): tune small schema and spec removals
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",ad748dabc67799e54d38997933e5f8c6f7d55b67,1930,false,,5,355,17,schema.go; schema_test.go; table
+apache/iceberg-go,67b7d86dbced6c008f0e86f7fd393244b378b286,67b7d86,Digvijay,digvijay.vaghela@yahoo.com,2026-08-31T02:49:42-05:00,GitHub,noreply@github.com,2026-08-31T09:49:42+02:00,feat(table): add delete-file-backed changelog task types (#1897),"* feat(table): add delete-file-backed changelog task types
+
+Introduce AddedRowsScanTask, DeletedDataFileScanTask, and
+DeletedRowsScanTask so later changelog planning can distinguish
+row inserts from file removal and added versus existing deletes.
+
+Signed-off-by: Digvijay <digvijay.vaghela@yahoo.com>
+
+* fix(table): split changelog deletes by kind
+
+Store position deletes, equality deletes, and deletion vectors on the
+matching FileScanTask fields instead of collapsing every delete into
+positional DeleteFiles.
+
+Signed-off-by: Digvijay <digvijay.vaghela@yahoo.com>
+
+* fix(table): align changelog tasks with review feedback
+
+Add ChangelogScanTask and Operation(), store addedDeletes as classified
+lists instead of a FileScanTask, and error on unknown delete content.
+
+Signed-off-by: Digvijay <digvijay.vaghela@yahoo.com>
+
+---------
+
+Signed-off-by: Digvijay <digvijay.vaghela@yahoo.com>",387131f9cde8deca074bfe3e079169342adb1754,1897,false,,3,375,0,table
+apache/iceberg-go,e9a0d3bfd5499b1f089d156bfc6bb4b3f9c1b311,e9a0d3b,Minh Vu,vuhoangminh97@gmail.com,2026-08-31T11:11:25+02:00,GitHub,noreply@github.com,2026-08-31T11:11:25+02:00,perf(table): stream projected position-delete reads (#1898),"* perf(table): stream projected position-delete reads
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(table): fix gofumpt formatting
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover streamed position delete reads
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): project position deletes by leaf columns
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(schema): avoid copying lazy caches during JSON encoding
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",67b7d86dbced6c008f0e86f7fd393244b378b286,1898,false,,4,534,88,table
