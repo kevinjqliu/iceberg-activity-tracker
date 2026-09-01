@@ -6183,3 +6183,46 @@ apache/iceberg,94ed50d0a61127fe03dd17b40e3e333ec041588c,94ed50d,Akanksha kedia,8
 apache/iceberg,7f7c0023b1faff6162cc864d3819393ce024d66a,7f7c002,Fokko Driesprong,fokko@apache.org,2026-08-31T15:04:43+02:00,GitHub,noreply@github.com,2026-08-31T15:04:43+02:00,Docs: Run `generateRuntimeDeps` on all modules (#17323),Updated comments for clarity on Gradle commands.,94ed50d0a61127fe03dd17b40e3e333ec041588c,17323,false,,1,2,2,runtime-deps.gradle
 apache/iceberg,9be09782baa577681f8218929ec022ae7fdf83a9,9be0978,Akanksha kedia,89628774+Akanksha-kedia@users.noreply.github.com,2026-08-31T21:37:35+05:30,GitHub,noreply@github.com,2026-08-31T09:07:35-07:00,Docs: Fix grammatical typo in Spark module description (#17897),"'submodules for each spark versions' -> 'submodules for each Spark version'
 (number agreement + capitalization, consistent with Flink/Hive naming nearby)",7f7c0023b1faff6162cc864d3819393ce024d66a,17897,false,,3,3,3,README.md; docs; site
+apache/iceberg,17680ce149981d3186537a603a26015f634671f9,17680ce,vishnu prakash,nvishnuprakash02@gmail.com,2026-09-01T06:05:07+05:30,GitHub,noreply@github.com,2026-08-31T17:35:07-07:00,Core: Fix geo bounds in v4 legacy stat maps (#17493),,9be09782baa577681f8218929ec022ae7fdf83a9,17493,false,,2,161,1,core
+apache/iceberg,915e5af420bd969550315560f70b6c91959a9b21,915e5af,Manu Zhang,OwenZhang1990@gmail.com,2026-09-01T09:28:13+08:00,GitHub,noreply@github.com,2026-08-31T18:28:13-07:00,Spark 4.1: Mark overrides of deprecated Spark API as deprecated (#16028),,17680ce149981d3186537a603a26015f634671f9,16028,false,,8,186,40,spark
+apache/iceberg,6164440663e3f7b1bae92a1a710ca5233755cd7d,6164440,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-31T18:55:09-07:00,GitHub,noreply@github.com,2026-08-31T18:55:09-07:00,Core: Remove ThreadPools.WORKER_THREAD_POOL_SIZE_PROP update warning log message (#17812),"* Core: Remove ThreadPools.WORKER_THREAD_POOL_SIZE_PROP and correct manifest spec fallback removal version
+
+Resolves the two remaining deprecation markers in iceberg-core that
+promised action ""in 1.12.0"" but were missed by the removal PRs.
+
+Remove ThreadPools.WORKER_THREAD_POOL_SIZE_PROP. The field was
+deprecated in #5659 in favor of SystemConfigs.WORKER_THREAD_POOL_SIZE
+and retargeted from 2.0.0 to 1.12.0 by #14392. It had no callers
+anywhere in the repository outside its own declaration and no
+references in the docs, and it was the only survivor of #14392's
+13-file batch after #17700 removed the rest. The corresponding
+java.field.removed break is recorded in .palantir/revapi.yml under the
+1.11.0 baseline.
+
+Correct the ManifestReader warning for the partition-spec-from-file-
+metadata fallback to say 2.0.0 rather than 1.12.0. The fallback cannot
+be honored in 1.12.0 because its only production caller is
+BaseSnapshot:276, which passes a null spec map while serving
+Snapshot.addedDeleteFiles(FileIO) and removedDeleteFiles(FileIO).
+Those accessors are themselves already marked ""@deprecated will be
+removed in 2.0.0; use SnapshotChanges#builderFor(Table) instead"", and
+because they receive only a FileIO they structurally cannot supply a
+spec map. The fallback must therefore outlive 1.12.0, and 2.0.0 aligns
+its removal with that of its last caller.
+
+* reword revapi change",915e5af420bd969550315560f70b6c91959a9b21,17812,false,,3,4,9,.palantir; core
+apache/iceberg,9381f0ca6ba57e028f3bf55329a49fa4ae4b212e,9381f0c,Charlie Chen,jchen264@uw.edu,2026-09-01T07:38:01-07:00,GitHub,noreply@github.com,2026-09-01T07:38:01-07:00,Dell: Preserve known ECS input file lengths (#17870),"* Dell: Preserve known ECS input file lengths
+
+Carry known lengths into ECS input files so scan planning avoids redundant object metadata requests.
+
+Generated-by: Codex
+
+* Dell: Verify known lengths avoid metadata requests
+
+Use a mock ECS client and assert that reading a supplied file length performs no client interaction.
+
+Generated-by: Codex",6164440663e3f7b1bae92a1a710ca5233755cd7d,17870,false,,3,50,1,dell
+apache/iceberg,86da2dc8414756e05106b3272fd6e6d0dde306e3,86da2dc,Varun Lakhyani,130844282+varun-lakhyani@users.noreply.github.com,2026-09-01T20:08:34+05:30,GitHub,noreply@github.com,2026-09-01T09:38:34-05:00,Core: Add Eager fetch to parquet read path (#17284),,9381f0ca6ba57e028f3bf55329a49fa4ae4b212e,17284,false,,5,225,26,core; parquet
+apache/iceberg,53387cbc031591f4be2b0d94eaf879ae5b4721eb,53387cb,Anurag Mantripragada,amantripragada@apple.com,2026-09-01T08:33:18-07:00,GitHub,noreply@github.com,2026-09-01T10:33:18-05:00,Spark 4.1: Add rewrite option to enable executor cache for delete files (#17868),,86da2dc8414756e05106b3272fd6e6d0dde306e3,17868,false,,4,77,10,docs; spark
+apache/iceberg,f37f4e03ebdb90b47b4f5d045484eb66f2708390,f37f4e0,Anurag Mantripragada,amantripragada@apple.com,2026-09-01T08:46:53-07:00,GitHub,noreply@github.com,2026-09-01T10:46:53-05:00,Spark 4.0: Add rewrite option to enable executor cache for delete files (#17907),,53387cbc031591f4be2b0d94eaf879ae5b4721eb,17907,false,,3,76,10,spark
+apache/iceberg,6a179f3128b162e7b12de748d9f79628924a4249,6a179f3,Anurag Mantripragada,amantripragada@apple.com,2026-09-01T08:47:14-07:00,GitHub,noreply@github.com,2026-09-01T10:47:14-05:00,Spark 3.5: Add rewrite option to enable executor cache for delete files (#17909),,f37f4e03ebdb90b47b4f5d045484eb66f2708390,17909,false,,3,76,10,spark
