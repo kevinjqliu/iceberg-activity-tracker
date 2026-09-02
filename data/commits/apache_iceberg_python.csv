@@ -5709,3 +5709,52 @@ Nothing referenced ruff.toml by path, and `ruff check --show-settings`
 resolves to identical settings before and after the move.
 
 Closes #3882",5bbf432ce2c53e95055f2bda9234cac35a63dd82,3883,false,,2,68,83,pyproject.toml; ruff.toml
+apache/iceberg-python,8e56e1366401e521ecfdb7bd992b217cccc86e52,8e56e13,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-09-01T10:37:01-07:00,GitHub,noreply@github.com,2026-09-01T10:37:01-07:00,Add last two versions to bug report (#3892),,58749a3a3a189dc45bee23eb1d7a2b059cbf6967,3892,false,,1,3,1,.github
+apache/iceberg-python,d12f68042a459e5d4732bd6ee5a188e891b0dd44,d12f680,m0g3r,87276771+m0g3r@users.noreply.github.com,2026-09-01T21:46:19+02:00,GitHub,noreply@github.com,2026-09-01T21:46:19+02:00,fix(avro): read doubles at full precision in the Cython decoder (#3808),"`CythonBinaryDecoder.read_double` was declared `cpdef float`, which in
+Cython is the C single-precision type, so every Avro double decoded by
+the fast decoder was silently rounded to 32-bit precision. Values
+outside the single-precision range collapse entirely: 1e308 becomes
+inf and 5e-324 becomes 0.0.
+
+`new_decoder` returns the Cython decoder whenever the extension is
+built, so this is the default read path. It affects any double read
+from a manifest, most visibly identity partition values on a
+float/double column: writing a partition value of 429496729622.314
+and reading the manifest back returns 429496729600.0.
+
+The pure-Python `StreamingBinaryDecoder` was always correct, and
+`read_float` is unaffected because a value decoded from four bytes is
+already representable as a C float.
+
+
+Claude-Session: https://claude.ai/code/session_01T2GWEoizz8ZGQbjatT8aZy
+
+Co-authored-by: Claude Opus 5 <noreply@anthropic.com>",8e56e1366401e521ecfdb7bd992b217cccc86e52,3808,false,Claude Opus 5,2,18,1,pyiceberg; tests
+apache/iceberg-python,0f192f5b774632e6591e7f97f329e9b2738c9d19,0f192f5,Sivaprasanna,sivaprasanna246@gmail.com,2026-09-02T11:49:21+02:00,GitHub,noreply@github.com,2026-09-02T11:49:21+02:00,"feat: Fuse `{partition,metrics}` manifest filtering (#3658)","* feat: Fuse partition and metrics filtering into manifest entry deserialization
+
+* Fold entry_filter into fetch_manifest_entry",d12f68042a459e5d4732bd6ee5a188e891b0dd44,3658,false,,3,49,11,pyiceberg; tests
+apache/iceberg-python,b0fc56316bf6ff2b868d1aa02dbe394aacf263ed,b0fc563,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-02T15:13:06+02:00,GitHub,noreply@github.com,2026-09-02T15:13:06+02:00,Build: Bump tornado from 6.5.7 to 6.5.8 (#3894),"Bumps [tornado](https://github.com/tornadoweb/tornado) from 6.5.7 to 6.5.8.
+- [Changelog](https://github.com/tornadoweb/tornado/blob/master/docs/releases.rst)
+- [Commits](https://github.com/tornadoweb/tornado/compare/v6.5.7...v6.5.8)
+
+---
+updated-dependencies:
+- dependency-name: tornado
+  dependency-version: 6.5.8
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",0f192f5b774632e6591e7f97f329e9b2738c9d19,3894,false,dependabot[bot],1,13,13,uv.lock
+apache/iceberg-python,885c0b877116e030655b3c49d485c7fa46d869ba,885c0b8,Dylan Pulver,35541198+dylanpulver@users.noreply.github.com,2026-09-02T18:06:06+03:00,GitHub,noreply@github.com,2026-09-02T17:06:06+02:00,Fix inverted null-count NotStartsWith in inclusive metrics (#3891),"`_InclusiveMetricsEvaluationVisitor._may_contain_null` inverted the
+condition from the Java implementation. It reported ""may contain null""
+when a null count was present (including a count of 0) and ""cannot
+contain null"" when the count was absent.
+
+Both directions are wrong. A file with a proven null count of 0 was
+never pruned by `NotStartsWith`, and a file whose null count is unknown
+could be pruned even though its nulls satisfy the predicate, silently
+dropping matching rows.
+
+Co-authored-by: Dylan Pulver <dylanpulver@users.noreply.github.com>
+Co-authored-by: Claude Opus 4.8 <noreply@anthropic.com>",b0fc56316bf6ff2b868d1aa02dbe394aacf263ed,3891,false,Dylan Pulver; Claude Opus 4.8,2,51,2,pyiceberg; tests

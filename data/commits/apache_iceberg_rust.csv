@@ -30298,3 +30298,201 @@ _last_updated_sequence_number:
   before (read all columns):  58.6 MB read, 1289 ms
 
 * Incorporate PR feedback",d6d06f3c4a60e5f3a6d3d789a43513a919d9eacb,3117,false,,1,317,59,crates
+apache/iceberg-rust,6d65786d7a4e19d6e62ac6b5df79e88841eae7be,6d65786,blackmwk,257669749+blackmwk@users.noreply.github.com,2026-09-02T17:29:00+08:00,GitHub,noreply@github.com,2026-09-02T17:29:00+08:00,refactor(memory): derive catalog configuration from properties (#3101),"* refactor(memory): derive catalog configuration from properties
+
+Replace manual catalog property extraction with the shared derive while preserving warehouse validation and forwarding unmodeled properties.
+
+Tracks [apache/iceberg-rust#3095](https://github.com/apache/iceberg-rust/issues/3095).
+
+Generated-by: Codex
+
+* refactor(memory): retain typed catalog properties
+
+Remove the redundant config wrapper and catch-all property field, expose the typed properties, and retain the catalog name and typed properties on MemoryCatalog.
+
+Addresses review feedback on [apache/iceberg-rust#3101](https://github.com/apache/iceberg-rust/pull/3101).
+
+Generated-by: Codex
+
+* refactor(memory): retain raw catalog properties
+
+* fix(memory): defer missing warehouse validation
+
+* refactor(memory): move raw properties into file io
+
+* fix(memory): restore catalog validation contract
+
+* refactor(memory): retain public catalog properties
+
+* refactor(memory): forward raw catalog properties",5c37021834c5391f499bb04e825e5b3d3282bdee,3101,false,,2,120,67,crates
+apache/iceberg-rust,1c27c683e7771e67badc7c6b3686958ca75664ce,1c27c68,Daniel Carl Jones,djonesoa@amazon.com,2026-09-02T10:51:29+01:00,GitHub,noreply@github.com,2026-09-02T17:51:29+08:00,chore: Merge changes from 0.10.x to main (#3074),"* chore: Add LICENSE and NOTICE files for crates missing them in 0.10.0 (#2830)
+
+## Which issue does this PR close?
+
+For release: #2527
+
+## What changes are included in this PR?
+
+These changes are cherry-picks of #2823 and #2828. The crates were
+missing the LICENSE and NOTICE files required for the distributed source
+code.
+
+## Are these changes tested?
+
+Tested using the following script provided by @kevinjqliu. Introducing
+this in CI is left as a follow-up
+(https://github.com/apache/iceberg-rust/issues/2827).
+
+```bash
+set -Eeuo pipefail
+
+failed=0
+
+while IFS= read -r crate; do
+    echo ""Checking ${crate}...""
+    files=""$(cargo package \
+    --package ""${crate}"" \
+    --list \
+    --locked)""
+
+    for required in LICENSE NOTICE; do
+    if ! grep -Fxq ""${required}"" <<<""${files}""; then
+        echo ""::error::${crate} package is missing top-level ${required}""
+        failed=1
+    fi
+    done
+done < <(
+    cargo metadata --no-deps --format-version 1 |
+    jq -r '.packages[] | select(.publish != []) | .name'
+)
+
+exit ""${failed}""
+```
+
+---------
+
+Co-authored-by: Andrew Kane <andrew@ankane.org>
+
+* chore: Update changelog for 0.10.0 RC4 (#2831)
+
+## Which issue does this PR close?
+
+Follow up for 0.10.0 RC4.
+
+## What changes are included in this PR?
+
+Change log entries for missing changes in 0.10.0 RC4. The changelog is
+worded for the original commits to `main`, and not as the squashed
+cherry pick in #2830.
+
+## Are these changes tested?
+
+N/A
+
+* chore: Update crossbeam-epoch to 0.9.20, pin CI ruff version to 0.15.22 (#2911)
+
+## Which issue does this PR close?
+
+Small changes needed for 0.10.1.
+
+## What changes are included in this PR?
+
+First, address advisory in crossbeam-epoch with patch version update.
+
+Second, to address CI, pin Ruff linter for Python to version available
+when iceberg-rust 0.10.0 was released.
+
+## Are these changes tested?
+
+Already covered by CI.
+
+* chore: Bump version to 0.10.1, update changelog (#2909)
+
+## Which issue does this PR close?
+
+This bumps the crate and pyiceberg-core version to 0.10.1, for the
+0.10.1 release.
+
+Additionally, it pins ruff to 0.15.22 which was the version used for
+iceberg-rust 0.10.0.
+
+## What changes are included in this PR?
+
+Version bump, updated dependency TSV manifests, updated changelog.
+
+Pins CI version of ruff Python linter.
+
+## Are these changes tested?
+
+N/A
+
+---------
+
+Co-authored-by: Andrew Kane <andrew@ankane.org>",6d65786d7a4e19d6e62ac6b5df79e88841eae7be,3074,false,Andrew Kane,4,26,19,.github; CHANGELOG.md; Cargo.lock; Cargo.toml
+apache/iceberg-rust,34ad7e0a52e119fc6032831ac587ff3026e8d34d,34ad7e0,Daniel Carl Jones,djonesoa@amazon.com,2026-09-02T11:03:13+01:00,GitHub,noreply@github.com,2026-09-02T18:03:13+08:00,chore(ci): Fail CI when a publishable crate is missing LICENSE or NOTICE (#3084),"* chore(ci): Fail CI when a publishable crate is missing LICENSE or NOTICE
+
+Missing LICENSE and NOTICE files for newly introduced crates (#2823) were
+only discovered manually during release preparation, because nothing
+asserted their presence.
+
+Add dev/check_license_notice.sh, which lists the packaged files of every
+publishable crate with `cargo package --list` and fails when a top-level
+LICENSE or NOTICE is absent. Checking the packaged file list rather than
+the crate directory also catches files present on disk but excluded from
+the published crate. Because `cargo package --list` reports an entry even
+when a symlinked target is gone, the file contents are checked separately
+so a removed or emptied root copy fails too. Each crate's copy must also
+resolve to the repository root file itself, so the license text cannot
+drift from one crate to the next.
+
+Run it from the CI lint job so pull requests fail when a crate is missing
+either file, and stop excluding the root LICENSE and NOTICE from the
+pull_request path filter, since every crate symlinks to those copies and a
+PR removing them must still run the job. Also wire it into `make check` so
+it can be run locally the same way as the other lint checks.
+
+The check does not pass at this commit. It reports iceberg-property-macro,
+which is published but ships neither file, and iceberg-catalog-s3tables,
+whose LICENSE and NOTICE are real copies rather than the repository root
+files. Both gaps are fixed in the two commits that follow.
+
+Closes #2827
+
+* chore: Add missing LICENSE and NOTICE to iceberg-property-macro
+
+iceberg-property-macro is published to crates.io but shipped neither a
+LICENSE nor a NOTICE, so the crate was distributed without the files an
+Apache release requires. It was missed because the crate was added after
+#1601, which introduced the files for the crates publishable at the time.
+
+Add the same relative symlinks to the repository root copies that every
+other publishable crate uses, which is what the new check in the preceding
+commit reports.
+
+* chore: Symlink s3tables LICENSE and NOTICE to the repository root
+
+Every publishable crate references the root LICENSE and NOTICE through a
+relative symlink. That convention was established in #1601, which added the
+files to the crates that were publishable at the time. `iceberg-catalog-s3tables`
+was `publish = false` back then so it was skipped, and #1916 later added real
+copies when the crate was made publishable. Every crate added since has followed
+the symlink convention, leaving s3tables as the only outlier.
+
+Replace the copies with symlinks so the root files remain the single source of
+truth and per-crate copies cannot drift from them. This is also required for the
+check added earlier in this branch to pass, which rejects a per-crate copy that
+is not the root file itself: the s3tables copies are byte-identical to the root
+files today, but nothing kept them that way.
+
+`cargo package` dereferences the symlinks, so the published crate is unchanged:
+LICENSE and NOTICE are still regular files with byte-identical content.
+
+* Update based on PR feedback",1c27c683e7771e67badc7c6b3686958ca75664ce,3084,false,,7,203,211,.github; Makefile; crates; dev
+apache/iceberg-rust,0f37499bec2e8be9724887808de0a8aa194f0450,0f37499,Xander,zander181@googlemail.com,2026-09-02T11:27:31+01:00,GitHub,noreply@github.com,2026-09-02T18:27:31+08:00,refactor(scan): extract reusable scan functions (#3093),"* refactor(scan): extract scan planning utilities
+
+* comments
+
+* comments
+
+* remove allocation",34ad7e0a52e119fc6032831ac587ff3026e8d34d,3093,false,,5,236,92,crates
+apache/iceberg-rust,a18a0b20f338b1c6512df3da29aa19136015c45b,a18a0b2,blackmwk,257669749+blackmwk@users.noreply.github.com,2026-09-02T21:38:35+08:00,GitHub,noreply@github.com,2026-09-02T21:38:35+08:00,feat(io): make FileIO serializable (#3090),,0f37499bec2e8be9724887808de0a8aa194f0450,3090,false,,12,402,5,Cargo.lock; crates
