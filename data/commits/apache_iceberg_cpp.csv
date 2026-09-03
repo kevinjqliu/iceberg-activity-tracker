@@ -8683,3 +8683,55 @@ iceberg_data, and give DVWriter its own DeleteWriteResult.
 Replace PuffinDVIORegistry with DVUtil::MergeAndWriteDVs, update CMake and
 Meson ownership and dependencies, and refresh tests and library documentation.",86821d7df1c373f0b6dfe605452515bd02305b4b,900,false,,40,479,568,deletes; dv_writer_test.cc; mkdocs; src; }
 apache/iceberg-cpp,7dcc4ced28e725de951840adb2cdb2a422b27e0a,7dcc4ce,Zehua Zou,zehuazou2000@gmail.com,2026-08-28T14:37:31+08:00,GitHub,noreply@github.com,2026-08-28T14:37:31+08:00,chore: add support for stale PR workflow (#901),,ef394f967bf0b726636c9b8231647e6c069e06dd,901,false,,1,49,0,.github
+apache/iceberg-cpp,8ed779fc98279ae351e75d786457c20e86043c0e,8ed779f,Minh Vu,vuhoangminh97@gmail.com,2026-09-03T04:59:53+02:00,GitHub,noreply@github.com,2026-09-03T10:59:53+08:00,fix: reject malformed Arrow field IDs (#845),,7dcc4ced28e725de951840adb2cdb2a422b27e0a,845,false,,2,28,8,src
+apache/iceberg-cpp,8e1cb7a41bb1b4a3dd0593bc58e67b2bd1789286,8e1cb7a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-03T11:00:25+08:00,GitHub,noreply@github.com,2026-09-03T11:00:25+08:00,chore(deps): bump the codeql-action group with 2 updates (#903),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.7 to 4.37.8
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd...db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28)
+
+Updates `github/codeql-action/analyze` from 4.37.7 to 4.37.8
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd...db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.37.8
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.37.8
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",8ed779fc98279ae351e75d786457c20e86043c0e,903,false,dependabot[bot],1,2,2,.github
+apache/iceberg-cpp,b88b89360367932f372a5554fdf68e2b366f8ef9,b88b893,Joey,1517874642@qq.com,2026-09-03T23:30:11+08:00,GitHub,noreply@github.com,2026-09-03T23:30:11+08:00,fix(cmake): generate version.h under PROJECT_BINARY_DIR to support add_subdirectory() builds (#906),"CMakeLists.txt generates the versioned header at
+${CMAKE_BINARY_DIR}/src/iceberg/version.h, but the include path used
+to compile the iceberg target (ICEBERG_INCLUDES in
+src/iceberg/CMakeLists.txt) is ${PROJECT_BINARY_DIR}/src. This change
+makes both consistently use PROJECT_BINARY_DIR.
+
+When iceberg-cpp is built as the top-level project, CMAKE_BINARY_DIR
+and PROJECT_BINARY_DIR happen to be the same directory, so this
+mismatch is invisible.
+
+When iceberg-cpp is consumed via add_subdirectory() from another
+CMake project (e.g. vendoring it under third/iceberg-cpp/),
+CMAKE_BINARY_DIR resolves to the outermost project's build directory,
+while PROJECT_BINARY_DIR correctly resolves to the build directory
+nested under the outer project (e.g.
+<outer_build_dir>/third/iceberg-cpp/). The generated version.h then
+ends up in the wrong place and any translation unit that does
+#include ""iceberg/version.h"" (e.g. catalog/rest/constant.h,
+deletes/dv_util.cc, deletes/dv_writer.cc) fails with a missing header
+when building as a nested dependency.
+
+Co-authored-by: joeyyjwang <joeyyjwang@tencent.com>",8e1cb7a41bb1b4a3dd0593bc58e67b2bd1789286,906,false,joeyyjwang,1,1,1,CMakeLists.txt

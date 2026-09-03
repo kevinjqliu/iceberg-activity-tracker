@@ -30496,3 +30496,77 @@ apache/iceberg-rust,0f37499bec2e8be9724887808de0a8aa194f0450,0f37499,Xander,zand
 
 * remove allocation",34ad7e0a52e119fc6032831ac587ff3026e8d34d,3093,false,,5,236,92,crates
 apache/iceberg-rust,a18a0b20f338b1c6512df3da29aa19136015c45b,a18a0b2,blackmwk,257669749+blackmwk@users.noreply.github.com,2026-09-02T21:38:35+08:00,GitHub,noreply@github.com,2026-09-02T21:38:35+08:00,feat(io): make FileIO serializable (#3090),,0f37499bec2e8be9724887808de0a8aa194f0450,3090,false,,12,402,5,Cargo.lock; crates
+apache/iceberg-rust,12575c7bdcff652ff23e8f97a4e4c6263c1caa0e,12575c7,blackmwk,257669749+blackmwk@users.noreply.github.com,2026-09-03T07:15:14+08:00,GitHub,noreply@github.com,2026-09-02T16:15:14-07:00,refactor(scan): validate FileScanTask construction (#3131),"* refactor(scan): Validate FileScanTask construction
+
+Make FileScanTask fields private, expose read-only getters, and validate builder output so non-empty partition data always has an associated partition spec.
+
+Generated-by: Codex (GPT-5)
+
+* refactor(scan): Simplify FileScanTask validation
+
+Use typed-builder output conversion for validation instead of coupling the custom build method to generated typestate arguments.
+
+Generated-by: Codex (GPT-5)
+
+* fix(scan): Validate FileScanTask partition data
+
+Validate partition arity and transformed value types while preserving support for historical partition specs whose source columns were dropped. Port the partition coverage from PR #3091 to builder regression tests.
+
+Generated-by: Codex (GPT-5)
+
+* fix(scan): Refine partition validation
+
+Enforce symmetric partition/spec presence and tuple arity while avoiding per-value transform validation during task construction. Update the spec-id scan fixture to provide its partition tuple.
+
+Generated-by: Codex (GPT-5)
+
+* fix(scan): Validate partition specs against schema
+
+Preserve historical specs with dropped source columns while validating resolvable partition specs against the task schema. Add regression coverage for an incompatible evolved schema.
+
+Generated-by: Codex (GPT-5)
+
+* fix(scan): Always validate partition specs
+
+Remove the dropped-source shortcut and rely directly on PartitionSpec::partition_type for schema validation. Update dropped-source coverage to assert the resulting planning error.
+
+Generated-by: Codex (GPT-5)",a18a0b20f338b1c6512df3da29aa19136015c45b,3131,false,,13,601,292,crates
+apache/iceberg-rust,31eb8dd4bc5a72e5cb20208b75e3ba52aa80ae26,31eb8dd,Jannik Steinmann,jannik.steinmann@datadoghq.com,2026-09-03T01:18:58+02:00,GitHub,noreply@github.com,2026-09-02T16:18:58-07:00,refactor(auth) Emphasize AuthManagers aren't shared between catalogs (#3086),Take an owned AuthManager on catalog construction,12575c7bdcff652ff23e8f97a4e4c6263c1caa0e,3086,false,,3,40,26,crates
+apache/iceberg-rust,107f449d198486258c0f2e459fc6a03183e4fad1,107f449,Kurtis Wright,Kurtiscwright@users.noreply.github.com,2026-09-02T16:40:53-07:00,GitHub,noreply@github.com,2026-09-02T16:40:53-07:00,fix(partition): Align DateTime Transform to Java's Implementation (#3022),"* fix(partition): Align DateTime Transform to Java's Implementation
+
+* Add Doc Tests and Update Match Branching
+
+* Adding Spark Equivalence Tests
+
+* Update comments and return early
+
+* Removes requested integration tests
+
+---------
+
+Co-authored-by: Kurtis Wright <kurwrigh@amazon.com>",31eb8dd4bc5a72e5cb20208b75e3ba52aa80ae26,3022,false,Kurtis Wright,3,241,12,crates
+apache/iceberg-rust,dd4f32c7db9539e281f2a6cbdcb6564b70e88bd8,dd4f32c,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-09-02T20:30:39-04:00,GitHub,noreply@github.com,2026-09-02T17:30:39-07:00,feat(scan): [3/N] read and apply V3 deletion vectors (#3035),"* feat(scan): carry deletion-vector coordinates on FileScanTaskDeleteFile
+
+Add referenced_data_file, content_offset, and content_size_in_bytes to
+FileScanTaskDeleteFile, populated from the delete file's manifest entry.
+These locate a deletion-vector blob and scope it to its data file, which
+the delete loader needs to read and apply V3 deletion vectors.
+
+Refs #2792.
+
+* fix after merging in main
+
+* fix public-api.txt
+
+* fix test name
+
+* update
+
+* apply V3 deletion vectors during scan
+
+* identify deletion vectors by content type and file format
+
+* Fix after merging upstream/main
+
+* Update comment wording.",107f449d198486258c0f2e459fc6a03183e4fad1,3035,false,,11,1296,108,crates
+apache/iceberg-rust,c8fc70e5dcf4591a4c0d834223b4c7078ddb28c2,c8fc70e,Daniel Carl Jones,djonesoa@amazon.com,2026-09-03T17:00:40+01:00,GitHub,noreply@github.com,2026-09-03T09:00:40-07:00,fix: Address merge conflicts raising Clippy issues (#3137),,dd4f32c7db9539e281f2a6cbdcb6564b70e88bd8,3137,false,,2,3,2,crates
