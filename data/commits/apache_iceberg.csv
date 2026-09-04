@@ -6232,3 +6232,123 @@ apache/iceberg,112add3c53a950fdef30b85c202a9cd82e2f6080,112add3,Anshul Baliga,10
 apache/iceberg,08b1fc4991760bb3249512f199e9282ca0f9d8e6,08b1fc4,Talat UYARER,talat@apache.org,2026-09-02T22:11:38-07:00,GitHub,noreply@github.com,2026-09-03T07:11:38+02:00,Docs: Bump site Flink version to 2.3 (#17936),,112add3c53a950fdef30b85c202a9cd82e2f6080,17936,false,,1,2,2,site
 apache/iceberg,7447be7cd2ddfba46fa57de763518f6e7648fc06,7447be7,Talat UYARER,talat@apache.org,2026-09-02T23:05:38-07:00,GitHub,noreply@github.com,2026-09-03T08:05:38+02:00,Docs: Fix wrong config keys in Flink maintenance docs (#17935),,08b1fc4991760bb3249512f199e9282ca0f9d8e6,17935,false,,1,4,4,docs
 apache/iceberg,0107f19a4a6e881bdee4a7c07562666e57469c01,0107f19,Uros,221401595+uros-b@users.noreply.github.com,2026-09-03T16:41:25+02:00,GitHub,noreply@github.com,2026-09-03T09:41:25-05:00,"Core, Open-API, Spark, Flink: Use String.replace for literal replacements (#17484)",,7447be7cd2ddfba46fa57de763518f6e7648fc06,17484,false,,14,28,22,.baseline; core; flink; open-api; spark
+apache/iceberg,9408165481aa116081f3453337bf6ed963176323,9408165,Uros,221401595+uros-b@users.noreply.github.com,2026-09-03T20:35:44+02:00,GitHub,noreply@github.com,2026-09-03T11:35:44-07:00,API: Add Javadoc for Transforms.fromString (#17693),,0107f19a4a6e881bdee4a7c07562666e57469c01,17693,false,,1,13,0,api
+apache/iceberg,6dec25e430b33a8b4f623b14940110d459581826,6dec25e,Prashant Singh,35593236+singhpk234@users.noreply.github.com,2026-09-03T13:32:39-07:00,GitHub,noreply@github.com,2026-09-03T13:32:39-07:00,Spec: Add finer grained read restrictions as part of loadTable (#13879),"Add an optional read-restrictions field to LoadTableResult so a catalog
+can return the result of evaluating fine grained access policies for the
+calling user. The restrictions are enforced by the client, which
+requires a trust relationship between the engine and the catalog; how
+that trust is established is out of scope for this change.
+
+ReadRestrictions carries two optional fields:
+
+- required-column-projections: a list of Action objects, each naming a
+  column by field-id along with the transformation to apply. Action uses
+  a discriminator on the action property, with mask-alphanum,
+  mask-to-fixed-value, replace-with-null, show-first-4, show-last-4,
+  truncate-to-year, truncate-to-month, sha-256-global and
+  sha-256-query-local defined. Each action produces a value of the same
+  type as the input column.
+
+- required-row-filter: an Expression evaluated against original,
+  untransformed column values. Projections are applied to the rows that
+  survive the filter.
+
+Enforcement is fail-closed. A reader that supports read restrictions
+must fail any read it cannot satisfy in full, including unrecognized
+action or expression types and actions that cannot be loaded, parsed, or
+evaluated, and must not silently return raw, partial, or empty results.
+The restrictions apply to every read performed with a given response,
+including subsequent planTableScan and fetchScanTasks calls, and may
+differ between requests or between authentication scopes. A missing or
+empty ReadRestrictions object imposes no restrictions.
+
+Approved on the dev list with 8 binding +1 votes and no -1 votes:
+https://lists.apache.org/thread/0zloqhp8wkgyn04yg69j71cwcg5n7g74",9408165481aa116081f3453337bf6ed963176323,13879,false,,2,506,0,open-api
+apache/iceberg,6344f6e17d6b92146f1ec8bfb7626f124f2cea4b,6344f6e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-03T20:05:43-07:00,GitHub,noreply@github.com,2026-09-03T20:05:43-07:00,Build: Bump mkdocs-material from 9.7.5 to 9.7.7 in /site (#17942),"Bumps [mkdocs-material](https://github.com/squidfunk/mkdocs-material) from 9.7.5 to 9.7.7.
+- [Release notes](https://github.com/squidfunk/mkdocs-material/releases)
+- [Changelog](https://github.com/squidfunk/mkdocs-material/blob/master/CHANGELOG)
+- [Commits](https://github.com/squidfunk/mkdocs-material/compare/9.7.5...9.7.7)
+
+---
+updated-dependencies:
+- dependency-name: mkdocs-material
+  dependency-version: 9.7.7
+  dependency-type: direct:production
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",6dec25e430b33a8b4f623b14940110d459581826,17942,false,dependabot[bot],1,1,1,site
+apache/iceberg,2750866c16e1baac10650c98797da510a92be90e,2750866,Uros,221401595+uros-b@users.noreply.github.com,2026-09-04T05:07:51+02:00,GitHub,noreply@github.com,2026-09-03T20:07:51-07:00,API: Fix grammatical typos in UpdatePartitionSpec Javadoc (#17941),"Correct ""the a"" / ""the an"" to ""a"" / ""an"" in the @throws documentation of addField and removeField.",6344f6e17d6b92146f1ec8bfb7626f124f2cea4b,17941,false,,1,8,8,api
+apache/iceberg,20d616d6a1e5c2f3e7553a2f7312330039fe3a81,20d616d,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-09-03T20:22:39-07:00,GitHub,noreply@github.com,2026-09-03T20:22:39-07:00,"Core, Hive, Spark: Auto close JsonGenerator using try-with-resources (#17931)","* Core, Hive, Spark: Close JsonGenerator instead of only flushing it
+
+Ten sites created a JsonGenerator, called flush(), and left it unclosed.
+flush() pushes buffered content to the target and flushes the target itself,
+so the output was correct, but only close() returns the generator's char
+buffers to the thread's BufferRecycler (_releaseBuffers) and returns the
+recycler to the pool (IOContext.close). Without it, every serialization
+allocates a fresh char[4000] concat buffer instead of reusing one.
+
+Each generator now joins its enclosing try-with-resources so it closes
+before its target. The explicit flush() remains only where a value is read
+off the target inside the try: JsonUtil.generate and
+TableMetadataParser.toJson read StringWriter.toString(), and
+HMSTablePropertyHelper.hashOf reads HashWriter.getHash(). The last is
+ordering-sensitive, since AUTO_CLOSE_TARGET makes closing the generator
+close the HashWriter, and a closed HashWriter rejects getHash().
+
+A JMH benchmark over TableMetadataParser measured a fixed 8,016 B/op
+allocation reduction independent of document size, which is one char[4000]
+plus its object header. For a ~1 KB document that is 10,616 -> 2,600 B/op
+and 0.860 -> 0.730 us/op; for ~41 KB it is 49,680 -> 41,664 B/op.
+
+On a failure mid-serialization, close() now auto-completes open contexts
+(AUTO_CLOSE_JSON_CONTENT) and flushes partial content, where the flush()
+was previously skipped. The resulting metadata file is orphaned either way
+because the commit fails.
+
+* Restore explicit generator.flush() calls
+
+Review feedback: relying on close() to flush is correct but implicit, and it
+contradicts JsonUtil.generate, which was cited as the pattern this change
+follows and which does call flush().
+
+Restoring the calls keeps this change to a single concern: adding the
+generator to the enclosing try-with-resources so it is closed. The
+buffer-recycling win comes entirely from close() releasing the char buffer
+to the BufferRecycler, not from dropping the flush, so nothing measured is
+lost. The flush is now redundant with close() at these sites, which costs
+one extra flush() on the underlying stream per write.",2750866c16e1baac10650c98797da510a92be90e,17931,false,,12,73,77,core; hive-metastore; spark
+apache/iceberg,fa220212b479bbce89855a0617251516b7491765,fa22021,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-09-03T20:40:19-07:00,GitHub,noreply@github.com,2026-09-03T20:40:19-07:00,"Core, OpenAPI: Preserve avg value sizes in REST JSON (#17855)",,20d616d6a1e5c2f3e7553a2f7312330039fe3a81,17855,false,,4,128,5,core; open-api
+apache/iceberg,9da109dd2537e77e8e5034068933575aa4e235ff,9da109d,Yuya Ebihara,ebyhry@gmail.com,2026-09-04T12:56:25+09:00,GitHub,noreply@github.com,2026-09-03T20:56:25-07:00,"Core, Flink, Spark, Build: Replace Guava Queues with plain JDK and bump guava from 33.6.0-jre to 33.7.1-jre  (#17888)","* Replace Guava Queues with plain JDK
+
+* Build: Bump guava from 33.6.0-jre to 33.7.1-jre
+
+Bumps `guava` from 33.6.0-jre to 33.7.1-jre.
+
+Updates `com.google.guava:guava` from 33.6.0-jre to 33.7.1-jre
+- [Release notes](https://github.com/google/guava/releases)
+- [Commits](https://github.com/google/guava/commits)
+
+Updates `com.google.guava:guava-testlib` from 33.6.0-jre to 33.7.1-jre
+- [Release notes](https://github.com/google/guava/releases)
+- [Commits](https://github.com/google/guava/commits)
+
+---
+updated-dependencies:
+- dependency-name: com.google.guava:guava
+  dependency-version: 33.7.1-jre
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+- dependency-name: com.google.guava:guava-testlib
+  dependency-version: 33.7.1-jre
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+---------
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",fa220212b479bbce89855a0617251516b7491765,17888,false,dependabot[bot],17,24,35,core; flink; gradle; spark
+apache/iceberg,27bfd00d67b2d00e3d4ea3e96832248bdc5107f6,27bfd00,Xiaoxuan,xioxuan@amazon.com,2026-09-04T07:33:15-07:00,GitHub,noreply@github.com,2026-09-04T08:33:15-06:00,Core: Fix commit validation when a data file has multiple DVs across snapshots (#17764),,9da109dd2537e77e8e5034068933575aa4e235ff,17764,false,,6,526,31,.palantir; core
