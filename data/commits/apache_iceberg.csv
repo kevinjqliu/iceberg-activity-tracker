@@ -6352,3 +6352,36 @@ Signed-off-by: dependabot[bot] <support@github.com>
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",fa220212b479bbce89855a0617251516b7491765,17888,false,dependabot[bot],17,24,35,core; flink; gradle; spark
 apache/iceberg,27bfd00d67b2d00e3d4ea3e96832248bdc5107f6,27bfd00,Xiaoxuan,xioxuan@amazon.com,2026-09-04T07:33:15-07:00,GitHub,noreply@github.com,2026-09-04T08:33:15-06:00,Core: Fix commit validation when a data file has multiple DVs across snapshots (#17764),,9da109dd2537e77e8e5034068933575aa4e235ff,17764,false,,6,526,31,.palantir; core
+apache/iceberg,2cb92cec7c7cf68f670ca7d54487e17d98bded09,2cb92ce,Anoop Johnson,anoop@apache.org,2026-09-04T10:09:25-07:00,GitHub,noreply@github.com,2026-09-04T10:09:25-07:00,"API, Core: Expose co-located deletion vector through DataFile (#17928)","V4 co-locates a data file's deletion vector on the data entry.
+Add DataFile.deletionVector() returning the DV as a DeleteFile.
+
+Related discussion thread:
+https://github.com/apache/iceberg/pull/17541/changes#r3787760198",27bfd00d67b2d00e3d4ea3e96832248bdc5107f6,17928,false,,4,31,2,api; api}; core
+apache/iceberg,2d98164ff5c360c062b34ca503bee9f9efd50bf9,2d98164,Prashant Singh,35593236+singhpk234@users.noreply.github.com,2026-09-04T10:55:36-07:00,GitHub,noreply@github.com,2026-09-04T10:55:36-07:00,API: Add contextual load apis (#15895),"* API: Adds contextual load APIs and LoadContext
+
+Co-authored-by: Prashant Singh <prashant.singh@snowflake.com>",2cb92cec7c7cf68f670ca7d54487e17d98bded09,15895,false,Prashant Singh,5,136,0,api
+apache/iceberg,031135677395a3fbc90a2e33f58a9fa3983335f5,0311356,Manu Zhang,OwenZhang1990@gmail.com,2026-09-05T03:44:30+08:00,GitHub,noreply@github.com,2026-09-04T12:44:30-07:00,Spark: Add support for 4.2.0 (#14984),,2d98164ff5c360c062b34ca503bee9f9efd50bf9,14984,false,,646,153144,13,.gitattributes; .github; .gitignore; dev; gradle; gradle.properties; jmh.gradle; settings.gradle; spark
+apache/iceberg,e76d63584d7f83b102026749e1ae0f91813cb78e,e76d635,Huaxin Gao,huaxin.gao11@gmail.com,2026-09-04T14:09:53-07:00,GitHub,noreply@github.com,2026-09-04T14:09:53-07:00,Spark 4.2: Fix build failures from missed cleanups (#17952),,031135677395a3fbc90a2e33f58a9fa3983335f5,17952,false,,4,6,8,spark
+apache/iceberg,f5ce38e09457d020291dade599a45fb1adb9a587,f5ce38e,Huaxin Gao,huaxin.gao11@gmail.com,2026-09-04T16:37:20-07:00,GitHub,noreply@github.com,2026-09-04T16:37:20-07:00,Docs: Note that REST catalog credentials should be redacted by engines (#17920),,e76d63584d7f83b102026749e1ae0f91813cb78e,17920,false,,1,6,0,docs
+apache/iceberg,982d4e63a981286948265e6b2ceb06316c6570cf,982d4e6,Sergei Nikolaev,kinolaev@gmail.com,2026-09-05T02:31:59+02:00,GitHub,noreply@github.com,2026-09-04T17:31:59-07:00,Core: Avoid per-row path rehashing in toPositionIndexes (#17864),"* Core: Avoid per-row path rehashing in toPositionIndexes
+
+Signed-off-by: Sergei Nikolaev <kinolaev@gmail.com>
+
+* Core: Compare paths by content when building pos delete indexes + tests
+
+Signed-off-by: Sergei Nikolaev <kinolaev@gmail.com>
+Co-authored-by: Anurag Mantripragada <amantripragada@apple.com>
+
+* Core: Fix Deletes.toPositionIndexes with interleaved paths test
+
+Signed-off-by: Sergei Nikolaev <kinolaev@gmail.com>
+
+* Core: Fix test names, improve assertion in TestDeletes
+
+Signed-off-by: Sergei Nikolaev <kinolaev@gmail.com>
+
+---------
+
+Signed-off-by: Sergei Nikolaev <kinolaev@gmail.com>
+Co-authored-by: Anurag Mantripragada <amantripragada@apple.com>",f5ce38e09457d020291dade599a45fb1adb9a587,17864,false,Anurag Mantripragada,2,79,2,core
+apache/iceberg,3a68b70bfb1e4ca6e9386271e262f48596cd6c44,3a68b70,Anoop Johnson,anoop@apache.org,2026-09-04T18:27:35-07:00,GitHub,noreply@github.com,2026-09-04T18:27:35-07:00,"API, Core: Add ManifestFile adapter for v4 tracked files (#17932)","Reintroduces the ManifestFile adapter closed in #16867, which stalled because ManifestFile had no way to represent a manifest deletion vector. The V4 scan task planner (#17541) plans over manifests through the ManifestFile API, so this adds ManifestFile.manifestDeletionVector() and has the adapter expose the tracked file's manifest DV.",982d4e63a981286948265e6b2ceb06316c6570cf,17932,false,,4,289,4,api; core

@@ -28526,3 +28526,111 @@ updated-dependencies:
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",fc0e6fcaa7d469d782ecd54e7d025481698dabd4,1985,false,dependabot[bot],2,3,3,go.mod; go.sum
+apache/iceberg-go,07b37f1b0aa58ba4f581fbc0613187eea240098f,07b37f1,Minh Vu,vuhoangminh97@gmail.com,2026-09-04T21:46:40+02:00,GitHub,noreply@github.com,2026-09-04T15:46:40-04:00,perf(table): skip metadata builds when Transaction.apply has no new requirements (#1955),"* perf(table): skip metadata builds when Transaction.apply has no new requirements
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover deferred transaction metadata builds
+
+* chore(table): tidy transaction review follow-ups
+
+* test(table): pin deferred metadata log behavior
+
+* perf(table): copy requirements only when needed
+
+* test(table): narrow deferred metadata log test name
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",aa76a28c34787f23f8eee1c5648271fc0ee6042f,1955,false,,3,179,27,table
+apache/iceberg-go,33e36db3a5bc3d0003d93b617a1a53cc90216892,33e36db,Roli Bhardwaj,90590085+technicolorbeat@users.noreply.github.com,2026-09-04T15:47:03-04:00,GitHub,noreply@github.com,2026-09-04T15:47:03-04:00,perf(rest): lazy-decode snapshots in commitTableResponse when snapshot-loading-mode=refs (#1956),"* perf(rest): defer unreferenced commit snapshots
+
+Parse REST commit-response metadata without materializing unreferenced snapshot history when snapshot-loading-mode=refs. Validate and index the raw snapshot array synchronously, eagerly decode every branch and tag target, and decode individual historical snapshots by ID on demand.
+
+Materialize the full history only for collection-wide operations such as Snapshots, serialization, equality, builders, and format upgrades. Keep the deferred state pointer-owned and concurrency-safe.
+
+Add correctness, round-trip, validation, and race coverage plus byte-sized benchmarks for eager parsing, referenced access, individual historical lookup, and full materialization.
+
+Fixes #1946
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>
+
+* fix(table): synchronize deferred snapshot index cleanup
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>
+
+* fix(table): preserve deferred snapshots in metadata builder
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>
+
+* fix(table): preserve deferred snapshot semantics
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>
+
+* ci: retry audit after transient SQLite lock
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>
+
+* fix(table): preserve deferred validation semantics
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>
+
+---------
+
+Signed-off-by: Roli Bhardwaj <specklegrey12@gmail.com>",07b37f1b0aa58ba4f581fbc0613187eea240098f,1956,false,,5,1403,67,catalog; table
+apache/iceberg-go,f9884636870ee82630003e2831ea2b57bd098cae,f988463,Minh Vu,vuhoangminh97@gmail.com,2026-09-04T22:29:14+02:00,GitHub,noreply@github.com,2026-09-04T16:29:14-04:00,feat(table): add RewriteManifests clustering (#1940),"* feat(table): add RewriteManifests clustering
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): stream manifest entries
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): benchmark clustered manifest pruning
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(table): pre-size clustered manifest state
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): validate clustered manifest keys
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): reuse clustered manifests on retry
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): clean up failed manifest writers
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): address manifest clustering review feedback
+
+* fix(table): satisfy nlreturn lint
+
+* fix(table): clean failed tombstone writers
+
+* fix(table): clean clustered writer finalization
+
+* fix(table): avoid duplicate clustered writer abort
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",33e36db3a5bc3d0003d93b617a1a53cc90216892,1940,false,,8,1401,152,table
+apache/iceberg-go,3020adbbc3faff047da6f483f739f1b5e1de611b,3020adb,Neelesh Salian,nssalian@users.noreply.github.com,2026-09-04T13:29:33-07:00,GitHub,noreply@github.com,2026-09-04T16:29:33-04:00,feat(table): variant predicate pushdown and reject variant partition source (#1607),"* feat(table): variant predicate pushdown and reject variant partition source
+
+* Fixes, cleanup, tests
+
+* fix residual nil-base panic and variant cast int64 overflow and other review comments
+
+* lint fixes
+
+* fix negated-extract lossy pruning and incremental-scan extract filter and added regression + coverage tests
+
+* fix sanitize-report NOT inversion and resolve variant extract source by field-id/physical-path (rename + nested)
+
+* pending PR comments
+
+* test for columnPathSegments",f9884636870ee82630003e2831ea2b57bd098cae,1607,false,,24,3261,303,errors.go; expr_json_test.go; exprs.go; partitions.go; partitions_test.go; schema.go; table; variant_cast.go; variant_cast_test.go; variant_extract.go; variant_extract_test.go; variant_path.go; variant_path_test.go; visitors.go
