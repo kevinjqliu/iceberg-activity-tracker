@@ -30794,3 +30794,12 @@ Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>",1deceb1380894537c49fbb
 apache/iceberg-rust,4687d265374bf5dc7bd8cd461f3bd46a23864761,4687d26,Jannik Steinmann,jannik.steinmann@datadoghq.com,2026-09-08T17:00:52+02:00,GitHub,noreply@github.com,2026-09-08T17:00:52+02:00,fix: Fix CI failure due to integration test's Hive install (#3174),"Install Hive directly
 
 Signed-off-by: Jannik Steinmann <jannik.steinmann@datadoghq.com>",28ede505ebc3a274d4840624e5c85eae480a77ae,3174,false,,1,6,4,dev
+apache/iceberg-rust,7874ee2c9b958b1b09c953032cc0580669823115,7874ee2,Anoop Johnson,anoop@apache.org,2026-09-09T03:23:11-07:00,GitHub,noreply@github.com,2026-09-09T18:23:11+08:00,perf(writer): borrow statistics in MinMaxColAggregator::update instead of cloning (#3171),"ParquetWriter clones the parquet Statistics for every column of every row
+group when collecting min/max bounds, but update() only reads it. For
+byte-array columns (string, binary, fixed, decimal) the clone duplicates the
+min and max byte buffers on the heap; for numeric columns it's a cheap copy.
+
+Take &Statistics and drop the clone at the call site. Roughly 15 ns per
+column per row group for byte-array columns, near nothing for numeric.
+Behavior is unchanged; the cheap PrimitiveType clone stays because it
+releases the borrow of self before the &mut self updates.",4687d265374bf5dc7bd8cd461f3bd46a23864761,3171,false,,1,8,8,crates
