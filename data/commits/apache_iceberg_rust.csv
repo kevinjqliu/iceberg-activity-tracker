@@ -30803,3 +30803,60 @@ Take &Statistics and drop the clone at the call site. Roughly 15 ns per
 column per row group for byte-array columns, near nothing for numeric.
 Behavior is unchanged; the cheap PrimitiveType clone stays because it
 releases the borrow of self before the &mut self updates.",4687d265374bf5dc7bd8cd461f3bd46a23864761,3171,false,,1,8,8,crates
+apache/iceberg-rust,4d83bc77dc10cff851a3ef427c451ff977bc3643,4d83bc7,Anoop Johnson,anoop@apache.org,2026-09-09T12:06:22-07:00,GitHub,noreply@github.com,2026-09-09T21:06:22+02:00,perf(arrow): build repeated boolean columns with BooleanBuffer (#3178),"create_primitive_array_repeated built a constant boolean column with
+BooleanArray::from(vec![*value; n]), which allocates an n-byte Vec<bool> and
+then bit-packs it. Set or clear the bits directly with BooleanBuffer::new_set
+/ new_unset instead. The sibling string and binary arms already skip the
+throwaway Vec via from_iter_values, so this just brings the bool arm in line.
+
+Same output, no nulls. This path materializes constant columns (partition
+values, defaults, metadata) on read, and boolean constants are uncommon, so
+it's a minor win.",7874ee2c9b958b1b09c953032cc0580669823115,3178,false,,1,7,2,crates
+apache/iceberg-rust,d6c2eb440db270ab2036809cec2123b4032e6504,d6c2eb4,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-10T01:50:34-07:00,GitHub,noreply@github.com,2026-09-10T16:50:34+08:00,chore: exclude repo-only files from the source archive (#3189),"The release tarball is built with git archive and ships .asf.yaml,
+.devcontainer, .github, .gitignore, .gitattributes, and .idea, none of
+which are needed to build, test, or verify from source. Ryan raised this
+in the 0.2.0 vote and Kurtis called out .idea in the 0.9.1 vote.
+
+Files the verification scripts rely on (.licenserc.yaml, lint configs,
+dev/) stay in.
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>",4d83bc77dc10cff851a3ef427c451ff977bc3643,3189,false,Claude Fable 5.1,1,9,0,.gitattributes
+apache/iceberg-rust,4aa55ba00c3ef2a4e603f323bfed0187952fe251,4aa55ba,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-10T02:41:14-07:00,GitHub,noreply@github.com,2026-09-10T17:41:14+08:00,fix(hms): use `get_table_req` for Hive 4 metastore compatibility (#3187),"fix(hms): use get_table_req for Hive 4 metastore compatibility
+
+Hive 4.0.1 removed the `get_table` thrift method, so the HMS catalog fails
+with `Invalid method name: 'get_table'` against any Hive 4 metastore.
+Switch `load_table`, `table_exists`, and `rename_table` to `get_table_req`,
+which exists in every Hive release since 2.3 (the IDL the `hive_metastore`
+crate is generated from), so older metastores keep working.
+
+Move the integration test metastore from `apache/hive:3.1.3` (Debian
+Bullseye, EOL) to `apache/hive:4.2.1` so CI exercises a Hive 4 server,
+mirroring apache/iceberg-python#3924.
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>",d6c2eb440db270ab2036809cec2123b4032e6504,3187,false,Claude Fable 5.1,2,31,19,crates; dev
+apache/iceberg-rust,6262dffd764ff76be38386f0880df6cf7910d980,6262dff,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-10T02:45:57-07:00,GitHub,noreply@github.com,2026-09-10T17:45:57+08:00,chore(dev): run REST fixture's SQLite backend in WAL mode (#3183),"The REST catalog fixture stores its JdbcCatalog in a file-backed SQLite
+database using the default rollback journal. Under parallel test load a
+committing writer must wait for every reader, and the request fails with
+SQLITE_BUSY (""database is locked"") instead of waiting. Switching the
+database to WAL mode lets reads proceed alongside the writer, removing
+the contention entirely.
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>",4aa55ba00c3ef2a4e603f323bfed0187952fe251,3183,false,Claude Fable 5.1,1,1,1,dev
+apache/iceberg-rust,6f062aa3d91541584ac0c06f5b58ff3bc172fe86,6f062aa,Xander,zander181@googlemail.com,2026-09-10T16:40:51+01:00,GitHub,noreply@github.com,2026-09-10T08:40:51-07:00,fix(ci): keep .github/actions in the source archive (#3193),"* fix(ci): keep .github/actions in the source archive
+
+`.github export-ignore` (#3189) hides `.github/actions` from repository
+archives. GitHub resolves the `uses: $/...` self-repository references
+introduced in #3161 by fetching such an archive, so every workflow that
+uses a local composite action now fails at action resolution:
+
+  Can't find 'action.yml', 'action.yaml' or 'Dockerfile' for action
+  'apache/iceberg-rust/.github/actions/setup-builder@<sha>'
+
+This breaks CI on main and on all open pull requests.
+
+List the .github entries individually instead, so the repo-only files
+#3189 targeted stay out of the release tarball while `.github/actions`
+remains resolvable. A `-export-ignore` negation on the subdirectory does
+not work: git does not descend into an export-ignored directory.
+
+* comment",6262dffd764ff76be38386f0880df6cf7910d980,3193,false,,1,3,1,.gitattributes

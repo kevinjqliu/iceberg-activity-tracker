@@ -6014,3 +6014,112 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
 ---------
 
 Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>",1d4f8d37dcb08f53b7e3b237a1bc2ab041439c7a,3914,false,Claude Fable 5.1,2,16,2,.github; mkdocs
+apache/iceberg-python,db5bd045b0a9d27f9855fd299bdf9c74dc7faffb,db5bd04,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-09-10T03:10:52Z,GitHub,noreply@github.com,2026-09-10T03:10:52Z,Update hive docker to 4.2.1 (#3924),"* Update hive docker to 4.2.1
+
+* Use newest Hive docker image
+
+* Add back MAVEN_MIRROR",9299bdb8530c6ae87f583c2e5cbeba2f5b532606,3924,false,,6,103,67,dev; pyiceberg; tests
+apache/iceberg-python,0cd614b440338f22702d3f462ec635ada0f63f89,0cd614b,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-09-10T15:51:47Z,GitHub,noreply@github.com,2026-09-10T15:51:47Z,REST: Add retry and timeout configuration for REST catalog (#3418),"* REST: Add retry and timeout configuration for REST catalog
+
+Closes #2772.
+
+The REST Catalog uses requests with no retries and no timeout by default,
+so transient 5xx/network failures bubble up immediately and slow servers
+can hang the client indefinitely (e.g. a Polaris instance returning 504
+from a proxy).
+
+Add an optional connection: block on the catalog properties:
+
+  catalog:
+    default:
+      uri: http://rest-catalog/ws/
+      connection:
+        timeout: 60
+        retry:
+          total: 5
+          backoff_factor: 1.0
+          status_forcelist: [429, 500, 502, 503, 504]
+          allowed_methods: [GET, HEAD, OPTIONS]
+
+connection.retry is passed verbatim to urllib3.util.retry.Retry. Both
+keys are optional and opt-in: when neither is set the default requests
+behavior is preserved.
+
+Signed-off-by: rahulsmahadev <rahul.mahadev@databricks.com>
+
+* Address review feedback: explicit options, exercise retries, fix mypy
+
+Per @Fokko + @rambleraptor: drop the urllib3 retry-dict pass-through and
+expose only three explicit knobs on the connection block (timeout, retries,
+backoff-factor). Hard-code the retry policy (status_forcelist of transient
+codes; allowed_methods of idempotent verbs) so users cannot misconfigure
+e.g. raise_on_status=False and silently swallow 4xx errors.
+
+Per @rambleraptor: add a test that exercises the retry path end-to-end by
+spinning up a loopback HTTP server that returns three 503s then a 200,
+verifying the catalog makes all four attempts. requests_mock can't be used
+here because it replaces the HTTPAdapter and bypasses retry logic.
+
+Fix the three mypy errors flagged by CI:
+- _RetryTimeoutHTTPAdapter.send now matches HTTPAdapter.send's full
+  signature instead of (request, **kwargs).
+- Test's set(adapter.max_retries.allowed_methods) now guards the
+  Collection[str] | None type.
+
+Signed-off-by: rahulsmahadev <rahul.mahadev@databricks.com>
+
+* Fix mypy: proxies type must be Mapping, not MutableMapping
+
+requests' HTTPAdapter.send declares proxies as Mapping[str, str] | None
+(via types-requests). Overriding with the more specific MutableMapping
+is an invalid override under mypy 1.18 strict mode.
+
+Signed-off-by: rahulsmahadev <rahul.mahadev@databricks.com>
+
+* Address review nits from @rambleraptor
+
+- Drop the misleading 'when none are set, the default requests behavior is
+  preserved' sentence in the docs (partial overrides don't reset other knobs
+  to undefined behavior).
+- Initialize retries and backoff_factor to 0 instead of None so the Retry()
+  call no longer needs conditional defaults inline. A Retry(total=0) is a
+  no-op and is functionally equivalent to no Retry at all.
+- Extract the loopback HTTP server setup from the retry test into a
+  _local_rest_server_503_then_200 context manager; the test body now shows
+  intent (set retries=3, list, verify 4 calls) without the handler scaffold.
+
+Signed-off-by: rahulsmahadev <rahul.mahadev@databricks.com>
+
+* Surface typed exceptions on retry exhaustion
+
+Per @danielcweeks: the urllib3 Retry was raising MaxRetryError /
+RetryError on exhaustion, which short-circuited
+_handle_non_200_response and lost the typed exception mapping
+(ServiceUnavailableError for 503, etc.).
+
+Set raise_on_status=False so urllib3 returns the final 5xx response
+instead of raising; _handle_non_200_response then maps it to the typed
+exception as it does for non-retried responses. This is safe because
+status_forcelist is hard-coded to transient codes — 4xx codes are never
+retried and reach the mapping unchanged.
+
+Added a regression test that drives retries to exhaustion against a
+server that always returns 503 and asserts ServiceUnavailableError is
+raised (not RetryError).
+
+Signed-off-by: rahulsmahadev <rahul.mahadev@databricks.com>
+
+* Address review feedback: flat rest.client.* connection properties
+
+- Rename the connection/retry/timeout config to flat rest.client.* keys (rest.client.request-timeout, rest.client.max-retries, rest.client.retry-backoff-factor), aligning naming with the Java HTTPClient while keeping seconds and a backoff-factor option.
+- Use requests' DEFAULT_RETRIES and drop the None branch in the adapter constructor.
+- Extract a helper to remove the repeated parse-and-validate logic across the three properties.
+- Retry idempotent PUT and DELETE in addition to GET/HEAD/OPTIONS.
+
+* Fix mypy unused-ignore in REST client timeout test
+
+* Address review: reuse property helpers and align timeout with Java client
+
+---------
+
+Signed-off-by: rahulsmahadev <rahul.mahadev@databricks.com>",db5bd045b0a9d27f9855fd299bdf9c74dc7faffb,3418,false,,3,313,5,mkdocs; pyiceberg; tests
