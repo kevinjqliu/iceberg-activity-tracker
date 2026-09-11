@@ -30860,3 +30860,73 @@ remains resolvable. A `-export-ignore` negation on the subdirectory does
 not work: git does not descend into an export-ignored directory.
 
 * comment",6262dffd764ff76be38386f0880df6cf7910d980,3193,false,,1,3,1,.gitattributes
+apache/iceberg-rust,0aeccb8c8d4e81e6e2e916427e183607049cd4a5,0aeccb8,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-10T15:19:35-07:00,GitHub,noreply@github.com,2026-09-10T15:19:35-07:00,fix: break dev-dependency cycle that blocks publishing iceberg-property-macro (#3184),"* fix: break dev-dependency cycle that blocks publishing iceberg-property-macro
+
+`iceberg` depends on `iceberg-property-macro`, and the macro crate had a
+versioned dev-dependency on `iceberg` via `workspace = true`. When cargo
+packages the macro crate for publishing it must resolve `iceberg ^0.11.0`
+from crates.io, which does not exist until the next step, so
+`cargo publish --workspace` fails with ""failed to select a version"". This
+is the same failure that broke the 0.5.0 publish and it reproduces on the
+v0.11.0-rc.1 tag.
+
+Make the dev-dependency path-only so cargo strips it when packaging. Mark
+the macro crate as internal to `iceberg` in its description and README,
+and add a `cargo publish --workspace --dry-run` step to CI so an
+unpublishable crate fails on the PR instead of after the release vote.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* ci: split publish dry-run between PR CI, RC tags, and RC creation
+
+The full `cargo publish --dry-run` compiles every packaged crate and took
+13 minutes per PR. PR CI now runs it with `--no-verify`, which still
+catches dependency cycles, unresolvable versions, and missing metadata in
+seconds.
+
+The compiled dry-run moves to where it matters for a release:
+
+- `create_rc.sh` runs it before creating any artifact or the RC tag, so a
+  crate that cannot be published fails RC creation. Opt out with
+  `--check_publish 0`.
+- `publish.yml` runs it on RC tag pushes, which previously did nothing, so
+  the exact tag is also checked on the MSRV toolchain the real publish uses.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* docs: drop RC tag workflow verification note from release guide
+
+The RC creation script now blocks on the publish dry-run, so the workflow
+run on the tag is a secondary check that does not need a manual step.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* docs: note requirements for create_rc.sh --check_publish
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* Apply suggestion from @dannycjones
+
+Co-authored-by: Daniel Carl Jones <danny@danielcarl.info>
+
+---------
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>
+Co-authored-by: Daniel Carl Jones <danny@danielcarl.info>",6f062aa3d91541584ac0c06f5b58ff3bc172fe86,3184,false,Claude Fable 5.1; Daniel Carl Jones,7,56,4,.github; crates; dev; website
+apache/iceberg-rust,44ceed3015a97fc18375dbf09758b42bc264db0e,44ceed3,Anoop Johnson,anoop@apache.org,2026-09-11T02:20:55-07:00,GitHub,noreply@github.com,2026-09-11T11:20:55+02:00,test(arrow): cover repeated boolean array path (#3201),"Follow-up to #3178 (https://github.com/apache/iceberg-rust/pull/3178),
+which optimized the boolean arm of create_primitive_array_repeated but
+was not exercised by existing tests. Add a test over true / false /
+num_rows == 0 asserting len, null_count, and element values.",0aeccb8c8d4e81e6e2e916427e183607049cd4a5,3201,false,,1,28,0,crates
+apache/iceberg-rust,8ac8b1c2ab3bd07e284cf096de003033ec489e4c,8ac8b1c,Anoop Johnson,anoop@apache.org,2026-09-11T05:51:19-07:00,GitHub,noreply@github.com,2026-09-11T14:51:19+02:00,perf(arrow): build constant filter masks with BooleanBuffer instead of Vec<bool> (#3177),"* perf(arrow): build constant filter masks with BooleanBuffer instead of Vec<bool>
+
+The predicate converter builds all-true and all-false boolean masks with
+BooleanArray::from(vec![b; n]), which allocates an n-byte Vec<bool> and then
+bit-packs it into the array. BooleanBuffer::new_set/new_unset write the packed
+bits directly, skipping the throwaway Vec and the pack pass.
+
+Covers the always-true/false predicates and the initial accumulators for
+is_in / not_in, built once per batch. Output is identical (all-set/all-unset,
+no nulls). Isolated construction is ~200x faster at 8192 rows; the real
+per-batch win is smaller since this is a fraction of filter evaluation.
+
+* PR feedback",44ceed3015a97fc18375dbf09758b42bc264db0e,3177,false,,1,31,5,crates

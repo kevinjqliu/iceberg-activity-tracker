@@ -6123,3 +6123,51 @@ Signed-off-by: rahulsmahadev <rahul.mahadev@databricks.com>
 ---------
 
 Signed-off-by: rahulsmahadev <rahul.mahadev@databricks.com>",db5bd045b0a9d27f9855fd299bdf9c74dc7faffb,3418,false,,3,313,5,mkdocs; pyiceberg; tests
+apache/iceberg-python,1652c1a0fb745df6498b2ea33a737eb5b689213f,1652c1a,J Schmidt,jeroen.f.l.schmidt@gmail.com,2026-09-10T18:08:46Z,GitHub,noreply@github.com,2026-09-10T18:08:46Z,feat: add ManageSnapshots.fast_forward_branch (#3649),"* feat: add ManageSnapshots.fast_forward_branch
+
+test: fast_forward_branch auto-creates missing from_branch
+test: fast_forward_branch is a no-op when snapshots already equal
+test: fast_forward_branch rejects a tag as the source ref
+test: fast_forward_branch rejects missing to_ref
+test: fast_forward_branch rejects non-ancestor target
+test: fast_forward_branch preserves retention fields
+test: fast_forward_branch composes in a manage_snapshots chain
+test(integration): fast_forward_branch on real catalogs
+
+docs: add fast_forward_branch section with WAP example
+chore: apply ruff-format and add None-checks for mypy
+
+* feat: intra-chain ref lookups via _effective_refs in ManageSnapshots
+
+* test(integration): fast_forward_branch preserves retention intra-chain
+
+* docs(fix): Cleanup Example & Add Mermaid Diagram
+
+* tests(PR Comments 1): Add fast_forward tag case
+tests(PR Comments 2): Add more noop cases
+tests(cleanup): Rename tests with naming format `test__{method}__with_{condition}__{outcome}`.
+tests(cleanup): Move tests into test class groupings
+tests(cleanup): Added explicit `table_v2_main_behind` fixture & update the tests to have main be fast-forwarded to reduce confusion against WAP process.
+
+* NIT: snapshot.py | Using walrus notation for single lookup.
+
+Co-authored-by: Fokko Driesprong <fokko@apache.org>
+
+* Trigger Build
+
+* fix: Bug introduced by single lookup walrus operation
+
+---------
+
+Co-authored-by: Fokko Driesprong <fokko@apache.org>",0cd614b440338f22702d3f462ec635ada0f63f89,3649,false,Fokko Driesprong,8,700,53,mkdocs; pyiceberg; tests; uv.lock
+apache/iceberg-python,d5474fdf0eb393d9979498fd88421e78a0554746,d5474fd,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-09-11T16:32:39Z,GitHub,noreply@github.com,2026-09-11T16:32:39Z,Infra: Replace MinIO with RustFS (#3928),"* Infra: Replace MinIO with RustFS in the dev and integration stacks
+
+MinIO Community Edition stopped publishing images in October 2025 and the
+repository was archived in April 2026, so `minio/minio:latest` resolves to a
+frozen build that will not receive further security fixes (#2664).
+
+I'm choosing RustFS since that's what Polaris uses.
+
+* Infra: Rename the object store service to `object-store`
+
+Feedback from @kevinjqliu",1652c1a0fb745df6498b2ea33a737eb5b689213f,3928,false,,7,68,57,Makefile; dev; mkdocs; run-s3.sh

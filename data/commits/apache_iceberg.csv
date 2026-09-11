@@ -6576,3 +6576,96 @@ warning-free.",cb5bf26a2db4e5245b736cb103bfb096fd1d54aa,17922,false,,4,195,4,com
 apache/iceberg,de8cba164ac51f9cb0da862f2051941383c685d5,de8cba1,Andrei Tserakhau,laskoviymishka@gmail.com,2026-09-09T21:11:28+02:00,GitHub,noreply@github.com,2026-09-09T21:11:28+02:00,REST Spec: add labels field for catalog metadata enrichment (#15750),REST Spec: add labels for catalog metadata enrichment,1ccfb83c920fb275a6284477d2d4a8572096c3ab,15750,false,,2,91,0,open-api
 apache/iceberg,9d7b2c52fb62de40ff8bc7f15f8923bd62201c21,9d7b2c5,Manu Zhang,OwenZhang1990@gmail.com,2026-09-10T03:13:07+08:00,GitHub,noreply@github.com,2026-09-09T12:13:07-07:00,Build: Include Spark 4.2 in source releases (#18024),,de8cba164ac51f9cb0da862f2051941383c685d5,18024,false,,2,90,3,.gitattributes; .github
 apache/iceberg,2702c983668c57177eba79ec97d9103d660cdc81,2702c98,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-10T08:25:18-07:00,GitHub,noreply@github.com,2026-09-10T08:25:18-07:00,Docker: Use WAL mode for the REST fixture's SQLite backend (#18044),Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>,9d7b2c52fb62de40ff8bc7f15f8923bd62201c21,18044,false,Claude Fable 5.1,3,9,4,docker; kafka-connect
+apache/iceberg,0b1193cba1fac4fbe153e6b99b06bbb52e6c6b3b,0b1193c,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-10T18:34:27+01:00,GitHub,noreply@github.com,2026-09-10T10:34:27-07:00,Core: Encrypt manifest output files directly (#18014),Core: Encrypt manifest output files directly,2702c983668c57177eba79ec97d9103d660cdc81,18014,false,,1,2,3,core
+apache/iceberg,7d0f3b84b99645af87babcbb7d79cb9ced6c0d55,7d0f3b8,Amogh Jahagirdar,amoghj@apache.org,2026-09-10T14:04:05-06:00,GitHub,noreply@github.com,2026-09-10T14:04:05-06:00,Parquet: Fix nested initial default applied when ancestor struct is null (#17320),Co-authored-by: Claude Sonnet 5 <noreply@anthropic.com>,0b1193cba1fac4fbe153e6b99b06bbb52e6c6b3b,17320,false,Claude Sonnet 5,13,839,261,data; flink; parquet; spark
+apache/iceberg,3c07f187f229b7fb0b0f91cb4219a5a5edaf9c28,3c07f18,Anoop Johnson,anoop@apache.org,2026-09-10T17:00:06-07:00,GitHub,noreply@github.com,2026-09-10T17:00:06-07:00,"API, Core: Read V4 manifests through ManifestFile (#18021)","V4ManifestReader took a bare InputFile, so callers had to thread manifest
+metadata like the deletion vector in separately. Have it take a ManifestFile
+and a FileIO instead: it opens the file itself and reads the format version and
+manifest DV straight off the manifest.
+
+Add ManifestFile.formatVersion() (0 for manifests written before format
+tracking) and reject unsupported versions and manifest DVs up front when the
+builder is created. Now that the reader owns opening the file, move the
+scanned-manifest metric into it.",7d0f3b84b99645af87babcbb7d79cb9ced6c0d55,18021,false,,5,183,89,api; core
+apache/iceberg,f8ee9d21671615d1571434b7ec43043874efeb17,f8ee9d2,Anoop Johnson,anoop@apache.org,2026-09-10T17:05:29-07:00,GitHub,noreply@github.com,2026-09-10T17:05:29-07:00,Core: Make tracked v4 file adapters serializable (#18031),"Make tracked file adapters serializable
+
+The scan planner emits FileScanTasks whose DataFile and DeleteFile are the
+tracked file adapters, and Spark serializes those to executors, so the
+adapters must be Serializable. Implement Serializable on the adapter base
+and replace the held PartitionSpec with the resolved spec ID, since the
+adapters only need the ID and carrying a full spec would be expensive to
+round trip. Add Java and Kryo serialization tests that compare the
+round-tripped file against the original.",3c07f187f229b7fb0b0f91cb4219a5a5edaf9c28,18031,false,,2,125,75,core
+apache/iceberg,308ac02d52716d9cd51582a224d5a35e462405f1,308ac02,Sushant Raikar,sushant.s.raikar@gmail.com,2026-09-10T18:52:08-07:00,GitHub,noreply@github.com,2026-09-10T18:52:08-07:00,Core: Retry requests with an Idempotency-Key on retriable errors (#17947),"* Core: Retry requests with an Idempotency-Key on retriable errors
+
+ExponentialHttpRequestRetryStrategy only applied the idempotent retriable
+status codes (408, 500, 502, 503, 504) when the HTTP method itself was
+idempotent. Mutation endpoints are POST, so a request that already carries
+an Idempotency-Key header - which the server guarantees is safe to replay -
+was not retried on 502/504 or on 503 without a Retry-After header.
+
+Treat a request carrying the Idempotency-Key header as retry-safe for these
+codes, in both the response and network-exception retry paths. Requests
+without the header keep the previous conservative behavior.
+
+* Core: Address review feedback on idempotency-key retries
+
+- Update testIdempotentCreateReplayAfterSimulated503: the client now
+  auto-retries a keyed POST on 503 and the server replays the finalized
+  200, so the call succeeds transparently. Assert success directly
+  instead of expecting a thrown 503 followed by a manual retry.
+- Add testIdempotentCreateRetryCarriesSameKey pinning the invariant that
+  every transport attempt of a retried keyed POST carries the identical
+  Idempotency-Key.
+- Clarify the retry-safety comment in ExponentialHttpRequestRetryStrategy
+  (idempotent method OR Idempotency-Key header), which no longer means
+  strict HTTP idempotency.
+
+* Core: Address review nits on idempotency-key retry test
+
+- Import CopyOnWriteArrayList instead of using its fully-qualified name.
+- Drop the redundant equality assertion in testIdempotentCreateRetryCarriesSameKey;
+  the filter already guarantees equality, so hasSize(2) is the real guard.",f8ee9d21671615d1571434b7ec43043874efeb17,17947,false,,3,78,21,core
+apache/iceberg,409004417f22c94ad1b7c75894e9619fd2e703b7,4090044,jackylee,qcsd2011@gmail.com,2026-09-11T14:00:51+08:00,GitHub,noreply@github.com,2026-09-10T23:00:51-07:00,ORC: Fix filter pushdown on tables with a variant column (#17998),"* ORC: Fix filter pushdown on tables with a variant column
+
+IdToOrcName did not override variant, so TypeUtil.SchemaVisitor threw
+while ExpressionToSearchArgument resolved column names.
+
+Generated-by: Ducc
+
+* ORC: Treat variant as unsupported for search argument predicates
+
+A predicate bound to a variant column reached type(), whose default
+branch throws. Variant has no PredicateLeaf.Type in ORC, so it belongs
+in UNSUPPORTED_TYPES alongside STRUCT, MAP and LIST.
+
+Generated-by: Ducc",308ac02d52716d9cd51582a224d5a35e462405f1,17998,false,,3,38,1,orc
+apache/iceberg,89987a6174ba8cb8f1ab539e693321cea1604189,89987a6,Vova Kolmakov,wombatukun@gmail.com,2026-09-11T13:40:05+07:00,GitHub,noreply@github.com,2026-09-11T08:40:05+02:00,Flink: Build nested field getters once in RowDataProjection (#16790),,409004417f22c94ad1b7c75894e9619fd2e703b7,16790,false,,2,38,7,flink
+apache/iceberg,954a22296f2755c0c056c15a3c6d14cc9b962770,954a222,Vova Kolmakov,wombatukun@gmail.com,2026-09-11T14:39:54+07:00,GitHub,noreply@github.com,2026-09-11T09:39:54+02:00,"Flink: Backport building nested field getters once in RowDataProjection to 1.20, 2.2 and 2.3 (#16790) (#18058)",Generated-by: Claude Code (claude-opus-5),89987a6174ba8cb8f1ab539e693321cea1604189,18058,false,,6,114,21,flink
+apache/iceberg,6585738915edcc8a10ab40e5fd490e6efdef2333,6585738,Alexandre Dutra,adutra@apache.org,2026-09-11T17:10:43+02:00,GitHub,noreply@github.com,2026-09-11T10:10:43-05:00,"Core, REST: Fix path segment encoding to use RFC 3986 percent-encoding (#15989)",,954a22296f2755c0c056c15a3c6d14cc9b962770,15989,false,,7,542,27,core
+apache/iceberg,baece5e6fee4ddcc5bcba3791fd5c1b4c9e6a577,baece5e,Fokko Driesprong,fokko@apache.org,2026-09-11T17:35:03+02:00,GitHub,noreply@github.com,2026-09-11T17:35:03+02:00,"Spark, Flink: Remove Joda from `SparkUtil.java` and tests (#17579)","* Spark, Flink: Remove Joda from tests
+
+* Spark, Flink: Remove Joda from tests
+
+* Include Spark 4.2
+
+* Make spotless happy
+
+* Fix import
+
+* Add Flink 2.3
+
+* Include timezones as well
+
+* Thanks Eduard",6585738915edcc8a10ab40e5fd490e6efdef2333,17579,false,,20,524,104,flink; spark
+apache/iceberg,86d9c8fc543e7c56c9f624eb725f76c9baff9570,86d9c8f,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-11T16:54:58+01:00,GitHub,noreply@github.com,2026-09-11T08:54:58-07:00,Spark: Encrypt manifests written by `rewrite_manifests` (#17987),"RewriteManifestsSparkAction created its replacement-manifest output with
+table().io().newOutputFile(...), which returns a plain OutputFile, so overload
+resolution selected the plaintext ManifestFiles.write and writeDeleteManifest
+variants. On a table using client-side encryption the replacement manifests were
+therefore written unencrypted, while still carrying each data file's
+key_metadata.
+
+Obtain an EncryptedOutputFile from the table's encryption manager instead,
+matching SnapshotProducer.newManifestOutputFile(). Behaviour is unchanged for
+tables without encryption, where PlaintextEncryptionManager yields the same
+empty key metadata the previous path produced.",baece5e6fee4ddcc5bcba3791fd5c1b4c9e6a577,17987,false,,8,262,8,spark
