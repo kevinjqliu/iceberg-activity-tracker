@@ -6669,3 +6669,38 @@ Obtain an EncryptedOutputFile from the table's encryption manager instead,
 matching SnapshotProducer.newManifestOutputFile(). Behaviour is unchanged for
 tables without encryption, where PlaintextEncryptionManager yields the same
 empty key metadata the previous path produced.",baece5e6fee4ddcc5bcba3791fd5c1b4c9e6a577,17987,false,,8,262,8,spark
+apache/iceberg,99c291d5ce837b21aa0b68e07fcad04a405e1c30,99c291d,Gianluca Graziadei,48211703+GGraziadei@users.noreply.github.com,2026-09-11T19:03:04+02:00,GitHub,noreply@github.com,2026-09-11T10:03:04-07:00,Spark: Fix Z-order NPE on null booleans and case-insensitive column resolution (#17669),"* Fix Z-order NPE on null booleans and case-insensitive column resolution
+
+* Update spark/v4.1/spark/src/main/java/org/apache/iceberg/spark/actions/SparkZOrderFileRewriteRunner.java
+
+Co-authored-by: Huaxin Gao <huaxin.gao11@gmail.com>
+
+* Spark: Pin spark.sql.caseSensitive in zOrderSortWithMismatchedColumnCase
+
+Use withSQLConf to set the config to false for the test instead of
+asserting on whatever value the shared session happens to have.
+
+---------
+
+Co-authored-by: Huaxin Gao <huaxin.gao11@gmail.com>",86d9c8fc543e7c56c9f624eb725f76c9baff9570,17669,false,Huaxin Gao,3,107,1,spark
+apache/iceberg,53d0e73f9d03e03805744bb9a13531ea12577efb,53d0e73,Xiening Dai,xndai@users.noreply.github.com,2026-09-11T10:50:30-07:00,GitHub,noreply@github.com,2026-09-11T12:50:30-05:00,"Core, Parquet: Fix null counting for parquet that doesn't have null_count stats (#17557)",,99c291d5ce837b21aa0b68e07fcad04a405e1c30,17557,false,,3,303,33,parquet
+apache/iceberg,4a0dc3f26d93e64e5b4f036cc37e3d2c81ee7cde,4a0dc3f,Pritam,28836358+pritampan@users.noreply.github.com,2026-09-11T21:25:03+01:00,GitHub,noreply@github.com,2026-09-11T13:25:03-07:00,Parquet: parse row-group size as long (#18055),* Parquet: parse row-group size as long,53d0e73f9d03e03805744bb9a13531ea12577efb,18055,false,,2,59,9,parquet
+apache/iceberg,b00a282b037ca4d43c1018a56ebafd69d4fa0e00,b00a282,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-09-11T16:09:08-07:00,GitHub,noreply@github.com,2026-09-11T16:09:08-07:00,Parquet: Compute geometry bounding box metrics (#17161),,4a0dc3f26d93e64e5b4f036cc37e3d2c81ee7cde,17161,false,,6,259,7,core; parquet
+apache/iceberg,cff60bc18e6fea1e29990f7f6d5ac78891defa59,cff60bc,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-12T00:11:47+01:00,GitHub,noreply@github.com,2026-09-11T16:11:47-07:00,Build: Pull MinIO images from Quay (#18071),,b00a282b037ca4d43c1018a56ebafd69d4fa0e00,18071,false,,4,11,7,aws; docker; kafka-connect; site
+apache/iceberg,1dccd6437f3391fd46954913d6699c9fb87434d7,1dccd64,Chris Lu,chrislusf@users.noreply.github.com,2026-09-11T22:43:32-07:00,GitHub,noreply@github.com,2026-09-12T07:43:32+02:00,Docs: Add SeaweedFS to vendors and third-party catalogs nav (#17605),,cff60bc18e6fea1e29990f7f6d5ac78891defa59,17605,false,,2,5,0,site
+apache/iceberg,357f657d1d94b049077a5ab963d6e16221a3eed0,357f657,Edgar Rodriguez,edgar.rd@gmail.com,2026-09-12T10:49:41-04:00,GitHub,noreply@github.com,2026-09-12T08:49:41-06:00,Parquet: Decode ENUM/JSON columns as UTF-8 in row-group filter conversions (#17157),"* Parquet: Decode ENUM/JSON columns as UTF-8 in row-group filter conversions
+
+ParquetConversions.converterFromParquet special-cased only the UTF8 original
+type, so for ENUM- or JSON-annotated Parquet columns it fell through to the
+binary path and returned a ByteBuffer. Iceberg maps both ENUM and JSON to
+StringType (MessageTypeToType), so at read time the metrics/dictionary row-group
+filters compared that ByteBuffer against a CharSequence predicate literal and
+threw:
+
+  class java.nio.HeapByteBuffer cannot be cast to class java.lang.CharSequence
+
+This is reachable for files written by other engines (e.g. Flink, which uses
+JSON columns) and added via add_files: querying such a column with a predicate
+triggers row-group filtering. Treat ENUM and JSON like UTF8 and decode them to a
+CharSequence. The import/metrics path (ParquetConversions.convertValue) already
+switches on the Iceberg type and was unaffected.",1dccd6437f3391fd46954913d6699c9fb87434d7,17157,false,,3,150,0,parquet

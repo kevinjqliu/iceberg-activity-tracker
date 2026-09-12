@@ -6171,3 +6171,293 @@ I'm choosing RustFS since that's what Polaris uses.
 * Infra: Rename the object store service to `object-store`
 
 Feedback from @kevinjqliu",1652c1a0fb745df6498b2ea33a737eb5b689213f,3928,false,,7,68,57,Makefile; dev; mkdocs; run-s3.sh
+apache/iceberg-python,5109df4cf11db5d00d8d9e7c613d8389342cb4a1,5109df4,Shayn Hornik,shaynhornik@gmail.com,2026-09-11T17:42:59Z,GitHub,noreply@github.com,2026-09-11T17:42:59Z,Build: Correct LICENSE paths for wheels and document the bundled Cython runtime (#3893),"* Build: Correct LICENSE paths for wheels and document the bundled Cython runtime
+
+The wheel ships fb303 and hive_metastore as top-level packages (setup.py package_dir), so the LICENSE entries pointing at vendor/ were wrong in binary distributions, and the compiled decoder_fast module embeds Cython runtime code that was not documented. Reword both vendored entries to describe each layout and add a Cython entry, raised in the 0.12.0 release vote thread.
+
+Generated-by: Claude Code (Fable 5)
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+* Build: Cite Cython's COPYING.txt instead of an invented copyright line
+
+Cython's LICENSE.txt carries no copyright holder line, so drop the one this
+entry made up and instead record why the bundled runtime needs no NOTICE
+change, as requested in review.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01SQc71d6jDK1U3i4mP9os5i
+
+* Build: Clarify generated code license entries
+
+Describe the generated Thrift bindings using their actual sdist and wheel layouts, and align the Cython note with its licensing clarification.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Build: Describe generated fb303 code precisely
+
+Avoid implying that the fb303 Thrift definition itself is included in source or binary distributions.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Claude Fable 5 <noreply@anthropic.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",d5474fdf0eb393d9979498fd88421e78a0554746,3893,false,Claude Fable 5; Claude Fable 5.1; Copilot App; Kevin Liu,1,19,2,LICENSE
+apache/iceberg-python,41a40312d0f35e6e36d5cb6dd44f2944bd715856,41a4031,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-11T18:26:32Z,GitHub,noreply@github.com,2026-09-11T18:26:32Z,Hive: document hive2-compatible and fix commit locks on Hive 2.1 (#3927),"* Docs: Describe hive.hive2-compatible as the Hive 2 setting
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* Hive: Mark the commit lock as non-transactional
+
+Hive 2.1.0 rejects a lock component whose operation type arrives as the
+default UNSET, and the generated Thrift client always sends that
+default. The commit lock is not part of a metastore transaction, so
+send NO_TXN, which every Hive release accepts.
+
+Verified against Hive 2.0.0, 2.1.0, 2.3.2, 3.1.3, 4.0.0, 4.0.1, 4.1.0
+and 4.2.1 metastores.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* Hive: Name the Hive versions that lack get_table_req
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* Clarify comments on lock request operation type
+
+Co-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>
+
+* Wrap lock request comment to fit line length
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* thanks geruh
+
+---------
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>
+Co-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>",5109df4cf11db5d00d8d9e7c613d8389342cb4a1,3927,false,Claude Fable 5.1; Copilot Autofix powered by AI,2,15,4,mkdocs; pyiceberg
+apache/iceberg-python,7dc3a60ca401b9fbf6e072a5c936a804b9a36b20,7dc3a60,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-11T18:31:02Z,GitHub,noreply@github.com,2026-09-11T18:31:02Z,CI: Avoid redundant post-merge runs (#3933),"* CI: Avoid redundant post-merge runs
+
+Merge queue checks already validate the final combined change before it lands. Stop rerunning the main Python workflows after merge, and avoid running the repository lint suite a second time from the docs workflow.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* CI: Remove remaining redundant main checks
+
+Markdown links, zizmor, and the ASF allowlist are already required for pull requests and merge groups. Avoid rerunning them after the validated change lands while retaining CodeQL's default-branch scan.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",41a40312d0f35e6e36d5cb6dd44f2944bd715856,3933,false,Copilot App,6,0,22,.github
+apache/iceberg-python,07c243f71e20c2eba5b6ce67ed7cb3718054a326,07c243f,Xander,zander181@googlemail.com,2026-09-11T18:49:17Z,GitHub,noreply@github.com,2026-09-11T18:49:17Z,feat(encryption): [1/N] spec model (#3930),"* feat(encryption): [1/N] spec model
+
+* test
+
+* validate
+
+* assert missing when empty",7dc3a60ca401b9fbf6e072a5c936a804b9a36b20,3930,false,,5,213,2,pyiceberg; tests
+apache/iceberg-python,4bf9da8498008951c978ab20ff84196e99a80e6e,4bf9da8,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-09-11T19:22:21Z,GitHub,noreply@github.com,2026-09-11T19:22:21Z,Add some docker images to dependabot (#3938),,07c243f71e20c2eba5b6ce67ed7cb3718054a326,3938,false,,1,13,0,.github
+apache/iceberg-python,b1f2da71915f41f47b00985533298de2755a060b,b1f2da7,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-09-11T19:45:56Z,GitHub,noreply@github.com,2026-09-11T19:45:56Z,Fix unit tests that haven't been running (#3937),"* Run all unit tests
+
+* Use explicit unit test marker
+
+Rename the synthesized marker to match its semantics and keep the local unit target from collecting the integration test directory.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",4bf9da8498008951c978ab20ff84196e99a80e6e,3937,false,Copilot App; Kevin Liu,5,35,40,.github; Makefile; pyproject.toml; tests
+apache/iceberg-python,5ba0b43209d15da7de3da66c439c39ae2ce8b7be,5ba0b43,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-11T19:47:26Z,GitHub,noreply@github.com,2026-09-11T19:47:26Z,CI: Run lint checks once (#3935),"* CI: Run lint checks once
+
+Avoid repeating version-independent lockfile and lint checks across the Python matrix.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* CI: Run lint on minimum Python version
+
+Keep linting deduplicated while checking syntax and typing against the oldest supported interpreter.\n\nCo-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",b1f2da71915f41f47b00985533298de2755a060b,3935,false,Copilot App,1,2,0,.github
+apache/iceberg-python,5202ea5964f67d3b2532bc5eb624f609c09fbc47,5202ea5,Xander,zander181@googlemail.com,2026-09-11T21:14:59Z,GitHub,noreply@github.com,2026-09-11T21:14:59Z,feat(encryption): [2/N] Add standard key metadata (#3948),"* feat(encryption): [2/N] Add standard key metadata
+
+* fix(encryption): Redact key metadata
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",5ba0b43209d15da7de3da66c439c39ae2ce8b7be,3948,false,Copilot App; Kevin Liu,3,196,0,pyiceberg; tests
+apache/iceberg-python,8275a6f209a37f034373e084fccb6ec388f8e5f8,8275a6f,hedger9487,59910195+hedger9487@users.noreply.github.com,2026-09-11T21:31:13Z,GitHub,noreply@github.com,2026-09-11T21:31:13Z,Manifest: Use int for equality_ids in manifest schema per Iceberg spec (#3840) (#3842),"Write equality_ids as list<int> and keep reading legacy list<long> manifests (#3840)
+
+The Iceberg spec defines data_file.equality_ids as list<int>, but PyIceberg
+wrote list<long>, which strict readers such as iceberg-cpp reject. Fix the
+manifest schema so new manifests follow the spec, and let the Avro resolver
+read the legacy long element as int for that field only, so existing
+manifests stay readable without loosening type promotion anywhere else.
+
+Closes #3840.
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>",5202ea5964f67d3b2532bc5eb624f609c09fbc47,3842,false,Kevin Liu,3,71,4,pyiceberg; tests
+apache/iceberg-python,453cdac78400897a802c76c45fbfefda91f949fe,453cdac,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-09-11T23:49:26Z,GitHub,noreply@github.com,2026-09-11T23:49:26Z,Fix release docs push (#3950),,8275a6f209a37f034373e084fccb6ec388f8e5f8,3950,false,,1,3,1,.github
+apache/iceberg-python,4b115ff0780d4ba0ca8c7ca5b575f87316403e8d,4b115ff,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-11T23:57:47Z,GitHub,noreply@github.com,2026-09-11T23:57:47Z,Build: Bump amazon/aws-cli from 2.36.40 to 2.36.44 in /dev (#3939),"Bumps amazon/aws-cli from 2.36.40 to 2.36.44.
+
+---
+updated-dependencies:
+- dependency-name: amazon/aws-cli
+  dependency-version: 2.36.44
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",453cdac78400897a802c76c45fbfefda91f949fe,3939,false,dependabot[bot],2,2,2,dev
+apache/iceberg-python,4134256f680074789a342eec317171c0347871df,4134256,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-11T23:57:48Z,GitHub,noreply@github.com,2026-09-11T23:57:48Z,Build: Bump google-auth from 2.57.0 to 2.57.1 (#3940),"Bumps [google-auth](https://github.com/googleapis/google-cloud-python) from 2.57.0 to 2.57.1.
+- [Release notes](https://github.com/googleapis/google-cloud-python/releases)
+- [Changelog](https://github.com/googleapis/google-cloud-python/blob/main/packages/google-cloud-documentai/CHANGELOG.md)
+- [Commits](https://github.com/googleapis/google-cloud-python/compare/google-auth-v2.57.0...google-auth-v2.57.1)
+
+---
+updated-dependencies:
+- dependency-name: google-auth
+  dependency-version: 2.57.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",4b115ff0780d4ba0ca8c7ca5b575f87316403e8d,3940,false,dependabot[bot],1,3,3,uv.lock
+apache/iceberg-python,540ff7947c1be7343f6f17a4247063eb18545c5b,540ff79,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-11T23:57:50Z,GitHub,noreply@github.com,2026-09-11T23:57:50Z,Build: Bump cachetools from 7.1.7 to 7.1.8 (#3941),"Bumps [cachetools](https://github.com/tkem/cachetools) from 7.1.7 to 7.1.8.
+- [Changelog](https://github.com/tkem/cachetools/blob/master/CHANGELOG.rst)
+- [Commits](https://github.com/tkem/cachetools/compare/v7.1.7...v7.1.8)
+
+---
+updated-dependencies:
+- dependency-name: cachetools
+  dependency-version: 7.1.8
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",4134256f680074789a342eec317171c0347871df,3941,false,dependabot[bot],1,3,3,uv.lock
+apache/iceberg-python,c7166524f05fb0c35fc554ad9b7d643a2648d95f,c716652,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-11T23:57:52Z,GitHub,noreply@github.com,2026-09-11T23:57:52Z,Build: Bump google-cloud-bigquery from 3.44.0 to 3.45.0 (#3942),"Bumps [google-cloud-bigquery](https://github.com/googleapis/python-bigquery) from 3.44.0 to 3.45.0.
+- [Release notes](https://github.com/googleapis/python-bigquery/releases)
+- [Changelog](https://github.com/googleapis/python-bigquery/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/googleapis/python-bigquery/commits)
+
+---
+updated-dependencies:
+- dependency-name: google-cloud-bigquery
+  dependency-version: 3.45.0
+  dependency-type: direct:development
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",540ff7947c1be7343f6f17a4247063eb18545c5b,3942,false,dependabot[bot],1,3,3,uv.lock
+apache/iceberg-python,1bc7671a4091de209ed0aa7e3b264b886ae1b908,1bc7671,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-11T23:57:53Z,GitHub,noreply@github.com,2026-09-11T23:57:53Z,Build: Bump mkdocstrings-python from 2.0.7 to 2.0.8 (#3943),"Bumps [mkdocstrings-python](https://github.com/mkdocstrings/python) from 2.0.7 to 2.0.8.
+- [Release notes](https://github.com/mkdocstrings/python/releases)
+- [Changelog](https://github.com/mkdocstrings/python/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/mkdocstrings/python/compare/2.0.7...2.0.8)
+
+---
+updated-dependencies:
+- dependency-name: mkdocstrings-python
+  dependency-version: 2.0.8
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",c7166524f05fb0c35fc554ad9b7d643a2648d95f,3943,false,dependabot[bot],2,5,5,pyproject.toml; uv.lock
+apache/iceberg-python,bc85c7c05407df718355b578f07b41128fdc8aee,bc85c7c,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-11T23:57:55Z,GitHub,noreply@github.com,2026-09-11T23:57:55Z,Build: Bump huggingface-hub from 1.29.0 to 1.30.0 (#3944),"Bumps [huggingface-hub](https://github.com/huggingface/huggingface_hub) from 1.29.0 to 1.30.0.
+- [Release notes](https://github.com/huggingface/huggingface_hub/releases)
+- [Commits](https://github.com/huggingface/huggingface_hub/compare/v1.29.0...v1.30.0)
+
+---
+updated-dependencies:
+- dependency-name: huggingface-hub
+  dependency-version: 1.30.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",1bc7671a4091de209ed0aa7e3b264b886ae1b908,3944,false,dependabot[bot],1,3,3,uv.lock
+apache/iceberg-python,7dd8ee3cdfb137a9dd46af3dd3fce4b3759c388e,7dd8ee3,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-11T23:57:57Z,GitHub,noreply@github.com,2026-09-11T23:57:57Z,Build: Bump protobuf from 7.36.0 to 7.36.1 (#3945),"Bumps [protobuf](https://github.com/protocolbuffers/protobuf) from 7.36.0 to 7.36.1.
+- [Release notes](https://github.com/protocolbuffers/protobuf/releases)
+- [Commits](https://github.com/protocolbuffers/protobuf/commits)
+
+---
+updated-dependencies:
+- dependency-name: protobuf
+  dependency-version: 7.36.1
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",bc85c7c05407df718355b578f07b41128fdc8aee,3945,false,dependabot[bot],2,11,11,pyproject.toml; uv.lock
+apache/iceberg-python,087bc25f969d519eac5562263c40e79a6a43f3bc,087bc25,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-11T23:57:59Z,GitHub,noreply@github.com,2026-09-11T23:57:59Z,Build: Bump griffe from 2.2.0 to 2.3.0 (#3946),"Bumps [griffe](https://github.com/mkdocstrings/griffe) from 2.2.0 to 2.3.0.
+- [Release notes](https://github.com/mkdocstrings/griffe/releases)
+- [Changelog](https://github.com/mkdocstrings/griffe/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/mkdocstrings/griffe/compare/2.2.0...2.3.0)
+
+---
+updated-dependencies:
+- dependency-name: griffe
+  dependency-version: 2.3.0
+  dependency-type: direct:development
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7dd8ee3cdfb137a9dd46af3dd3fce4b3759c388e,3946,false,dependabot[bot],2,11,11,pyproject.toml; uv.lock
+apache/iceberg-python,0e43bc368fb550f8b2a0bd935db50faec2dceef5,0e43bc3,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-11T23:58:07Z,GitHub,noreply@github.com,2026-09-11T23:58:07Z,Build: Bump prek from 0.5.0 to 0.5.2 (#3947),"Bumps [prek](https://github.com/j178/prek) from 0.5.0 to 0.5.2.
+- [Release notes](https://github.com/j178/prek/releases)
+- [Changelog](https://github.com/j178/prek/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/j178/prek/compare/v0.5.0...v0.5.2)
+
+---
+updated-dependencies:
+- dependency-name: prek
+  dependency-version: 0.5.2
+  dependency-type: direct:development
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",087bc25f969d519eac5562263c40e79a6a43f3bc,3947,false,dependabot[bot],1,11,19,uv.lock
+apache/iceberg-python,13d085e09ac341480e800989868ad8c6d1d31fc8,13d085e,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-12T00:01:54Z,GitHub,noreply@github.com,2026-09-12T00:01:54Z,Require approval for GitHub writes (#3949),Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>,0e43bc368fb550f8b2a0bd935db50faec2dceef5,3949,false,Copilot App,1,6,0,AGENTS.md
+apache/iceberg-python,562d3af3a77476bcd7b923f31da60200c1b2563c,562d3af,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-12T00:02:09Z,GitHub,noreply@github.com,2026-09-12T00:02:09Z,Improve CLI describe entity detection (#3934),"* Improve CLI describe entity detection
+
+Resolve namespace and table candidates before rendering output so ambiguous identifiers require explicit disambiguation without partial descriptions.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Remove duplicate ambiguity assertion
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Fix BigQuery namespace miss handling
+
+Report unsupported multipart namespace identifiers as NoSuchNamespaceError so CLI describe can continue to the table candidate without hiding unexpected catalog errors.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Apply batched suggestions from code review
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",13d085e09ac341480e800989868ad8c6d1d31fc8,3934,false,Copilot App; Kevin Liu,4,97,28,pyiceberg; tests
