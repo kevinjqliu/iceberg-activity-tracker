@@ -6704,3 +6704,105 @@ JSON columns) and added via add_files: querying such a column with a predicate
 triggers row-group filtering. Treat ENUM and JSON like UTF8 and decode them to a
 CharSequence. The import/metrics path (ParquetConversions.convertValue) already
 switches on the Iceberg type and was unaffected.",1dccd6437f3391fd46954913d6699c9fb87434d7,17157,false,,3,150,0,parquet
+apache/iceberg,4987c84414a3f97e1ac7fc763320e7006e01fcd3,4987c84,Gianluca Graziadei,48211703+GGraziadei@users.noreply.github.com,2026-09-12T19:47:13+02:00,GitHub,noreply@github.com,2026-09-12T10:47:13-07:00,"Spark: Backport Z-order null boolean and case-insensitive column fixes to 3.5, 4.0 and 4.2 (#18077)",Backport of #17669.,357f657d1d94b049077a5ab963d6e16221a3eed0,18077,false,,9,321,3,spark
+apache/iceberg,0b933180d5dbe8ab603671761d95ec5922d8ecd7,0b93318,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-12T19:04:35+01:00,GitHub,noreply@github.com,2026-09-12T11:04:35-07:00,Spark: Reject `rewrite_table_path` for encrypted tables (#17988),"For an encrypted source table the rewrite completes and produces a target that
+cannot be read. RewriteTablePathUtil resolves an EncryptionManager from the
+FileIO and ManifestListWriter mints a fresh data encryption key for the staged
+manifest list, but rewriteManifestList declares the writer as a bare
+FileAppender and never calls toManifestListFile(), which is the sole caller of
+addManifestListKeyMetadata. Meanwhile the rewrite copies the source table's
+encryption-keys list and the snapshot key-id verbatim, so the target's manifest
+lists are encrypted under a key that is registered nowhere. The copied manifests
+are separately written through the plaintext ManifestFiles.write overloads.
+
+Reject encrypted tables in validateInputs() instead. The guard tests
+table.io() instanceof EncryptingFileIO, which is the same expression
+RewriteTablePathUtil branches on when it resolves the encryption manager, so the
+guard cannot fail open against this defect.",4987c84414a3f97e1ac7fc763320e7006e01fcd3,17988,false,,7,82,0,spark
+apache/iceberg,9299fe6926db7c09e2fe7f53e8129d994c37859c,9299fe6,Manu Zhang,OwenZhang1990@gmail.com,2026-09-13T04:02:24+08:00,GitHub,noreply@github.com,2026-09-12T13:02:24-07:00,Build: Fix Spark publication and CI configuration (#18042),"* Build: Fix Spark publication and CI configuration
+
+Avoid republishing unrelated snapshot artifacts and preserve complete release BOM constraints. Correct stale benchmark workflow filters and clarify the supported Spark matrix.
+
+Generated-by: Codex
+
+* Build: Remove outdated Spark Java 21 support comment
+
+Generated-by: Codex
+
+* Build: Restore binary staging script
+
+Keep dev/stage-binaries.sh unchanged in this PR.
+
+Generated-by: Codex",0b933180d5dbe8ab603671761d95ec5922d8ecd7,18042,false,,8,16,9,.github; build.gradle
+apache/iceberg,76c214183d7b07be354c82902dc1db271995e68f,76c2141,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-13T00:55:33-07:00,GitHub,noreply@github.com,2026-09-13T00:55:33-07:00,Build: Bump docker/setup-qemu-action from 4.2.0 to 4.3.0 (#18091),"Bumps [docker/setup-qemu-action](https://github.com/docker/setup-qemu-action) from 4.2.0 to 4.3.0.
+- [Release notes](https://github.com/docker/setup-qemu-action/releases)
+- [Commits](https://github.com/docker/setup-qemu-action/compare/96fe6ef7f33517b61c61be40b68a1882f3264fb8...1f40c72289eff860ee54a304f1438e3cff362e0a)
+
+---
+updated-dependencies:
+- dependency-name: docker/setup-qemu-action
+  dependency-version: 4.3.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",9299fe6926db7c09e2fe7f53e8129d994c37859c,18091,false,dependabot[bot],1,1,1,.github
+apache/iceberg,5ee0bdefe7535a33d4e6b0da660a8d64f1fecb03,5ee0bde,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-13T00:55:50-07:00,GitHub,noreply@github.com,2026-09-13T00:55:50-07:00,Build: Bump software.amazon.awssdk:bom from 2.54.7 to 2.54.13 (#18089),"Bumps software.amazon.awssdk:bom from 2.54.7 to 2.54.13.
+
+---
+updated-dependencies:
+- dependency-name: software.amazon.awssdk:bom
+  dependency-version: 2.54.13
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",76c214183d7b07be354c82902dc1db271995e68f,18089,false,dependabot[bot],1,1,1,gradle
+apache/iceberg,a7f9fcf2346302839f39cd6558f30cb091bae3cb,a7f9fcf,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-13T00:56:12-07:00,GitHub,noreply@github.com,2026-09-13T00:56:12-07:00,Build: Bump com.diffplug.spotless:spotless-plugin-gradle from 8.10.1 to 8.10.2 (#18085),"Build: Bump com.diffplug.spotless:spotless-plugin-gradle
+
+Bumps [com.diffplug.spotless:spotless-plugin-gradle](https://github.com/diffplug/spotless) from 8.10.1 to 8.10.2.
+- [Release notes](https://github.com/diffplug/spotless/releases)
+- [Changelog](https://github.com/diffplug/spotless/blob/main/CHANGES.md)
+- [Commits](https://github.com/diffplug/spotless/compare/gradle/8.10.1...gradle/8.10.2)
+
+---
+updated-dependencies:
+- dependency-name: com.diffplug.spotless:spotless-plugin-gradle
+  dependency-version: 8.10.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",5ee0bdefe7535a33d4e6b0da660a8d64f1fecb03,18085,false,dependabot[bot],1,1,1,build.gradle
+apache/iceberg,df5e75d6e3f571fc326344f29e07adefc4b2d5c9,df5e75d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-13T00:56:43-07:00,GitHub,noreply@github.com,2026-09-13T00:56:43-07:00,Build: Bump org.roaringbitmap:RoaringBitmap from 1.6.20 to 1.6.21 (#18084),"Bumps [org.roaringbitmap:RoaringBitmap](https://github.com/RoaringBitmap/RoaringBitmap) from 1.6.20 to 1.6.21.
+- [Release notes](https://github.com/RoaringBitmap/RoaringBitmap/releases)
+- [Commits](https://github.com/RoaringBitmap/RoaringBitmap/compare/1.6.20...1.6.21)
+
+---
+updated-dependencies:
+- dependency-name: org.roaringbitmap:RoaringBitmap
+  dependency-version: 1.6.21
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a7f9fcf2346302839f39cd6558f30cb091bae3cb,18084,false,dependabot[bot],1,1,1,gradle
+apache/iceberg,fd2c44f5ac309198c809211c345d368bb04b5eef,fd2c44f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-13T00:57:05-07:00,GitHub,noreply@github.com,2026-09-13T00:57:05-07:00,Build: Bump datamodel-code-generator from 0.76.0 to 0.76.2 (#18083),"Bumps [datamodel-code-generator](https://github.com/datamodel-code-generator/datamodel-code-generator) from 0.76.0 to 0.76.2.
+- [Release notes](https://github.com/datamodel-code-generator/datamodel-code-generator/releases)
+- [Changelog](https://github.com/datamodel-code-generator/datamodel-code-generator/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/datamodel-code-generator/datamodel-code-generator/compare/0.76.0...0.76.2)
+
+---
+updated-dependencies:
+- dependency-name: datamodel-code-generator
+  dependency-version: 0.76.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",df5e75d6e3f571fc326344f29e07adefc4b2d5c9,18083,false,dependabot[bot],1,1,1,open-api

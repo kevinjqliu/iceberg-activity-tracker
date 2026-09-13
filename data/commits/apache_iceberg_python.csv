@@ -6461,3 +6461,41 @@ Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>
 ---------
 
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",13d085e09ac341480e800989868ad8c6d1d31fc8,3934,false,Copilot App; Kevin Liu,4,97,28,pyiceberg; tests
+apache/iceberg-python,308768d99b67816434e8d5c6dfea278737430ef8,308768d,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-12T18:02:01Z,GitHub,noreply@github.com,2026-09-12T18:02:01Z,Add missing referenced_data_file field to v2 manifests (#3953),"Fix v2 referenced data file schema
+
+Add optional referenced_data_file (field 143) to v2 manifests, retain it in existing expectations, and cover a non-null reference using explicit canonical-record projection.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",562d3af3a77476bcd7b923f31da60200c1b2563c,3953,false,Copilot App,3,42,2,pyiceberg; tests
+apache/iceberg-python,5133f353722c83b3145f7724e1bed05f8938f214,5133f35,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-12T21:35:36Z,GitHub,noreply@github.com,2026-09-12T21:35:36Z,Fix DataFile spec ID and reject unknown record fields (#3954),"* Fix DataFile spec ID binding
+
+Reject unknown record fields while retaining spec_id as transient DataFile context.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Fix DataFile integration fixture version argument
+
+Use the internal table format selector now that unknown DataFile fields are rejected.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Use canonical DataFile in integration fixture
+
+Let the v2 manifest writer project the canonical record instead of constructing a version-specific positional layout.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Exclude spec ID from manifest serialization fixture
+
+Keep transient DataFile context out of the expected Avro payload.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Clarify versioned DataFile test setup
+
+Keep the canonical DataFile name distinct from the explicit v1 record and order version selection first.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",308768d99b67816434e8d5c6dfea278737430ef8,3954,false,Copilot App,5,38,10,pyiceberg; tests
