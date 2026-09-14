@@ -29020,3 +29020,95 @@ apache/iceberg-go,b9cab8c898a130b8ed9863658dfadf592ae472a6,b9cab8c,Sreesh Mahesh
 Generated-by: Codex
 
 Signed-off-by: Sreesh Maheshwar <maheshwarsreesh@gmail.com>",5be3cc4fd8af002fe36932bf2bd9774a663264a2,2008,false,,1,2,2,internal
+apache/iceberg-go,8832cf696b5cc2a54767b5f2fa4c06b138c04495,8832cf6,İrem Çağın Yurttürk,cagin.yurtturk@getbruin.com,2026-09-14T15:13:50+03:00,GitHub,noreply@github.com,2026-09-14T14:13:50+02:00,fix(catalog/sql): return ErrNamespaceAlreadyExists on a concurrent create (#1635),"* fix(catalog/sql): return ErrNamespaceAlreadyExists on a concurrent create
+
+CreateNamespace resolves the namespace key, returns ErrNamespaceAlreadyExists if
+it is there, and otherwise inserts. Two callers creating the same namespace both
+pass that check, and the loser's insert then violates the primary key on
+iceberg_namespace_properties. The driver's error is returned as-is:
+
+  error inserting namespace properties for namespace '[raw]': constraint failed:
+  UNIQUE constraint failed: iceberg_namespace_properties.catalog_name, ...
+
+so callers matching errors.Is(err, catalog.ErrNamespaceAlreadyExists) -- the
+contract every other catalog implementation honours -- see a create-if-absent
+fail for a namespace that does exist.
+
+Re-resolve the key when the insert fails and return the sentinel if the
+namespace is now present. An insert that failed for any other reason is
+unchanged.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* test(catalog/sql): pin the insert-recovery branch
+
+TestCreateNamespaceConcurrent cannot tell the two paths apart: the check at
+1246 and the recovery at 1276 return the same sentinel with the same
+formatting, so the counts hold whichever one a goroutine took.
+
+Adds a test that only passes if the insert ran and failed. A driver wrapper
+plants the row on the same connection just before the catalog's insert, as its
+own statement -- sqlite rolls back the failing statement's own changes,
+including anything a trigger did, so the plant has to be separate.
+
+The re-check now runs in the transaction. On a separate connection it could not
+see an uncommitted winner, and with a constrained pool it deadlocked waiting
+for a connection the open transaction was holding.
+
+Also collects unexpected errors in the concurrent test and asserts after the
+drain, so one stray error does not report as three failures.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* fix(catalog/sql): recover the create race with a savepoint
+
+The insert-failure recovery re-queried the namespace on the same tx. On
+Postgres a failed statement aborts the whole transaction (25P02), so that
+re-check came back an error rather than a row and the raw duplicate-key
+error was returned -- the pre-PR behaviour. The fix was inert on Postgres,
+one of the five declared dialects, and SQLite masked it by rolling back
+only the failing statement.
+
+Wrap the insert in a savepoint (bun's nested transaction, which emits the
+right syntax per dialect, including MSSQL's SAVE TRANSACTION). On failure,
+roll back to the savepoint so the transaction is usable again, then
+re-check. The race-loser now returns the sentinel in the same form as the
+serial pre-check so the two paths are identical; the rollback- and
+re-check-failure branches join their causes instead of dropping them.
+
+TestCreateNamespaceLosesInsertRace drives a driver that emulates the
+Postgres abort -- refusing statements after the failed insert until a
+ROLLBACK TO SAVEPOINT -- so it fails without the savepoint and passes with
+it, which the previous SQLite-only planting driver could not show. Adds a
+negative test that an unrelated insert failure surfaces its own error, and
+a note that the driver name depends on databaseName() being unique.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* fix(catalog/sql): gate the create-race savepoint to Postgres
+
+Oracle has no RELEASE SAVEPOINT, so sp.Commit() on the happy path would
+fail and roll back a good insert. Only Postgres aborts the whole tx on a
+failed statement, so only it needs the savepoint to keep the re-check
+runnable; other dialects take a plain insert + re-check.
+
+The emulated-Postgres recovery tests now build the catalog with the
+Postgres dialect and assert the insert interceptor actually fired.
+
+* test(catalog/sql): pin non-Postgres recovery and savepoint happy path
+
+Add a deterministic SQLite-dialect test (non-aborting dupInsertDriver) for
+the non-Postgres recovery branch, and an insertSucceeds mode covering the
+Postgres SAVEPOINT -> insert -> RELEASE happy path. Both previously ran at
+coverage count 0. Also scope the gate comment to the dialects reasoned about.
+
+* test(catalog/sql): assert the savepoint happy path persists the row
+
+The success-path test only checked the nil return, so swapping RELEASE
+SAVEPOINT for ROLLBACK left it green while zero rows persisted. Let the
+insertSucceeds probe read real persistence and assert the namespace
+survives the commit, so a rolled-back savepoint fails the test.
+
+---------
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>",b9cab8c898a130b8ed9863658dfadf592ae472a6,1635,false,,2,435,3,catalog
