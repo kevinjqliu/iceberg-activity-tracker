@@ -31232,3 +31232,81 @@ bound -- and the two in-predicate sites cloned the entire `NestedField`.
 `bytes_to_datum` only borrows the type to reach its `PrimitiveType`, so take
 `&Type` and pass `&reference.field().field_type` at the call sites, dropping
 the per-leaf clones on the manifest-pruning path.",f11a20d0ba9b6c168839e234f3817b0e0d75ce4b,3214,false,,1,11,15,crates
+apache/iceberg-rust,9db0b68572da283fcef96d7d4340e3c1ac4cc2ec,9db0b68,Andrei Tserakhau,laskoviymishka@gmail.com,2026-09-14T21:10:52Z,GitHub,noreply@github.com,2026-09-14T21:10:52Z,feat(writer): add PositionDeleteFileWriter (#2986),"* feat(writer): add PositionDeleteFileWriter
+
+Add PositionDeleteFileWriter and its builder under writer/base_writer. It writes
+a position delete file with the two required columns file_path (string, field id
+2147483546) and pos (long, 2147483545) and sets DataContentType::PositionDeletes
+on close.
+
+position_delete_schema() returns the canonical Iceberg schema, built from the
+existing metadata_columns field definitions. write() checks that a batch has
+exactly those two required, non-nullable, correctly typed columns before writing,
+and rejects a closed writer. close() propagates the partition key and leaves
+sort_order_id null.
+
+Position delete files are a v2 construct: v3 replaces them with deletion vectors
+and forbids adding new ones, so callers must not route v3 writes here. This base
+writer has no format-version gate by design; that gating belongs at the
+transaction/commit layer. The writer also does not sort its input, so callers
+must supply rows sorted by (file_path, pos) until a higher-level writer enforces
+it. Setting referenced_data_file and a higher-level DeltaWriter are follow-ups.
+
+Tested: schema shape, a parquet round trip for single and multiple writes,
+partition propagation, that the reserved field ids survive into the written
+parquet schema, and the validation cases (wrong column count, wrong/missing/
+unparsable field ids, wrong types including LargeUtf8, nullable columns, and
+writes after close).
+
+Refs #340.
+
+* docs(writer): note the optional row column is unsupported
+
+The position delete spec allows an optional `row` column alongside `file_path`
+and `pos` that inlines the deleted row's values. This writer handles only the
+two required columns, so say so in the module docs. The batch validator already
+rejects a third column with a matching message.
+
+---------
+
+Co-authored-by: Shawn Chang <schang@apache.org>",f0c9dad705f27f8745a7b8ad92a9768ce1d9548c,2986,false,Shawn Chang,3,939,0,crates
+apache/iceberg-rust,5c3d18f4ad22656f7aa13c03657190a0fd5a7d37,5c3d18f,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-15T07:43:57Z,GitHub,noreply@github.com,2026-09-15T07:43:57Z,fix(release): warn when bash 3.2 will not report the failed step (#3194),"The release scripts run each step in a `( trap - ERR; ... )` subshell so a
+failure is reported exactly once. bash 3.2 (macOS /bin/bash) does not run
+the parent's ERR trap for a failing subshell, so the script still exits on
+failure but does not report which step failed. bash 4.0 and later do;
+verified against 3.2 through 5.1.
+
+Print a warning at startup on bash older than 4 in the four scripts that
+install the trap.
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>",9db0b68572da283fcef96d7d4340e3c1ac4cc2ec,3194,false,Claude Fable 5.1,4,24,0,dev
+apache/iceberg-rust,aa5ff7e004b01137010923aaac640532d214f94a,aa5ff7e,Xander,zander181@googlemail.com,2026-09-15T10:11:42Z,GitHub,noreply@github.com,2026-09-15T10:11:42Z,fix(encryption): return DataInvalid for invalid AES key sizes (#3226),"`AesKeySize::from_key_length` and `AesKeySize::from_str` returned
+`FeatureUnsupported` for anything outside 128/192/256-bit. AES defines no other
+key sizes, so these are invalid input rather than something a later version
+could support, and `FeatureUnsupported` here is indistinguishable from the
+genuinely unsupported cases such as an unknown key metadata version.
+
+`from_key_length` is reachable from `SecureKey::new`,
+`StandardKeyMetadata::try_new` and the `encryption.data-key-length` table
+property, all of which now surface `DataInvalid`. Messages change from
+""Unsupported ..."" to ""Invalid ..."" to match.",5c3d18f4ad22656f7aa13c03657190a0fd5a7d37,3226,false,,1,18,5,crates
+apache/iceberg-rust,930c10298e43daeb7316b20b83049e9f724ae58c,930c102,Xander,zander181@googlemail.com,2026-09-15T15:14:51Z,GitHub,noreply@github.com,2026-09-15T15:14:51Z,feat(python) add standard key metadata python bindings (#3206),"* add standard ket metadata python bindings
+
+* fix
+
+* fix: clarify unsupported key metadata version error
+
+Report the received and supported key metadata versions, matching the wording expected by PyIceberg. Add Rust and Python regression coverage.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* named struct
+
+* improve tests
+
+* tests
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",aa5ff7e004b01137010923aaac640532d214f94a,3206,false,Copilot App; Kevin Liu,4,276,1,bindings; crates

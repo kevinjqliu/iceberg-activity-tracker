@@ -6519,3 +6519,97 @@ Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",630661f07e2197c07abc99827e5b0a3c8ed652b3,3441,false,Copilot App; Kevin Liu,6,131,0,mkdocs; pyiceberg; tests
 apache/iceberg-python,76eb1d4f25c3ff8b8e96a8951cc3cebb6da170f2,76eb1d4,Yuya Ebihara,ebyhry@gmail.com,2026-09-14T15:35:11Z,GitHub,noreply@github.com,2026-09-14T15:35:11Z,Add view operations to CLI (#3926),Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>,0e4ac51c6d17c18d2ab0ddfb31a037eb6b924447,3926,false,Copilot App,3,221,13,pyiceberg; tests
 apache/iceberg-python,a2cbb8252df913318b217bcf906c56898b9f4b55,a2cbb82,Xander,zander181@googlemail.com,2026-09-14T15:35:44Z,GitHub,noreply@github.com,2026-09-14T15:35:44Z,refactor(encryption): [3/N] Move lazy import to utils/ (#3961),refactor(encryption): Move lazy import to utils/,76eb1d4f25c3ff8b8e96a8951cc3cebb6da170f2,3961,false,,3,87,23,pyiceberg; tests
+apache/iceberg-python,50f8b95f41a39b0669449745a0a7b817a4236223,50f8b95,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-09-14T19:29:10Z,GitHub,noreply@github.com,2026-09-14T19:29:10Z,Add ty as tool in pyproject.toml (#3964),,a2cbb8252df913318b217bcf906c56898b9f4b55,3964,false,,2,74,34,pyproject.toml; uv.lock
+apache/iceberg-python,182169ef7ac111f799cd569a4a59c95c885aab13,182169e,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-09-14T23:02:26Z,GitHub,noreply@github.com,2026-09-14T23:02:26Z,CI: Skip link-check on external URIs (#3966),"* Docs: Skip flaky external API documentation links
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Docs: Require link-check skip comments on external URLs in AGENTS.md
+
+External docs hosts rate-limit the markdown link checker, so note that
+external URLs in docs need a markdown-link-check-disable-next-line comment.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01V2AEta8dDFjjxotEvYnb3D
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+Co-authored-by: Claude Opus 5 <noreply@anthropic.com>",50f8b95f41a39b0669449745a0a7b817a4236223,3966,false,Copilot App; Claude Opus 5; Kevin Liu,2,8,0,AGENTS.md; mkdocs
+apache/iceberg-python,400d324082232f842c5bb533b20f3b60f22ed96f,400d324,Xander,zander181@googlemail.com,2026-09-14T23:03:44Z,GitHub,noreply@github.com,2026-09-14T23:03:44Z,feat(encryption) [4/N] AES-GCM encryption implementation (#3963),"* tmp
+
+* nit
+
+* test(encryption): add AES-GCM known-answer regression tests
+
+The existing cipher tests all round-trip through the same code, so a
+symmetric change to the nonce || ciphertext || tag layout would pass them
+while breaking interoperability with the Java and iceberg-rust clients.
+Pin encryption and decryption against fixed GCM-spec vectors covering
+AES-128 and AES-256, with and without AAD.
+
+* fix(encryption): align AES-GCM decryption error with Java
+
+Report the same cause as the Java client when the GCM tag check fails, so
+the message reads consistently across implementations and makes clear the
+failure is bad input rather than a retryable system error.
+
+* refactor(encryption): import cryptography through try_import
+
+Import the cryptography modules with try_import rather than a spelled-out
+try/except, and drop not_installed now that nothing calls it. The
+TYPE_CHECKING block already keeps AESGCM and InvalidTag statically typed,
+so lazy_import is back to a single entry point.",182169ef7ac111f799cd569a4a59c95c885aab13,3963,false,,5,313,1,mkdocs; pyiceberg; pyproject.toml; tests; uv.lock
+apache/iceberg-python,4a0eeeafbd8dae6dc2e8f0ccffd5ff24b0a196aa,4a0eeea,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-09-14T23:04:32Z,GitHub,noreply@github.com,2026-09-14T23:04:32Z,Fix constructor signatures and test annotations for ty (#3965),"* Remove 2892 type errors
+
+* Update pyiceberg/expressions/literals.py
+
+* Update pyiceberg/expressions/literals.py
+
+* make lint was complaining
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",400d324082232f842c5bb533b20f3b60f22ed96f,3965,false,Kevin Liu,9,185,81,pyiceberg; tests
+apache/iceberg-python,1312c5509e5459a41d6eff633185b8b8d5f48295,1312c55,jackylee,qcsd2011@gmail.com,2026-09-15T08:34:26Z,GitHub,noreply@github.com,2026-09-15T08:34:26Z,fix(expressions): accept a bare true / false as an AND / OR / NOT operand (#3917),"* fix(expressions): accept a bare true / false as an AND / OR / NOT operand
+
+The BooleanLiteral to AlwaysTrue/AlwaysFalse conversion was attached only to
+the whole expression, so a bare boolean reached And/Or/Not as a
+BooleanLiteral and failed pydantic validation:
+
+    parse(""(false) or foo = 1"")  ->  EqualTo(foo, 1)
+    parse(""false or foo = 1"")    ->  ValidationError: 1 validation error for Or
+
+Seeding a filter with `true` and appending clauses is a common way to build
+a row_filter, so `row_filter=""true and status = 'x'""` raised instead of
+scanning. Give `predicate` its own copy of the boolean element that folds to
+AlwaysTrue/AlwaysFalse; `literal` and `literal_set` keep the raw
+BooleanLiteral, so `foo = true` and `foo in (true, false)` are unchanged.
+
+Co-Authored-By: Claude Code <noreply@anthropic.com>
+
+* Fix parse action for always_boolean to use strtobool
+
+Co-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>
+
+* refactor(expressions): fold a bare boolean at the predicate level
+
+The extra `boolean.copy()` is not needed. `handle_always_expression` already
+did this fold; it was only attached to the whole expression, which is why
+`(true) and foo = 1` worked and `true and foo = 1` did not -- infix_notation
+returns the same Forward that a parenthesized sub-expression recurses through,
+so the fold ran only when an operand happened to take that path.
+
+Attach it to `predicate` instead so every operand folds. `literal` and
+`literal_set` consume the boolean further in, so `foo = true` and
+`foo in (true, false)` keep the raw `BooleanLiteral`. The top-level attachment
+is now unreachable and is removed. Tests are unchanged.
+
+Co-Authored-By: Claude Code <noreply@anthropic.com>
+
+---------
+
+Co-authored-by: Claude Code <noreply@anthropic.com>
+Co-authored-by: Fokko Driesprong <fokko@apache.org>
+Co-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>",4a0eeeafbd8dae6dc2e8f0ccffd5ff24b0a196aa,3917,false,Claude Code; Copilot Autofix powered by AI; Fokko Driesprong,2,39,23,pyiceberg; tests
