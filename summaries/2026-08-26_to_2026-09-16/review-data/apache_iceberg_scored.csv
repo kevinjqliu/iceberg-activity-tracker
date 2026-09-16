@@ -1,0 +1,902 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg,3a68b70bfb1e4ca6e9386271e262f48596cd6c44,3a68b70,Anoop Johnson,anoop@apache.org,2026-09-04T18:27:35-07:00,GitHub,noreply@github.com,2026-09-04T18:27:35-07:00,"API, Core: Add ManifestFile adapter for v4 tracked files (#17932)","Reintroduces the ManifestFile adapter closed in #16867, which stalled because ManifestFile had no way to represent a manifest deletion vector. The V4 scan task planner (#17541) plans over manifests through the ManifestFile API, so this adds ManifestFile.manifestDeletionVector() and has the adapter expose the tracked file's manifest DV.",982d4e63a981286948265e6b2ceb06316c6570cf,17932,false,,4,289,4,api; core,113,6,119,"base; feature/api verb; important area: api, core; strategic: deletion vector, manifest, v4; summary signal: deletion vector; deletion vector signal; medium churn; multi-area change; has PR number; LanceDB similarity 0.21","API, Core: Add FileIO to Scan API","- API, Core: Add ManifestFile adapter for v4 tracked files (#17932) (Thanks Anoop Johnson!)"
+apache/iceberg,2cb92cec7c7cf68f670ca7d54487e17d98bded09,2cb92ce,Anoop Johnson,anoop@apache.org,2026-09-04T10:09:25-07:00,GitHub,noreply@github.com,2026-09-04T10:09:25-07:00,"API, Core: Expose co-located deletion vector through DataFile (#17928)","V4 co-locates a data file's deletion vector on the data entry.
+Add DataFile.deletionVector() returning the DV as a DeleteFile.
+
+Related discussion thread:
+https://github.com/apache/iceberg/pull/17541/changes#r3787760198",27bfd00d67b2d00e3d4ea3e96832248bdc5107f6,17928,false,,4,31,2,api; api}; core,109,9,118,"base; feature/api verb; important area: api, core; strategic: deletion vector, v4; summary signal: deletion vector; deletion vector signal; multi-area change; has PR number; LanceDB similarity 0.31","API, Core: Add FileIO to Scan API","- API, Core: Expose co-located deletion vector through DataFile (#17928) (Thanks Anoop Johnson!)"
+apache/iceberg,3c07f187f229b7fb0b0f91cb4219a5a5edaf9c28,3c07f18,Anoop Johnson,anoop@apache.org,2026-09-10T17:00:06-07:00,GitHub,noreply@github.com,2026-09-10T17:00:06-07:00,"API, Core: Read V4 manifests through ManifestFile (#18021)","V4ManifestReader took a bare InputFile, so callers had to thread manifest
+metadata like the deletion vector in separately. Have it take a ManifestFile
+and a FileIO instead: it opens the file itself and reads the format version and
+manifest DV straight off the manifest.
+
+Add ManifestFile.formatVersion() (0 for manifests written before format
+tracking) and reject unsupported versions and manifest DVs up front when the
+builder is created. Now that the reader owns opening the file, move the
+scanned-manifest metric into it.",7d0f3b84b99645af87babcbb7d79cb9ced6c0d55,18021,false,,5,183,89,api; core,110,7,117,"base; important area: api, core; strategic: deletion vector, manifest, v4; summary signal: deletion vector; community signal: fileio; deletion vector signal; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.23","API, Core: Add FileIO to Scan API","- API, Core: Read V4 manifests through ManifestFile (#18021) (Thanks Anoop Johnson!)"
+apache/iceberg,a001f40f0859e842eb0bd0dfbbab6321ff235f1b,a001f40,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-08-27T17:26:15-07:00,GitHub,noreply@github.com,2026-08-27T17:26:15-07:00,"API, Core, Parquet: Carry avg value sizes for v4 content stats (#17451)",,a7d17f8e5d7d1e098aa84e220fd5c5d71aadcc36,17451,false,,21,289,26,api; core; parquet,82,12,94,"base; important area: api, core; strategic: v4; community signal: v4 content stats; large file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.41","Core, Parquet: Allow for Writing Parquet/Avro Manifests in V4","- API, Core, Parquet: Carry avg value sizes for v4 content stats (#17451) (Thanks Xin Huang!)"
+apache/iceberg,de8cba164ac51f9cb0da862f2051941383c685d5,de8cba1,Andrei Tserakhau,laskoviymishka@gmail.com,2026-09-09T21:11:28+02:00,GitHub,noreply@github.com,2026-09-09T21:11:28+02:00,REST Spec: add labels field for catalog metadata enrichment (#15750),REST Spec: add labels for catalog metadata enrichment,1ccfb83c920fb275a6284477d2d4a8572096c3ab,15750,false,,2,91,0,open-api,72,13,85,base; feature/api verb; important area: rest spec; strategic: catalog; has PR number; LanceDB similarity 0.44,REST Spec: Add unregister table endpoint,- REST Spec: add labels field for catalog metadata enrichment (#15750) (Thanks Andrei Tserakhau!)
+apache/iceberg,b93b392b7cbc001599b19f0ea4d712711776f855,b93b392,hemanthboyina,hemanthboyina@apache.org,2026-09-14T23:28:38+05:30,GitHub,noreply@github.com,2026-09-14T10:58:38-07:00,"Spark 3.5, 4.0: Add sort_by parameter to rewrite_manifests procedure (#18065)","* Spark 3.5, 4.0: Add sort_by parameter to rewrite_manifests procedure
+
+* fix test errors
+
+* fix checkstyle too",4262ca754c9423aa15d4caafa0880cd7eb753c44,18065,false,,4,217,3,spark,61,23,84,base; feature/api verb; strategic: manifest; medium churn; has PR number; LanceDB similarity 0.77,Spark: Add sort_by parameter to rewrite_manifests procedure,"- Spark 3.5, 4.0: Add sort_by parameter to rewrite_manifests procedure (#18065) (Thanks hemanthboyina!)"
+apache/iceberg,031135677395a3fbc90a2e33f58a9fa3983335f5,0311356,Manu Zhang,OwenZhang1990@gmail.com,2026-09-05T03:44:30+08:00,GitHub,noreply@github.com,2026-09-04T12:44:30-07:00,Spark: Add support for 4.2.0 (#14984),,2d98164ff5c360c062b34ca503bee9f9efd50bf9,14984,false,,646,153144,13,.gitattributes; .github; .gitignore; dev; gradle; gradle.properties; jmh.gradle; settings.gradle; spark,73,10,83,base; feature/api verb; important area: spark; large file count; large churn; multi-area change; has PR number; LanceDB similarity 0.32,"Spark: Backport: Add Spark app name to env context for Spark v3.4, 3.5, 4.0 <Varun Lakhyani>",- Spark: Add support for 4.2.0 (#14984) (Thanks Manu Zhang!)
+apache/iceberg,6dec25e430b33a8b4f623b14940110d459581826,6dec25e,Prashant Singh,35593236+singhpk234@users.noreply.github.com,2026-09-03T13:32:39-07:00,GitHub,noreply@github.com,2026-09-03T13:32:39-07:00,Spec: Add finer grained read restrictions as part of loadTable (#13879),"Add an optional read-restrictions field to LoadTableResult so a catalog
+can return the result of evaluating fine grained access policies for the
+calling user. The restrictions are enforced by the client, which
+requires a trust relationship between the engine and the catalog; how
+that trust is established is out of scope for this change.
+
+ReadRestrictions carries two optional fields:
+
+- required-column-projections: a list of Action objects, each naming a
+  column by field-id along with the transformation to apply. Action uses
+  a discriminator on the action property, with mask-alphanum,
+  mask-to-fixed-value, replace-with-null, show-first-4, show-last-4,
+  truncate-to-year, truncate-to-month, sha-256-global and
+  sha-256-query-local defined. Each action produces a value of the same
+  type as the input column.
+
+- required-row-filter: an Expression evaluated against original,
+  untransformed column values. Projections are applied to the rows that
+  survive the filter.
+
+Enforcement is fail-closed. A reader that supports read restrictions
+must fail any read it cannot satisfy in full, including unrecognized
+action or expression types and actions that cannot be loaded, parsed, or
+evaluated, and must not silently return raw, partial, or empty results.
+The restrictions apply to every read performed with a given response,
+including subsequent planTableScan and fetchScanTasks calls, and may
+differ between requests or between authentication scopes. A missing or
+empty ReadRestrictions object imposes no restrictions.
+
+Approved on the dev list with 8 binding +1 votes and no -1 votes:
+https://lists.apache.org/thread/0zloqhp8wkgyn04yg69j71cwcg5n7g74",9408165481aa116081f3453337bf6ed963176323,13879,false,,2,506,0,open-api,76,7,83,base; feature/api verb; important area: spec; strategic: catalog; medium churn; has PR number; LanceDB similarity 0.23,OpenAPI: Promote the S3 signing endpoint to the main spec,- Spec: Add finer grained read restrictions as part of loadTable (#13879) (Thanks Prashant Singh!)
+apache/iceberg,5aaf0eb22ad419184b57ebc35ab19f46061f08a4,5aaf0eb,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-08-26T17:35:40-07:00,GitHub,noreply@github.com,2026-08-26T17:35:40-07:00,Core: Add geometry bounds builder (#17509),,3bf74aae1d7cf00d5f7964fd99629914ab05b27c,17509,false,,2,963,0,core,74,9,83,base; feature/api verb; important area: core; community signal: geometry; medium churn; has PR number; LanceDB similarity 0.31,Core: Drop support for Java 11,- Core: Add geometry bounds builder (#17509) (Thanks Xin Huang!)
+apache/iceberg,6164440663e3f7b1bae92a1a710ca5233755cd7d,6164440,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-31T18:55:09-07:00,GitHub,noreply@github.com,2026-08-31T18:55:09-07:00,Core: Remove ThreadPools.WORKER_THREAD_POOL_SIZE_PROP update warning log message (#17812),"* Core: Remove ThreadPools.WORKER_THREAD_POOL_SIZE_PROP and correct manifest spec fallback removal version
+
+Resolves the two remaining deprecation markers in iceberg-core that
+promised action ""in 1.12.0"" but were missed by the removal PRs.
+
+Remove ThreadPools.WORKER_THREAD_POOL_SIZE_PROP. The field was
+deprecated in #5659 in favor of SystemConfigs.WORKER_THREAD_POOL_SIZE
+and retargeted from 2.0.0 to 1.12.0 by #14392. It had no callers
+anywhere in the repository outside its own declaration and no
+references in the docs, and it was the only survivor of #14392's
+13-file batch after #17700 removed the rest. The corresponding
+java.field.removed break is recorded in .palantir/revapi.yml under the
+1.11.0 baseline.
+
+Correct the ManifestReader warning for the partition-spec-from-file-
+metadata fallback to say 2.0.0 rather than 1.12.0. The fallback cannot
+be honored in 1.12.0 because its only production caller is
+BaseSnapshot:276, which passes a null spec map while serving
+Snapshot.addedDeleteFiles(FileIO) and removedDeleteFiles(FileIO).
+Those accessors are themselves already marked ""@deprecated will be
+removed in 2.0.0; use SnapshotChanges#builderFor(Table) instead"", and
+because they receive only a FileIO they structurally cannot supply a
+spec map. The fallback must therefore outlive 1.12.0, and 2.0.0 aligns
+its removal with that of its last caller.
+
+* reword revapi change",915e5af420bd969550315560f70b6c91959a9b21,17812,false,,3,4,9,.palantir; core,70,12,82,base; important area: core; strategic: manifest; community signal: fileio; multi-area change; has PR number; LanceDB similarity 0.40,Core: Remove deprecation from ViewProperties.WRITE_METADATA_LOCATION,- Core: Remove ThreadPools.WORKER_THREAD_POOL_SIZE_PROP update warning log message (#17812) (Thanks Hongyue and Steve Zhang!)
+apache/iceberg,f80a72fe995bd4236a0dbe78f8cf29848792fe8f,f80a72f,Talat Uyarer,talat@apache.org,2026-08-27T09:35:13-07:00,pvary,peter.vary.apache@gmail.com,2026-08-28T14:17:04+02:00,Flink: Remove support for Flink 2.0,,6070163a89d060e9708a422c3879de42fb264c3f,,false,,557,15,111729,.github; dev; flink; gradle; gradle.properties; jmh.gradle; settings.gradle,71,10,81,base; feature/api verb; important area: flink; large file count; large churn; multi-area change; LanceDB similarity 0.35,Flink: Support Variant to Flink 2.1,- Flink: Remove support for Flink 2.0 (Thanks Talat Uyarer!)
+apache/iceberg,3f5539d5064f2afe83b826dc9e7e4a2f5af68295,3f5539d,Manu Zhang,owenzhang1990@gmail.com,2026-08-19T12:34:17+08:00,Szehon Ho,szehon.apache@gmail.com,2026-09-08T21:36:03-07:00,Spark: Initial support for 4.2.0,Generated-by: Codex,9f584b55d35e10edc9addc13784aa095b79e0a8d,,false,,101,3070,1443,.gitattributes; .github; .gitignore; IcebergAlterV2ViewSetPropertiesExec.scala; IcebergAlterV2ViewUnsetPropertiesExec.scala; IcebergDescribeV2ViewExec.scala; IcebergRenameV2ViewExec.scala; IcebergShowCreateV2ViewExec.scala; IcebergShowV2ViewPropertiesExec.scala; dev; gradle; gradle.properties; jmh.gradle; settings.gradle; spark,71,9,80,base; feature/api verb; important area: spark; large file count; large churn; multi-area change; LanceDB similarity 0.31,Spark: Initial support for 4.1.0 <manuzhang>,- Spark: Initial support for 4.2.0 (Thanks Manu Zhang!)
+apache/iceberg,7858e8003eddda8af74e578f042b993fd32de6fc,7858e80,Talat Uyarer,talat@apache.org,2026-08-28T12:09:42-07:00,pvary,peter.vary.apache@gmail.com,2026-08-29T07:13:05+02:00,Flink: Forward-port REST catalog support in CatalogTestBase to 2.2,,d314ba975e510c4482f606aa53ffe9ef2f308315,,false,,3,104,5,flink,70,10,80,base; feature/api verb; important area: flink; strategic: catalog; LanceDB similarity 0.34,Flink: Support Variant to Flink 2.1,- Flink: Forward-port REST catalog support in CatalogTestBase to 2.2 (Thanks Talat Uyarer!)
+apache/iceberg,886ec107eff958caa27cc1a5e06f978fe498345d,886ec10,Talat Uyarer,talat@apache.org,2026-08-28T12:13:08-07:00,pvary,peter.vary.apache@gmail.com,2026-08-29T07:10:30+02:00,Flink: Forward-port REST catalog support in CatalogTestBase to 2.3,,e58b5b264e25a2ae877bc8d77fa2117b97de8fd4,,false,,3,104,5,flink,70,10,80,base; feature/api verb; important area: flink; strategic: catalog; LanceDB similarity 0.34,Flink: Support Variant to Flink 2.1,- Flink: Forward-port REST catalog support in CatalogTestBase to 2.3 (Thanks Talat Uyarer!)
+apache/iceberg,44d9721e4bfd75afbbaf1e0a41cf592f6c40f51b,44d9721,Vova Kolmakov,wombatukun@gmail.com,2026-08-27T22:14:58+07:00,GitHub,noreply@github.com,2026-08-27T10:14:58-05:00,Build: Clean up shaded-jar LICENSE/NOTICE and add missing third-party notices (#16543),,a3401a12b46ac66824d4df92e4086cfbe4dd3e14,16543,false,,26,563,79,NOTICE; aws-bundle; azure-bundle; build.gradle; flink; gcp-bundle; open-api; spark,74,6,80,base; feature/api verb; large file count; medium churn; multi-area change; release/security/notice signal; has PR number; LanceDB similarity 0.21,"API, CORE, Flink, Spark: Deprecate Snapshot.changes Methods with SnapshotChange Utility",- Build: Clean up shaded-jar LICENSE/NOTICE and add missing third-party notices (#16543) (Thanks Vova Kolmakov!)
+apache/iceberg,68a7f2767b8da025a2663e67fc5321febf3c8dd1,68a7f27,hemanthboyina,hemanthboyina@apache.org,2026-08-26T18:36:36+05:30,GitHub,noreply@github.com,2026-08-26T15:06:36+02:00,Core: Add dv_count column to PartitionsTable metadata table (#16125),,af1535b821be52b5166e4190f305ac1ad602e3a8,16125,false,,9,301,8,core; flink; spark,65,13,78,base; feature/api verb; important area: core; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.44,"API, Core: Add overwrite-aware table registration",- Core: Add dv_count column to PartitionsTable metadata table (#16125) (Thanks hemanthboyina!)
+apache/iceberg,86da2dc8414756e05106b3272fd6e6d0dde306e3,86da2dc,Varun Lakhyani,130844282+varun-lakhyani@users.noreply.github.com,2026-09-01T20:08:34+05:30,GitHub,noreply@github.com,2026-09-01T09:38:34-05:00,Core: Add Eager fetch to parquet read path (#17284),,9381f0ca6ba57e028f3bf55329a49fa4ae4b212e,17284,false,,5,225,26,core; parquet,65,12,77,base; feature/api verb; important area: core; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.41,Bump to Parquet 1.17.0,- Core: Add Eager fetch to parquet read path (#17284) (Thanks Varun Lakhyani!)
+apache/iceberg,8dc651d81ab3b9337389a454bec21ffabfdf240c,8dc651d,Talat Uyarer,talat@apache.org,2026-08-27T09:33:01-07:00,pvary,peter.vary.apache@gmail.com,2026-08-28T14:17:04+02:00,Flink: Add v2.2 directory,,c37a96eeecba3e8a025d24fbb93f78ec9dcf6a1e,,false,,558,115365,0,flink,66,11,77,base; feature/api verb; important area: flink; large file count; large churn; LanceDB similarity 0.37,"Data, Spark, Flink: Add TCK for File Format API",- Flink: Add v2.2 directory (Thanks Talat Uyarer!)
+apache/iceberg,0b933180d5dbe8ab603671761d95ec5922d8ecd7,0b93318,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-12T19:04:35+01:00,GitHub,noreply@github.com,2026-09-12T11:04:35-07:00,Spark: Reject `rewrite_table_path` for encrypted tables (#17988),"For an encrypted source table the rewrite completes and produces a target that
+cannot be read. RewriteTablePathUtil resolves an EncryptionManager from the
+FileIO and ManifestListWriter mints a fresh data encryption key for the staged
+manifest list, but rewriteManifestList declares the writer as a bare
+FileAppender and never calls toManifestListFile(), which is the sole caller of
+addManifestListKeyMetadata. Meanwhile the rewrite copies the source table's
+encryption-keys list and the snapshot key-id verbatim, so the target's manifest
+lists are encrypted under a key that is registered nowhere. The copied manifests
+are separately written through the plaintext ManifestFiles.write overloads.
+
+Reject encrypted tables in validateInputs() instead. The guard tests
+table.io() instanceof EncryptingFileIO, which is the same expression
+RewriteTablePathUtil branches on when it resolves the encryption manager, so the
+guard cannot fail open against this defect.",4987c84414a3f97e1ac7fc763320e7006e01fcd3,17988,false,,7,82,0,spark,69,7,76,"base; important area: spark; strategic: encryption, manifest; community signal: fileio; medium file count; has PR number; LanceDB similarity 0.24","Core, Spark: Moving Spark to use the new FormatModel API",- Spark: Reject `rewrite_table_path` for encrypted tables (#17988) (Thanks Sreesh Maheshwar!)
+apache/iceberg,3d6142b6abc3f597aa6a22116a12fb959392fef5,3d6142b,Noritaka Sekiyama,noritaka.sekiyama@databricks.com,2026-09-15T02:01:27+09:00,GitHub,noreply@github.com,2026-09-14T13:01:27-04:00,"Core, AWS: Fix case-insensitive handling of REST response header field names (#17979)","* Core: Read REST response headers without regard to case
+
+Freshness-aware table loading did nothing when the catalog server wrote the
+ETag response header in any spelling other than ETag. HTTPClient collected
+response headers into a map keyed by the name exactly as received and
+RESTSessionCatalog copied that into another HashMap and read the tag back as
+HttpHeaders.ETAG, so a server sending etag left the table cache empty, no
+later load sent If-None-Match, and nothing surfaced that the server had
+answered with a tag.
+
+Header field names are case-insensitive (RFC 9110) and lowercase is mandatory
+in HTTP/2 (RFC 9113), so the spelling a server chose cannot decide whether a
+client finds the header. Both maps are now case-insensitive.
+
+* AWS: Read the S3 signer's Cache-Control response header without regard to case
+
+canBeCached looked Cache-Control up in a plain HashMap filled with the
+server's own spelling, so a server writing cache-control never had its sign
+responses cached and every S3 request signed remotely again.
+
+* Ground the header-case comments in RFC 9110 alone
+
+Mentioning HTTP/2's mandatory lowercase alongside the rule read as if the
+change were about HTTP/2 conformance. The rule is RFC 9110 case-insensitivity;
+HTTP/2 only explains why some servers emit lowercase, which belongs with the
+test fixtures that simulate them. Also drops a comment that got duplicated.",74585b7e3dc19c9d6049b64d4bda3b8f6eb358b3,17979,false,,6,163,3,aws; core,64,8,72,base; fix; important area: core; strategic: catalog; medium file count; multi-area change; has PR number; LanceDB similarity 0.26,Core: Fix compute_table_stats failures with concurrent writes,"- Core, AWS: Fix case-insensitive handling of REST response header field names (#17979) (Thanks Noritaka Sekiyama!)"
+apache/iceberg,2d98164ff5c360c062b34ca503bee9f9efd50bf9,2d98164,Prashant Singh,35593236+singhpk234@users.noreply.github.com,2026-09-04T10:55:36-07:00,GitHub,noreply@github.com,2026-09-04T10:55:36-07:00,API: Add contextual load apis (#15895),"* API: Adds contextual load APIs and LoadContext
+
+Co-authored-by: Prashant Singh <prashant.singh@snowflake.com>",2cb92cec7c7cf68f670ca7d54487e17d98bded09,15895,false,Prashant Singh,5,136,0,api,59,11,70,base; feature/api verb; important area: api; medium file count; co-authored; has PR number; LanceDB similarity 0.35,Docs: Add blog post about File Format API,- API: Add contextual load apis (#15895) (Thanks Prashant Singh!)
+apache/iceberg,74585b7e3dc19c9d6049b64d4bda3b8f6eb358b3,74585b7,Talat UYARER,talat@apache.org,2026-09-14T08:52:18-07:00,GitHub,noreply@github.com,2026-09-14T17:52:18+02:00,Flink: Support reading Iceberg views in SQL (#17859),,a061f8a2ba8510f3fff938332641dd58b40408f8,17859,false,,2,451,10,flink,56,13,69,base; feature/api verb; important area: flink; medium churn; has PR number; LanceDB similarity 0.45,Flink: Support Variant to Flink 2.1,- Flink: Support reading Iceberg views in SQL (#17859) (Thanks Talat UYARER!)
+apache/iceberg,99c291d5ce837b21aa0b68e07fcad04a405e1c30,99c291d,Gianluca Graziadei,48211703+GGraziadei@users.noreply.github.com,2026-09-11T19:03:04+02:00,GitHub,noreply@github.com,2026-09-11T10:03:04-07:00,Spark: Fix Z-order NPE on null booleans and case-insensitive column resolution (#17669),"* Fix Z-order NPE on null booleans and case-insensitive column resolution
+
+* Update spark/v4.1/spark/src/main/java/org/apache/iceberg/spark/actions/SparkZOrderFileRewriteRunner.java
+
+Co-authored-by: Huaxin Gao <huaxin.gao11@gmail.com>
+
+* Spark: Pin spark.sql.caseSensitive in zOrderSortWithMismatchedColumnCase
+
+Use withSQLConf to set the config to false for the test instead of
+asserting on whatever value the shared session happens to have.
+
+---------
+
+Co-authored-by: Huaxin Gao <huaxin.gao11@gmail.com>",86d9c8fc543e7c56c9f624eb725f76c9baff9570,17669,false,Huaxin Gao,3,107,1,spark,58,9,67,base; fix; important area: spark; strategic: v4; co-authored; has PR number; LanceDB similarity 0.29,Spark 4.1: Fix async microbatch plan bugs,- Spark: Fix Z-order NPE on null booleans and case-insensitive column resolution (#17669) (Thanks Gianluca Graziadei and Huaxin Gao!)
+apache/iceberg,17680ce149981d3186537a603a26015f634671f9,17680ce,vishnu prakash,nvishnuprakash02@gmail.com,2026-09-01T06:05:07+05:30,GitHub,noreply@github.com,2026-08-31T17:35:07-07:00,Core: Fix geo bounds in v4 legacy stat maps (#17493),,9be09782baa577681f8218929ec022ae7fdf83a9,17493,false,,2,161,1,core,55,12,67,base; fix; important area: core; strategic: v4; has PR number; LanceDB similarity 0.39,Core: Fix useSnapshotSchema logic and projection in RESTTableScan,- Core: Fix geo bounds in v4 legacy stat maps (#17493) (Thanks vishnu prakash!)
+apache/iceberg,375aa33d997292e90ed438caf01cbf1254776eb9,375aa33,Anoop Johnson,anoop@apache.org,2026-08-27T15:11:53-07:00,GitHub,noreply@github.com,2026-08-27T15:11:53-07:00,Core: Preserve trailing slash on table location in V4 manifest reader (#17807),"The V4 manifest reader stripped a trailing slash from the table location
+before resolving relative file locations against it. Remove the strip
+as it should be done by the catalog during table creation. It is not
+the reader's responsibility",81045840187d172df9a9abb32a7c39420a4f10fc,17807,false,,2,15,1,core,59,8,67,"base; important area: core; strategic: catalog, manifest, v4; correctness signal; has PR number; LanceDB similarity 0.28",Core: v4 table metadata location should be optional,- Core: Preserve trailing slash on table location in V4 manifest reader (#17807) (Thanks Anoop Johnson!)
+apache/iceberg,db3972eb3d79d2ac93f9e0f0b6d741421784ed56,db3972e,Manu Zhang,owenzhang1990@gmail.com,2026-09-06T09:36:04+08:00,Szehon Ho,szehon.apache@gmail.com,2026-09-08T21:36:03-07:00,"Revert ""Spark: Add support for 4.2.0 (#14984)""","This reverts commit 031135677395a3fbc90a2e33f58a9fa3983335f5.
+
+Generated-by: Codex",8b37e266c4b834853d17620a18e9679ae063c39d,,false,,646,13,153144,.gitattributes; .github; .gitignore; dev; gradle; gradle.properties; jmh.gradle; settings.gradle; spark,56,7,63,base; feature/api verb; large file count; large churn; multi-area change; LanceDB similarity 0.23,"Spark: Backport: Add Spark app name to env context for Spark v3.4, 3.5, 4.0 <Varun Lakhyani>","- Revert ""Spark: Add support for 4.2.0 (#14984)"" (Thanks Manu Zhang!)"
+apache/iceberg,dd58c02b06ada6f086b6fedb6a5267f5eb77dc31,dd58c02,gaborkaszab,gaborkaszab@gmail.com,2026-08-26T15:59:25+02:00,GitHub,noreply@github.com,2026-08-26T15:59:25+02:00,"Revert ""Core: Add dv_count column to PartitionsTable metadata table"" (#17825)","Revert ""Core: Add dv_count column to PartitionsTable metadata table (#16125)""
+
+This reverts commit 68a7f2767b8da025a2663e67fc5321febf3c8dd1.",1c7b35c6fb0df5836eb6d9b5027885f578849e0e,17825,false,,9,8,301,core; flink; spark,50,13,63,base; feature/api verb; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.44,"API, Core: Add overwrite-aware table registration","- Revert ""Core: Add dv_count column to PartitionsTable metadata table"" (#17825) (Thanks gaborkaszab!)"
+apache/iceberg,308ac02d52716d9cd51582a224d5a35e462405f1,308ac02,Sushant Raikar,sushant.s.raikar@gmail.com,2026-09-10T18:52:08-07:00,GitHub,noreply@github.com,2026-09-10T18:52:08-07:00,Core: Retry requests with an Idempotency-Key on retriable errors (#17947),"* Core: Retry requests with an Idempotency-Key on retriable errors
+
+ExponentialHttpRequestRetryStrategy only applied the idempotent retriable
+status codes (408, 500, 502, 503, 504) when the HTTP method itself was
+idempotent. Mutation endpoints are POST, so a request that already carries
+an Idempotency-Key header - which the server guarantees is safe to replay -
+was not retried on 502/504 or on 503 without a Retry-After header.
+
+Treat a request carrying the Idempotency-Key header as retry-safe for these
+codes, in both the response and network-exception retry paths. Requests
+without the header keep the previous conservative behavior.
+
+* Core: Address review feedback on idempotency-key retries
+
+- Update testIdempotentCreateReplayAfterSimulated503: the client now
+  auto-retries a keyed POST on 503 and the server replays the finalized
+  200, so the call succeeds transparently. Assert success directly
+  instead of expecting a thrown 503 followed by a manual retry.
+- Add testIdempotentCreateRetryCarriesSameKey pinning the invariant that
+  every transport attempt of a retried keyed POST carries the identical
+  Idempotency-Key.
+- Clarify the retry-safety comment in ExponentialHttpRequestRetryStrategy
+  (idempotent method OR Idempotency-Key header), which no longer means
+  strict HTTP idempotency.
+
+* Core: Address review nits on idempotency-key retry test
+
+- Import CopyOnWriteArrayList instead of using its fully-qualified name.
+- Drop the redundant equality assertion in testIdempotentCreateRetryCarriesSameKey;
+  the filter already guarantees equality, so hasSize(2) is the real guard.",f8ee9d21671615d1571434b7ec43043874efeb17,17947,false,,3,78,21,core,55,7,62,base; fix; important area: core; strategic: variant; has PR number; LanceDB similarity 0.24,"Core, Data: File Format API interfaces",- Core: Retry requests with an Idempotency-Key on retriable errors (#17947) (Thanks Sushant Raikar!)
+apache/iceberg,c4784768b2f38c5a8c70d8e0e5a07f4302f9282f,c478476,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-09-14T16:30:45-07:00,GitHub,noreply@github.com,2026-09-14T16:30:45-07:00,"Spark 4.2: Add insert, update, and delete write summaries to snapshot summary (#17955)",,c4566ffbe984d3c3849cabb147d10346bc0a89b0,17955,false,,11,470,1,docs; spark,50,11,61,base; feature/api verb; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.37,Spark 4.1: Add Merge WriteSummary to Snapshot Summary,"- Spark 4.2: Add insert, update, and delete write summaries to snapshot summary (#17955) (Thanks Rahul Shivu Mahadev!)"
+apache/iceberg,86d9c8fc543e7c56c9f624eb725f76c9baff9570,86d9c8f,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-11T16:54:58+01:00,GitHub,noreply@github.com,2026-09-11T08:54:58-07:00,Spark: Encrypt manifests written by `rewrite_manifests` (#17987),"RewriteManifestsSparkAction created its replacement-manifest output with
+table().io().newOutputFile(...), which returns a plain OutputFile, so overload
+resolution selected the plaintext ManifestFiles.write and writeDeleteManifest
+variants. On a table using client-side encryption the replacement manifests were
+therefore written unencrypted, while still carrying each data file's
+key_metadata.
+
+Obtain an EncryptedOutputFile from the table's encryption manager instead,
+matching SnapshotProducer.newManifestOutputFile(). Behaviour is unchanged for
+tables without encryption, where PlaintextEncryptionManager yields the same
+empty key metadata the previous path produced.",baece5e6fee4ddcc5bcba3791fd5c1b4c9e6a577,17987,false,,8,262,8,spark,55,6,61,"base; important area: spark; strategic: encryption, manifest, variant; medium file count; medium churn; has PR number; LanceDB similarity 0.20",Spark: Enable remote scan planning with REST catalog <Eduard Tudenhoefner>,- Spark: Encrypt manifests written by `rewrite_manifests` (#17987) (Thanks Sreesh Maheshwar!)
+apache/iceberg,f8ee9d21671615d1571434b7ec43043874efeb17,f8ee9d2,Anoop Johnson,anoop@apache.org,2026-09-10T17:05:29-07:00,GitHub,noreply@github.com,2026-09-10T17:05:29-07:00,Core: Make tracked v4 file adapters serializable (#18031),"Make tracked file adapters serializable
+
+The scan planner emits FileScanTasks whose DataFile and DeleteFile are the
+tracked file adapters, and Spark serializes those to executors, so the
+adapters must be Serializable. Implement Serializable on the adapter base
+and replace the held PartitionSpec with the resolved spec ID, since the
+adapters only need the ID and carrying a full spec would be expensive to
+round trip. Add Java and Kryo serialization tests that compare the
+round-tripped file against the original.",3c07f187f229b7fb0b0f91cb4219a5a5edaf9c28,18031,false,,2,125,75,core,51,8,59,"base; important area: core; strategic: round-trip, v4; medium churn; has PR number; LanceDB similarity 0.27",Make StandardEncryptionManager serializable,- Core: Make tracked v4 file adapters serializable (#18031) (Thanks Anoop Johnson!)
+apache/iceberg,0b1193cba1fac4fbe153e6b99b06bbb52e6c6b3b,0b1193c,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-10T18:34:27+01:00,GitHub,noreply@github.com,2026-09-10T10:34:27-07:00,Core: Encrypt manifest output files directly (#18014),Core: Encrypt manifest output files directly,2702c983668c57177eba79ec97d9103d660cdc81,18014,false,,1,2,3,core,47,11,58,base; important area: core; strategic: manifest; has PR number; LanceDB similarity 0.38,Core: Drop support for Java 11,- Core: Encrypt manifest output files directly (#18014) (Thanks Sreesh Maheshwar!)
+apache/iceberg,c4566ffbe984d3c3849cabb147d10346bc0a89b0,c4566ff,Sergei Nikolaev,kinolaev@gmail.com,2026-09-15T00:07:16+02:00,GitHub,noreply@github.com,2026-09-14T15:07:16-07:00,"Core, Spark: scan based remove dangling delete action (#15727)",,6a0dfdc8c6104f367a09e8fe709aacb2f7bd4cff,15727,false,,14,1226,2660,core; spark,44,13,57,"base; important area: core, spark; medium file count; large churn; multi-area change; has PR number; LanceDB similarity 0.45","Core, Spark: Unify bulk deletion","- Core, Spark: scan based remove dangling delete action (#15727) (Thanks Sergei Nikolaev!)"
+apache/iceberg,27bfd00d67b2d00e3d4ea3e96832248bdc5107f6,27bfd00,Xiaoxuan,xioxuan@amazon.com,2026-09-04T07:33:15-07:00,GitHub,noreply@github.com,2026-09-04T08:33:15-06:00,Core: Fix commit validation when a data file has multiple DVs across snapshots (#17764),,9da109dd2537e77e8e5034068933575aa4e235ff,17764,false,,6,526,31,.palantir; core,48,9,57,base; fix; important area: core; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.31,"Core, Data: File Format API interfaces",- Core: Fix commit validation when a data file has multiple DVs across snapshots (#17764) (Thanks Xiaoxuan!)
+apache/iceberg,84c4339065f2ff3f366f72f26932080850b0f934,84c4339,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-27T08:47:42-07:00,GitHub,noreply@github.com,2026-08-27T17:47:42+02:00,"Core, Data, Spark, Flink: Remove of position delete files with row data (#17706)",,16e84cb95512a3c6ab4db4e34a5d501f404737b9,17706,false,,115,814,5016,.palantir; core; data; flink; orc; parquet; spark,48,9,57,"base; important area: core, flink, spark; large file count; large churn; multi-area change; has PR number; LanceDB similarity 0.30","Data, Spark, Flink: Add TCK for File Format API","- Core, Data, Spark, Flink: Remove of position delete files with row data (#17706) (Thanks Hongyue and Steve Zhang!)"
+apache/iceberg,af86b8399ca794bfe482eae85ba7e79ab0c49adc,af86b83,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-08T05:11:57+01:00,GitHub,noreply@github.com,2026-09-07T21:11:57-07:00,Core: Defensively copy TableMetadata.encryptionKeys to an immutable list (#17985),* Core: Defensively copy TableMetadata.encryptionKeys to an immutable list,141f1d0475a77763458c5ac7bf38ee808e6dbf0b,17985,false,,1,1,1,core,47,9,56,base; important area: core; strategic: encryption; has PR number; LanceDB similarity 0.29,"API, Core: Scan API for partition stats <gaborkaszab>",- Core: Defensively copy TableMetadata.encryptionKeys to an immutable list (#17985) (Thanks Sreesh Maheshwar!)
+apache/iceberg,20d616d6a1e5c2f3e7553a2f7312330039fe3a81,20d616d,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-09-03T20:22:39-07:00,GitHub,noreply@github.com,2026-09-03T20:22:39-07:00,"Core, Hive, Spark: Auto close JsonGenerator using try-with-resources (#17931)","* Core, Hive, Spark: Close JsonGenerator instead of only flushing it
+
+Ten sites created a JsonGenerator, called flush(), and left it unclosed.
+flush() pushes buffered content to the target and flushes the target itself,
+so the output was correct, but only close() returns the generator's char
+buffers to the thread's BufferRecycler (_releaseBuffers) and returns the
+recycler to the pool (IOContext.close). Without it, every serialization
+allocates a fresh char[4000] concat buffer instead of reusing one.
+
+Each generator now joins its enclosing try-with-resources so it closes
+before its target. The explicit flush() remains only where a value is read
+off the target inside the try: JsonUtil.generate and
+TableMetadataParser.toJson read StringWriter.toString(), and
+HMSTablePropertyHelper.hashOf reads HashWriter.getHash(). The last is
+ordering-sensitive, since AUTO_CLOSE_TARGET makes closing the generator
+close the HashWriter, and a closed HashWriter rejects getHash().
+
+A JMH benchmark over TableMetadataParser measured a fixed 8,016 B/op
+allocation reduction independent of document size, which is one char[4000]
+plus its object header. For a ~1 KB document that is 10,616 -> 2,600 B/op
+and 0.860 -> 0.730 us/op; for ~41 KB it is 49,680 -> 41,664 B/op.
+
+On a failure mid-serialization, close() now auto-completes open contexts
+(AUTO_CLOSE_JSON_CONTENT) and flushes partial content, where the flush()
+was previously skipped. The resulting metadata file is orphaned either way
+because the commit fails.
+
+* Restore explicit generator.flush() calls
+
+Review feedback: relying on close() to flush is correct but implicit, and it
+contradicts JsonUtil.generate, which was cited as the pattern this change
+follows and which does call flush().
+
+Restoring the calls keeps this change to a single concern: adding the
+generator to the enclosing try-with-resources so it is closed. The
+buffer-recycling win comes entirely from close() releasing the char buffer
+to the BufferRecycler, not from dropping the flush, so nothing measured is
+lost. The flush is now redundant with close() at these sites, which costs
+one extra flush() on the underlying stream per write.",2750866c16e1baac10650c98797da510a92be90e,17931,false,,12,73,77,core; hive-metastore; spark,48,8,56,"base; important area: core, spark; medium file count; multi-area change; correctness signal; has PR number; LanceDB similarity 0.28","Core, Spark: Fix equality deletes non-deterministic schema ordering","- Core, Hive, Spark: Auto close JsonGenerator using try-with-resources (#17931) (Thanks Hongyue and Steve Zhang!)"
+apache/iceberg,0abea5bc1aa5cfa5919805b43574916833b5a371,0abea5b,vishnu prakash,nvishnuprakash02@gmail.com,2026-08-29T11:49:42+05:30,GitHub,noreply@github.com,2026-08-29T08:19:42+02:00,Flink: Fix deleted rows reappearing after a failed eq-delete conversion cycle (#17630),,7858e8003eddda8af74e578f042b993fd32de6fc,17630,false,,9,372,138,docs; flink,48,8,56,base; fix; important area: flink; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.28,"Docker, Docs, Site: Add Flink quickstart",- Flink: Fix deleted rows reappearing after a failed eq-delete conversion cycle (#17630) (Thanks vishnu prakash!)
+apache/iceberg,6a0dfdc8c6104f367a09e8fe709aacb2f7bd4cff,6a0dfdc,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-09-14T14:53:52-07:00,GitHub,noreply@github.com,2026-09-14T14:53:52-07:00,Parquet: Preserve geometry CRS in writer metrics (#18072),,b93b392b7cbc001599b19f0ea4d712711776f855,18072,false,,2,16,5,parquet,42,13,55,base; community signal: geometry; correctness signal; has PR number; LanceDB similarity 0.43,Bump to Parquet 1.17.0,- Parquet: Preserve geometry CRS in writer metrics (#18072) (Thanks Xin Huang!)
+apache/iceberg,fd02b2144794c7ae1d4a2f1c192611d9835f32a9,fd02b21,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-28T15:06:59-07:00,GitHub,noreply@github.com,2026-08-28T15:06:59-07:00,Core: Read delete manifests correctly during snapshot expiration (#17763),,5cefa2f06fa247d5dab62a1b808f98a84d36a290,17763,false,,4,67,3,core,47,8,55,base; important area: core; strategic: manifest; has PR number; LanceDB similarity 0.27,Core: Load snapshot after it has been committed to prevent accidental cleanup of files,- Core: Read delete manifests correctly during snapshot expiration (#17763) (Thanks Hongyue and Steve Zhang!)
+apache/iceberg,c37a96eeecba3e8a025d24fbb93f78ec9dcf6a1e,c37a96e,Talat Uyarer,talat@apache.org,2026-08-27T09:32:48-07:00,pvary,peter.vary.apache@gmail.com,2026-08-28T14:17:04+02:00,Flink: Copy Flink v2.1 to v2.3 directory,,3532113744c683913238971ba37d77e21a837e92,,false,,558,115365,0,flink,41,14,55,base; important area: flink; large file count; large churn; LanceDB similarity 0.48,Flink: Support Variant to Flink 2.1,- Flink: Copy Flink v2.1 to v2.3 directory (Thanks Talat Uyarer!)
+apache/iceberg,8cd126e914ba7a5a4dfb8e88d3165bc1ac4bcbd8,8cd126e,Talat UYARER,talat@apache.org,2026-09-15T06:15:00-07:00,GitHub,noreply@github.com,2026-09-15T15:15:00+02:00,Flink: Tolerate catalogs that reject view operations at runtime (#18106),,c4784768b2f38c5a8c70d8e0e5a07f4302f9282f,18106,false,,2,120,4,flink,47,7,54,base; important area: flink; strategic: catalog; has PR number; LanceDB similarity 0.24,"Core, Spark: Moving Spark to use the new FormatModel API",- Flink: Tolerate catalogs that reject view operations at runtime (#18106) (Thanks Talat UYARER!)
+apache/iceberg,b00a282b037ca4d43c1018a56ebafd69d4fa0e00,b00a282,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-09-11T16:09:08-07:00,GitHub,noreply@github.com,2026-09-11T16:09:08-07:00,Parquet: Compute geometry bounding box metrics (#17161),,4a0dc3f26d93e64e5b4f036cc37e3d2c81ee7cde,17161,false,,6,259,7,core; parquet,43,11,54,base; community signal: geometry; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.37,Bump to Parquet 1.17.0,- Parquet: Compute geometry bounding box metrics (#17161) (Thanks Xin Huang!)
+apache/iceberg,53387cbc031591f4be2b0d94eaf879ae5b4721eb,53387cb,Anurag Mantripragada,amantripragada@apple.com,2026-09-01T08:33:18-07:00,GitHub,noreply@github.com,2026-09-01T10:33:18-05:00,Spark 4.1: Add rewrite option to enable executor cache for delete files (#17868),,86da2dc8414756e05106b3272fd6e6d0dde306e3,17868,false,,4,77,10,docs; spark,42,12,54,base; feature/api verb; multi-area change; has PR number; LanceDB similarity 0.41,Spark 4.1: Rename expectedSchema to projection for clarity,- Spark 4.1: Add rewrite option to enable executor cache for delete files (#17868) (Thanks Anurag Mantripragada!)
+apache/iceberg,6585738915edcc8a10ab40e5fd490e6efdef2333,6585738,Alexandre Dutra,adutra@apache.org,2026-09-11T17:10:43+02:00,GitHub,noreply@github.com,2026-09-11T10:10:43-05:00,"Core, REST: Fix path segment encoding to use RFC 3986 percent-encoding (#15989)",,954a22296f2755c0c056c15a3c6d14cc9b962770,15989,false,,7,542,27,core,43,10,53,"base; fix; important area: core, rest; medium file count; medium churn; has PR number; LanceDB similarity 0.35","Core, REST: Add support for overwrite in RegisterTableRequest","- Core, REST: Fix path segment encoding to use RFC 3986 percent-encoding (#15989) (Thanks Alexandre Dutra!)"
+apache/iceberg,ee1acca581d6a2f389dd561bf59ec951c19d9caf,ee1acca,Bartosz Szostakiewicz,81922839+Bartekszost@users.noreply.github.com,2026-09-14T07:24:19+02:00,GitHub,noreply@github.com,2026-09-14T07:24:19+02:00,Core: Make REST scan planning poll retries configurable (#17846),,f2d5f1fd60c33c6cf0b87445b3a3ceaca75670df,17846,false,,5,182,64,core; docs,40,12,52,base; important area: core; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.40,Core: Track & close FileIO used for remote scan planning,- Core: Make REST scan planning poll retries configurable (#17846) (Thanks Bartosz Szostakiewicz!)
+apache/iceberg,53d0e73f9d03e03805744bb9a13531ea12577efb,53d0e73,Xiening Dai,xndai@users.noreply.github.com,2026-09-11T10:50:30-07:00,GitHub,noreply@github.com,2026-09-11T12:50:30-05:00,"Core, Parquet: Fix null counting for parquet that doesn't have null_count stats (#17557)",,99c291d5ce837b21aa0b68e07fcad04a405e1c30,17557,false,,3,303,33,parquet,39,13,52,base; fix; important area: core; medium churn; has PR number; LanceDB similarity 0.45,Bump to Parquet 1.17.0,"- Core, Parquet: Fix null counting for parquet that doesn't have null_count stats (#17557) (Thanks Xiening Dai!)"
+apache/iceberg,fa220212b479bbce89855a0617251516b7491765,fa22021,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-09-03T20:40:19-07:00,GitHub,noreply@github.com,2026-09-03T20:40:19-07:00,"Core, OpenAPI: Preserve avg value sizes in REST JSON (#17855)",,20d616d6a1e5c2f3e7553a2f7312330039fe3a81,17855,false,,4,128,5,core; open-api,44,8,52,"base; important area: core, openapi; multi-area change; correctness signal; has PR number; LanceDB similarity 0.28",Core: Freshness-aware table loading in REST catalog,"- Core, OpenAPI: Preserve avg value sizes in REST JSON (#17855) (Thanks Xin Huang!)"
+apache/iceberg,30366fd62b54ae91fb561c66de35fb3b6aa111dc,30366fd,Talat UYARER,talat@apache.org,2026-08-28T11:01:04-07:00,GitHub,noreply@github.com,2026-08-28T20:01:04+02:00,Flink: Catalog type refactor in Test and add support for REST catalog in CatalogTestBase (#17861),,f80a72fe995bd4236a0dbe78f8cf29848792fe8f,17861,false,,14,170,55,flink,48,3,51,base; feature/api verb; important area: flink; medium file count; medium churn; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.36; capped LanceDB boost for routine/low-signal commit,"Core, REST: Add support for overwrite in RegisterTableRequest",- Flink: Catalog type refactor in Test and add support for REST catalog in CatalogTestBase (#17861) (Thanks Talat UYARER!)
+apache/iceberg,a061f8a2ba8510f3fff938332641dd58b40408f8,a061f8a,Lucas Gameiro,lucas.gameiro@datadoghq.com,2026-09-14T16:50:09+02:00,GitHub,noreply@github.com,2026-09-14T16:50:09+02:00,Flink: Preserve RowKind in DynamicIcebergSink's DataConverter (#18101),,e5128cd80bf33668138cc5c446c9ceb593075d9b,18101,false,,2,10,1,flink,39,11,50,base; important area: flink; correctness signal; has PR number; LanceDB similarity 0.38,Flink: Support Variant to Flink 2.1,- Flink: Preserve RowKind in DynamicIcebergSink's DataConverter (#18101) (Thanks Lucas Gameiro!)
+apache/iceberg,9f584b55d35e10edc9addc13784aa095b79e0a8d,9f584b5,Manu Zhang,owenzhang1990@gmail.com,2026-08-29T23:52:36+08:00,Szehon Ho,szehon.apache@gmail.com,2026-09-08T21:36:03-07:00,Spark: Copy back 4.2 as 4.1,Generated-by: Codex,5329317ad465d81dd940768d6c6b903044e58935,,false,,633,151567,0,spark,41,9,50,base; important area: spark; large file count; large churn; LanceDB similarity 0.31,"Spark: Backport: Add Spark app name to env context for Spark v3.4, 3.5, 4.0 <Varun Lakhyani>",- Spark: Copy back 4.2 as 4.1 (Thanks Manu Zhang!)
+apache/iceberg,bb6bb88cecfd8c0af138f15fcf6033bf5e98c266,bb6bb88,vishnuprakaz,nvishnuprakash02@gmail.com,2026-08-29T17:55:35+05:30,Maximilian Michels,mxm@apache.org,2026-08-30T12:23:32+03:00,Flink: Forward-port eq-delete conversion replan reindex fix to 2.3 (#17630),,883ea5b748779f01f702c10ccb412b2335781696,17630,false,,8,371,137,flink,43,7,50,base; fix; important area: flink; medium file count; medium churn; has PR number; LanceDB similarity 0.24,Fix Internal to Generic conversion of TIMESTAMP_NANO,- Flink: Forward-port eq-delete conversion replan reindex fix to 2.3 (#17630) (Thanks vishnuprakaz!)
+apache/iceberg,9bf2afd491be4b1a598918afd271cacb4aff9609,9bf2afd,jackylee,qcsd2011@gmail.com,2026-09-07T17:22:46+08:00,GitHub,noreply@github.com,2026-09-07T11:22:46+02:00,Flink: Fix microsecond truncation for timestamps in arrays and maps (#18001),,8d8c4cd9123d4c19c41d5135bfb513d8a95d9773,18001,false,,8,120,28,flink,39,10,49,base; fix; important area: flink; medium file count; has PR number; LanceDB similarity 0.35,Flink: Fix equalityFieldColumns always null in IcebergSink <GuoYu>,- Flink: Fix microsecond truncation for timestamps in arrays and maps (#18001) (Thanks jackylee!)
+apache/iceberg,f05bf491a067ccf4c76c1d4d5c9c35746f21f8cb,f05bf49,Manu Zhang,OwenZhang1990@gmail.com,2026-09-09T15:00:20+08:00,GitHub,noreply@github.com,2026-09-09T09:00:20+02:00,Core: Fix partition info display in RewritePositionDeleteFilesSparkAction (#15175),,0630297ef2d0304112ac4a11f610ad493cb6b888,15175,false,,2,23,2,core,35,13,48,base; fix; important area: core; has PR number; LanceDB similarity 0.44,Core: Fix metadata table scans with useRef by preserving metadata schema,- Core: Fix partition info display in RewritePositionDeleteFilesSparkAction (#15175) (Thanks Manu Zhang!)
+apache/iceberg,0630297ef2d0304112ac4a11f610ad493cb6b888,0630297,Chester,superdiao6@gmail.com,2026-09-09T14:50:58+08:00,GitHub,noreply@github.com,2026-09-09T08:50:58+02:00,"Core, Hive: Fix NPE in commit status check when a create commit fails (#17464)",,3f5539d5064f2afe83b826dc9e7e4a2f5af68295,17464,false,,4,142,0,core; hive-metastore,40,8,48,base; fix; important area: core; multi-area change; has PR number; LanceDB similarity 0.26,Core: Include query params into ETag calculation in reference IRC,"- Core, Hive: Fix NPE in commit status check when a create commit fails (#17464) (Thanks Chester!)"
+apache/iceberg,f37f4e03ebdb90b47b4f5d045484eb66f2708390,f37f4e0,Anurag Mantripragada,amantripragada@apple.com,2026-09-01T08:46:53-07:00,GitHub,noreply@github.com,2026-09-01T10:46:53-05:00,Spark 4.0: Add rewrite option to enable executor cache for delete files (#17907),,53387cbc031591f4be2b0d94eaf879ae5b4721eb,17907,false,,3,76,10,spark,37,11,48,base; feature/api verb; has PR number; LanceDB similarity 0.38,"Spark 3.4, 3.5, 4.0, 4.1: Don't Use table FileIO for Spark Checkpoints ( , )",- Spark 4.0: Add rewrite option to enable executor cache for delete files (#17907) (Thanks Anurag Mantripragada!)
+apache/iceberg,604d9b869dd38a5338bdc47756c4630d6acc6535,604d9b8,Talat Uyarer,talat@apache.org,2026-08-28T12:26:04-07:00,pvary,peter.vary.apache@gmail.com,2026-08-29T07:09:14+02:00,Flink: Backport REST catalog support in CatalogTestBase to 1.20,,df7461595e766d54843a772a4472d68e037a4669,,false,,3,104,5,flink,35,13,48,base; feature/api verb; important area: flink; strategic: catalog; downrank low-signal sync item; LanceDB similarity 0.43,Flink: Backport TableMaintenance Support Coordinator Lock to 1.20 and 2.0,- Flink: Backport REST catalog support in CatalogTestBase to 1.20 (Thanks Talat Uyarer!)
+apache/iceberg,ef8a69dc3dab5858d612770062bbf5a6043170f0,ef8a69d,DB Tsai,dbtsai@dbtsai.com,2026-08-27T18:12:53-07:00,GitHub,noreply@github.com,2026-08-27T18:12:53-07:00,"API, AWS, Azure, GCP: Track read metrics for positioned, vectored, and accelerated reads (#17236)",,a001f40f0859e842eb0bd0dfbbab6321ff235f1b,17236,false,,12,572,18,api; aws; azure; gcp,40,8,48,base; important area: api; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.27,"API, Core, Orc: Implement project() for partition statistics scan API","- API, AWS, Azure, GCP: Track read metrics for positioned, vectored, and accelerated reads (#17236) (Thanks DB Tsai!)"
+apache/iceberg,409004417f22c94ad1b7c75894e9619fd2e703b7,4090044,jackylee,qcsd2011@gmail.com,2026-09-11T14:00:51+08:00,GitHub,noreply@github.com,2026-09-10T23:00:51-07:00,ORC: Fix filter pushdown on tables with a variant column (#17998),"* ORC: Fix filter pushdown on tables with a variant column
+
+IdToOrcName did not override variant, so TypeUtil.SchemaVisitor threw
+while ExpressionToSearchArgument resolved column names.
+
+Generated-by: Ducc
+
+* ORC: Treat variant as unsupported for search argument predicates
+
+A predicate bound to a variant column reached type(), whose default
+branch throws. Variant has no PredicateLeaf.Type in ORC, so it belongs
+in UNSUPPORTED_TYPES alongside STRUCT, MAP and LIST.
+
+Generated-by: Ducc",308ac02d52716d9cd51582a224d5a35e462405f1,17998,false,,3,38,1,orc,40,7,47,base; fix; strategic: variant; has PR number; LanceDB similarity 0.23,Spark: Validate Z-order rewrite does not conflict with internal ICEZVALUE column name,- ORC: Fix filter pushdown on tables with a variant column (#17998) (Thanks jackylee!)
+apache/iceberg,7d0f3b84b99645af87babcbb7d79cb9ced6c0d55,7d0f3b8,Amogh Jahagirdar,amoghj@apache.org,2026-09-10T14:04:05-06:00,GitHub,noreply@github.com,2026-09-10T14:04:05-06:00,Parquet: Fix nested initial default applied when ancestor struct is null (#17320),Co-authored-by: Claude Sonnet 5 <noreply@anthropic.com>,0b1193cba1fac4fbe153e6b99b06bbb52e6c6b3b,17320,false,Claude Sonnet 5,13,839,261,data; flink; parquet; spark,40,7,47,base; fix; medium file count; large churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.24,Kafka Connect: Fix CVE-2025-67721 in io.airlift:aircompressor by bumping to 2.0.3,- Parquet: Fix nested initial default applied when ancestor struct is null (#17320) (Thanks Amogh Jahagirdar and Claude Sonnet 5!)
+apache/iceberg,982d4e63a981286948265e6b2ceb06316c6570cf,982d4e6,Sergei Nikolaev,kinolaev@gmail.com,2026-09-05T02:31:59+02:00,GitHub,noreply@github.com,2026-09-04T17:31:59-07:00,Core: Avoid per-row path rehashing in toPositionIndexes (#17864),"* Core: Avoid per-row path rehashing in toPositionIndexes
+
+Signed-off-by: Sergei Nikolaev <kinolaev@gmail.com>
+
+* Core: Compare paths by content when building pos delete indexes + tests
+
+Signed-off-by: Sergei Nikolaev <kinolaev@gmail.com>
+Co-authored-by: Anurag Mantripragada <amantripragada@apple.com>
+
+* Core: Fix Deletes.toPositionIndexes with interleaved paths test
+
+Signed-off-by: Sergei Nikolaev <kinolaev@gmail.com>
+
+* Core: Fix test names, improve assertion in TestDeletes
+
+Signed-off-by: Sergei Nikolaev <kinolaev@gmail.com>
+
+---------
+
+Signed-off-by: Sergei Nikolaev <kinolaev@gmail.com>
+Co-authored-by: Anurag Mantripragada <amantripragada@apple.com>",f5ce38e09457d020291dade599a45fb1adb9a587,17864,false,Anurag Mantripragada,2,79,2,core,38,9,47,base; fix; important area: core; co-authored; has PR number; LanceDB similarity 0.30,Core: Drop support for Java 11,- Core: Avoid per-row path rehashing in toPositionIndexes (#17864) (Thanks Sergei Nikolaev and Anurag Mantripragada!)
+apache/iceberg,6a179f3128b162e7b12de748d9f79628924a4249,6a179f3,Anurag Mantripragada,amantripragada@apple.com,2026-09-01T08:47:14-07:00,GitHub,noreply@github.com,2026-09-01T10:47:14-05:00,Spark 3.5: Add rewrite option to enable executor cache for delete files (#17909),,f37f4e03ebdb90b47b4f5d045484eb66f2708390,17909,false,,3,76,10,spark,37,10,47,base; feature/api verb; has PR number; LanceDB similarity 0.35,"Spark: Backport: Add Spark app name to env context for Spark v3.4, 3.5, 4.0 <Varun Lakhyani>",- Spark 3.5: Add rewrite option to enable executor cache for delete files (#17909) (Thanks Anurag Mantripragada!)
+apache/iceberg,3bf74aae1d7cf00d5f7964fd99629914ab05b27c,3bf74aa,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-08-26T08:23:08-07:00,GitHub,noreply@github.com,2026-08-26T09:23:08-06:00,Core: Reduce visibility on scan planning response builder for specsById and deleteFiles (#17638),,dd58c02b06ada6f086b6fedb6a5267f5eb77dc31,17638,false,,12,269,129,.palantir; core; open-api,40,7,47,base; important area: core; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.24,Core: Fix compute_table_stats failures with concurrent writes,- Core: Reduce visibility on scan planning response builder for specsById and deleteFiles (#17638) (Thanks Hongyue and Steve Zhang!)
+apache/iceberg,0107f19a4a6e881bdee4a7c07562666e57469c01,0107f19,Uros,221401595+uros-b@users.noreply.github.com,2026-09-03T16:41:25+02:00,GitHub,noreply@github.com,2026-09-03T09:41:25-05:00,"Core, Open-API, Spark, Flink: Use String.replace for literal replacements (#17484)",,7447be7cd2ddfba46fa57de763518f6e7648fc06,17484,false,,14,28,22,.baseline; core; flink; open-api; spark,36,9,45,"base; important area: core, flink, open-api, spark; medium file count; multi-area change; has PR number; LanceDB similarity 0.29","Core, Spark: Moving Spark to use the new FormatModel API","- Core, Open-API, Spark, Flink: Use String.replace for literal replacements (#17484) (Thanks Uros!)"
+apache/iceberg,4262ca754c9423aa15d4caafa0880cd7eb753c44,4262ca7,Talat UYARER,talat@apache.org,2026-09-14T10:11:22-07:00,GitHub,noreply@github.com,2026-09-14T19:11:22+02:00,"Flink: Backport view read support to 2.2, 2.1 and 1.20 (#18104)",Backport of #17859,2cac9eeb68da76094e60e2510f92753ac6cae50c,18104,false,,6,1353,30,flink,29,14,43,base; feature/api verb; important area: flink; medium file count; large churn; downrank low-signal sync item; has PR number; LanceDB similarity 0.48,Flink: Backport TableMaintenance Support Coordinator Lock to 1.20 and 2.0,"- Flink: Backport view read support to 2.2, 2.1 and 1.20 (#18104) (Thanks Talat UYARER!)"
+apache/iceberg,9408165481aa116081f3453337bf6ed963176323,9408165,Uros,221401595+uros-b@users.noreply.github.com,2026-09-03T20:35:44+02:00,GitHub,noreply@github.com,2026-09-03T11:35:44-07:00,API: Add Javadoc for Transforms.fromString (#17693),,0107f19a4a6e881bdee4a7c07562666e57469c01,17693,false,,1,13,0,api,40,3,43,base; feature/api verb; important area: api; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.33; capped LanceDB boost for routine/low-signal commit,"API, Core: Add FileIO to Scan API",- API: Add Javadoc for Transforms.fromString (#17693) (Thanks Uros!)
+apache/iceberg,a3401a12b46ac66824d4df92e4086cfbe4dd3e14,a3401a1,Uros,221401595+uros-b@users.noreply.github.com,2026-08-27T02:59:17+02:00,GitHub,noreply@github.com,2026-08-26T17:59:17-07:00,API: Add a builder usage example to PartitionSpec Javadoc (#17747),,5aaf0eb22ad419184b57ebc35ab19f46061f08a4,17747,false,,1,9,0,api,40,3,43,base; feature/api verb; important area: api; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.31; capped LanceDB boost for routine/low-signal commit,"API, Core: Add FileIO to Scan API",- API: Add a builder usage example to PartitionSpec Javadoc (#17747) (Thanks Uros!)
+apache/iceberg,8ea7d00410b9be99dd740c9e16f92f3857c7cd56,8ea7d00,Damanpreet Singh,damanpreet8360@gmail.com,2026-09-03T03:01:11+05:30,GitHub,noreply@github.com,2026-09-02T16:31:11-05:00,"Core, API, Parquet: Collapse redundant nested if statements (#17905)",,6ee69282ab18ef578243da96ab1e522b654811da,17905,false,,4,11,17,api; core; parquet,32,10,42,"base; important area: api, core; multi-area change; has PR number; LanceDB similarity 0.32",Core: Fix compute_table_stats failures with concurrent writes,"- Core, API, Parquet: Collapse redundant nested if statements (#17905) (Thanks Damanpreet Singh!)"
+apache/iceberg,16e84cb95512a3c6ab4db4e34a5d501f404737b9,16e84cb,Bobby Morck,32784880+bmorck@users.noreply.github.com,2026-08-27T11:43:21-04:00,GitHub,noreply@github.com,2026-08-27T08:43:21-07:00,Spark: Make the view stored-schema cast configurable (#17499),,44d9721e4bfd75afbbaf1e0a41cf592f6c40f51b,17499,false,,4,100,3,docs; spark,32,9,41,base; important area: spark; multi-area change; has PR number; LanceDB similarity 0.31,"Spark: Backport: Add Spark app name to env context for Spark v3.4, 3.5, 4.0 <Varun Lakhyani>",- Spark: Make the view stored-schema cast configurable (#17499) (Thanks Bobby Morck!)
+apache/iceberg,5329317ad465d81dd940768d6c6b903044e58935,5329317,Manu Zhang,owenzhang1990@gmail.com,2026-08-29T23:52:18+08:00,Szehon Ho,szehon.apache@gmail.com,2026-09-08T21:36:03-07:00,Spark: Move 4.1 as 4.2,Generated-by: Codex,db3972eb3d79d2ac93f9e0f0b6d741421784ed56,,false,,633,0,0,v4.2},33,6,39,base; important area: spark; large file count; LanceDB similarity 0.22,Spark 4.1: Set data file sort_order_id in manifest for writes from Spark,- Spark: Move 4.1 as 4.2 (Thanks Manu Zhang!)
+apache/iceberg,94ed50d0a61127fe03dd17b40e3e333ec041588c,94ed50d,Akanksha kedia,89628774+Akanksha-kedia@users.noreply.github.com,2026-08-31T13:52:25+05:30,GitHub,noreply@github.com,2026-08-31T10:22:25+02:00,"Docs, Core, AWS, BigQuery, Flink: Fix miscellaneous typos in comments and docs (#17898)",,04c39218226bbde5e07b1d169f2bf0eea35d11c6,17898,false,,23,27,27,aws; bigquery; core; docs; flink; site,36,3,39,"base; fix; important area: core, flink; large file count; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit",Flink: Dynamic Sink: Add case-insensitive field matching,"- Docs, Core, AWS, BigQuery, Flink: Fix miscellaneous typos in comments and docs (#17898) (Thanks Akanksha kedia!)"
+apache/iceberg,cb5bf26a2db4e5245b736cb103bfb096fd1d54aa,cb5bf26,Talat UYARER,talat@apache.org,2026-09-09T09:23:52-07:00,GitHub,noreply@github.com,2026-09-09T09:23:52-07:00,Docs: Add dedicated page for REST Catalog documentation (#17940),"* Docs: Add dedicated pages for REST Catalog
+
+* Addressed Kevin's comments",f05bf491a067ccf4c76c1d4d5c9c35746f21f8cb,17940,false,,5,364,86,docs,33,3,36,base; feature/api verb; medium file count; medium churn; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.40; capped LanceDB boost for routine/low-signal commit,Docs: Add informational properties section for table comment,- Docs: Add dedicated page for REST Catalog documentation (#17940) (Thanks Talat UYARER!)
+apache/iceberg,6ee69282ab18ef578243da96ab1e522b654811da,6ee6928,gaborkaszab,gaborkaszab@gmail.com,2026-09-02T09:39:39+02:00,GitHub,noreply@github.com,2026-09-02T09:39:39+02:00,Core: Clean up TestTrackingBuilder (#17145),,6a179f3128b162e7b12de748d9f79628924a4249,17145,false,,1,57,61,core,27,9,36,base; important area: core; has PR number; LanceDB similarity 0.31,Core: Drop support for Java 11,- Core: Clean up TestTrackingBuilder (#17145) (Thanks gaborkaszab!)
+apache/iceberg,46465fa700dced9a296b071dc1be83b750482e75,46465fa,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-09-15T08:47:47-07:00,GitHub,noreply@github.com,2026-09-15T08:47:47-07:00,Docs: Add blog post for Iceberg-Python 0.12.0 release (#17948),"* Docs: Add blog post for iceberg-python 0.12.0 release
+
+* Blog post for Python release
+
+* Comments from kevinjqliu - removed section, changed some wording
+
+* PR comments
+
+---------
+
+Co-authored-by: Yuya Ebihara <ebyhry@gmail.com>",522763940bec734b118206c8f6540aaebac5bd83,17948,false,Yuya Ebihara,1,221,0,site,32,3,35,base; feature/api verb; medium churn; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.41; capped LanceDB boost for routine/low-signal commit,Docs: Add blog post about File Format API,- Docs: Add blog post for Iceberg-Python 0.12.0 release (#17948) (Thanks Alex Stephen and Yuya Ebihara!)
+apache/iceberg,baece5e6fee4ddcc5bcba3791fd5c1b4c9e6a577,baece5e,Fokko Driesprong,fokko@apache.org,2026-09-11T17:35:03+02:00,GitHub,noreply@github.com,2026-09-11T17:35:03+02:00,"Spark, Flink: Remove Joda from `SparkUtil.java` and tests (#17579)","* Spark, Flink: Remove Joda from tests
+
+* Spark, Flink: Remove Joda from tests
+
+* Include Spark 4.2
+
+* Make spotless happy
+
+* Fix import
+
+* Add Flink 2.3
+
+* Include timezones as well
+
+* Thanks Eduard",6585738915edcc8a10ab40e5fd490e6efdef2333,17579,false,,20,524,104,flink; spark,32,3,35,"base; important area: flink, spark; large file count; medium churn; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.32; capped LanceDB boost for routine/low-signal commit","Core, Spark: Moving Spark to use the new FormatModel API","- Spark, Flink: Remove Joda from `SparkUtil.java` and tests (#17579) (Thanks Fokko Driesprong!)"
+apache/iceberg,6070163a89d060e9708a422c3879de42fb264c3f,6070163,Talat Uyarer,talat@apache.org,2026-08-27T09:34:40-07:00,pvary,peter.vary.apache@gmail.com,2026-08-28T14:17:04+02:00,Flink: Code changes for Flink 2.2 and 2.3,,c52b0342de0e2f80caa0cb269cbe6f07b0c967ec,,false,,4,8,6,flink,25,10,35,base; important area: flink; LanceDB similarity 0.35,Flink: Support Variant to Flink 2.1,- Flink: Code changes for Flink 2.2 and 2.3 (Thanks Talat Uyarer!)
+apache/iceberg,81045840187d172df9a9abb32a7c39420a4f10fc,8104584,Russell Spitzer,russell.spitzer@GMAIL.COM,2026-08-27T11:33:50-05:00,GitHub,noreply@github.com,2026-08-27T11:33:50-05:00,Spec: Clarify content file uniqueness within a snapshot (#17198),,84c4339065f2ff3f366f72f26932080850b0f934,17198,false,,1,6,4,format,27,8,35,base; important area: spec; has PR number; LanceDB similarity 0.28,Core: Add V4 location relativization utilities,- Spec: Clarify content file uniqueness within a snapshot (#17198) (Thanks Russell Spitzer!)
+apache/iceberg,e5128cd80bf33668138cc5c446c9ceb593075d9b,e5128cd,Vova Kolmakov,wombatukun@gmail.com,2026-09-14T19:31:26+07:00,GitHub,noreply@github.com,2026-09-14T14:31:26+02:00,Kafka Connect: Fix MongoDataConverter array conversion of timestamp and date types (#16604),"* Kafka Connect: Fix MongoDataConverter array conversion of timestamp and date types
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+
+* Kafka Connect: Add nested and document-encoded array tests for MongoDataConverter
+
+Generated-by: Claude Code (claude-opus-5)
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01HMBCdN3dZmSWpiSFarbFM4
+
+---------
+
+Co-authored-by: Vova Kolmakov <wombatukun@apache.org>
+Co-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",ee1acca581d6a2f389dd561bf59ec951c19d9caf,16604,false,Claude Opus 4.8 (1M context); Claude Opus 5 (1M context); Vova Kolmakov,2,118,2,kafka-connect,23,11,34,base; fix; co-authored; has PR number; LanceDB similarity 0.35,Kafka Connect: fix table UUID check,"- Kafka Connect: Fix MongoDataConverter array conversion of timestamp and date types (#16604) (Thanks Vova Kolmakov, Claude Opus 4.8 (1M context), and Claude Opus 5 (1M context)!)"
+apache/iceberg,522763940bec734b118206c8f6540aaebac5bd83,5227639,Talat UYARER,talat@apache.org,2026-09-15T08:42:47-07:00,GitHub,noreply@github.com,2026-09-15T08:42:47-07:00,"Flink: Backport view-incapable catalog handling to 2.2, 2.1 and 1.20 (#18128)","Backport view-incapable catalog handling to 2.2, 2.1 and 1.20",498019cf6dcbdd889a3956081ca6894228febbfc,18128,false,,6,360,12,flink,20,13,33,base; important area: flink; strategic: catalog; medium file count; medium churn; downrank low-signal sync item; has PR number; LanceDB similarity 0.42,Flink: Backport TableMaintenance Support Coordinator Lock to 1.20 and 2.0,"- Flink: Backport view-incapable catalog handling to 2.2, 2.1 and 1.20 (#18128) (Thanks Talat UYARER!)"
+apache/iceberg,04c39218226bbde5e07b1d169f2bf0eea35d11c6,04c3921,damansingh1313,damanpreet8360@gmail.com,2026-08-31T02:51:39+05:30,GitHub,noreply@github.com,2026-08-30T14:21:39-07:00,"API, Core: Fix typos in test comments (#17889)","Fix a duplicated ""the"", ""overriden"" -> ""overridden"", and ""doesnt"" -> ""doesn't"" in
+test comments. Comment-only changes, no behavior change.",14defbdecf39d0e1306b235a4e0b14a5bce78595,17889,false,,3,3,4,api; core,28,3,31,"base; fix; important area: api, core; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit",Core: Fix rewriting delete manifests in RewriteTablePathUtil,"- API, Core: Fix typos in test comments (#17889) (Thanks damansingh1313!)"
+apache/iceberg,1c7b35c6fb0df5836eb6d9b5027885f578849e0e,1c7b35c,yangshangqing,50940701+yangshangqing95@users.noreply.github.com,2026-08-26T09:32:33-04:00,GitHub,noreply@github.com,2026-08-26T15:32:33+02:00,ORC: Fix timestamp nano predicate pushdown (#17750),Co-authored-by: Vova Kolmakov <wombatukun@gmail.com>,68a7f2767b8da025a2663e67fc5321febf3c8dd1,17750,false,Vova Kolmakov,3,98,5,orc,23,8,31,base; fix; co-authored; has PR number; LanceDB similarity 0.27,"API, Spark: Optimize NOT IN and != predicate evaluation for fields containing a single-value <Joy Haldar>",- ORC: Fix timestamp nano predicate pushdown (#17750) (Thanks yangshangqing and Vova Kolmakov!)
+apache/iceberg,915e5af420bd969550315560f70b6c91959a9b21,915e5af,Manu Zhang,OwenZhang1990@gmail.com,2026-09-01T09:28:13+08:00,GitHub,noreply@github.com,2026-08-31T18:28:13-07:00,Spark 4.1: Mark overrides of deprecated Spark API as deprecated (#16028),,17680ce149981d3186537a603a26015f634671f9,16028,false,,8,186,40,spark,20,10,30,base; medium file count; medium churn; has PR number; LanceDB similarity 0.34,Upgrade to Spark 3.5.8,- Spark 4.1: Mark overrides of deprecated Spark API as deprecated (#16028) (Thanks Manu Zhang!)
+apache/iceberg,832f03715485fd485d9820392a72a59f015da727,832f037,Charlie Chen,jcharlieuw@gmail.com,2026-08-28T15:08:30-07:00,GitHub,noreply@github.com,2026-08-28T15:08:30-07:00,Spark: Fix map value decoding in test helpers (#17721),Generated-by: Codex,fd02b2144794c7ae1d4a2f1c192611d9835f32a9,17721,false,,6,6,6,spark,27,3,30,base; fix; important area: spark; medium file count; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.32; capped LanceDB boost for routine/low-signal commit,Spark: Fix javadoc mentioning Spark 3.3 in Spark 3.4 benchmark classes,- Spark: Fix map value decoding in test helpers (#17721) (Thanks Charlie Chen!)
+apache/iceberg,9299fe6926db7c09e2fe7f53e8129d994c37859c,9299fe6,Manu Zhang,OwenZhang1990@gmail.com,2026-09-13T04:02:24+08:00,GitHub,noreply@github.com,2026-09-12T13:02:24-07:00,Build: Fix Spark publication and CI configuration (#18042),"* Build: Fix Spark publication and CI configuration
+
+Avoid republishing unrelated snapshot artifacts and preserve complete release BOM constraints. Correct stale benchmark workflow filters and clarify the supported Spark matrix.
+
+Generated-by: Codex
+
+* Build: Remove outdated Spark Java 21 support comment
+
+Generated-by: Codex
+
+* Build: Restore binary staging script
+
+Keep dev/stage-binaries.sh unchanged in this PR.
+
+Generated-by: Codex",0b933180d5dbe8ab603671761d95ec5922d8ecd7,18042,false,,8,16,9,.github; build.gradle,26,3,29,base; fix; medium file count; multi-area change; correctness signal; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Flink: Support UUID type in Avro and Parquet readers and writers,- Build: Fix Spark publication and CI configuration (#18042) (Thanks Manu Zhang!)
+apache/iceberg,1dccd6437f3391fd46954913d6699c9fb87434d7,1dccd64,Chris Lu,chrislusf@users.noreply.github.com,2026-09-11T22:43:32-07:00,GitHub,noreply@github.com,2026-09-12T07:43:32+02:00,Docs: Add SeaweedFS to vendors and third-party catalogs nav (#17605),,cff60bc18e6fea1e29990f7f6d5ac78891defa59,17605,false,,2,5,0,site,25,3,28,base; feature/api verb; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.32; capped LanceDB boost for routine/low-signal commit,Docs: Add informational properties section for table comment,- Docs: Add SeaweedFS to vendors and third-party catalogs nav (#17605) (Thanks Chris Lu!)
+apache/iceberg,1ccfb83c920fb275a6284477d2d4a8572096c3ab,1ccfb83,Uros,221401595+uros-b@users.noreply.github.com,2026-09-09T18:39:36+02:00,GitHub,noreply@github.com,2026-09-09T09:39:36-07:00,Common: Add missing Javadoc for Dyn* utility classes (#17922),"build-javadoc emits 41 doclint warnings (37 no comment, 4 no @return) for
+the public API of the Dyn* reflection utilities in iceberg-common. The
+Gradle javadoc task runs default doclint (-Xdoclint:all) with no
+suppression, so every undocumented public/protected element is flagged.
+
+Document the flagged elements in DynClasses, DynConstructors, DynFields,
+and DynMethods with complete Javadoc (summary plus @param/@return/@throws
+and type-param tags), matching the style already used on their siblings.
+@Override methods are left as-is since they inherit docs. Javadoc-only; no
+signature or bytecode change. ./gradlew :iceberg-common:javadoc is now
+warning-free.",cb5bf26a2db4e5245b736cb103bfb096fd1d54aa,17922,false,,4,195,4,common,25,3,28,base; feature/api verb; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,Core: Fix BinPackRewriteFilePlanner producing incorrect output file count with max-files-to-rewrite,- Common: Add missing Javadoc for Dyn* utility classes (#17922) (Thanks Uros!)
+apache/iceberg,112add3c53a950fdef30b85c202a9cd82e2f6080,112add3,Anshul Baliga,106268157+anshulbaliga7@users.noreply.github.com,2026-09-03T07:44:24+05:30,GitHub,noreply@github.com,2026-09-02T19:14:24-07:00,Docs: Add max-file-group-input-files to rewrite options tables in spark-procedures.md (#17707),,8ea7d00410b9be99dd740c9e16f92f3857c7cd56,17707,false,,1,2,0,docs,25,3,28,base; feature/api verb; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,Spark: Backport Add _row_id and _last_updated_sequence_number raeder in Orc to support lineage,- Docs: Add max-file-group-input-files to rewrite options tables in spark-procedures.md (#17707) (Thanks Anshul Baliga!)
+apache/iceberg,9381f0ca6ba57e028f3bf55329a49fa4ae4b212e,9381f0c,Charlie Chen,jchen264@uw.edu,2026-09-01T07:38:01-07:00,GitHub,noreply@github.com,2026-09-01T07:38:01-07:00,Dell: Preserve known ECS input file lengths (#17870),"* Dell: Preserve known ECS input file lengths
+
+Carry known lengths into ECS input files so scan planning avoids redundant object metadata requests.
+
+Generated-by: Codex
+
+* Dell: Verify known lengths avoid metadata requests
+
+Use a mock ECS client and assert that reading a supplied file length performs no client interaction.
+
+Generated-by: Codex",6164440663e3f7b1bae92a1a710ca5233755cd7d,17870,false,,3,50,1,dell,24,4,28,base; correctness signal; has PR number; LanceDB similarity 0.12,"Revert ""Move deleted files to Hadoop trash if configured """,- Dell: Preserve known ECS input file lengths (#17870) (Thanks Charlie Chen!)
+apache/iceberg,2750866c16e1baac10650c98797da510a92be90e,2750866,Uros,221401595+uros-b@users.noreply.github.com,2026-09-04T05:07:51+02:00,GitHub,noreply@github.com,2026-09-03T20:07:51-07:00,API: Fix grammatical typos in UpdatePartitionSpec Javadoc (#17941),"Correct ""the a"" / ""the an"" to ""a"" / ""an"" in the @throws documentation of addField and removeField.",6344f6e17d6b92146f1ec8bfb7626f124f2cea4b,17941,false,,1,8,8,api,23,3,26,base; fix; important area: api; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Core: Simplify handling of the current planId in client side of remote planning <Eduard Tudenhoefner>,- API: Fix grammatical typos in UpdatePartitionSpec Javadoc (#17941) (Thanks Uros!)
+apache/iceberg,2702c983668c57177eba79ec97d9103d660cdc81,2702c98,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-10T08:25:18-07:00,GitHub,noreply@github.com,2026-09-10T08:25:18-07:00,Docker: Use WAL mode for the REST fixture's SQLite backend (#18044),Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>,9d7b2c52fb62de40ff8bc7f15f8923bd62201c21,18044,false,Claude Fable 5.1,3,9,4,docker; kafka-connect,20,5,25,base; multi-area change; co-authored; has PR number; LanceDB similarity 0.15,"Docker, Docs, Site: Add Flink quickstart",- Docker: Use WAL mode for the REST fixture's SQLite backend (#18044) (Thanks Kevin Liu and Claude Fable 5.1!)
+apache/iceberg,5cefa2f06fa247d5dab62a1b808f98a84d36a290,5cefa2f,Uros,221401595+uros-b@users.noreply.github.com,2026-08-28T23:48:34+02:00,GitHub,noreply@github.com,2026-08-28T14:48:34-07:00,Build: Add descriptions to OpenAPI spec validation tasks (#17799),,30366fd62b54ae91fb561c66de35fb3b6aa111dc,17799,false,,1,4,0,build.gradle,22,3,25,base; feature/api verb; downrank routine build/deps; has PR number; LanceDB similarity 0.28; capped LanceDB boost for routine/low-signal commit,REST Spec: Add unregister table endpoint,- Build: Add descriptions to OpenAPI spec validation tasks (#17799) (Thanks Uros!)
+apache/iceberg,883ea5b748779f01f702c10ccb412b2335781696,883ea5b,vishnuprakaz,nvishnuprakash02@gmail.com,2026-08-29T17:55:35+05:30,Maximilian Michels,mxm@apache.org,2026-08-30T12:23:32+03:00,Flink: Backport eq-delete conversion replan reindex fix to 1.20 and 2.2 (#17630),,849c85b99d1b04947fb06cb3ac1dbdf64f348707,17630,false,,16,742,274,flink,12,12,24,base; fix; important area: flink; medium file count; large churn; downrank low-signal sync item; has PR number; LanceDB similarity 0.39,Flink: Backport TableMaintenance Support Coordinator Lock to 1.20 and 2.0,- Flink: Backport eq-delete conversion replan reindex fix to 1.20 and 2.2 (#17630) (Thanks vishnuprakaz!)
+apache/iceberg,357f657d1d94b049077a5ab963d6e16221a3eed0,357f657,Edgar Rodriguez,edgar.rd@gmail.com,2026-09-12T10:49:41-04:00,GitHub,noreply@github.com,2026-09-12T08:49:41-06:00,Parquet: Decode ENUM/JSON columns as UTF-8 in row-group filter conversions (#17157),"* Parquet: Decode ENUM/JSON columns as UTF-8 in row-group filter conversions
+
+ParquetConversions.converterFromParquet special-cased only the UTF8 original
+type, so for ENUM- or JSON-annotated Parquet columns it fell through to the
+binary path and returned a ByteBuffer. Iceberg maps both ENUM and JSON to
+StringType (MessageTypeToType), so at read time the metrics/dictionary row-group
+filters compared that ByteBuffer against a CharSequence predicate literal and
+threw:
+
+  class java.nio.HeapByteBuffer cannot be cast to class java.lang.CharSequence
+
+This is reachable for files written by other engines (e.g. Flink, which uses
+JSON columns) and added via add_files: querying such a column with a predicate
+triggers row-group filtering. Treat ENUM and JSON like UTF8 and decode them to a
+CharSequence. The import/metrics path (ParquetConversions.convertValue) already
+switches on the Iceberg type and was unaffected.",1dccd6437f3391fd46954913d6699c9fb87434d7,17157,false,,3,150,0,parquet,12,10,22,base; has PR number; LanceDB similarity 0.35,Bump to Parquet 1.17.0,- Parquet: Decode ENUM/JSON columns as UTF-8 in row-group filter conversions (#17157) (Thanks Edgar Rodriguez!)
+apache/iceberg,c52b0342de0e2f80caa0cb269cbe6f07b0c967ec,c52b034,Talat Uyarer,talat@apache.org,2026-08-27T09:33:55-07:00,pvary,peter.vary.apache@gmail.com,2026-08-28T14:17:04+02:00,Flink: Adjust build scripts for Flink 2.2 and 2.3,,8dc651d81ab3b9337389a454bec21ffabfdf240c,,false,,7,94,36,flink; gradle; gradle.properties; jmh.gradle; settings.gradle,19,3,22,base; important area: flink; medium file count; multi-area change; downrank routine build/deps; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,Flink: Add the possibility to use Coordinator Lock when using Flink SQL,- Flink: Adjust build scripts for Flink 2.2 and 2.3 (Thanks Talat Uyarer!)
+apache/iceberg,4a0dc3f26d93e64e5b4f036cc37e3d2c81ee7cde,4a0dc3f,Pritam,28836358+pritampan@users.noreply.github.com,2026-09-11T21:25:03+01:00,GitHub,noreply@github.com,2026-09-11T13:25:03-07:00,Parquet: parse row-group size as long (#18055),* Parquet: parse row-group size as long,53d0e73f9d03e03805744bb9a13531ea12577efb,18055,false,,2,59,9,parquet,12,9,21,base; has PR number; LanceDB similarity 0.31,Bump to Parquet 1.17.0,- Parquet: parse row-group size as long (#18055) (Thanks Pritam!)
+apache/iceberg,1019497e35a6871f924bbf0fdfadc3a16f7f80f3,1019497,Thomas Thornton,thomaswilliamthornton@gmail.com,2026-09-08T14:12:31-07:00,GitHub,noreply@github.com,2026-09-08T14:12:31-07:00,kafka connect: coordinator only commits offsets when greater than existing offsets (#17552),* kafka connect: coordinator only commits offsets when greater than existing offsets,4d725363c3de0bbfd5f3e936be8e9be10b0e7f5d,17552,false,,2,177,3,kafka-connect,12,8,20,base; has PR number; LanceDB similarity 0.28,Kafka Connect: Fix CVE-2025-67721 in io.airlift:aircompressor by bumping to 2.0.3,- kafka connect: coordinator only commits offsets when greater than existing offsets (#17552) (Thanks Thomas Thornton!)
+apache/iceberg,d314ba975e510c4482f606aa53ffe9ef2f308315,d314ba9,Talat Uyarer,talat@apache.org,2026-08-28T12:09:27-07:00,pvary,peter.vary.apache@gmail.com,2026-08-29T07:13:05+02:00,Flink: Forward-port CatalogType test refactor to 2.2,,886ec107eff958caa27cc1a5e06f978fe498345d,,false,,12,67,51,flink,17,3,20,base; important area: flink; medium file count; downrank docs/tests/benchmarks; LanceDB similarity 0.31; capped LanceDB boost for routine/low-signal commit,Flink: Dynamic Sink: Add case-insensitive field matching,- Flink: Forward-port CatalogType test refactor to 2.2 (Thanks Talat Uyarer!)
+apache/iceberg,e58b5b264e25a2ae877bc8d77fa2117b97de8fd4,e58b5b2,Talat Uyarer,talat@apache.org,2026-08-28T12:12:42-07:00,pvary,peter.vary.apache@gmail.com,2026-08-29T07:10:30+02:00,Flink: Forward-port CatalogType test refactor to 2.3,,604d9b869dd38a5338bdc47756c4630d6acc6535,,false,,12,67,51,flink,17,3,20,base; important area: flink; medium file count; downrank docs/tests/benchmarks; LanceDB similarity 0.29; capped LanceDB boost for routine/low-signal commit,Flink: Support Variant to Flink 2.1,- Flink: Forward-port CatalogType test refactor to 2.3 (Thanks Talat Uyarer!)
+apache/iceberg,141f1d0475a77763458c5ac7bf38ee808e6dbf0b,141f1d0,Talat UYARER,talat@apache.org,2026-09-07T03:04:56-07:00,GitHub,noreply@github.com,2026-09-07T12:04:56+02:00,"Docs, Flink: Update Flink configuration and write options in Iceberg documentation (#17938)",,9bf2afd491be4b1a598918afd271cacb4aff9609,17938,false,,3,29,4,docs,15,3,18,base; important area: flink; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,docs: Add CREATE DATABASE step before CREATE TABLE in Spark quickstart,"- Docs, Flink: Update Flink configuration and write options in Iceberg documentation (#17938) (Thanks Talat UYARER!)"
+apache/iceberg,4d725363c3de0bbfd5f3e936be8e9be10b0e7f5d,4d72536,vbhanuchander-lang,v.bhanuchander@gmail.com,2026-09-08T17:08:18-04:00,GitHub,noreply@github.com,2026-09-08T14:08:18-07:00,Kafka Connect: Track control topic offsets as a high-water mark (#17933),Track the furthest position consumed of controlTopicOffsets().,af86b8399ca794bfe482eae85ba7e79ab0c49adc,17933,false,,2,138,2,kafka-connect,12,5,17,base; has PR number; LanceDB similarity 0.17,Flink: Fix equalityFieldColumns always null in IcebergSink <GuoYu>,- Kafka Connect: Track control topic offsets as a high-water mark (#17933) (Thanks vbhanuchander-lang!)
+apache/iceberg,89987a6174ba8cb8f1ab539e693321cea1604189,89987a6,Vova Kolmakov,wombatukun@gmail.com,2026-09-11T13:40:05+07:00,GitHub,noreply@github.com,2026-09-11T08:40:05+02:00,Flink: Build nested field getters once in RowDataProjection (#16790),,409004417f22c94ad1b7c75894e9619fd2e703b7,16790,false,,2,38,7,flink,12,3,15,base; important area: flink; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Flink: Fix equalityFieldColumns always null in IcebergSink <GuoYu>,- Flink: Build nested field getters once in RowDataProjection (#16790) (Thanks Vova Kolmakov!)
+apache/iceberg,498019cf6dcbdd889a3956081ca6894228febbfc,498019c,Uros,221401595+uros-b@users.noreply.github.com,2026-09-15T16:53:20+02:00,GitHub,noreply@github.com,2026-09-15T16:53:20+02:00,Docs: Fix grammar and spacing typos in Delta Lake migration and Flink maintenance docs (#18127),,8cd126e914ba7a5a4dfb8e88d3165bc1ac4bcbd8,18127,false,,2,2,2,docs,8,3,11,base; fix; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.28; capped LanceDB boost for routine/low-signal commit,Flink: Add branch support to RewriteDataFiles maintenance task,- Docs: Fix grammar and spacing typos in Delta Lake migration and Flink maintenance docs (#18127) (Thanks Uros!)
+apache/iceberg,7447be7cd2ddfba46fa57de763518f6e7648fc06,7447be7,Talat UYARER,talat@apache.org,2026-09-02T23:05:38-07:00,GitHub,noreply@github.com,2026-09-03T08:05:38+02:00,Docs: Fix wrong config keys in Flink maintenance docs (#17935),,08b1fc4991760bb3249512f199e9282ca0f9d8e6,17935,false,,1,4,4,docs,8,3,11,base; fix; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.29; capped LanceDB boost for routine/low-signal commit,"Docker, Docs, Site: Add Flink quickstart",- Docs: Fix wrong config keys in Flink maintenance docs (#17935) (Thanks Talat UYARER!)
+apache/iceberg,849c85b99d1b04947fb06cb3ac1dbdf64f348707,849c85b,Eunbin Son,58901024+thswlsqls@users.noreply.github.com,2026-08-30T14:37:54+09:00,GitHub,noreply@github.com,2026-08-30T07:37:54+02:00,Docs: Fix Nessie Flink Python example (#17091),,e290e998bd7f3a9f59e7f2a407ca1f27891f26b2,17091,false,,1,1,1,docs,8,3,11,base; fix; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Flink: Fix HashKeyGenerator SelectorKey cache ignoring writeParallelism and distributionMode,- Docs: Fix Nessie Flink Python example (#17091) (Thanks Eunbin Son!)
+apache/iceberg,a7d17f8e5d7d1e098aa84e220fd5c5d71aadcc36,a7d17f8,Bobby Morck,32784880+bmorck@users.noreply.github.com,2026-08-27T19:46:50-04:00,GitHub,noreply@github.com,2026-08-27T16:46:50-07:00,Spark: Backport view schema binding mode to Spark 3.5 and 4.0 (#17838),,375aa33d997292e90ed438caf01cbf1254776eb9,17838,false,,6,198,6,spark,0,10,10,base; important area: spark; medium file count; medium churn; downrank low-signal sync item; has PR number; LanceDB similarity 0.33,Spark: Fix javadoc mentioning Spark 3.3 in Spark 3.4 benchmark classes,- Spark: Backport view schema binding mode to Spark 3.5 and 4.0 (#17838) (Thanks Bobby Morck!)
+apache/iceberg,4987c84414a3f97e1ac7fc763320e7006e01fcd3,4987c84,Gianluca Graziadei,48211703+GGraziadei@users.noreply.github.com,2026-09-12T19:47:13+02:00,GitHub,noreply@github.com,2026-09-12T10:47:13-07:00,"Spark: Backport Z-order null boolean and case-insensitive column fixes to 3.5, 4.0 and 4.2 (#18077)",Backport of #17669.,357f657d1d94b049077a5ab963d6e16221a3eed0,18077,false,,9,321,3,spark,0,9,9,base; important area: spark; medium file count; medium churn; downrank low-signal sync item; has PR number; LanceDB similarity 0.30,Spark: Backport: Add ExecutorService support to RewriteTablePath,"- Spark: Backport Z-order null boolean and case-insensitive column fixes to 3.5, 4.0 and 4.2 (#18077) (Thanks Gianluca Graziadei!)"
+apache/iceberg,e76d63584d7f83b102026749e1ae0f91813cb78e,e76d635,Huaxin Gao,huaxin.gao11@gmail.com,2026-09-04T14:09:53-07:00,GitHub,noreply@github.com,2026-09-04T14:09:53-07:00,Spark 4.2: Fix build failures from missed cleanups (#17952),,031135677395a3fbc90a2e33f58a9fa3983335f5,17952,false,,4,6,8,spark,5,3,8,base; fix; downrank routine build/deps; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,- Spark 4.2: Fix build failures from missed cleanups (#17952) (Thanks Huaxin Gao!)
+apache/iceberg,954a22296f2755c0c056c15a3c6d14cc9b962770,954a222,Vova Kolmakov,wombatukun@gmail.com,2026-09-11T14:39:54+07:00,GitHub,noreply@github.com,2026-09-11T09:39:54+02:00,"Flink: Backport building nested field getters once in RowDataProjection to 1.20, 2.2 and 2.3 (#16790) (#18058)",Generated-by: Claude Code (claude-opus-5),89987a6174ba8cb8f1ab539e693321cea1604189,18058,false,,6,114,21,flink,-4,10,6,base; important area: flink; medium file count; downrank low-signal sync item; has PR number; LanceDB similarity 0.32,Flink: Backport TableMaintenance Support Coordinator Lock to 1.20 and 2.0,"- Flink: Backport building nested field getters once in RowDataProjection to 1.20, 2.2 and 2.3 (#16790) (#18058) (Thanks Vova Kolmakov!)"
+apache/iceberg,8b37e266c4b834853d17620a18e9679ae063c39d,8b37e26,Manu Zhang,owenzhang1990@gmail.com,2026-09-06T09:35:32+08:00,Szehon Ho,szehon.apache@gmail.com,2026-09-08T21:36:03-07:00,"Revert ""Spark 4.2: Fix build failures from missed cleanups (#17952)""","This reverts commit e76d63584d7f83b102026749e1ae0f91813cb78e.
+
+Generated-by: Codex",1019497e35a6871f924bbf0fdfadc3a16f7f80f3,,false,,4,8,6,spark,3,3,6,base; fix; downrank routine build/deps; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,"- Revert ""Spark 4.2: Fix build failures from missed cleanups (#17952)"" (Thanks Manu Zhang!)"
+apache/iceberg,cff60bc18e6fea1e29990f7f6d5ac78891defa59,cff60bc,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-12T00:11:47+01:00,GitHub,noreply@github.com,2026-09-11T16:11:47-07:00,Build: Pull MinIO images from Quay (#18071),,b00a282b037ca4d43c1018a56ebafd69d4fa0e00,18071,false,,4,11,7,aws; docker; kafka-connect; site,2,3,5,base; multi-area change; downrank routine build/deps; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,Introduce foundational types for V4 manifest support,- Build: Pull MinIO images from Quay (#18071) (Thanks Sreesh Maheshwar!)
+apache/iceberg,9d7b2c52fb62de40ff8bc7f15f8923bd62201c21,9d7b2c5,Manu Zhang,OwenZhang1990@gmail.com,2026-09-10T03:13:07+08:00,GitHub,noreply@github.com,2026-09-09T12:13:07-07:00,Build: Include Spark 4.2 in source releases (#18024),,de8cba164ac51f9cb0da862f2051941383c685d5,18024,false,,2,90,3,.gitattributes; .github,2,3,5,base; multi-area change; downrank routine build/deps; has PR number; LanceDB similarity 0.33; capped LanceDB boost for routine/low-signal commit,Evaluating dependency changes,- Build: Include Spark 4.2 in source releases (#18024) (Thanks Manu Zhang!)
+apache/iceberg,f5ce38e09457d020291dade599a45fb1adb9a587,f5ce38e,Huaxin Gao,huaxin.gao11@gmail.com,2026-09-04T16:37:20-07:00,GitHub,noreply@github.com,2026-09-04T16:37:20-07:00,Docs: Note that REST catalog credentials should be redacted by engines (#17920),,e76d63584d7f83b102026749e1ae0f91813cb78e,17920,false,,1,6,0,docs,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Bump to Parquet 1.17.0,- Docs: Note that REST catalog credentials should be redacted by engines (#17920) (Thanks Huaxin Gao!)
+apache/iceberg,7f7c0023b1faff6162cc864d3819393ce024d66a,7f7c002,Fokko Driesprong,fokko@apache.org,2026-08-31T15:04:43+02:00,GitHub,noreply@github.com,2026-08-31T15:04:43+02:00,Docs: Run `generateRuntimeDeps` on all modules (#17323),Updated comments for clarity on Gradle commands.,94ed50d0a61127fe03dd17b40e3e333ec041588c,17323,false,,1,2,2,runtime-deps.gradle,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,Add runtime dependency guard for all bundled shadow JAR artifacts,- Docs: Run `generateRuntimeDeps` on all modules (#17323) (Thanks Fokko Driesprong!)
+apache/iceberg,e098577b287adfdb526822265aefb5addde0f3fe,e098577,Talat UYARER,talat@apache.org,2026-08-28T22:04:19-07:00,GitHub,noreply@github.com,2026-08-29T07:04:19+02:00,Docs: Update documentation Flink versions and Flink lifecycle maintenance. (#17869),,832f03715485fd485d9820392a72a59f015da727,17869,false,,2,5,3,site,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,"Docker, Docs, Site: Add Flink quickstart",- Docs: Update documentation Flink versions and Flink lifecycle maintenance. (#17869) (Thanks Talat UYARER!)
+apache/iceberg,3532113744c683913238971ba37d77e21a837e92,3532113,Talat UYARER,talat@apache.org,2026-08-27T22:26:30-07:00,GitHub,noreply@github.com,2026-08-27T22:26:30-07:00,Docs: Flink DDL documentation correction (#17854),"Flink DDL documentation correction: Expand `ALTER TABLE` section to include support for adding, dropping, renaming, and modifying columns, along with clarifications on partition changes. Update Flink overview table to reflect these capabilities.",ef8a69dc3dab5858d612770062bbf5a6043170f0,17854,false,,2,44,2,docs,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,Flink: Support Variant to Flink 2.1,- Docs: Flink DDL documentation correction (#17854) (Thanks Talat UYARER!)
+apache/iceberg,2cac9eeb68da76094e60e2510f92753ac6cae50c,2cac9ee,Eunbin Son,58901024+thswlsqls@users.noreply.github.com,2026-09-15T02:08:37+09:00,GitHub,noreply@github.com,2026-09-14T19:08:37+02:00,MR: Pass partition constants to the format model read builder (#18037),,3d6142b6abc3f597aa6a22116a12fb959392fef5,18037,false,,2,56,0,mr,-3,3,0,base; downrank routine build/deps; has PR number; LanceDB similarity 0.16; capped LanceDB boost for routine/low-signal commit,OpenAPI: Promote the S3 signing endpoint to the main spec,- MR: Pass partition constants to the format model read builder (#18037) (Thanks Eunbin Son!)
+apache/iceberg,df7461595e766d54843a772a4472d68e037a4669,df74615,Talat Uyarer,talat@apache.org,2026-08-28T12:25:53-07:00,pvary,peter.vary.apache@gmail.com,2026-08-29T07:09:14+02:00,Flink: Backport CatalogType test refactor to 1.20,,e098577b287adfdb526822265aefb5addde0f3fe,,false,,10,61,45,flink,-18,3,-15,base; important area: flink; medium file count; downrank docs/tests/benchmarks; downrank low-signal sync item; LanceDB similarity 0.42; capped LanceDB boost for routine/low-signal commit,Flink: Backport TableMaintenance Support Coordinator Lock to 1.20 and 2.0,- Flink: Backport CatalogType test refactor to 1.20 (Thanks Talat Uyarer!)
+apache/iceberg,9da109dd2537e77e8e5034068933575aa4e235ff,9da109d,Yuya Ebihara,ebyhry@gmail.com,2026-09-04T12:56:25+09:00,GitHub,noreply@github.com,2026-09-03T20:56:25-07:00,"Core, Flink, Spark, Build: Replace Guava Queues with plain JDK and bump guava from 33.6.0-jre to 33.7.1-jre  (#17888)","* Replace Guava Queues with plain JDK
+
+* Build: Bump guava from 33.6.0-jre to 33.7.1-jre
+
+Bumps `guava` from 33.6.0-jre to 33.7.1-jre.
+
+Updates `com.google.guava:guava` from 33.6.0-jre to 33.7.1-jre
+- [Release notes](https://github.com/google/guava/releases)
+- [Commits](https://github.com/google/guava/commits)
+
+Updates `com.google.guava:guava-testlib` from 33.6.0-jre to 33.7.1-jre
+- [Release notes](https://github.com/google/guava/releases)
+- [Commits](https://github.com/google/guava/commits)
+
+---
+updated-dependencies:
+- dependency-name: com.google.guava:guava
+  dependency-version: 33.7.1-jre
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+- dependency-name: com.google.guava:guava-testlib
+  dependency-version: 33.7.1-jre
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+---------
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",fa220212b479bbce89855a0617251516b7491765,17888,false,dependabot[bot],17,24,35,core; flink; gradle; spark,-21,3,-18,"base; important area: core, flink, spark; medium file count; multi-area change; co-authored; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.32; capped LanceDB boost for routine/low-signal commit","API, CORE, Flink, Spark: Deprecate Snapshot.changes Methods with SnapshotChange Utility","- Core, Flink, Spark, Build: Replace Guava Queues with plain JDK and bump guava from 33.6.0-jre to 33.7.1-jre  (#17888) (Thanks Yuya Ebihara and dependabot[bot]!)"
+apache/iceberg,9be09782baa577681f8218929ec022ae7fdf83a9,9be0978,Akanksha kedia,89628774+Akanksha-kedia@users.noreply.github.com,2026-08-31T21:37:35+05:30,GitHub,noreply@github.com,2026-08-31T09:07:35-07:00,Docs: Fix grammatical typo in Spark module description (#17897),"'submodules for each spark versions' -> 'submodules for each Spark version'
+(number agreement + capitalization, consistent with Flink/Hive naming nearby)",7f7c0023b1faff6162cc864d3819393ce024d66a,17897,false,,3,3,3,README.md; docs; site,-22,3,-19,base; fix; multi-area change; downrank docs/tests/benchmarks; downrank low-signal sync item; has PR number; LanceDB similarity 0.28; capped LanceDB boost for routine/low-signal commit,Spark: Fix javadoc mentioning Spark 3.3 in Spark 3.4 benchmark classes,- Docs: Fix grammatical typo in Spark module description (#17897) (Thanks Akanksha kedia!)
+apache/iceberg,f2d5f1fd60c33c6cf0b87445b3a3ceaca75670df,f2d5f1f,Yuya Ebihara,ebyhry@gmail.com,2026-09-14T09:51:34+09:00,GitHub,noreply@github.com,2026-09-13T17:51:34-07:00,Build: Bump com.google.cloud:libraries-bom from 26.87.0 to 26.88.0 (#18094),"Bumps [com.google.cloud:libraries-bom](https://github.com/googleapis/google-cloud-java) from 26.87.0 to 26.88.0.
+- [Release notes](https://github.com/googleapis/google-cloud-java/releases)
+- [Changelog](https://github.com/googleapis/google-cloud-java/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/googleapis/google-cloud-java/compare/libraries-bom/v26.87.0...libraries-bom/v26.88.0)
+
+---
+updated-dependencies:
+- dependency-name: com.google.cloud:libraries-bom
+  dependency-version: 26.88.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7368b3fd6c8a21d22e507f7efb139d842d00e067,18094,false,dependabot[bot],3,100,94,gcp-bundle; gradle; kafka-connect,-40,3,-37,base; multi-area change; co-authored; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Core: Fix row ID assignment for EXISTING entry during a manifest merge,- Build: Bump com.google.cloud:libraries-bom from 26.87.0 to 26.88.0 (#18094) (Thanks Yuya Ebihara and dependabot[bot]!)
+apache/iceberg,8d8c4cd9123d4c19c41d5135bfb513d8a95d9773,8d8c4cd,Yuya Ebihara,ebyhry@gmail.com,2026-09-07T09:24:31+09:00,GitHub,noreply@github.com,2026-09-06T17:24:31-07:00,Build: Bump com.google.cloud:libraries-bom from 26.86.0 to 26.87.0 (#17981),"Bumps [com.google.cloud:libraries-bom](https://github.com/googleapis/google-cloud-java) from 26.86.0 to 26.87.0.
+- [Release notes](https://github.com/googleapis/google-cloud-java/releases)
+- [Changelog](https://github.com/googleapis/google-cloud-java/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/googleapis/google-cloud-java/compare/libraries-bom/v26.86.0...libraries-bom/v26.87.0)
+
+---
+updated-dependencies:
+- dependency-name: com.google.cloud:libraries-bom
+  dependency-version: 26.87.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",1d297a09154bc8e716819ea02794dde4cf0ae976,17981,false,dependabot[bot],3,59,59,gcp-bundle; gradle; kafka-connect,-40,3,-37,base; multi-area change; co-authored; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Core: Fix row ID assignment for EXISTING entry during a manifest merge,- Build: Bump com.google.cloud:libraries-bom from 26.86.0 to 26.87.0 (#17981) (Thanks Yuya Ebihara and dependabot[bot]!)
+apache/iceberg,d198ac9433b9bb8afa34696c6b53ba6408eebd0c,d198ac9,Yuya Ebihara,ebyhry@gmail.com,2026-08-30T20:07:19+09:00,GitHub,noreply@github.com,2026-08-30T19:07:19+08:00,Build: Bump software.amazon.awssdk:bom from 2.53.1 to 2.54.2 (#17887),"Bumps software.amazon.awssdk:bom from 2.53.1 to 2.54.2.
+
+---
+updated-dependencies:
+- dependency-name: software.amazon.awssdk:bom
+  dependency-version: 2.54.2
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",bb6bb88cecfd8c0af138f15fcf6033bf5e98c266,17887,false,dependabot[bot],3,86,86,aws-bundle; gradle; kafka-connect,-40,3,-37,base; multi-area change; co-authored; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump software.amazon.awssdk:bom from 2.53.1 to 2.54.2 (#17887) (Thanks Yuya Ebihara and dependabot[bot]!)
+apache/iceberg,7368b3fd6c8a21d22e507f7efb139d842d00e067,7368b3f,Yuya Ebihara,ebyhry@gmail.com,2026-09-14T08:39:42+09:00,GitHub,noreply@github.com,2026-09-13T16:39:42-07:00,Build: Bump io.grpc:grpc-netty-shaded from 1.83.0 to 1.84.0 (#18093),"Bumps [io.grpc:grpc-netty-shaded](https://github.com/grpc/grpc-java) from 1.83.0 to 1.84.0.
+- [Release notes](https://github.com/grpc/grpc-java/releases)
+- [Commits](https://github.com/grpc/grpc-java/compare/v1.83.0...v1.84.0)
+
+---
+updated-dependencies:
+- dependency-name: io.grpc:grpc-netty-shaded
+  dependency-version: 1.84.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",fd2c44f5ac309198c809211c345d368bb04b5eef,18093,false,dependabot[bot],2,2,2,kafka-connect,-45,3,-42,base; co-authored; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Core: Remove deprecation from ViewProperties.WRITE_METADATA_LOCATION,- Build: Bump io.grpc:grpc-netty-shaded from 1.83.0 to 1.84.0 (#18093) (Thanks Yuya Ebihara and dependabot[bot]!)
+apache/iceberg,e290e998bd7f3a9f59e7f2a407ca1f27891f26b2,e290e99,Steve Loughran,stevel@apache.org,2026-08-29T18:12:08+01:00,GitHub,noreply@github.com,2026-08-29T10:12:08-07:00,Build: Bump Avro Version to Avro 1.12.2 (#17188),"* Build: Bump Avro Version to Avro 1.12.2
+
+This is a smoke test PR against the staging RC1 artifacts
+
+Change-Id: I1954fdf77da9cb6b48b8f6eae9ac8536d852366f
+
+* Remove Apache staging repository from repositories
+
+
+Removed Apache staging repository from build.gradle as there's a full release now (same artifact tested against before)",0abea5bc1aa5cfa5919805b43574916833b5a371,17188,false,,1,1,1,gradle,-48,3,-45,base; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump Avro Version to Avro 1.12.2 (#17188) (Thanks Steve Loughran!)
+apache/iceberg,08b1fc4991760bb3249512f199e9282ca0f9d8e6,08b1fc4,Talat UYARER,talat@apache.org,2026-09-02T22:11:38-07:00,GitHub,noreply@github.com,2026-09-03T07:11:38+02:00,Docs: Bump site Flink version to 2.3 (#17936),,112add3c53a950fdef30b85c202a9cd82e2f6080,17936,false,,1,2,2,site,-60,3,-57,base; downrank dependency bump; downrank docs/tests/benchmarks; downrank routine build/deps; has PR number; LanceDB similarity 0.28; capped LanceDB boost for routine/low-signal commit,"Docker, Docs, Site: Add Flink quickstart",- Docs: Bump site Flink version to 2.3 (#17936) (Thanks Talat UYARER!)
+apache/iceberg,f17b40b217e2cc24e5531de3ea7a51c9983f9e38,f17b40b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-05T23:20:23-07:00,GitHub,noreply@github.com,2026-09-05T23:20:23-07:00,Build: Bump actions/setup-java from 5.7.0 to 6.0.0 (#17975),"Bumps [actions/setup-java](https://github.com/actions/setup-java) from 5.7.0 to 6.0.0.
+- [Release notes](https://github.com/actions/setup-java/releases)
+- [Commits](https://github.com/actions/setup-java/compare/b6effb05e454b25005698d916606bdc6ffcbf961...dd06d9cba3e5552c54d9f8ea23572deb30010f7c)
+
+---
+updated-dependencies:
+- dependency-name: actions/setup-java
+  dependency-version: 6.0.0
+  dependency-type: direct:production
+  update-type: version-update:semver-major
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",c3b3573131600145a916b481bf58a9e1e48a32a7,17975,false,dependabot[bot],12,16,16,.github,-66,3,-63,base; medium file count; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Core: Convert metrics to Content Stats,- Build: Bump actions/setup-java from 5.7.0 to 6.0.0 (#17975) (Thanks dependabot[bot]!)
+apache/iceberg,fd2c44f5ac309198c809211c345d368bb04b5eef,fd2c44f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-13T00:57:05-07:00,GitHub,noreply@github.com,2026-09-13T00:57:05-07:00,Build: Bump datamodel-code-generator from 0.76.0 to 0.76.2 (#18083),"Bumps [datamodel-code-generator](https://github.com/datamodel-code-generator/datamodel-code-generator) from 0.76.0 to 0.76.2.
+- [Release notes](https://github.com/datamodel-code-generator/datamodel-code-generator/releases)
+- [Changelog](https://github.com/datamodel-code-generator/datamodel-code-generator/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/datamodel-code-generator/datamodel-code-generator/compare/0.76.0...0.76.2)
+
+---
+updated-dependencies:
+- dependency-name: datamodel-code-generator
+  dependency-version: 0.76.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",df5e75d6e3f571fc326344f29e07adefc4b2d5c9,18083,false,dependabot[bot],1,1,1,open-api,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Fix NPE in `ParquetAvroWriter` when schema contains variant type,- Build: Bump datamodel-code-generator from 0.76.0 to 0.76.2 (#18083) (Thanks dependabot[bot]!)
+apache/iceberg,df5e75d6e3f571fc326344f29e07adefc4b2d5c9,df5e75d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-13T00:56:43-07:00,GitHub,noreply@github.com,2026-09-13T00:56:43-07:00,Build: Bump org.roaringbitmap:RoaringBitmap from 1.6.20 to 1.6.21 (#18084),"Bumps [org.roaringbitmap:RoaringBitmap](https://github.com/RoaringBitmap/RoaringBitmap) from 1.6.20 to 1.6.21.
+- [Release notes](https://github.com/RoaringBitmap/RoaringBitmap/releases)
+- [Commits](https://github.com/RoaringBitmap/RoaringBitmap/compare/1.6.20...1.6.21)
+
+---
+updated-dependencies:
+- dependency-name: org.roaringbitmap:RoaringBitmap
+  dependency-version: 1.6.21
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a7f9fcf2346302839f39cd6558f30cb091bae3cb,18084,false,dependabot[bot],1,1,1,gradle,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.35; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump org.roaringbitmap:RoaringBitmap from 1.6.20 to 1.6.21 (#18084) (Thanks dependabot[bot]!)
+apache/iceberg,a7f9fcf2346302839f39cd6558f30cb091bae3cb,a7f9fcf,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-13T00:56:12-07:00,GitHub,noreply@github.com,2026-09-13T00:56:12-07:00,Build: Bump com.diffplug.spotless:spotless-plugin-gradle from 8.10.1 to 8.10.2 (#18085),"Build: Bump com.diffplug.spotless:spotless-plugin-gradle
+
+Bumps [com.diffplug.spotless:spotless-plugin-gradle](https://github.com/diffplug/spotless) from 8.10.1 to 8.10.2.
+- [Release notes](https://github.com/diffplug/spotless/releases)
+- [Changelog](https://github.com/diffplug/spotless/blob/main/CHANGES.md)
+- [Commits](https://github.com/diffplug/spotless/compare/gradle/8.10.1...gradle/8.10.2)
+
+---
+updated-dependencies:
+- dependency-name: com.diffplug.spotless:spotless-plugin-gradle
+  dependency-version: 8.10.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",5ee0bdefe7535a33d4e6b0da660a8d64f1fecb03,18085,false,dependabot[bot],1,1,1,build.gradle,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.35; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump com.diffplug.spotless:spotless-plugin-gradle from 8.10.1 to 8.10.2 (#18085) (Thanks dependabot[bot]!)
+apache/iceberg,5ee0bdefe7535a33d4e6b0da660a8d64f1fecb03,5ee0bde,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-13T00:55:50-07:00,GitHub,noreply@github.com,2026-09-13T00:55:50-07:00,Build: Bump software.amazon.awssdk:bom from 2.54.7 to 2.54.13 (#18089),"Bumps software.amazon.awssdk:bom from 2.54.7 to 2.54.13.
+
+---
+updated-dependencies:
+- dependency-name: software.amazon.awssdk:bom
+  dependency-version: 2.54.13
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",76c214183d7b07be354c82902dc1db271995e68f,18089,false,dependabot[bot],1,1,1,gradle,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.28; capped LanceDB boost for routine/low-signal commit,Core: Remove deprecation from ViewProperties.WRITE_METADATA_LOCATION,- Build: Bump software.amazon.awssdk:bom from 2.54.7 to 2.54.13 (#18089) (Thanks dependabot[bot]!)
+apache/iceberg,76c214183d7b07be354c82902dc1db271995e68f,76c2141,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-13T00:55:33-07:00,GitHub,noreply@github.com,2026-09-13T00:55:33-07:00,Build: Bump docker/setup-qemu-action from 4.2.0 to 4.3.0 (#18091),"Bumps [docker/setup-qemu-action](https://github.com/docker/setup-qemu-action) from 4.2.0 to 4.3.0.
+- [Release notes](https://github.com/docker/setup-qemu-action/releases)
+- [Commits](https://github.com/docker/setup-qemu-action/compare/96fe6ef7f33517b61c61be40b68a1882f3264fb8...1f40c72289eff860ee54a304f1438e3cff362e0a)
+
+---
+updated-dependencies:
+- dependency-name: docker/setup-qemu-action
+  dependency-version: 4.3.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",9299fe6926db7c09e2fe7f53e8129d994c37859c,18091,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,"Docker, Docs, Site: Add Flink quickstart",- Build: Bump docker/setup-qemu-action from 4.2.0 to 4.3.0 (#18091) (Thanks dependabot[bot]!)
+apache/iceberg,1d297a09154bc8e716819ea02794dde4cf0ae976,1d297a0,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-05T23:24:30-07:00,GitHub,noreply@github.com,2026-09-05T23:24:30-07:00,Build: Bump datamodel-code-generator from 0.74.0 to 0.76.0 (#17968),"Bumps [datamodel-code-generator](https://github.com/koxudaxi/datamodel-code-generator) from 0.74.0 to 0.76.0.
+- [Release notes](https://github.com/koxudaxi/datamodel-code-generator/releases)
+- [Changelog](https://github.com/koxudaxi/datamodel-code-generator/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/koxudaxi/datamodel-code-generator/compare/0.74.0...0.76.0)
+
+---
+updated-dependencies:
+- dependency-name: datamodel-code-generator
+  dependency-version: 0.76.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",9da6c91fc1dca984c71406ad76c7eff89cae9d87,17968,false,dependabot[bot],1,1,1,open-api,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,Spec: Add v4 content stats representation,- Build: Bump datamodel-code-generator from 0.74.0 to 0.76.0 (#17968) (Thanks dependabot[bot]!)
+apache/iceberg,9da6c91fc1dca984c71406ad76c7eff89cae9d87,9da6c91,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-05T23:23:41-07:00,GitHub,noreply@github.com,2026-09-05T23:23:41-07:00,Build: Bump software.amazon.awssdk:bom from 2.54.2 to 2.54.7 (#17969),"Bumps software.amazon.awssdk:bom from 2.54.2 to 2.54.7.
+
+---
+updated-dependencies:
+- dependency-name: software.amazon.awssdk:bom
+  dependency-version: 2.54.7
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",eedfc012c645dbaa73166d106dc96ba2e6e69523,17969,false,dependabot[bot],1,1,1,gradle,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,Spark: Add ordering to TestSelect to remove flakiness <Huaxin Gao>,- Build: Bump software.amazon.awssdk:bom from 2.54.2 to 2.54.7 (#17969) (Thanks dependabot[bot]!)
+apache/iceberg,eedfc012c645dbaa73166d106dc96ba2e6e69523,eedfc01,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-05T23:23:26-07:00,GitHub,noreply@github.com,2026-09-05T23:23:26-07:00,Build: Bump com.diffplug.spotless:spotless-plugin-gradle from 8.10.0 to 8.10.1 (#17970),"Build: Bump com.diffplug.spotless:spotless-plugin-gradle
+
+Bumps [com.diffplug.spotless:spotless-plugin-gradle](https://github.com/diffplug/spotless) from 8.10.0 to 8.10.1.
+- [Release notes](https://github.com/diffplug/spotless/releases)
+- [Changelog](https://github.com/diffplug/spotless/blob/main/CHANGES.md)
+- [Commits](https://github.com/diffplug/spotless/compare/gradle/8.10.0...gradle/8.10.1)
+
+---
+updated-dependencies:
+- dependency-name: com.diffplug.spotless:spotless-plugin-gradle
+  dependency-version: 8.10.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7449f490914ae98aeabd064f082cb5ae4627a1f8,17970,false,dependabot[bot],1,1,1,build.gradle,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.39; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump com.diffplug.spotless:spotless-plugin-gradle from 8.10.0 to 8.10.1 (#17970) (Thanks dependabot[bot]!)
+apache/iceberg,7449f490914ae98aeabd064f082cb5ae4627a1f8,7449f49,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-05T23:22:59-07:00,GitHub,noreply@github.com,2026-09-05T23:22:59-07:00,Build: Bump org.xerial:sqlite-jdbc from 3.53.2.1 to 3.53.4.0 (#17972),"Bumps [org.xerial:sqlite-jdbc](https://github.com/xerial/sqlite-jdbc) from 3.53.2.1 to 3.53.4.0.
+- [Release notes](https://github.com/xerial/sqlite-jdbc/releases)
+- [Changelog](https://github.com/xerial/sqlite-jdbc/blob/master/CHANGELOG)
+- [Commits](https://github.com/xerial/sqlite-jdbc/compare/3.53.2.1...3.53.4.0)
+
+---
+updated-dependencies:
+- dependency-name: org.xerial:sqlite-jdbc
+  dependency-version: 3.53.4.0
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",abce5bb2f17ecd021ed5d61691da6dbf428e1f6f,17972,false,dependabot[bot],1,1,1,gradle,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.27; capped LanceDB boost for routine/low-signal commit,Core: Remove deprecation from ViewProperties.WRITE_METADATA_LOCATION,- Build: Bump org.xerial:sqlite-jdbc from 3.53.2.1 to 3.53.4.0 (#17972) (Thanks dependabot[bot]!)
+apache/iceberg,abce5bb2f17ecd021ed5d61691da6dbf428e1f6f,abce5bb,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-05T23:22:43-07:00,GitHub,noreply@github.com,2026-09-05T23:22:43-07:00,Build: Bump org.openapitools:openapi-generator-gradle-plugin from 7.24.0 to 7.25.0 (#17973),"Build: Bump org.openapitools:openapi-generator-gradle-plugin
+
+Bumps [org.openapitools:openapi-generator-gradle-plugin](https://github.com/OpenAPITools/openapi-generator) from 7.24.0 to 7.25.0.
+- [Release notes](https://github.com/OpenAPITools/openapi-generator/releases)
+- [Changelog](https://github.com/OpenAPITools/openapi-generator/blob/master/docs/release-summary.md)
+- [Commits](https://github.com/OpenAPITools/openapi-generator/compare/v7.24.0...v7.25.0)
+
+---
+updated-dependencies:
+- dependency-name: org.openapitools:openapi-generator-gradle-plugin
+  dependency-version: 7.25.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",96ae51d86b32f1e4f3a117aad2c3d0c0a8a0759a,17973,false,dependabot[bot],1,1,1,build.gradle,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.34; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump org.openapitools:openapi-generator-gradle-plugin from 7.24.0 to 7.25.0 (#17973) (Thanks dependabot[bot]!)
+apache/iceberg,96ae51d86b32f1e4f3a117aad2c3d0c0a8a0759a,96ae51d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-05T23:22:29-07:00,GitHub,noreply@github.com,2026-09-05T23:22:29-07:00,Build: Bump the codeql-action group with 3 updates (#17974),"Bumps the codeql-action group with 3 updates: [github/codeql-action/init](https://github.com/github/codeql-action), [github/codeql-action/analyze](https://github.com/github/codeql-action) and [github/codeql-action/upload-sarif](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.8 to 4.37.9
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28...cdf488f595d80d6e07e03d4674febd5ab45fa938)
+
+Updates `github/codeql-action/analyze` from 4.37.8 to 4.37.9
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28...cdf488f595d80d6e07e03d4674febd5ab45fa938)
+
+Updates `github/codeql-action/upload-sarif` from 4.37.8 to 4.37.9
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28...cdf488f595d80d6e07e03d4674febd5ab45fa938)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.37.9
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.37.9
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/upload-sarif
+  dependency-version: 4.37.9
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",f17b40b217e2cc24e5531de3ea7a51c9983f9e38,17974,false,dependabot[bot],2,3,3,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.16; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- Build: Bump the codeql-action group with 3 updates (#17974) (Thanks dependabot[bot]!)
+apache/iceberg,c3b3573131600145a916b481bf58a9e1e48a32a7,c3b3573,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-05T23:20:08-07:00,GitHub,noreply@github.com,2026-09-05T23:20:08-07:00,Build: Bump zizmorcore/zizmor-action from 0.6.2 to 0.6.3 (#17976),"Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.6.2 to 0.6.3.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/3dc1ecc9bcb9e94e9b2c709687979e1298497054...70fb788f84895a7701f5643d103d587e460b5c99)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.6.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",3a68b70bfb1e4ca6e9386271e262f48596cd6c44,17976,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Core: Propagate Avro compression settings to manifest writers,- Build: Bump zizmorcore/zizmor-action from 0.6.2 to 0.6.3 (#17976) (Thanks dependabot[bot]!)
+apache/iceberg,6344f6e17d6b92146f1ec8bfb7626f124f2cea4b,6344f6e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-03T20:05:43-07:00,GitHub,noreply@github.com,2026-09-03T20:05:43-07:00,Build: Bump mkdocs-material from 9.7.5 to 9.7.7 in /site (#17942),"Bumps [mkdocs-material](https://github.com/squidfunk/mkdocs-material) from 9.7.5 to 9.7.7.
+- [Release notes](https://github.com/squidfunk/mkdocs-material/releases)
+- [Changelog](https://github.com/squidfunk/mkdocs-material/blob/master/CHANGELOG)
+- [Commits](https://github.com/squidfunk/mkdocs-material/compare/9.7.5...9.7.7)
+
+---
+updated-dependencies:
+- dependency-name: mkdocs-material
+  dependency-version: 9.7.7
+  dependency-type: direct:production
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",6dec25e430b33a8b4f623b14940110d459581826,17942,false,dependabot[bot],1,1,1,site,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,Spark 4.1: Rename expectedSchema to projection for clarity,- Build: Bump mkdocs-material from 9.7.5 to 9.7.7 in /site (#17942) (Thanks dependabot[bot]!)
+apache/iceberg,1051b432aae7b27c5dd18a2b7b9a395b6694d84a,1051b43,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-30T19:08:38+08:00,GitHub,noreply@github.com,2026-08-30T19:08:38+08:00,Build: Bump datamodel-code-generator from 0.73.0 to 0.74.0 (#17880),"Bumps [datamodel-code-generator](https://github.com/koxudaxi/datamodel-code-generator) from 0.73.0 to 0.74.0.
+- [Release notes](https://github.com/koxudaxi/datamodel-code-generator/releases)
+- [Changelog](https://github.com/koxudaxi/datamodel-code-generator/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/koxudaxi/datamodel-code-generator/compare/0.73.0...0.74.0)
+
+---
+updated-dependencies:
+- dependency-name: datamodel-code-generator
+  dependency-version: 0.74.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",5e3e1bec4658bda23a5134096b2075c8188e0020,17880,false,dependabot[bot],1,1,1,open-api,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- Build: Bump datamodel-code-generator from 0.73.0 to 0.74.0 (#17880) (Thanks dependabot[bot]!)
+apache/iceberg,5e3e1bec4658bda23a5134096b2075c8188e0020,5e3e1be,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-30T19:08:16+08:00,GitHub,noreply@github.com,2026-08-30T19:08:16+08:00,Build: Bump the codeql-action group with 3 updates (#17885),"Bumps the codeql-action group with 3 updates: [github/codeql-action/init](https://github.com/github/codeql-action), [github/codeql-action/analyze](https://github.com/github/codeql-action) and [github/codeql-action/upload-sarif](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.7 to 4.37.8
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd...db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28)
+
+Updates `github/codeql-action/analyze` from 4.37.7 to 4.37.8
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd...db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28)
+
+Updates `github/codeql-action/upload-sarif` from 4.37.7 to 4.37.8
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd...db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.37.8
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.37.8
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/upload-sarif
+  dependency-version: 4.37.8
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",712302de665943829ce7b29e7d4aa9b2dc8f83e2,17885,false,dependabot[bot],2,3,3,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.16; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- Build: Bump the codeql-action group with 3 updates (#17885) (Thanks dependabot[bot]!)
+apache/iceberg,712302de665943829ce7b29e7d4aa9b2dc8f83e2,712302d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-30T19:07:56+08:00,GitHub,noreply@github.com,2026-08-30T19:07:56+08:00,Build: Bump com.diffplug.spotless:spotless-plugin-gradle from 8.9.0 to 8.10.0 (#17883),"Build: Bump com.diffplug.spotless:spotless-plugin-gradle
+
+Bumps [com.diffplug.spotless:spotless-plugin-gradle](https://github.com/diffplug/spotless) from 8.9.0 to 8.10.0.
+- [Release notes](https://github.com/diffplug/spotless/releases)
+- [Changelog](https://github.com/diffplug/spotless/blob/main/CHANGES.md)
+- [Commits](https://github.com/diffplug/spotless/compare/gradle/8.9.0...gradle/8.10.0)
+
+---
+updated-dependencies:
+- dependency-name: com.diffplug.spotless:spotless-plugin-gradle
+  dependency-version: 8.10.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7bd0f94707ce778d7f5c40d95b93839d4a6ca008,17883,false,dependabot[bot],1,1,1,build.gradle,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.30; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump com.diffplug.spotless:spotless-plugin-gradle from 8.9.0 to 8.10.0 (#17883) (Thanks dependabot[bot]!)
+apache/iceberg,7bd0f94707ce778d7f5c40d95b93839d4a6ca008,7bd0f94,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-30T19:07:39+08:00,GitHub,noreply@github.com,2026-08-30T19:07:39+08:00,Build: Bump docker/setup-buildx-action from 4.2.0 to 4.3.0 (#17886),"Bumps [docker/setup-buildx-action](https://github.com/docker/setup-buildx-action) from 4.2.0 to 4.3.0.
+- [Release notes](https://github.com/docker/setup-buildx-action/releases)
+- [Commits](https://github.com/docker/setup-buildx-action/compare/bb05f3f5519dd87d3ba754cc423b652a5edd6d2c...37fe631027851001ddb9b187196cc803df7f5f0e)
+
+---
+updated-dependencies:
+- dependency-name: docker/setup-buildx-action
+  dependency-version: 4.3.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",d198ac9433b9bb8afa34696c6b53ba6408eebd0c,17886,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,"Docker, Docs, Site: Add Flink quickstart",- Build: Bump docker/setup-buildx-action from 4.2.0 to 4.3.0 (#17886) (Thanks dependabot[bot]!)
+apache/iceberg,14defbdecf39d0e1306b235a4e0b14a5bce78595,14defbd,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-08-30T14:21:06-07:00,GitHub,noreply@github.com,2026-08-30T14:21:06-07:00,Build: Bump jackson-bom from 2.22.1 to 2.22.2 (#17881),"Bumps `jackson-bom` from 2.22.1 to 2.22.2.
+
+Updates `com.fasterxml.jackson:jackson-bom` from 2.22.1 to 2.22.2
+- [Commits](https://github.com/FasterXML/jackson-bom/compare/jackson-bom-2.22.1...jackson-bom-2.22.2)
+
+Updates `com.fasterxml.jackson.core:jackson-core` from 2.22.1 to 2.22.2
+- [Commits](https://github.com/FasterXML/jackson-core/compare/jackson-core-2.22.1...jackson-core-2.22.2)
+
+Updates `com.fasterxml.jackson.core:jackson-databind` from 2.22.1 to 2.22.2
+- [Commits](https://github.com/FasterXML/jackson-databind/compare/jackson-databind-2.22.1...jackson-databind-2.22.2)
+
+---
+updated-dependencies:
+- dependency-name: com.fasterxml.jackson:jackson-bom
+  dependency-version: 2.22.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+- dependency-name: com.fasterxml.jackson.core:jackson-core
+  dependency-version: 2.22.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+- dependency-name: com.fasterxml.jackson.core:jackson-databind
+  dependency-version: 2.22.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",1051b432aae7b27c5dd18a2b7b9a395b6694d84a,17881,false,dependabot[bot],1,1,1,gradle,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump jackson-bom from 2.22.1 to 2.22.2 (#17881) (Thanks dependabot[bot]!)

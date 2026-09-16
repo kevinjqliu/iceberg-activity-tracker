@@ -1,0 +1,166 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-cpp,ef394f967bf0b726636c9b8231647e6c069e06dd,ef394f9,Gang Wu,ustcwg@gmail.com,2026-08-26T15:38:34+08:00,GitHub,noreply@github.com,2026-08-26T15:38:34+08:00,refactor: move Puffin & DV support into core iceberg library (#900),"Move Puffin readers and writers, deletion-vector utilities, and DVWriter into
+the iceberg library. Keep data writers and iceberg_data::WriteResult in
+iceberg_data, and give DVWriter its own DeleteWriteResult.
+
+Replace PuffinDVIORegistry with DVUtil::MergeAndWriteDVs, update CMake and
+Meson ownership and dependencies, and refresh tests and library documentation.",86821d7df1c373f0b6dfe605452515bd02305b4b,900,false,,40,479,568,deletes; dv_writer_test.cc; mkdocs; src; },110,11,121,base; feature/api verb; strategic: puffin; summary signal: deletion-vector; deletion vector signal; large file count; large churn; multi-area change; has PR number; LanceDB similarity 0.36,Flink: Support UUID type in Avro and Parquet readers and writers,- refactor: move Puffin & DV support into core iceberg library (#900) (Thanks Gang Wu!)
+apache/iceberg-cpp,b88b89360367932f372a5554fdf68e2b366f8ef9,b88b893,Joey,1517874642@qq.com,2026-09-03T23:30:11+08:00,GitHub,noreply@github.com,2026-09-03T23:30:11+08:00,fix(cmake): generate version.h under PROJECT_BINARY_DIR to support add_subdirectory() builds (#906),"CMakeLists.txt generates the versioned header at
+${CMAKE_BINARY_DIR}/src/iceberg/version.h, but the include path used
+to compile the iceberg target (ICEBERG_INCLUDES in
+src/iceberg/CMakeLists.txt) is ${PROJECT_BINARY_DIR}/src. This change
+makes both consistently use PROJECT_BINARY_DIR.
+
+When iceberg-cpp is built as the top-level project, CMAKE_BINARY_DIR
+and PROJECT_BINARY_DIR happen to be the same directory, so this
+mismatch is invisible.
+
+When iceberg-cpp is consumed via add_subdirectory() from another
+CMake project (e.g. vendoring it under third/iceberg-cpp/),
+CMAKE_BINARY_DIR resolves to the outermost project's build directory,
+while PROJECT_BINARY_DIR correctly resolves to the build directory
+nested under the outer project (e.g.
+<outer_build_dir>/third/iceberg-cpp/). The generated version.h then
+ends up in the wrong place and any translation unit that does
+#include ""iceberg/version.h"" (e.g. catalog/rest/constant.h,
+deletes/dv_util.cc, deletes/dv_writer.cc) fails with a missing header
+when building as a nested dependency.
+
+Co-authored-by: joeyyjwang <joeyyjwang@tencent.com>",8e1cb7a41bb1b4a3dd0593bc58e67b2bd1789286,906,false,joeyyjwang,1,1,1,CMakeLists.txt,68,6,74,base; feature/api verb; fix; strategic: catalog; co-authored; has PR number; LanceDB similarity 0.21,OpenAPI: Promote the S3 signing endpoint to the main spec,- fix(cmake): generate version.h under PROJECT_BINARY_DIR to support add_subdirectory() builds (#906) (Thanks Joey and joeyyjwang!)
+apache/iceberg-cpp,4e4e10a2103dac18cbe4d531710e0c86ba340840,4e4e10a,Junwang Zhao,zhjwpku@gmail.com,2026-09-13T11:16:39+08:00,GitHub,noreply@github.com,2026-09-13T11:16:39+08:00,refactor: expose snapshot utilities in a public header (#932),,a00387f12906b77fc62f943708632f7e6d767c0c,932,false,,11,15,9,snapshot_util.h; src,46,6,52,base; feature/api verb; medium file count; multi-area change; has PR number; LanceDB similarity 0.19,Core: Include query params into ETag calculation in reference IRC,- refactor: expose snapshot utilities in a public header (#932) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,ac6c0ba4d83abe80cfce9f6c1b3d6686b7811dcb,ac6c0ba,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-09-08T09:28:19-07:00,GitHub,noreply@github.com,2026-09-09T00:28:19+08:00,feat(parquet): support reading list columns as Arrow large_list (#714),,b52568ce00c37bfcd763f4fa0bcfdcf8fef2b0f2,714,false,,5,617,8,src,45,6,51,base; feature/api verb; medium file count; medium churn; has PR number; LanceDB similarity 0.20,Make StandardEncryptionManager serializable,- feat(parquet): support reading list columns as Arrow large_list (#714) (Thanks Rahul Shivu Mahadev!)
+apache/iceberg-cpp,dcf92f560c93d6286ca05f922d3a2ba662ff134a,dcf92f5,Manu Zhang,OwenZhang1990@gmail.com,2026-09-04T22:55:45+08:00,GitHub,noreply@github.com,2026-09-04T22:55:45+08:00,feat: add fallible iterator utility (#905),,02779a708e1af698fde7fb28657b2efd297d5867,905,false,,6,306,0,src,45,5,50,base; feature/api verb; medium file count; medium churn; has PR number; LanceDB similarity 0.18,GCP: Add scheduled refresh for storage credentials held by GCSFileIO,- feat: add fallible iterator utility (#905) (Thanks Manu Zhang!)
+apache/iceberg-cpp,811d500426190e2e5e6730da39cc59c0aacd37f3,811d500,Xinli Shang,shangx@uber.com,2026-09-08T07:16:16-07:00,GitHub,noreply@github.com,2026-09-08T22:16:16+08:00,feat: expose ReplacePartitions on Table and Transaction (#925),"Adds NewReplacePartitions() to Table and Transaction, with the
+StaticTable override returning NotSupported. Routes the existing
+ReplacePartitions tests through Table::NewReplacePartitions() and adds
+a transaction-scoped test.",fb54f93a80b7c54e4d30bbe6607abf3d873439d0,925,false,,6,78,4,src,41,8,49,base; feature/api verb; medium file count; has PR number; LanceDB similarity 0.28,Docs: Add informational properties section for table comment,- feat: expose ReplacePartitions on Table and Transaction (#925) (Thanks Xinli Shang!)
+apache/iceberg-cpp,7dcc4ced28e725de951840adb2cdb2a422b27e0a,7dcc4ce,Zehua Zou,zehuazou2000@gmail.com,2026-08-28T14:37:31+08:00,GitHub,noreply@github.com,2026-08-28T14:37:31+08:00,chore: add support for stale PR workflow (#901),,ef394f967bf0b726636c9b8231647e6c069e06dd,901,false,,1,49,0,.github,37,9,46,base; feature/api verb; has PR number; LanceDB similarity 0.31,"Core, REST: Add support for overwrite in RegisterTableRequest",- chore: add support for stale PR workflow (#901) (Thanks Zehua Zou!)
+apache/iceberg-cpp,86821d7df1c373f0b6dfe605452515bd02305b4b,86821d7,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-08-26T14:51:03+08:00,GitHub,noreply@github.com,2026-08-26T14:51:03+08:00,feat(io): restore the oss scheme with a round trip test and docs (#893),,3cf417803a07a737b9da8da29d00c237d448677d,893,false,,10,400,22,mkdocs; src,28,3,31,base; important area: io; medium file count; medium churn; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.16; capped LanceDB boost for routine/low-signal commit,Control merge schema evolution via table property in Spark 4.1,- feat(io): restore the oss scheme with a round trip test and docs (#893) (Thanks Jiajia Li!)
+apache/iceberg-cpp,307adb1cc272f830fdbae1b1ee241acd92451657,307adb1,kid,19265318+u70b3@users.noreply.github.com,2026-09-13T23:13:40+08:00,GitHub,noreply@github.com,2026-09-13T23:13:40+08:00,fix: track batch position delete references (#842),,4e4e10a2103dac18cbe4d531710e0c86ba340840,842,false,,2,293,19,src,24,5,29,base; fix; medium churn; has PR number; LanceDB similarity 0.18,Spark 4.1: New Async Spark Micro Batch Planner,- fix: track batch position delete references (#842) (Thanks kid!)
+apache/iceberg-cpp,97ce6eb6eaf80d7c208613350dcb4b60adeed25f,97ce6eb,Junwang Zhao,zhjwpku@gmail.com,2026-09-07T11:30:29+08:00,GitHub,noreply@github.com,2026-09-07T11:30:29+08:00,fix: correct mismatched class and struct declarations (#911),"Keep Projections and TableMetadataBuilder::Impl declarations consistent
+with their definitions to avoid mismatched-tag diagnostics and potential
+link failures under the Microsoft C++ ABI.",dcf92f560c93d6286ca05f922d3a2ba662ff134a,911,false,,2,2,2,src,20,6,26,base; fix; has PR number; LanceDB similarity 0.20,Spark: Backport Add _row_id and _last_updated_sequence_number raeder in Orc to support lineage,- fix: correct mismatched class and struct declarations (#911) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,8ed779fc98279ae351e75d786457c20e86043c0e,8ed779f,Minh Vu,vuhoangminh97@gmail.com,2026-09-03T04:59:53+02:00,GitHub,noreply@github.com,2026-09-03T10:59:53+08:00,fix: reject malformed Arrow field IDs (#845),,7dcc4ced28e725de951840adb2cdb2a422b27e0a,845,false,,2,28,8,src,20,5,25,base; fix; has PR number; LanceDB similarity 0.16,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- fix: reject malformed Arrow field IDs (#845) (Thanks Minh Vu!)
+apache/iceberg-cpp,b52568ce00c37bfcd763f4fa0bcfdcf8fef2b0f2,b52568c,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-09-08T22:40:33+08:00,GitHub,noreply@github.com,2026-09-08T22:40:33+08:00,build: install the public headers under iceberg/catalog (#927),"rest_catalog.h is installed and includes iceberg/catalog/session_catalog.h,
+but the CMake build never installs the headers directly under
+src/iceberg/catalog, so any downstream project that consumes the installed
+package and uses the REST catalog fails to compile:
+
+  fatal error: iceberg/catalog/session_catalog.h: No such file or directory
+
+The Meson build already installs these three headers; only CMake is missing
+them, and every sibling directory (data, expression, manifest, ...) calls
+iceberg_install_all_headers.",811d500426190e2e5e6730da39cc59c0aacd37f3,927,false,,1,2,0,src,17,3,20,"base; strategic: catalog, manifest; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit",Flink: Add the possibility to use Coordinator Lock when using Flink SQL,- build: install the public headers under iceberg/catalog (#927) (Thanks Jiajia Li!)
+apache/iceberg-cpp,a00387f12906b77fc62f943708632f7e6d767c0c,a00387f,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-12T00:34:00+01:00,GitHub,noreply@github.com,2026-09-11T16:34:00-07:00,ci: use Quay and GitHub releases for MinIO (#933),"* ci: pull MinIO image from Quay
+
+Docker Hub no longer serves the MinIO server repository. Use the corresponding Quay image so Docker-based S3 test setup can start on clean machines.
+
+Generated-by: Codex
+
+* ci: fetch MinIO binaries from GitHub releases
+
+The MinIO download host returns HTTP 410 for native binaries. Use pinned official GitHub release assets for the client and Windows server, and reject HTTP errors before executing downloads.
+
+Generated-by: Codex",c136a1f924909675d0d9d95b10e91193696af3b9,933,false,,1,11,6,ci,12,6,18,base; has PR number; LanceDB similarity 0.21,Flink: Support UUID type in Avro and Parquet readers and writers,- ci: use Quay and GitHub releases for MinIO (#933) (Thanks Sreesh Maheshwar!)
+apache/iceberg-cpp,c136a1f924909675d0d9d95b10e91193696af3b9,c136a1f,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-10T08:25:45-07:00,GitHub,noreply@github.com,2026-09-10T08:25:45-07:00,chore(test): run REST fixture's SQLite backend in WAL mode (#931),Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>,ac6c0ba4d83abe80cfce9f6c1b3d6686b7811dcb,931,false,Claude Fable 5.1,1,1,1,src,3,3,6,base; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.16; capped LanceDB boost for routine/low-signal commit,Core: Include query params into ETag calculation in reference IRC,- chore(test): run REST fixture's SQLite backend in WAL mode (#931) (Thanks Kevin Liu and Claude Fable 5.1!)
+apache/iceberg-cpp,fb54f93a80b7c54e4d30bbe6607abf3d873439d0,fb54f93,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-08T22:14:25+08:00,GitHub,noreply@github.com,2026-09-08T22:14:25+08:00,chore(deps): bump apache/skywalking-eyes from 0.8.0 to 0.9.0 (#924),"Bumps [apache/skywalking-eyes](https://github.com/apache/skywalking-eyes) from 0.8.0 to 0.9.0.
+- [Release notes](https://github.com/apache/skywalking-eyes/releases)
+- [Changelog](https://github.com/apache/skywalking-eyes/blob/main/CHANGES.md)
+- [Commits](https://github.com/apache/skywalking-eyes/compare/61275cc80d0798a405cb070f7d3a8aaf7cf2c2c1...a196742f472feaffafea537ce5a2a4c3c53a8de4)
+
+---
+updated-dependencies:
+- dependency-name: apache/skywalking-eyes
+  dependency-version: 0.9.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a9a2f63c8212620d6402c4cd27e2cdea929226b6,924,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.33; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- chore(deps): bump apache/skywalking-eyes from 0.8.0 to 0.9.0 (#924) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,a9a2f63c8212620d6402c4cd27e2cdea929226b6,a9a2f63,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-08T22:14:10+08:00,GitHub,noreply@github.com,2026-09-08T22:14:10+08:00,chore(deps): bump zizmorcore/zizmor-action from 0.6.2 to 0.6.3 (#923),"Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.6.2 to 0.6.3.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/3dc1ecc9bcb9e94e9b2c709687979e1298497054...70fb788f84895a7701f5643d103d587e460b5c99)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.6.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",775f8d3b6712f16b2a06863a1cdc352f90880283,923,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Core: Propagate Avro compression settings to manifest writers,- chore(deps): bump zizmorcore/zizmor-action from 0.6.2 to 0.6.3 (#923) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,775f8d3b6712f16b2a06863a1cdc352f90880283,775f8d3,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-08T22:13:54+08:00,GitHub,noreply@github.com,2026-09-08T22:13:54+08:00,chore(deps): bump the codeql-action group with 2 updates (#922),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.8 to 4.37.9
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28...cdf488f595d80d6e07e03d4674febd5ab45fa938)
+
+Updates `github/codeql-action/analyze` from 4.37.8 to 4.37.9
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28...cdf488f595d80d6e07e03d4674febd5ab45fa938)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.37.9
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.37.9
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",97ce6eb6eaf80d7c208613350dcb4b60adeed25f,922,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.13; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#922) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,02779a708e1af698fde7fb28657b2efd297d5867,02779a7,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-04T22:45:44+08:00,GitHub,noreply@github.com,2026-09-04T22:45:44+08:00,chore(deps): bump mkdocs-material from 9.6.22 to 9.7.7 (#908),"Bumps [mkdocs-material](https://github.com/squidfunk/mkdocs-material) from 9.6.22 to 9.7.7.
+- [Release notes](https://github.com/squidfunk/mkdocs-material/releases)
+- [Changelog](https://github.com/squidfunk/mkdocs-material/blob/master/CHANGELOG)
+- [Commits](https://github.com/squidfunk/mkdocs-material/compare/9.6.22...9.7.7)
+
+---
+updated-dependencies:
+- dependency-name: mkdocs-material
+  dependency-version: 9.7.7
+  dependency-type: direct:production
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",b88b89360367932f372a5554fdf68e2b366f8ef9,908,false,dependabot[bot],1,1,1,requirements.txt,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,Core: Remove deprecation from ViewProperties.WRITE_METADATA_LOCATION,- chore(deps): bump mkdocs-material from 9.6.22 to 9.7.7 (#908) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,8e1cb7a41bb1b4a3dd0593bc58e67b2bd1789286,8e1cb7a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-03T11:00:25+08:00,GitHub,noreply@github.com,2026-09-03T11:00:25+08:00,chore(deps): bump the codeql-action group with 2 updates (#903),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.7 to 4.37.8
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd...db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28)
+
+Updates `github/codeql-action/analyze` from 4.37.7 to 4.37.8
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd...db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.37.8
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.37.8
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",8ed779fc98279ae351e75d786457c20e86043c0e,903,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#903) (Thanks dependabot[bot]!)
