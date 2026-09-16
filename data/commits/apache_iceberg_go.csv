@@ -29112,3 +29112,25 @@ survives the commit, so a rolled-back savepoint fails the test.
 ---------
 
 Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>",b9cab8c898a130b8ed9863658dfadf592ae472a6,1635,false,,2,435,3,catalog
+apache/iceberg-go,c9deccc5531c5cf0283e0150e7ae6a98c366f0fd,c9deccc,Ajitesh Singh,ajiteshjs@gmail.com,2026-09-16T01:24:35-07:00,GitHub,noreply@github.com,2026-09-16T10:24:35+02:00,fix(table): convert int-backed decimal row group bounds (#2009),"Parquet plain-encodes INT32/INT64-backed decimal statistics little-endian,
+while an Iceberg bound is big-endian two's complement. TestRowGroup stored
+the stat bytes as bounds unchanged, so they decoded to unrelated values and
+pruned row groups that do match, silently dropping rows from scan results.
+
+Reverse the stat bytes for those two physical types before storing them,
+in a parquetStatsBounds helper that any evaluator populating bounds from
+Parquet statistics should go through. FIXED_LEN_BYTE_ARRAY-backed decimals
+are already big-endian in Parquet and pass through untouched. The reversed
+4- or 8-byte bounds are wider than the spec's minimum width, but they are
+only used in memory and UnmarshalBinary is width-tolerant, so they decode
+as-is. arrow-go plain-encodes little-endian on big-endian hosts too, so the
+conversion does not depend on the host architecture.
+
+Closes #1876
+
+
+
+Claude-Session: https://claude.ai/code/session_01Vjw9UhcAFA8jpcrFdfrBTk
+
+Signed-off-by: Ajitesh Singh <ajiteshjs@gmail.com>
+Co-authored-by: Claude Opus 5 <noreply@anthropic.com>",8832cf696b5cc2a54767b5f2fa4c06b138c04495,2009,false,Claude Opus 5,2,279,2,table

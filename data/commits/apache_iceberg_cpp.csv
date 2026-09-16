@@ -8840,3 +8840,43 @@ The MinIO download host returns HTTP 410 for native binaries. Use pinned officia
 Generated-by: Codex",c136a1f924909675d0d9d95b10e91193696af3b9,933,false,,1,11,6,ci
 apache/iceberg-cpp,4e4e10a2103dac18cbe4d531710e0c86ba340840,4e4e10a,Junwang Zhao,zhjwpku@gmail.com,2026-09-13T11:16:39+08:00,GitHub,noreply@github.com,2026-09-13T11:16:39+08:00,refactor: expose snapshot utilities in a public header (#932),,a00387f12906b77fc62f943708632f7e6d767c0c,932,false,,11,15,9,snapshot_util.h; src
 apache/iceberg-cpp,307adb1cc272f830fdbae1b1ee241acd92451657,307adb1,kid,19265318+u70b3@users.noreply.github.com,2026-09-13T23:13:40+08:00,GitHub,noreply@github.com,2026-09-13T23:13:40+08:00,fix: track batch position delete references (#842),,4e4e10a2103dac18cbe4d531710e0c86ba340840,842,false,,2,293,19,src
+apache/iceberg-cpp,bec0ceb6e644acafb09b2a0b16ca91bbff952265,bec0ceb,Joey,1517874642@qq.com,2026-09-16T10:06:48+08:00,GitHub,noreply@github.com,2026-09-16T10:06:48+08:00,fix(manifest): write null instead of empty list/map for unset optional DataFile fields (#934),"AppendIntList, AppendIntMap, and AppendBinaryMap in
+src/iceberg/arrow_row_builder.cc always call ArrowArrayFinishElement()
+after appending entries, even when the input container is empty. This
+produced an empty-but-non-null list/map element rather than a null
+element whenever one of DataFile's optional list/map fields
+(split_offsets, equality_ids, column_sizes, value_counts,
+null_value_counts, nan_value_counts, lower_bounds, upper_bounds) was
+unset.
+
+Add an empty check to each of these helpers that delegates to the
+existing AppendNull() instead of finishing an empty element.
+AppendStringMap (used for required properties-style maps) is
+intentionally left unchanged.
+
+Add unit test coverage in arrow_row_builder_test.cc asserting that
+AppendIntList/AppendIntMap/AppendBinaryMap write a null element (not
+an empty one) for empty input, alongside existing non-empty-input
+coverage.
+
+Co-authored-by: joeyyjwang <joeyyjwang@tencent.com>",307adb1cc272f830fdbae1b1ee241acd92451657,934,false,joeyyjwang,2,117,0,src
+apache/iceberg-cpp,6361791d70d19f3638e7a929d8d4661aa8c26a46,6361791,wzhuo,wngzhuo@gmail.com,2026-09-16T17:09:59+08:00,GitHub,noreply@github.com,2026-09-16T17:09:59+08:00,feat(inspect): implement streaming SnapshotsTable scans (#801),"- Add Scan() virtual method and Scan() convenience overload to MetadataTable
+- Add SnapshotSelection struct for time-travel snapshot resolution
+- Add supports_time_travel() concrete method driven by kind()
+- Implement SnapshotsTable::Scan() to materialize snapshot rows via ArrowRowBuilder",bec0ceb6e644acafb09b2a0b16ca91bbff952265,801,false,,14,752,137,src
+apache/iceberg-cpp,6988eb067a92e6ea5445f8810b2bbe5bc6b86e40,6988eb0,Manu Zhang,OwenZhang1990@gmail.com,2026-09-16T22:28:38+08:00,GitHub,noreply@github.com,2026-09-16T22:28:38+08:00,feat: add lazy scan planning streams (#873),"Scan planning currently materializes manifest entries and file scan tasks before returning. This change adds fallible, single-pass streams so callers can consume entries and tasks incrementally or stop early.
+
+- Add `DataTableScan::PlanFilesStream()` and `ManifestGroup::PlanFilesStream()`. The eager `PlanFiles()` methods collect the stream into a vector.
+- Add `ManifestReader::EntriesStream()` and `LiveEntriesStream()` as the reader implementation extension points. `Entries()` and `LiveEntries()` collect these streams for eager callers.
+- Rename the pull utility from `Iterator<T>` to `Stream<T>`, with `ManifestEntryStream` and `FileScanTaskStream` aliases and corresponding owning `*Ptr` aliases. `Next()` returns `Result<std::optional<T>>`; errors and exhaustion are terminal, and `ToVector()` collects the remaining values.
+- Distinguish explicit empty selections from default projections: `Select({})` selects no user columns, while `Select({""*""})` or omitting `Select()` selects all columns. Table projections still include fields required by filters, and an explicit empty selection conflicts with an explicit projection schema.
+- Preserve partition values needed for delete matching and residual evaluation under narrow projections. Read statistics needed for equality-delete matching, then drop statistics the caller did not request.
+- Report scan metrics on exhaustion or early stream destruction, without emitting a successful report after a planning error.
+
+Streams own their reader or planning resources and may outlive the object that created them. A configured executor is borrowed and must remain alive until the planning stream is destroyed. Serial planning opens one data manifest at a time; executor-backed planning opens at most 32 matching manifest streams per batch and consumes their entries incrementally. `DataTableScan` uses the configured executor when there is more than one data manifest or more than one delete manifest.
+
+Snapshot and manifest-list metadata remain materialized, and delete manifests are read eagerly to build the delete-file index before returning the planning stream.
+
+API changes: include `iceberg/util/stream.h` and use `Stream<T>` in place of `Iterator<T>`. `ManifestGroup::PlanFiles()` and `PlanFilesStream()` consume the group and require an rvalue, such as `std::move(*group).PlanFilesStream()`. Custom manifest readers implement `EntriesStream()` and `LiveEntriesStream()` and return streams that remain valid after reader destruction. `DataTableScan::PlanFiles()` retains its existing caller syntax and eager result type.
+
+Validation: built `manifest_test` and `scan_test` with CMake and ran `ctest --test-dir build --output-on-failure -R '^(manifest_test|scan_test)$'`; both suites passed. Coverage includes empty and wildcard projections, equality and position deletes, partition isolation, executor-backed planning, stream lifetimes, and scan reporting. `git diff --check` passed.",6361791d70d19f3638e7a929d8d4661aa8c26a46,873,false,,18,1227,314,example; src; stream.h; stream_test.cc
