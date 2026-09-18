@@ -29145,3 +29145,90 @@ Signed-off-by: badalprasadsingh <badal@datazip.io>
 ---------
 
 Signed-off-by: badalprasadsingh <badal@datazip.io>",c9deccc5531c5cf0283e0150e7ae6a98c366f0fd,2004,false,,3,119,4,table
+apache/iceberg-go,fd547716756bea78179cb15b6a376978107e4f2a,fd54771,Badal Prasad Singh,badal@datazip.io,2026-09-18T13:48:01+05:30,GitHub,noreply@github.com,2026-09-18T10:18:01+02:00,test(rest): widen the cancel grace in the stalled cancel tests (#2017),"test: raise the grace
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",b8015668744505e48628367a508fce0cf4c165de,2017,false,,2,8,6,catalog
+apache/iceberg-go,3d24714a9bd4280eda2b1c2355d8127e61691df4,3d24714,jj.lee,63435794+jx2lee@users.noreply.github.com,2026-09-18T17:19:56+09:00,GitHub,noreply@github.com,2026-09-18T10:19:56+02:00,fix(glue): return ErrNamespaceAlreadyExists for duplicate namespaces (#2012),"* fix(glue): return ErrNamespaceAlreadyExists for duplicate namespaces
+
+* map Glue AlreadyExistsException to catalog sentinels",fd547716756bea78179cb15b6a376978107e4f2a,2012,false,,2,172,0,catalog
+apache/iceberg-go,3861625c8645f60a32afc044807bb3de218783fb,3861625,Revanth,revanthcse1@gmail.com,2026-09-18T04:01:21-05:00,GitHub,noreply@github.com,2026-09-18T11:01:21+02:00,fix: ensure REST scan planning produces tasks equivalent to local planning (#2019),fix: align REST scan planning with local task splitting and nested field serialization,3d24714a9bd4280eda2b1c2355d8127e61691df4,2019,false,,6,657,20,catalog; expr_json.go; expr_json_test.go; exprs.go; table
+apache/iceberg-go,3eccc01e0986d81cb89ec7421c57652291a6011d,3eccc01,Minh Vu,vuhoangminh97@gmail.com,2026-09-18T14:20:30+02:00,GitHub,noreply@github.com,2026-09-18T14:20:30+02:00,perf(table): filter overwrite manifests concurrently (#2005),"* perf(table): filter overwrite manifests concurrently
+
+* perf(table): unify overwrite manifest filtering",3861625c8645f60a32afc044807bb3de218783fb,2005,false,,6,864,281,table
+apache/iceberg-go,c59e14f0f7ed7616c5dd59a965851fec75ea67ff,c59e14f,Minh Vu,vuhoangminh97@gmail.com,2026-09-18T14:36:24+02:00,GitHub,noreply@github.com,2026-09-18T14:36:24+02:00,perf(table): parallelize non-bulk PurgeFiles deletion (#1973),"* perf(table): parallelize non-bulk purge deletion
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(catalog): synchronize parallel purge callbacks
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): address purge deletion review feedback
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): address purge deletion review feedback
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): pin purge cancellation and worker limits
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): preserve purge deletion errors
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",3eccc01e0986d81cb89ec7421c57652291a6011d,1973,false,,7,486,73,catalog; io; table; website
+apache/iceberg-go,faa9868504e607a7dcea2efc1270465534ee97c1,faa9868,Minh Vu,vuhoangminh97@gmail.com,2026-09-18T14:39:27+02:00,GitHub,noreply@github.com,2026-09-18T14:39:27+02:00,perf(metadata): avoid re-cloning defensive schema copies (#1990),"* perf(metadata): avoid re-cloning defensive schema copies
+
+* fix(table): deep-copy sort order transforms
+
+* perf(table): avoid duplicate partition spec cloning
+
+* perf(table): avoid redundant lineage schema copies
+
+* perf(hive): avoid duplicate schema field copies
+
+* test: harden metadata copy regression coverage
+
+* test: harden metadata clone coverage
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test: cover partition metadata getter isolation
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",c59e14f0f7ed7616c5dd59a965851fec75ea67ff,1990,false,,13,252,112,catalog; internal; metadata_columns.go; partitions.go; partitions_internal_test.go; table; view
+apache/iceberg-go,5b1bfc39a04e8e5dc516b38ec2cc96c064a75334,5b1bfc3,Minh Vu,vuhoangminh97@gmail.com,2026-09-18T14:39:44+02:00,GitHub,noreply@github.com,2026-09-18T14:39:44+02:00,perf(table): cache snapshot manifests across scans (#1970),"* perf(table): cache snapshot manifests across scans
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover canceled snapshot manifest waiters
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): bound snapshot manifest cache
+
+* fix(table): address snapshot manifest cache review feedback
+
+* fix(table): make snapshot manifest cache cancellation-safe
+
+* fix(table): tighten snapshot manifest cache behavior
+
+* fix(table): reuse cached manifests in metadata inspectors
+
+* fix(table): preserve cancellation in manifest cache reads
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover canceled manifest set reads
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",faa9868504e607a7dcea2efc1270465534ee97c1,1970,false,,16,1505,54,table; website
