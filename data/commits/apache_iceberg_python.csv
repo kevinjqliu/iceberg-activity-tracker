@@ -6613,3 +6613,73 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>
 Co-authored-by: Claude Code <noreply@anthropic.com>
 Co-authored-by: Fokko Driesprong <fokko@apache.org>
 Co-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>",4a0eeeafbd8dae6dc2e8f0ccffd5ff24b0a196aa,3917,false,Claude Code; Copilot Autofix powered by AI; Fokko Driesprong,2,39,23,pyiceberg; tests
+apache/iceberg-python,5fe2e9eb6b3b6b03be77cc72c2c06552737375cb,5fe2e9e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-18T19:29:53Z,GitHub,noreply@github.com,2026-09-18T19:29:53Z,Build: Bump anyio from 4.14.1 to 4.14.2 (#4000),"Bumps [anyio](https://github.com/agronholm/anyio) from 4.14.1 to 4.14.2.
+- [Release notes](https://github.com/agronholm/anyio/releases)
+- [Commits](https://github.com/agronholm/anyio/compare/4.14.1...4.14.2)
+
+---
+updated-dependencies:
+- dependency-name: anyio
+  dependency-version: 4.14.2
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",1312c5509e5459a41d6eff633185b8b8d5f48295,4000,false,dependabot[bot],1,37,37,uv.lock
+apache/iceberg-python,130275141f88d4c9072262af7473f5cde493c3a6,1302751,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-18T19:30:17Z,GitHub,noreply@github.com,2026-09-18T19:30:17Z,Build: Bump soupsieve from 2.8.4 to 2.9 (#3994),"Bumps [soupsieve](https://github.com/facelessuser/soupsieve) from 2.8.4 to 2.9.
+- [Release notes](https://github.com/facelessuser/soupsieve/releases)
+- [Commits](https://github.com/facelessuser/soupsieve/compare/2.8.4...2.9)
+
+---
+updated-dependencies:
+- dependency-name: soupsieve
+  dependency-version: '2.9'
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",5fe2e9eb6b3b6b03be77cc72c2c06552737375cb,3994,false,dependabot[bot],1,3,3,uv.lock
+apache/iceberg-python,7e7d340daba2bb3213df148d8941fbb90e77c116,7e7d340,Harrison Crosse,harrison@crosse.dev,2026-09-18T19:31:44Z,GitHub,noreply@github.com,2026-09-18T19:31:44Z,fix(table): preserve explicit snapshot ID zero in scans (#3998),Distinguish snapshot ID zero from an omitted ID when selecting a scan snapshot and rejecting ref overrides.,130275141f88d4c9072262af7473f5cde493c3a6,3998,false,,2,27,2,pyiceberg; tests
+apache/iceberg-python,8408a5dfeab665aa53f64bed5ab0c7b02b39dfbb,8408a5d,Rodrigo Stachlewski Palma,86628053+Rodrigo-Palma@users.noreply.github.com,2026-09-18T19:33:42Z,GitHub,noreply@github.com,2026-09-18T19:33:42Z,fix(expressions): bound the DNF expansion in rewrite_to_dnf (#3995),"Converting to DNF distributes every AND over the ORs below it, so a filter
+with n two-branch OR groups expands to 2**n terms. Nothing bounded that, so a
+small user-supplied filter could produce an expression no consumer can use:
+20 groups reached 1,048,576 terms in ~17s and ~1 GiB.
+
+Cap the expansion at MAX_DNF_TERMS and raise before the product is built, so
+the same input now fails in 0.22s.",7e7d340daba2bb3213df148d8941fbb90e77c116,3995,false,,2,27,0,pyiceberg; tests
+apache/iceberg-python,570392ba65aeb163cbfbb450442ca6379a5a917d,570392b,Damanpreet Singh,damanpreet8360@gmail.com,2026-09-18T19:36:59Z,GitHub,noreply@github.com,2026-09-18T19:36:59Z,test: Add unit tests for ParseNumberFromBrackets (#3878),"* test: Add unit tests for ParseNumberFromBrackets
+
+pyiceberg/utils/parsing.py was the only module under pyiceberg/utils
+without a dedicated test. ParseNumberFromBrackets backs parsing of
+bucket[N], truncate[N] and fixed[L], so cover its match behaviour and the
+ValidationError raised on malformed input.
+
+* test: Assert the exact error message and drop redundant cases
+
+Verify the full ValidationError message for the invalid-input cases and
+parametrize them. Remove the multi-digit case (already covered) and the
+cases that relied on re.search tolerating text around the pattern.",8408a5dfeab665aa53f64bed5ab0c7b02b39dfbb,3878,false,,1,42,0,tests
+apache/iceberg-python,86044b939e1ba6e840520bb3c300b1f14c4bb0d0,86044b9,Kaanchan Krishna,krishnakaanchan@gmail.com,2026-09-18T19:40:23Z,GitHub,noreply@github.com,2026-09-18T19:40:23Z,PyArrow: Keep the storage account out of ADLS paths in `parse_location` (#3884),"PyArrow: Keep the storage account out of ADLS paths in parse_location
+
+For Azure the netloc is <container>@<account>.<host>, so building the path as
+netloc + path put the account inside the path and PyArrow then read the whole
+first segment as the container name. Return only the container instead, which
+matches what PyArrow's own from_uri produces for the same location.",570392ba65aeb163cbfbb450442ca6379a5a917d,3884,false,,2,31,1,pyiceberg; tests
+apache/iceberg-python,8c96d4211aa6571f2a31ad13d886cb25130a2ea0,8c96d42,akashchamp,116457960+akashchamp@users.noreply.github.com,2026-09-18T20:11:22Z,GitHub,noreply@github.com,2026-09-18T20:11:22Z,fix(avro): bound Cython decoder input (#3955),,86044b939e1ba6e840520bb3c300b1f14c4bb0d0,3955,false,,3,156,51,pyiceberg; tests
+apache/iceberg-python,a63c87f8d8eb36d633eda39fbece7c2c92ab9efd,a63c87f,Arul Jerald,126075220+ArulJerald@users.noreply.github.com,2026-09-18T20:14:03Z,GitHub,noreply@github.com,2026-09-18T20:14:03Z,perf(types): avoid double iteration in transform_dict_value_to_str (#3988),"Combine the None-validation and str-conversion loops over dict.items()
+into a single pass, and rename the `dict` parameter to `d` to stop
+shadowing the builtin.
+
+Fixes #3987",8c96d4211aa6571f2a31ad13d886cb25130a2ea0,3988,false,,1,5,3,pyiceberg
+apache/iceberg-python,0d584073f67948c46f34d4c2a1672455bc10b5c9,0d58407,Arul Jerald,126075220+ArulJerald@users.noreply.github.com,2026-09-18T20:18:36Z,GitHub,noreply@github.com,2026-09-18T20:18:36Z,"fix(types): validate DecimalType scale, not just precision (#3985)","* fix(types): validate DecimalType scale, not just precision
+
+DecimalType only bounded precision (1-38) via a model validator; scale
+was accepted unbounded, including negative or larger than precision,
+and flowed unchecked into downstream type construction and binding.
+Add an equivalent check enforcing 0 <= scale <= precision, and fix
+pre-existing test fixtures across the suite that relied on scale >
+precision or negative scale.
+
+Fixes #3981
+
+* trigger CI rerun",a63c87f8d8eb36d633eda39fbece7c2c92ab9efd,3985,false,,9,39,18,pyiceberg; tests
