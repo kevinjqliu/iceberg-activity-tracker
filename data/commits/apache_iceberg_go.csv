@@ -29237,3 +29237,117 @@ apache/iceberg-go,0c8e3498c7ca94bc00be2b89f7981619565c5b9d,0c8e349,Minh Vu,vuhoa
 * perf(table): reserve equality delete group storage
 
 * perf(table): fast path small equality delete groups",5b1bfc39a04e8e5dc516b38ec2cc96c064a75334,2026,false,,2,58,5,table
+apache/iceberg-go,77fdbbb159d93abe5bed548a229cfb5ed77c0291,77fdbbb,Samani G. Gikandi,samani@gojulas.com,2026-09-21T09:20:49-07:00,GitHub,noreply@github.com,2026-09-21T18:20:49+02:00,fix(table): fixes handling of partition specs w/ nested fields (#2014) (#2015),"* fix(table): fixes handling of partition specs w/ nested fields (#2014)
+
+Closes #2014
+
+Today when planning writes we use `arrow.Schema.FieldIndices` to resolve
+the arrow field index from a field name. This doesn't work for nested
+fields such as `user.last_name` because the API above only consults the
+top level schema rather than traversing nested structs.
+
+This diff adds a test to repro this and updates `newPartitionExtractionPlan`
+to properly handle nested fields. I checked the existing benchmarks
+before and after and found no performance impact.
+
+Signed-off-by: Samani G. Gikandi <samani@gojulas.com>
+
+* fixup! fix(table): fixes handling of partition specs w/ nested fields (#2014)
+
+* fixes regression w/ column names with literal `.`
+* updates implementation to handle nested field names with dots
+* makes resolveColumnChain fallible and propagates errors on type
+  assertion
+* adds additional tests covering complex schemas, schemas w/ nested
+  dotted field names, multiple layers of nesting, and data that doesn't
+  match the schema
+
+---------
+
+Signed-off-by: Samani G. Gikandi <samani@gojulas.com>",0c8e3498c7ca94bc00be2b89f7981619565c5b9d,2015,false,,2,426,11,table
+apache/iceberg-go,92b80fcca182afebc7090f968a8153b7e3aed04c,92b80fc,Minh Vu,vuhoangminh97@gmail.com,2026-09-21T18:21:13+02:00,GitHub,noreply@github.com,2026-09-21T18:21:13+02:00,perf(table): avoid schema clone in remote wildcard projection (#2027),"* perf(table): avoid schema clone in remote wildcard projection
+
+* perf(table): reuse remote projection name index
+
+* fix(table): keep remote projection name index private
+
+Keep the borrowed root-field traversal and use the existing FindColumnName
+accessor instead of exposing the schema's cached map. Match the internal
+import alias used by the table package.
+
+Add coverage for cold and warm caches, nested defaults, field ordering,
+independent projection results, and concurrent schema readers.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",77fdbbb159d93abe5bed548a229cfb5ed77c0291,2027,false,,2,106,1,table
+apache/iceberg-go,0d83b0845b646d9c257c7dce02115b0868f5ba8b,0d83b08,Revanth,revanthcse1@gmail.com,2026-09-21T11:21:42-05:00,GitHub,noreply@github.com,2026-09-21T18:21:42+02:00,test(io): avoid real Azure IO in credential tests (#2018),"* test(io): avoid real Azure IO in credential tests
+
+Signed-off-by: Revanth Ch <revanthcse1@gmail.com>
+
+* test(io): verify production Azure credential factory types
+
+* tighten Azure credential factory test assertion
+
+---------
+
+Signed-off-by: Revanth Ch <revanthcse1@gmail.com>",92b80fcca182afebc7090f968a8153b7e3aed04c,2018,false,,3,132,34,go.mod; io
+apache/iceberg-go,630e13005310eeddc1d17a0ba472655a3dd3be0a,630e130,Minh Vu,vuhoangminh97@gmail.com,2026-09-21T18:22:05+02:00,GitHub,noreply@github.com,2026-09-21T18:22:05+02:00,perf: optimize FIFO packing for lookback one (#2033),"* perf(internal): reuse FIFO packing storage with one-bin lookback
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(internal): rotate FIFO lookback-one bins in place
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",0d83b0845b646d9c257c7dce02115b0868f5ba8b,2033,false,,2,164,2,internal
+apache/iceberg-go,55a554fab7f80f7e95dc0ee02505308d4ac52c6b,55a554f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-21T13:55:10-04:00,GitHub,noreply@github.com,2026-09-21T13:55:10-04:00,build(deps): bump zizmorcore/zizmor-action from 0.6.3 to 0.6.4 (#2031),"Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.6.3 to 0.6.4.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/70fb788f84895a7701f5643d103d587e460b5c99...cc914d7f3750a2d13d75c7f184a1060aa0e9d482)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.6.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",630e13005310eeddc1d17a0ba472655a3dd3be0a,2031,false,dependabot[bot],1,1,1,.github
+apache/iceberg-go,7869b48db63baf56224ded256987aa4dc73feb42,7869b48,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-21T13:55:37-04:00,GitHub,noreply@github.com,2026-09-21T13:55:37-04:00,build(deps): bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp from 1.44.0 to 1.45.0 (#2021),"build(deps): bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp
+
+Bumps [go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp](https://github.com/open-telemetry/opentelemetry-go) from 1.44.0 to 1.45.0.
+- [Release notes](https://github.com/open-telemetry/opentelemetry-go/releases)
+- [Changelog](https://github.com/open-telemetry/opentelemetry-go/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/open-telemetry/opentelemetry-go/compare/v1.44.0...v1.45.0)
+
+---
+updated-dependencies:
+- dependency-name: go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp
+  dependency-version: 1.45.0
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",55a554fab7f80f7e95dc0ee02505308d4ac52c6b,2021,false,dependabot[bot],2,12,12,go.mod; go.sum
+apache/iceberg-go,5288171327637ffa0fd8e636215c8c1f5374d324,5288171,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-21T13:56:00-04:00,GitHub,noreply@github.com,2026-09-21T13:56:00-04:00,build(deps): bump github.com/containerd/containerd/v2 from 2.2.5 to 2.2.8 (#2007),"build(deps): bump github.com/containerd/containerd/v2
+
+Bumps [github.com/containerd/containerd/v2](https://github.com/containerd/containerd) from 2.2.5 to 2.2.8.
+- [Release notes](https://github.com/containerd/containerd/releases)
+- [Changelog](https://github.com/containerd/containerd/blob/main/RELEASES.md)
+- [Commits](https://github.com/containerd/containerd/compare/v2.2.5...v2.2.8)
+
+---
+updated-dependencies:
+- dependency-name: github.com/containerd/containerd/v2
+  dependency-version: 2.2.8
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7869b48db63baf56224ded256987aa4dc73feb42,2007,false,dependabot[bot],2,3,3,go.mod; go.sum
