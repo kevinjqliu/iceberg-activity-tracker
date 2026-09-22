@@ -7205,3 +7205,75 @@ updated-dependencies:
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",2ffead0eb00d427628205e082cd6cd50951d9852,18194,false,dependabot[bot],2,2,2,gradle; kafka-connect
 apache/iceberg,ab5d012f91ffb61acff2de8dbddacfc0736e3d4a,ab5d012,Szehon Ho,szehon.apache@gmail.com,2026-09-21T11:00:42-07:00,GitHub,noreply@github.com,2026-09-21T11:00:42-07:00,Parquet: Fix incorrect pruning for nested fields in optional structs (#18069),,781a30f3c9b5c74dc15ad5e16f7266919f2cbfeb,18069,false,,3,106,28,parquet; spark
+apache/iceberg,b5f36393227382296e28568306aa88eb570171b7,b5f3639,Noritaka Sekiyama,noritaka.sekiyama@databricks.com,2026-09-22T03:59:25+09:00,GitHub,noreply@github.com,2026-09-21T11:59:25-07:00,Spec: Align the decimal type string with the canonical form (#18145),"#16798 added the sentence that the type strings in Appendix C's table are the
+canonical serialized forms, but left the decimal row itself unchanged: the
+template still omitted the separator space and the examples showed both
+spacings. Java's DecimalType.toString() writes the spaced form, as does
+PyIceberg, and #16799 already made this change for geography.",ab5d012f91ffb61acff2de8dbddacfc0736e3d4a,18145,false,,1,1,1,format
+apache/iceberg,e8d0f0f3004a608e45986cbc2f8e5baf1a8a7db9,e8d0f0f,Andrei Tserakhau,laskoviymishka@gmail.com,2026-09-21T22:37:02+02:00,GitHub,noreply@github.com,2026-09-21T22:37:02+02:00,Core: expose catalog labels on the loaded table via SupportsLabels (#18046),"* Core: expose labels on the loaded table via SupportsLabels
+
+Builds on the labels read-path serde: make the catalog-provided labels from
+the load response reachable by consumers.
+
+- New SupportsLabels mixin interface (mirroring SupportsDistributedScanPlanning)
+  with a single labels() accessor.
+- BaseTable implements SupportsLabels via a new constructor that carries an
+  optional Labels; existing constructors default to an empty instance. The field
+  is transient and not copied into SerializableTable, so labels are ephemeral
+  catalog enrichment and are not preserved across table serialization.
+- RESTSessionCatalog populates labels from the load response for both the plain
+  BaseTable and the server-side scan-planning RESTTable paths, across loadTable,
+  registerTable, and createTable.
+
+* Core: address review comments on the labels table PR
+
+- Rename TestBaseTableLabels to TestLabelsOnBaseTable, drop a redundant comment,
+  and assert the field-label contents (field id + labels), not just the count.
+- Implement SupportsLabels on SerializableTable, returning Labels.EMPTY: labels
+  are driver-side catalog enrichment and are not carried across serialization.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Core: address labels review feedback on SerializableTable and BaseTable
+
+- Drop SupportsLabels from SerializableTable. Labels are transient catalog
+  enrichment that is intentionally not shipped to executors, and the only
+  consumer already guards with instanceof, so behavior is unchanged; a
+  real label-carrying implementation stays additive if ever needed.
+- Broaden the BaseTable#labels() null comment: the transient field is null
+  after any deserialization that bypasses writeReplace(), not only Kryo.
+- Make the TestLabelsOnBaseTable test methods package-private.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Core: add a RESTCatalog test for catalog labels on the loaded table
+
+Loads a table through RESTCatalog backed by an adapter that returns
+object- and field-level labels on the load-table response, and asserts
+they are surfaced through SupportsLabels#labels().
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* apply pvary suggestion
+
+Co-authored-by: pvary <peter.vary.apache@gmail.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+Co-authored-by: pvary <peter.vary.apache@gmail.com>",b5f36393227382296e28568306aa88eb570171b7,18046,false,Isaac; pvary,6,290,13,core
+apache/iceberg,29ae647f4468fc8c68298d731154e9309233f8a1,29ae647,Rango,lhl.snail@gmail.com,2026-09-22T12:45:56+08:00,GitHub,noreply@github.com,2026-09-21T21:45:56-07:00,Docs: Fix replaceSortOrder example in evolution.md (#18201),co-author: @thswlsqls,e8d0f0f3004a608e45986cbc2f8e5baf1a8a7db9,18201,false,,1,1,1,docs
+apache/iceberg,af4552f6985b217582426ab3d6c55243f12233b0,af4552f,Yuya Ebihara,ebyhry@gmail.com,2026-09-23T02:26:35+09:00,GitHub,noreply@github.com,2026-09-22T10:26:35-07:00,Build: Bump AWS SDK to 2.54.17 and migrate to Apache HttpClient 5 (#18195),"Build: Bump software.amazon.awssdk:bom from 2.54.13 to 2.54.17
+
+Bumps software.amazon.awssdk:bom from 2.54.13 to 2.54.17.
+
+---
+updated-dependencies:
+- dependency-name: software.amazon.awssdk:bom
+  dependency-version: 2.54.17
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",29ae647f4468fc8c68298d731154e9309233f8a1,18195,false,dependabot[bot],12,66,85,aws; aws-bundle; build.gradle; docs; gradle

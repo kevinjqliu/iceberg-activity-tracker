@@ -31398,3 +31398,69 @@ Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",5d2c755d663e5694a0058bf40fcf2c7b662562d6,3245,false,Copilot App,1,1,4,.github
 apache/iceberg-rust,832a4eba7a732baebbbd7f76bb6fd6225f1db1e9,832a4eb,blackmwk,257669749+blackmwk@users.noreply.github.com,2026-09-18T13:10:20Z,GitHub,noreply@github.com,2026-09-18T13:10:20Z,ci: fix Rust cache action casing for ASF allowlist (#3249),,492234eb43b1aceee1b9379d5c676e4635b5d4d7,3249,false,,3,6,6,.github
+apache/iceberg-rust,53eccc5f0892eb27b4af940e5e10993dc6ab9e4a,53eccc5,Anoop Johnson,anoop@apache.org,2026-09-21T20:18:28Z,GitHub,noreply@github.com,2026-09-21T20:18:28Z,fix(cache): drop schema-id from the manifest-list cache key (#3235),"* fix(cache): drop schema-id from the manifest-list cache key
+
+ObjectCache::get_manifest_list built the cache key from
+snapshot.schema_id().unwrap(), but schema-id is optional on snapshots in
+every table version (v1-v3 per spec, and already read as Option<SchemaId>),
+so a snapshot that omits it panicked on every scan (the object cache is on
+by default).
+
+schema-id does not belong in this key: ManifestListReader::load parses the
+manifest list from its bytes and the table format version only and never
+reads schema-id, and the manifest-list location is already unique per
+snapshot.
+
+* Fix import
+
+* Harden test",832a4eba7a732baebbbd7f76bb6fd6225f1db1e9,3235,false,,1,50,4,crates
+apache/iceberg-rust,f3e41d5321d0043697041f1353eb47d46f2b4b1d,f3e41d5,Liang-Chi Hsieh,viirya@gmail.com,2026-09-21T21:26:11Z,GitHub,noreply@github.com,2026-09-21T21:26:11Z,feat(transaction): support transform-based sort orders (#2765),"* feat(transaction): support transform-based sort orders
+
+ReplaceSortOrderAction only supported sorting by a column's raw value:
+`asc`/`desc` hardcoded Transform::Identity and only accepted a column name.
+Java's SortOrderBuilder.asc/desc accept a Term, which can be a transform
+expression (bucket[N], year, truncate[W], ...).
+
+Add asc_with_transform / desc_with_transform. asc/desc are unchanged (same
+signature and behavior) and now delegate to the new methods with
+Transform::Identity, so no existing caller is affected.
+
+Transform-compatibility with the source column's type is checked at commit
+time via the existing SortOrder::builder().build(schema) -> check_compatibility
+path, matching the timing of Java's SortOrder.Builder.build() -- the spec-level
+type was already general (SortField.transform, check_compatibility already
+validate arbitrary transforms); only the transaction-layer API was narrow.
+
+Scope: this only extends the metadata-declaration API. Whether the write path
+sorts data to match a table's declared sort order -- for any transform,
+including the pre-existing identity case -- is a separate, pre-existing gap
+untouched here.
+
+Closes #2764
+
+* test(transaction): metadata.json round-trip test for transform sort orders
+
+Per review: commit a transform-based sort order through the in-crate memory
+catalog (which serializes the updated metadata to a metadata.json file via
+TableMetadata::write_to), then reload the table (TableMetadata::read_from
+parses that file) and assert the transforms survive the JSON round-trip.
+
+* docs(transaction): note intended Term convergence; hoist test imports
+
+Per review: document on asc_with_transform/desc_with_transform that once
+Term becomes transform-carrying (#2665), sort-order declaration is expected
+to converge on Term-based asc/desc (as in Java's SortOrderBuilder) and the
+_with_transform variants can be deprecated. Also hoist the use statements
+scattered inside test fns to the test module top for consistency.
+
+* fix(transaction): validate sort transforms and preserve input errors
+
+* chore: update public API snapshot for sort transforms
+
+* fix(sort): use consistent validation errors and document void policy",53eccc5f0892eb27b4af940e5e10993dc6ab9e4a,2765,false,,3,210,35,crates
+apache/iceberg-rust,bb1e4a4861f02377489eff818b75138f414c4cb0,bb1e4a4,Anoop Johnson,anoop@apache.org,2026-09-21T21:42:58Z,GitHub,noreply@github.com,2026-09-21T21:42:58Z,perf(expr): resolve row group stats once per eq/in/starts_with leaf (#3254),"The eq, in, and starts_with row-group metric checks each read both the
+lower and upper bound via min_value and max_value, and each of those
+independently re-runs stats_and_type_for_field_id.
+
+Resolve the stats and type once per leaf and decode each bound in place,
+so the lower and upper bounds still decode lazily.",f3e41d5321d0043697041f1353eb47d46f2b4b1d,3254,false,,1,18,6,crates

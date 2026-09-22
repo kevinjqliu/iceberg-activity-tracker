@@ -8938,3 +8938,45 @@ inheritance-ready null ID from a literal -1.
 Reuse manifests only when the ID is null, rewrite explicit -1 manifests
 with the commit snapshot ID, and continue requiring the field when
 writing manifest lists.",b2f1fcd6ad335c7aa7ddf3cb7ec967b4fbefe424,947,false,,19,163,49,src
+apache/iceberg-cpp,ad83c1d97fb62634448481a12d1e6051657bd55b,ad83c1d,Manu Zhang,OwenZhang1990@gmail.com,2026-09-22T09:40:43+08:00,GitHub,noreply@github.com,2026-09-22T09:40:43+08:00,fix: align boolean parsing with Iceberg Java (#951),"Boolean values were parsed ad hoc in four places, and not consistently:
+`arrow_s3_file_io.cc` rejected anything that was not ""true"" or ""false"",
+while `config.h`, `auth_managers.cc` and `rest_catalog.cc` read any
+unrecognized value as false. Each site spelled out the ""true""/""false""
+literals itself, and `StringUtils` covered only numbers.
+
+Add `StringUtils::ParseBoolean()`, which mirrors Java's
+Boolean.parseBoolean, and `PropertyUtil::PropertyAsBoolean()` /
+`PropertyUtil::PropertyAsOptionalBoolean()`, which mirror Java's
+PropertyUtil.propertyAsBoolean and propertyAsNullableBoolean, and read
+every boolean through them.
+
+That settles the codebase on Java's contract: ""true"" ignoring case reads
+as true, and every other value reads as false. `s3.path-style-access` and
+`s3.ssl.enabled` change behavior accordingly: a malformed value used to
+fail the FileIO build and now reads as false, as it does in Java, whose
+S3FileIOProperties reads both with PropertyUtil.propertyAsBoolean. The
+test that pinned the old behavior is rewritten to pin the new one.
+
+Co-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>",168cb52b90c279679c37f1c7cf481194a839148b,951,false,Claude Opus 5 (1M context),11,154,30,src
+apache/iceberg-cpp,2aaea26d23e025791aadb4084bbfd76f8bc65321,2aaea26,Manu Zhang,OwenZhang1990@gmail.com,2026-09-22T09:40:58+08:00,GitHub,noreply@github.com,2026-09-22T09:40:58+08:00,chore: prepare 0.4.0 release version (#953),,ad83c1d97fb62634448481a12d1e6051657bd55b,953,false,,1,1,1,cmake_modules
+apache/iceberg-cpp,64dc66f159bd62c9817a96d74cbce767268934d0,64dc66f,Manu Zhang,OwenZhang1990@gmail.com,2026-09-22T11:37:02+08:00,GitHub,noreply@github.com,2026-09-22T11:37:02+08:00,chore: bump avro to 209a373 to preserve adjust-to-utc on primitives (#954),"Move the avro-cpp pin from 997d50d to 209a373 (current main, 74 commits).
+The C++ changes in the range are a std::formatter fix for C++23 builds
+(#3815), a JSON decoder fix for the lone low surrogate U+DFFF (#3841),
+and AVRO-4351, which makes avro-cpp keep custom attributes on primitive
+schema nodes when parsing and printing schema JSON.
+
+AVRO-4351 is what matters here. `GetAdjustToUtc()` reads ""adjust-to-utc""
+off the primitive node, and the reader takes its file schema from the Avro
+file header. With the old pin the attribute was dropped both when the
+writer printed the header and when the reader parsed it, so every
+timestamp read from a file looked like it had no timezone and projecting
+a `timestamptz` or `timestamptz_ns` column out of an Avro file failed with
+""Cannot read Iceberg type"". No test wrote and re-read a timestamptz
+column through a real file, so this went unnoticed.
+
+Add schema-level projection tests that parse ""adjust-to-utc"" from JSON,
+and file-level round trips that write timestamptz columns, assert the
+attribute is present in the physical file schema, and read them back.
+All of them fail on the old pin and pass on the new one.
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>",2aaea26d23e025791aadb4084bbfd76f8bc65321,954,false,Claude Fable 5.1,4,112,1,cmake_modules; src

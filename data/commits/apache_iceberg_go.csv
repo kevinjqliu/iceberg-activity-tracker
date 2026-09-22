@@ -29351,3 +29351,123 @@ updated-dependencies:
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7869b48db63baf56224ded256987aa4dc73feb42,2007,false,dependabot[bot],2,3,3,go.mod; go.sum
+apache/iceberg-go,5ed1a6e69a5a065853156b69592ae0995b2ab5ad,5ed1a6e,Minh Vu,vuhoangminh97@gmail.com,2026-09-21T21:06:39+02:00,GitHub,noreply@github.com,2026-09-21T15:06:39-04:00,perf(table): load deletion-vector Puffin groups lazily (#1968),"* perf(table): load deletion-vector Puffin groups lazily
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): reject empty deletion vector references
+
+* fix(table): preserve lazy deletion vector cache
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",5288171327637ffa0fd8e636215c8c1f5374d324,1968,false,,7,616,246,table
+apache/iceberg-go,f3dc938de4efe69f46a22355f08750fb77a0a5a3,f3dc938,Andrei Tserakhau,laskoviymishka@gmail.com,2026-09-21T21:06:46+02:00,GitHub,noreply@github.com,2026-09-21T15:06:46-04:00,feat(rest): add catalog labels to the load table/view read path (#2013),"Add the iceberg.Labels and iceberg.FieldLabel value types and decode the
+optional ""labels"" object from LoadTableResult and LoadViewResult responses.
+Labels are catalog-provided, transient enrichment and are never persisted to
+metadata; field labels are keyed by field ID and tolerate dropped columns.
+
+This decodes labels off the wire only; exposing them on the loaded table and
+view follows in a later change.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",5ed1a6e69a5a065853156b69592ae0995b2ab5ad,2013,false,Isaac,4,227,0,catalog; labels.go; labels_test.go
+apache/iceberg-go,f6c158f78d1895b0f963bdf13542f81dd08d4acf,f6c158f,KranzL,50032317+KranzL@users.noreply.github.com,2026-09-21T15:06:54-04:00,GitHub,noreply@github.com,2026-09-21T15:06:54-04:00,feat(table): add tunables to bound compaction pipeline memory (#1993),"* Add tunables bounding compaction pipeline memory
+
+The compaction read+write pipeline had fixed memory characteristics:
+the scanner decodes read.parquet.batch-size rows per Arrow batch
+(131072 by default) with no per-scan override, and each rolling data
+writer buffers up to 64 record batches in its input channel with no way
+to lower or raise that bound. On wide rows the product of those two
+numbers dominates a compaction worker's peak memory.
+
+- WithArrowBatchSize scan option caps the rows decoded per Arrow batch
+  for one scan, overriding the table's read.parquet.batch-size without
+  mutating caller-supplied scan options.
+- The rolling data writers' record channel capacity (default 64
+  batches) is now configurable via the WithRecordBatchBufferSize write
+  option, threaded through recordWritingArgs to the writer factory. It
+  applies to both the fanout and the clustered write paths, which share
+  the rolling writer.
+- WithParquetRowGroupLimit write option overrides the table's
+  write.parquet.row-group-limit per write, bounding rows buffered per
+  row group before each flush.
+- Compaction group options forward all three into
+  ExecuteCompactionGroup: WithCompactionReadBatchSize,
+  WithCompactionRecordBatchBufferSize, and
+  WithCompactionParquetRowGroupLimit.
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>
+
+* Fix WithRecordBatchBufferSize
+
+* WithArrowBatchSize fix
+
+* WithCompactionReadBatchSize comment fix
+
+* WithArrowBatchSize
+
+---------
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>",f3dc938de4efe69f46a22355f08750fb77a0a5a3,1993,false,,9,499,32,table
+apache/iceberg-go,8abbdeca808535500fd552f1f82dc895527b0af1,8abbdec,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-21T15:10:49-04:00,GitHub,noreply@github.com,2026-09-21T15:10:49-04:00,build(deps): bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc from 1.44.0 to 1.45.0 (#2022),"build(deps): bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
+
+Bumps [go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc](https://github.com/open-telemetry/opentelemetry-go) from 1.44.0 to 1.45.0.
+- [Release notes](https://github.com/open-telemetry/opentelemetry-go/releases)
+- [Changelog](https://github.com/open-telemetry/opentelemetry-go/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/open-telemetry/opentelemetry-go/compare/v1.44.0...v1.45.0)
+
+---
+updated-dependencies:
+- dependency-name: go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
+  dependency-version: 1.45.0
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",f6c158f78d1895b0f963bdf13542f81dd08d4acf,2022,false,dependabot[bot],2,3,3,go.mod; go.sum
+apache/iceberg-go,833e10c12cc37219b335bcb34639d5e0a8aa9721,833e10c,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-21T15:11:28-04:00,GitHub,noreply@github.com,2026-09-21T15:11:28-04:00,build(deps): bump the codeql-action group with 2 updates (#2030),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.9 to 4.38.0
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/cdf488f595d80d6e07e03d4674febd5ab45fa938...b96794f015dfd88f77b49b1c93e0fa7110f94c63)
+
+Updates `github/codeql-action/analyze` from 4.37.9 to 4.38.0
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/cdf488f595d80d6e07e03d4674febd5ab45fa938...b96794f015dfd88f77b49b1c93e0fa7110f94c63)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.38.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.38.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",8abbdeca808535500fd552f1f82dc895527b0af1,2030,false,dependabot[bot],1,2,2,.github
+apache/iceberg-go,2d73e1e32fef8b72557eb505e0f98f4e4ec53ada,2d73e1e,Neelesh Salian,nssalian@users.noreply.github.com,2026-09-22T08:40:04-07:00,GitHub,noreply@github.com,2026-09-22T17:40:04+02:00,"feat(table): adopt arrow-go 18.8, fast-path shredded variant extract, restore parquet dict fallback (#2002)","* feat(table): adopt arrow-go 18.8 and fast-path shredded variant extract
+
+Signed-off-by: Neelesh Salian <n_salian@apple.com>
+
+* fix(table): harden variant extract fast path per review
+
+Signed-off-by: Neelesh Salian <n_salian@apple.com>
+
+* fold null variant wrapper as absent key, poll ctx, unwrap dict in dict-fallback walk
+
+* PR comment fixes
+
+* PR remainder fixes
+
+---------
+
+Signed-off-by: Neelesh Salian <n_salian@apple.com>",833e10c12cc37219b335bcb34639d5e0a8aa9721,2002,false,,16,1421,86,go.mod; go.sum; table; variant_extract.go
