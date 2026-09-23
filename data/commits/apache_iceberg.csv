@@ -7277,3 +7277,44 @@ updated-dependencies:
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",29ae647f4468fc8c68298d731154e9309233f8a1,18195,false,dependabot[bot],12,66,85,aws; aws-bundle; build.gradle; docs; gradle
+apache/iceberg,2df983194664111767fffa89a9a91f031682b3a0,2df9831,pvary,peter.vary.apache@gmail.com,2026-09-22T20:03:21+02:00,GitHub,noreply@github.com,2026-09-22T20:03:21+02:00,Docs: Add AI contribution and disclosure rules to AGENTS.md (#18168),,af4552f6985b217582426ab3d6c55243f12233b0,18168,false,,1,14,3,AGENTS.md
+apache/iceberg,1504ddd5d5119e934e7cbcaed82b9384caf35b82,1504ddd,Muralikrishna Dudaka,2dmurali@gmail.com,2026-09-22T12:51:41-07:00,GitHub,noreply@github.com,2026-09-22T12:51:41-07:00,Parquet: Fix Variant conversion in default Avro writer (#17944),,2df983194664111767fffa89a9a91f031682b3a0,17944,false,,2,32,0,parquet
+apache/iceberg,17cf4b4a585a7a8801d15b328399141f5289bd7d,17cf4b4,Ryan Blue,blue@apache.org,2026-09-22T14:24:59-07:00,GitHub,noreply@github.com,2026-09-22T14:24:59-07:00,Core: Add inheritance to V4ManifestReader (#18171),,1504ddd5d5119e934e7cbcaed82b9384caf35b82,18171,false,,9,224,136,core; parquet
+apache/iceberg,7b1934b552ec95e4af98fe19ada4ce3c9a7e74cb,7b1934b,Gianluca Graziadei,48211703+GGraziadei@users.noreply.github.com,2026-09-22T23:42:21+02:00,GitHub,noreply@github.com,2026-09-22T14:42:21-07:00,Parquet: Remove commons-lang3 usage from ParquetVariantReaders (#18208),"ParquetVariantReaders.children called commons-lang3 Streams.of(Iterable),
+which only exists in commons-lang3 3.13.0 and later. iceberg-parquet does
+not declare commons-lang3 as a dependency, so on classpaths that provide
+an older version (Hadoop 3.3.x/3.4.x, orc-core 1.9.x, Spark 3.5,
+Flink 1.20 all ship 3.12.0) reading any variant column fails with
+NoSuchMethodError. Replace the call with the bundled Guava Iterables
+equivalent so the reader has no dependency on commons-lang3.
+
+Fixes #18164",17cf4b4a585a7a8801d15b328399141f5289bd7d,18208,false,,1,1,4,parquet
+apache/iceberg,3deb3e2275ee1c6e8e386c10f63a9aeed719d638,3deb3e2,Xinyi Lu,124839592+agnes-xinyi-lu@users.noreply.github.com,2026-09-22T14:42:54-07:00,GitHub,noreply@github.com,2026-09-22T14:42:54-07:00,Spark: Fix RewriteManifestsSparkAction sortBy() for dotted partition field names (#17428),,7b1934b552ec95e4af98fe19ada4ce3c9a7e74cb,17428,false,,8,148,4,spark
+apache/iceberg,ad4e824433e543affb8dd05b6c8e7f4ab1a5fd3c,ad4e824,Yuming Wang,yumwang@ebay.com,2026-09-23T07:08:57+08:00,GitHub,noreply@github.com,2026-09-22T16:08:57-07:00,Core: Avoid redundant SplitScanTask wrapper for files that fit in a single split (#18002),"* Core: Avoid redundant split wrapper for files smaller than target split size
+
+BaseContentScanTask.split() wraps every splittable file in a SplitScanTask
+even when the file already fits within a single split (length <= targetSplitSize).
+For tables with many small files this allocates one redundant 1:1 wrapper
+per data file during scan planning, adding Spark driver heap pressure.
+
+Short-circuit that case: when a file fits in a single split, return the
+task itself instead of constructing an iterator that would only ever
+produce a single, functionally-identical wrapper.
+
+Also make IcebergSourceSplit.splitId() class-agnostic so the split
+identity is stable whether the underlying task is a BaseFileScanTask or
+a SplitScanTask. Previously splitId embedded the concrete task class name
+via MoreObjects.toStringHelper(fileScanTask), so the serialization
+round-trip was not type-preserving (ScanTaskParser.fromJson always
+returns a SplitScanTask), breaking TestIcebergEnumeratorStateSerializer.
+Use a fixed label so splitId no longer depends on the runtime task type.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+* fix
+
+---------
+
+Co-authored-by: Cursor <cursoragent@cursor.com>",3deb3e2275ee1c6e8e386c10f63a9aeed719d638,18002,false,Cursor,2,123,19,core
+apache/iceberg,23774790e6928610e4e9ef7192373eb68b20b0e2,2377479,Szehon Ho,szehon.apache@gmail.com,2026-09-22T16:10:14-07:00,GitHub,noreply@github.com,2026-09-22T16:10:14-07:00,Spark 4.2: Push down opaque partition predicates (#17956),,ad4e824433e543affb8dd05b6c8e7f4ab1a5fd3c,17956,false,,10,490,15,spark
+apache/iceberg,89a6a8776a251f5113770697b2c1d634c1f5fae0,89a6a87,JeonDaehong,90895144+JeonDaehong@users.noreply.github.com,2026-09-23T16:28:51+09:00,GitHub,noreply@github.com,2026-09-23T09:28:51+02:00,"Spark: Backport forEachInRange vectorized delete checks to 3.5, 4.0 and 4.1 (#18207)",Backport of #18027,23774790e6928610e4e9ef7192373eb68b20b0e2,18207,false,,6,708,111,spark

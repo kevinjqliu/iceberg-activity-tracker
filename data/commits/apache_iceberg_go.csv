@@ -29471,3 +29471,101 @@ Signed-off-by: Neelesh Salian <n_salian@apple.com>
 ---------
 
 Signed-off-by: Neelesh Salian <n_salian@apple.com>",833e10c12cc37219b335bcb34639d5e0a8aa9721,2002,false,,16,1421,86,go.mod; go.sum; table; variant_extract.go
+apache/iceberg-go,85396eb3449670980f6118faae6f972af7ce7d4f,85396eb,Badal Prasad Singh,badal@datazip.io,2026-09-23T00:47:33+05:30,GitHub,noreply@github.com,2026-09-22T21:17:33+02:00,fix(table): report cancellation when the scan iterator channel closes (#2035),"minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",2d73e1e32fef8b72557eb505e0f98f4e4ec53ada,2035,false,,1,4,0,table
+apache/iceberg-go,1857b7b0097da80b9b3e4562484cc382f5b5436c,1857b7b,Revanth,revanthcse1@gmail.com,2026-09-22T14:41:31-05:00,GitHub,noreply@github.com,2026-09-22T21:41:31+02:00,"feat(rest): add scan-planning retries, telemetry, and documentation (#2020)","* feat(rest): add scan-planning retries, telemetry, and documentation
+
+* fix(rest): address scan-planning review feedback",85396eb3449670980f6118faae6f972af7ce7d4f,2020,false,,12,909,29,README.md; catalog; expr_json_test.go; go.mod; internal; table
+apache/iceberg-go,28cd1baa51ad36e082f2e320470592675c4db0a8,28cd1ba,Minh Vu,vuhoangminh97@gmail.com,2026-09-22T23:44:05+02:00,GitHub,noreply@github.com,2026-09-22T23:44:05+02:00,perf(table): prune parquet row groups by dictionary (#2006),"* perf(table): prune parquet row groups by dictionary
+
+* perf(table): tighten dictionary pruning
+
+* fix(table): remove redundant benchmark capture
+
+* fix(table): address dictionary pruning review feedback
+
+* perf(table): make dictionary pruning adaptive
+
+* fix(table): harden dictionary row group pruning
+
+* perf(table): accelerate large dictionary predicates
+
+* fix(table): address dictionary pruning review",1857b7b0097da80b9b3e4562484cc382f5b5436c,2006,false,,9,1384,21,table
+apache/iceberg-go,63ced822ca9c7d6534306e58dda3ed6daad8e115,63ced82,Jeremy Schoemaker,jeremy@shoemoney.com,2026-09-22T16:45:07-05:00,GitHub,noreply@github.com,2026-09-22T23:45:07+02:00,fix(manifest): support nanosecond timestamp partitions (#2034),"* fix(manifest): support nanosecond timestamp partition types in Avro schema
+
+partitionTypeToAvroSchema had no arm for TimestampNsType or
+TimestampTzNsType, so any v3 table partitioned on a timestamp_ns or
+timestamptz_ns column fell through to ""unsupported partition type"" and
+could not have a manifest written at all. NewManifestWriter calls
+partitionTypeToAvroSchema before anything else, so the failure is
+unconditional.
+
+The read side already handles these types: the manifest decoder switches
+on atype.TimestampNanos, and catalog/rest/scan_task_decoder.go maps both
+ns types to atype.TimestampNanos. The library could read partitions it
+could not write.
+
+Add TimestampNsNode and TimestampTzNsNode to the internal Avro schema
+nodes, using atype.TimestampNanos with adjust-to-utc false and true
+respectively, mirroring the existing micros nodes, and wire both ns
+types into the partition type switch.
+
+Signed-off-by: Jeremy Schoemaker <jeremy@shoemoney.com>
+
+* fix(manifest): finalize nanosecond partition statistics
+
+Signed-off-by: Jeremy Schoemaker <jeremy@shoemoney.com>
+
+---------
+
+Signed-off-by: Jeremy Schoemaker <jeremy@shoemoney.com>",28cd1baa51ad36e082f2e320470592675c4db0a8,2034,false,,4,125,1,internal; manifest.go; schema_conversions.go; schema_conversions_test.go
+apache/iceberg-go,b5bb5b547d48a09c564be649807b6cde4bc711a2,b5bb5b5,Minh Vu,vuhoangminh97@gmail.com,2026-09-23T19:48:23+02:00,GitHub,noreply@github.com,2026-09-23T19:48:23+02:00,perf(table): avoid redundant filter cache schema traversal (#2028),"* perf(table): avoid redundant filter cache schema traversal
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): benchmark physical filter schema keys
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(table): compact physical schema key types
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): preserve unexpected schema key panics
+
+Recover only explicitly marked invalid inputs, retain typed-nil rejection,
+and cover compact type-tag uniqueness and panic propagation.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",63ced822ca9c7d6534306e58dda3ed6daad8e115,2028,false,,4,399,43,table
+apache/iceberg-go,b46a9275634b2b8cb7384709c05ea498ef495711,b46a927,Minh Vu,vuhoangminh97@gmail.com,2026-09-23T19:48:43+02:00,GitHub,noreply@github.com,2026-09-23T19:48:43+02:00,perf(codec): avoid rebuilding partition schema on schema-cache hits (#2029),"* perf(codec): avoid rebuilding partition schema on cache hits
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(codec): avoid cloning partition source types
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(codec): compact partition schema fingerprint types
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(codec): split schema cache benchmarks
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(codec): guard partition fingerprint compatibility
+
+Cross-check fingerprint type support against Avro conversion, cover
+multi-field parameterized schemas and name boundaries, and share the
+integer encoder.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",b5bb5b547d48a09c564be649807b6cde4bc711a2,2029,false,,4,497,10,data_file_codec.go; data_file_codec_bench_test.go; data_file_codec_fingerprint_test.go; data_file_codec_test.go
