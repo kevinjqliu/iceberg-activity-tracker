@@ -29569,3 +29569,173 @@ Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
 ---------
 
 Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",b5bb5b547d48a09c564be649807b6cde4bc711a2,2029,false,,4,497,10,data_file_codec.go; data_file_codec_bench_test.go; data_file_codec_fingerprint_test.go; data_file_codec_test.go
+apache/iceberg-go,21e85b611b13625a340cfe29f0344fbd1cc0d54f,21e85b6,Neelesh Salian,nssalian@users.noreply.github.com,2026-09-23T12:29:28-07:00,GitHub,noreply@github.com,2026-09-23T21:29:28+02:00,"docs: document variant type, field-extract filtering, and shredding (#2045)","* docs: document variant type, field-extract filtering, and shredding
+
+* PR comment fixes and cleanup",b46a9275634b2b8cb7384709c05ea498ef495711,2045,false,,6,136,2,website
+apache/iceberg-go,7dd7364930b6c888aa939a4fe19038ea51cc1086,7dd7364,Badal Prasad Singh,badal@datazip.io,2026-09-24T02:47:03+05:30,GitHub,noreply@github.com,2026-09-23T23:17:03+02:00,fix(table): validate deletion vector fields in RowDelta (#2004 follow-up) (#2016),"* fix: reject dvs below v3
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* minor follow ups
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* chore: minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",21e85b611b13625a340cfe29f0344fbd1cc0d54f,2016,false,,7,158,115,table
+apache/iceberg-go,dce9757b17bbb526d48c0594f1f3c84d8990b5d2,dce9757,KranzL,50032317+KranzL@users.noreply.github.com,2026-09-23T17:17:52-04:00,GitHub,noreply@github.com,2026-09-23T23:17:52+02:00,perf(table): bound the scan reorder heap at scan concurrency above one (#2039),"* perf(table): add lagging-task reorder heap benchmark and test
+
+BenchmarkArrowScanReorderHeapLaggingTask in
+table/arrow_scanner_reorder_bench_test.go scans M single-batch data
+files at WithMaxConcurrency(4) with the Open of task 0's file gated
+until the other M - 1 files have been read, and reports the peak
+HeapInuse delta while the gate is closed and the number of batches the
+other files produced in that window. On Apple M3 Pro, 11 cores,
+go1.25.9, -count=3, the delta is 4.7 MB at M = 8, 20 to 23 MB at
+M = 32 and 96 MB at M = 128, with M - 1 batches held every time.
+
+TestArrowScanReorderHeapBoundedWhileHeadTaskLags in
+table/arrow_scanner_reorder_test.go runs the same scan inside a
+testing/synctest bubble. synctest.Wait returns once every scan
+goroutine is durably blocked, so the count of out-of-order batches the
+pipeline holds is read at a fixed point with no sleeps, both before a
+fix (all M - 1 other files are read) and after one (workers park on
+credits). It asserts the count never exceeds numWorkers x K with K = 2
+as reorderCreditsPerWorker. On main it fails with 31 held batches
+against a bound of 8, then releases the gate, checks that every row
+arrives and checks that the CheckedAllocator is empty.
+
+Refs #2038.
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>
+
+* perf(table): bound the scan reorder heap at scan concurrency above one
+
+Each scan worker in recordBatchesFromTasksAndDeletes and in
+makePositionDeleteRecordsForFilter now holds a task credit. The worker
+takes the credit before it takes a task, the credit rides on the
+task's Last record, and it comes back when the iterator's consumer
+takes that record, when the deferred drain loop takes it, or when
+MakeSequencedChanWithDiscard discards it at close. A worker waiting
+for its credit also waits on the scan context, so cancellation still
+stops it. Error records carry no credit.
+
+A worker therefore cannot start its next task while any batch of its
+previous task is still in the records channel, the reorder heap or
+the sequenced channel. While the head task lags, each other worker
+finishes one task and parks, so the heap holds at most numWorkers - 1
+tasks instead of every task the free workers can reach. Decoding
+inside a task is not throttled and the head task's worker never waits.
+
+Per-batch credits, as #2038 proposed, were measured first on
+BenchmarkArrowScanManyFilesAndBatches (32 files of 32 one-row batches,
+concurrency 4): K = 2 took 141.6 ms/op against 69.4 ms/op on main,
+K = 8 took 127.9 ms/op and K = 32 took 78.7 ms/op, because the batches
+a free worker may run ahead are the scan's parallelism. With the
+per-task credit that benchmark is within noise of main in interleaved
+runs (benchstat, n = 10: +0.4%, -0.2% and +1.5% on the three
+sub-benchmarks), and BenchmarkArrowScanReorderHeapLaggingTask holds 3
+gated batches and 2.0 to 2.3 MB of peak heap delta for M = 8, 32 and
+128, where main holds M - 1 batches and 4.7, 20 to 25 and 95 MB.
+
+The doc on WithCompactionArrowBatchSize now states the bound that
+holds, workers x (rows in the largest task + n) +
+(recordBatchBufferSize + 2) x n rows, and WithCompactionScanConcurrency
+says its worker count multiplies the read-side term.
+
+TestArrowScanReorderHeapBoundedWhileHeadTaskLags asserts the bound of
+(numWorkers - 1) x maxInFlightTasksPerWorker completed out-of-order
+tasks. TestArrowScanReorderCancelWhileWorkersWaitForTaskCredits
+cancels the scan while the free workers are parked and checks that the
+iterator returns context.Canceled, every scan goroutine exits and every
+batch is released.
+
+Fixes #2038.
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>
+
+* perf(table): hand the scan credit to exactly one record and test the compaction bound
+
+recordSink now tracks whether its worker holds a credit and hands it to
+exactly one record: the task's Last record in send, or the error record
+in fail when no Last record was sent. processRecords can send Last and
+then return an error from the reader or the deferred close, so fail
+hands off nil in that case. No path abandons a credit any more, and a
+worker that failed and went back to reserve would wait only until its
+error record leaves the sequenced channel. The three delete-loader
+error sites in recordBatchesFromTasksAndDeletes go through sink.fail,
+so fail is the only path that puts an error record into records.
+recordSink is a pointer built only by newRecordSink, so a nil sink
+panics on first use instead of hanging on a nil channel send. The nil
+guard in acquire is gone; taskCredits is declared before
+enumeratedRecord.
+
+Scan.ReadTasks now states the bound for the general scan: each worker
+holds the decoded batches of at most one task until the iterator has
+returned them, so the batches waiting behind a slow early task total at
+most the worker count times the rows in the largest task, rounded up to
+a multiple of the batch size, and one large file among small ones still
+holds its whole decoded contents while it waits. ToArrowRecords and
+WithMaxConcurrency point at that paragraph.
+
+TestRecordSinkHandsOffCreditOnce covers fail without Last, Last followed
+by fail, and that reserve blocks while the credit is out.
+TestExecuteCompactionGroupRecordPipelineBounded drives
+ExecuteCompactionGroup with four scan workers and a writer queue of two
+over 32 single-batch files inside testing/synctest, gating task 0 in
+Open and then the output file in Create, and checks 3 fully read tasks
+while task 0 is gated and exactly 8 while the writer is gated, the two
+terms of the bound on WithCompactionArrowBatchSize counted in tasks.
+With the credit gate disabled the counts are 31 and 32.
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>
+
+* test(table): write uncompressed parquet in the synctest compaction fixture
+
+TestExecuteCompactionGroupRecordPipelineBounded wrote zstd parquet
+inside its synctest bubble. arrow-go keeps zstd encoders in a global
+sync.Pool and klauspost's Encoder creates its encoders channel on first
+use, so the first zstd write inside the bubble left a pooled encoder
+whose channel belongs to the bubble. When a later test reused that
+encoder, go1.25.9 failed the whole package with ""receive on synctest
+channel from outside bubble"" (seen in TestClusteredWriter on the
+ubuntu and macos go1.25.9 jobs; go1.26.1 passes). Locally the pool was
+usually cleared by GC before the next zstd write, which is why the
+suite passed here; with GOGC=off it fails every time.
+
+The reorder fixture now sets write.parquet.compression-codec to
+uncompressed, so no codec pool is touched inside the bubble. With
+GOGC=off the pair TestExecuteCompactionGroupRecordPipelineBounded and
+TestClusteredWriter passes three times in a row.
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>
+
+---------
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>",7dd7364930b6c888aa939a4fe19038ea51cc1086,2039,false,,8,681,47,table
+apache/iceberg-go,5d377f16bc3a5da0abd59a80204e73698bde7af2,5d377f1,Revanth,revanthcse1@gmail.com,2026-09-23T16:27:33-05:00,GitHub,noreply@github.com,2026-09-23T23:27:33+02:00,docs(io): document ADLS managed identity property divergence (#2024),"* docs(io): document ADLS managed identity property divergence
+
+* docs(io): clarify ADLS authentication precedence and property
+
+* docs(io): clarify ADLS auth precedence and cross-client property differences",dce9757b17bbb526d48c0594f1f3c84d8990b5d2,2024,false,,2,49,10,io; website
+apache/iceberg-go,85121cbde006091263c8035b90bd76a34b3d7460,85121cb,Andrei Tserakhau,laskoviymishka@gmail.com,2026-09-24T19:04:46+02:00,GitHub,noreply@github.com,2026-09-24T10:04:46-07:00,fix(codec): nanosecond timestamp partitions in schema fingerprint (#2052),"fix(codec): support nanosecond timestamp partitions in schema fingerprint
+
+`manifestEntrySchemaFor` rejected `timestamp_ns` / `timestamptz_ns` partition types because `writePartitionTypeFingerprint` was missing the cases already supported by `partitionTypeToAvroSchema`.
+
+Add both fingerprint cases and update the invalid-type test. Existing fingerprint/Avro parity coverage now keeps the two paths in sync.",5d377f16bc3a5da0abd59a80204e73698bde7af2,2052,false,,2,4,2,data_file_codec.go; data_file_codec_test.go
