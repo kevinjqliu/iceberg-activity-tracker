@@ -6683,3 +6683,79 @@ precision or negative scale.
 Fixes #3981
 
 * trigger CI rerun",a63c87f8d8eb36d633eda39fbece7c2c92ab9efd,3985,false,,9,39,18,pyiceberg; tests
+apache/iceberg-python,a46cbdf09a77bf893d05c3e49caf6b72b3c24d57,a46cbdf,Yuang Gao,91290127+YuangGao@users.noreply.github.com,2026-09-24T19:14:24Z,GitHub,noreply@github.com,2026-09-24T19:14:24Z,fix: rank catalog configuration above table properties when constructing FileIO (#3956),"* Rank catalog configuration above table properties when constructing FileIO
+
+* Cover FileIO property precedence in StaticTable.from_metadata",0d584073f67948c46f34d4c2a1672455bc10b5c9,3956,false,,11,83,17,pyiceberg; tests
+apache/iceberg-python,f7dcc3d92ccd87532f6332028e68b11b09446be3,f7dcc3d,Kuldeep Yadav,kuldeeep.yadav1@gmail.com,2026-09-24T19:15:54Z,GitHub,noreply@github.com,2026-09-24T19:15:54Z,perf(table): import the expression parser lazily (#4012),"Import the expression parser lazily in pyiceberg.table
+
+The parser is only used by _parse_row_filter for string row filters,
+but importing it at module level pulls in pyparsing (and unittest,
+argparse and difflib through pyparsing.testing) on every
+`import pyiceberg.table` and `load_catalog`.",a46cbdf09a77bf893d05c3e49caf6b72b3c24d57,4012,false,,1,2,1,pyiceberg
+apache/iceberg-python,0743814334b1caf86a54a2301e3e5b34d80aff0a,0743814,Rodrigo Stachlewski Palma,86628053+Rodrigo-Palma@users.noreply.github.com,2026-09-24T19:28:20Z,GitHub,noreply@github.com,2026-09-24T19:28:20Z,fix(avro): advance the decoder when skipping an enum (#4009),"EnumReader.skip() was a no-op, so the enum's bytes stayed in the stream and
+the next field was decoded from them. Reading a manifest with the status
+field projected out returns wrong values for every field after it.
+
+Delegate to the wrapped reader, which is what read() already does.",f7dcc3d92ccd87532f6332028e68b11b09446be3,4009,false,,2,35,3,pyiceberg; tests
+apache/iceberg-python,4dba4a480bfe7548bcb99e1c4194f692d2975d00,4dba4a4,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-24T19:33:47Z,GitHub,noreply@github.com,2026-09-24T19:33:47Z,Infra: Bump RustFS to 1.0.0 (#4013),"RustFS 1.0.0 is the stable release and includes the vhost domain port
+matching fix, so RUSTFS_SERVER_DOMAINS no longer needs the port.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",0743814334b1caf86a54a2301e3e5b34d80aff0a,4013,false,Copilot App,2,4,4,dev
+apache/iceberg-python,d888dd113efc5bddd650ccdd17c64f8866ccf07b,d888dd1,Rodrigo Stachlewski Palma,86628053+Rodrigo-Palma@users.noreply.github.com,2026-09-24T19:44:47Z,GitHub,noreply@github.com,2026-09-24T19:44:47Z,fix(config): let an explicitly falsy value on the right-hand side win in merge_config (#4005),"fix(config): let an explicitly falsy value on the right-hand side win
+
+merge_config() documents 'take the non-null value, with precedence on
+rhs', but it used `rhs_value or lhs_value`, which falls back to the
+left-hand side for any falsy value, not just None.
+
+load_catalog(name, **properties) merges the configuration file into the
+caller's properties, so turning an option off explicitly was silently
+ignored when the file set it:
+
+    # .pyiceberg.yaml has s3.path-style-access: ""true""
+    load_catalog(""prod"", **{""s3.path-style-access"": False})
+    # -> 's3.path-style-access' stays 'true'
+
+That contradicts the intent of #45, which made the passed-in argument
+take precedence over the environment. property_as_bool() in the same
+codebase already distinguishes 'not set' from falsy by testing against
+(None, """"), so the two now agree.
+
+None on the right-hand side still means 'not set' and keeps the
+left-hand value.",4dba4a480bfe7548bcb99e1c4194f692d2975d00,4005,false,,2,26,3,pyiceberg; tests
+apache/iceberg-python,dc4e3f85c8b1c356c48597f32b0246e0af9842a8,dc4e3f8,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-24T20:05:42Z,GitHub,noreply@github.com,2026-09-24T20:05:42Z,Preserve REST view response configuration (#3959),"* Preserve REST view response configuration
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Keep view configuration prerequisite focused
+
+Remove the API documentation addition and keep the REST load test focused on preserving nonempty configuration.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",d888dd113efc5bddd650ccdd17c64f8866ccf07b,3959,false,Copilot App,4,21,1,pyiceberg; tests
+apache/iceberg-python,07099ee180db9a1e89fc55d21bcac21b7a33e2f9,07099ee,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-24T20:10:25Z,GitHub,noreply@github.com,2026-09-24T20:10:25Z,Fix schema equality for empty schemas and identifier fields (#3958),"* Fix schema equality for empty schemas and identifier fields
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Use loops for schema equality regression cases
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Keep schema equality tests focused on regressions
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",dc4e3f85c8b1c356c48597f32b0246e0af9842a8,3958,false,Copilot App,2,13,4,pyiceberg; tests
+apache/iceberg-python,ebbc0ba3e4c633179b4069a70a8f9a4453e75d88,ebbc0ba,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-09-24T20:15:27Z,GitHub,noreply@github.com,2026-09-24T20:15:27Z,Register `to_bytes` for `UnknownType` (#3899),"`from_bytes` and `partition_to_py` both handle `UnknownType`, but
+`to_bytes` did not, so serializing an unknown value fell through to the
+dispatch fallback and raised. Unknown values are always null and have no
+binary representation, so return None, matching `Conversions.toByteBuffer`
+in the Java implementation.
+
+The JSON single-value entry points are deliberately left unregistered:
+the spec defines no JSON representation for unknown, since a non-null
+initial-default or write-default is invalid for the type.",07099ee180db9a1e89fc55d21bcac21b7a33e2f9,3899,false,,2,24,0,pyiceberg; tests

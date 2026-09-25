@@ -31535,3 +31535,62 @@ apache/iceberg-rust,c9a25b23b7645f3af0e9dfd7e85d8cf646901c55,c9a25b2,Xander,zand
 * DRAFT try key_metadata_with_length
 
 * fix(encryption): address key metadata length review",830bb886542527f4e8956f03040e7c407b621401,3236,false,,20,568,178,CHANGELOG.md; crates
+apache/iceberg-rust,119fad92c891c95a7819d87e4195407b3f7c0578,119fad9,Oleks V,comphead@users.noreply.github.com,2026-09-24T18:51:51Z,GitHub,noreply@github.com,2026-09-24T18:51:51Z,ci: replace MinIO with RustFS for integration tests (#3273),"* ci: replace MinIO with RustFS for integration tests
+
+`quay.io/minio/minio` no longer allows anonymous pulls, so
+`make docker-up` fails and the integration tests cannot start.
+DataFusion hit the same failure and switched to RustFS in
+apache/datafusion#25706. PyIceberg moved to RustFS earlier in
+apache/iceberg-python#3928.
+
+Run `rustfs/rustfs:1.0.0` as the shared S3 service instead. It keeps
+the `admin`/`password` credentials, the 9000/9001 ports, and
+virtual-hosted-style access through `RUSTFS_SERVER_DOMAINS` and the
+bucket aliases. The healthcheck uses `/health/ready`, which waits for
+storage and IAM. The `mc` bucket setup becomes `curl --aws-sigv4` run
+from the RustFS image, and the public bucket policy is dropped because
+no test reads anonymously.
+
+Point the REST fixture, HMS, and Spark at `http://rustfs:9000`, and
+rename the MinIO-specific test helpers and the
+`ICEBERG_TEST_MINIO_ENDPOINT` override to RustFS.
+
+Closes #3272
+
+* ci: use vendor-neutral object-store naming for S3 test service
+
+Rename the RustFS service, hostname, bucket aliases, test helpers and env
+var to a generic object-store name (matching PyIceberg), so future
+backend swaps only need an image change.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci: fail fast and gate readiness on test bucket creation
+
+Treat any non-200/409 response as a failure instead of ignoring it, and
+add a healthcheck so `docker compose up --wait` blocks until the buckets
+exist.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci: remove orphan containers on docker-up
+
+Renaming the minio service leaves stale containers holding port 9000 for
+anyone with a previously started stack; clean them up automatically.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci: make create-buckets a one-shot job
+
+RustFS returns 200 when re-creating an existing bucket, so plain chained
+curl -f calls are idempotent. Replace the status-code parsing, marker-file
+healthcheck and tail with a one-shot container, and gate spark-iceberg on
+its successful completion.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: ovoievodin <o_voievodin@apple.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c9a25b23b7645f3af0e9dfd7e85d8cf646901c55,3273,false,Copilot App; ovoievodin; Kevin Liu,11,65,74,Makefile; crates; dev; website

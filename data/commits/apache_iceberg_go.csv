@@ -29739,3 +29739,53 @@ apache/iceberg-go,85121cbde006091263c8035b90bd76a34b3d7460,85121cb,Andrei Tserak
 `manifestEntrySchemaFor` rejected `timestamp_ns` / `timestamptz_ns` partition types because `writePartitionTypeFingerprint` was missing the cases already supported by `partitionTypeToAvroSchema`.
 
 Add both fingerprint cases and update the invalid-type test. Existing fingerprint/Avro parity coverage now keeps the two paths in sync.",5d377f16bc3a5da0abd59a80204e73698bde7af2,2052,false,,2,4,2,data_file_codec.go; data_file_codec_test.go
+apache/iceberg-go,a2b91aee208daeffc3d955d5bb54a549a9149df6,a2b91ae,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-24T23:43:39+01:00,GitHub,noreply@github.com,2026-09-24T15:43:39-07:00,ci: replace MinIO with RustFS in integration tests (#2055),"* ci: replace MinIO with RustFS in integration tests
+
+Use RustFS 1.0.0 and AWS CLI bucket setup for the shared S3 test fixture.
+
+Generated-by: Codex
+Signed-off-by: Sreesh Maheshwar <maheshwarsreesh@gmail.com>
+
+* ci: apply the shared S3 configuration to Spark 3.5
+
+Copy spark-defaults.conf into the Spark 3.5 image so it uses object-store instead of the inherited MinIO endpoint.
+
+Generated-by: Codex
+Signed-off-by: Sreesh Maheshwar <maheshwarsreesh@gmail.com>
+
+* ci: preserve the Spark 3.5 image catalog configuration
+
+Override only the inherited S3 endpoint, retaining the demo catalog and history-server settings.
+
+Generated-by: Codex
+Signed-off-by: Sreesh Maheshwar <maheshwarsreesh@gmail.com>
+
+* ci: make RustFS fixture startup reliable and observable
+
+Expose server logs, retry bucket initialization, and rebuild the Spark fixture so local images pick up its endpoint configuration.
+
+Generated-by: Codex
+Signed-off-by: Sreesh Maheshwar <maheshwarsreesh@gmail.com>
+
+* ci: empty the warehouse bucket on setup
+
+Clear any existing objects in the warehouse bucket during create-bucket
+so re-running integration setup starts from a clean state, as before.
+Also update a leftover object store reference in the CLI docs.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci: share spark-defaults.conf with the Spark 3.5 image
+
+Copy the repo's spark-defaults.conf into the Spark 3.5 image, as the
+Spark 4 image already does, so both use one catalog configuration
+instead of rewriting the base image's config.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Signed-off-by: Sreesh Maheshwar <maheshwarsreesh@gmail.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",85121cbde006091263c8035b90bd76a34b3d7460,2055,false,Copilot App; Kevin Liu,12,76,57,.github; CONTRIBUTING.md; Makefile; README.md; catalog; hadoop_s3_integration_test.go; internal; io; website
+apache/iceberg-go,7536627ab9a538b64bd0f86d7a9bdf5ec74180b1,7536627,Minh Vu,vuhoangminh97@gmail.com,2026-09-25T10:59:30+02:00,GitHub,noreply@github.com,2026-09-25T10:59:30+02:00,perf(table): reuse partition path formatting plan (#1958),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,a2b91aee208daeffc3d955d5bb54a549a9149df6,1958,false,,5,198,3,table

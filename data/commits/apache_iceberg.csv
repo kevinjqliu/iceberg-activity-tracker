@@ -7336,3 +7336,62 @@ Co-authored-by: Kurtis Wright <kurwrigh@amazon.com>
 Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",89a6a8776a251f5113770697b2c1d634c1f5fae0,18218,false,Kurtis Wright; Kevin Liu,1,8,0,gcp-bundle
 apache/iceberg,9409ecf5c74f1dcc1f152ea83cd280ac51d6a871,9409ecf,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-23T15:04:15-07:00,GitHub,noreply@github.com,2026-09-23T15:04:15-07:00,Build: Add Jackson's Schubfach and fast_double_parser to runtime LICENSE and NOTICE (#18227),,bb9faedfb22ce7763159b731f5c7dc63936d771b,18227,false,,22,814,22,aws-bundle; azure-bundle; flink; gcp-bundle; spark
 apache/iceberg,5e7169168db3d34e29354c6f59ec4d6e420b8d2d,5e71691,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-23T15:42:05-07:00,GitHub,noreply@github.com,2026-09-23T15:42:05-07:00,GCP: Add CEL-Java to the gcp-bundle LICENSE (#18226),,9409ecf5c74f1dcc1f152ea83cd280ac51d6a871,18226,false,,1,9,2,gcp-bundle
+apache/iceberg,3957d26daa535eb5f03e101f1210ee234e978f9a,3957d26,Ryan Blue,blue@apache.org,2026-09-24T11:59:34-07:00,GitHub,noreply@github.com,2026-09-24T11:59:34-07:00,Core: Implement v4 first row ID assignment (#18225),,5e7169168db3d34e29354c6f59ec4d6e420b8d2d,18225,false,,4,297,4,core
+apache/iceberg,3316c1d1a4bd36712641b98e11d66dee5a74d0d6,3316c1d,Huaxin Gao,huaxin.gao11@gmail.com,2026-09-24T14:18:24-07:00,GitHub,noreply@github.com,2026-09-24T14:18:24-07:00,Core: Do not retry Tasks after interrupt (#18213),"* Core: Do not retry Tasks after interrupt
+
+* address comments
+
+* Add parallel test for interrupt without retry
+
+* address comments",3957d26daa535eb5f03e101f1210ee234e978f9a,18213,false,,2,168,0,core
+apache/iceberg,212aa894e919ff9fdf89160da4aadcbe6858ac01,212aa89,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-25T04:21:51+01:00,GitHub,noreply@github.com,2026-09-24T20:21:51-07:00,Build: Replace MinIO with RustFS in integration tests (#18247),"* Build: Replace MinIO with RustFS in integration tests
+
+Move AWS and Kafka Connect test fixtures to RustFS while preserving legacy checksum coverage. Leave quickstarts unchanged.
+
+Generated-by: Codex
+
+* Build: Address review feedback on RustFS test migration
+
+Drop the RustFS MD5 bulk-delete test, which cannot distinguish plugin
+on from off; the local HTTP fixture covers legacy MD5 behavior. Tidy the
+container helper, align test names, and quiet the bucket setup log.
+
+Generated-by: Claude Code
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+
+* Build: Expose RustFS logs in test failures
+
+Mirror RustFS logs to stdout so Testcontainers and Docker Compose include server diagnostics when startup or integration tests fail.
+
+Generated-by: Codex
+
+* Build: Use backend-neutral object store naming in AWS tests
+
+Rename RustFSUtil to ObjectStoreUtil and its callers so a future backend swap only touches the image and its environment variables. Rely on RustFS defaults for the data directory and console.
+
+Generated-by: GitHub Copilot (Claude Opus 5.5)
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Build: Remove MinIO leftovers from Kafka Connect test stack
+
+Replace the minioadmin credentials, create the bucket with the RustFS image's curl instead of pulling aws-cli, and keep the existing data volume.
+
+Generated-by: GitHub Copilot (Claude Opus 5.5)
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Docs: Replace MinIO with RustFS in quickstarts
+
+Run the Flink and Spark quickstarts on a RustFS object store and create buckets with curl instead of mc. The Spark quickstart keeps a minio alias because the tabulario/spark-iceberg image hardcodes that endpoint.
+
+Generated-by: GitHub Copilot (Claude Opus 5.5)
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",3316c1d1a4bd36712641b98e11d66dee5a74d0d6,18247,false,Claude Opus 5.5 (1M context); Copilot App; Kevin Liu,17,263,178,ObjectStoreUtil.java; TestObjectStoreUtil.java; aws; build.gradle; docker; gradle; kafka-connect; site
