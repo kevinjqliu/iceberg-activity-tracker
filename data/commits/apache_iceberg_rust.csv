@@ -31616,3 +31616,88 @@ instead: string, binary, or decimal.
 * Round2 feedback
 
 * Fix trace",9a2111a914e9b17fdc039700186056ec14fae606,3247,false,,1,343,33,crates
+apache/iceberg-rust,f64575819ec5d61a1d8ffd7740831a2cb64df5cd,f645758,Andrei Tserakhau,laskoviymishka@gmail.com,2026-09-27T02:03:28Z,GitHub,noreply@github.com,2026-09-27T02:03:28Z,feat(writer): add PositionDeleteInput builder (#3230),"* feat(writer): add PositionDeleteInput builder
+
+Add PositionDeleteInputBuilder, a small helper that assembles a
+spec-conforming position delete RecordBatch from (path, pos) rows.
+
+The batch has exactly the two required position delete columns
+(file_path: Utf8, pos: Int64), both non-null and carrying the reserved
+field ids, so it passes PositionDeleteFileWriter's per-batch validation
+and can be handed straight to that writer. An empty builder still
+produces a valid 0-row batch.
+
+To keep a single source of truth for the field-id wiring, the Arrow
+schema is no longer hand-wired in the builder. This commit un-gates the
+previously test-only POSITION_DELETE_ARROW_SCHEMA static and
+position_delete_arrow_schema() helper in position_delete_writer.rs,
+making the helper pub(crate), and the builder now obtains the shared
+Arrow projection through it as a cheap Arc clone.
+
+extend accepts any iterator of (Into<String>, i64) rows, and build
+debug-asserts the paths/positions length invariant. The module docs
+note that rows are materialized into two heap Vecs before the batch is
+built (so very large inputs should use one builder per write batch),
+that the optional third row column is not supported yet, and that
+position delete files are a v2 construct which v3 forbids, so a
+format-version gate must be applied at the transaction/commit layer.
+
+Relates to #340 and #2218.
+
+* refactor(writer): replace PositionDeleteInput builder with a sorted position_delete_batch fn
+
+Per review, collapse the PositionDeleteInputBuilder surface
+(new/with_capacity/push/extend/len/is_empty/build) into a single free
+function, position_delete_batch(rows). A FooBuilder is expected to build a
+Foo, but the builder's build() only returned a bare RecordBatch, so a plain
+function reads more clearly and keeps the API as tight as possible.
+
+The function collects rows into a BTreeMap<String, RoaringTreemap> keyed by
+file path. This deduplicates repeated (file_path, pos) pairs and, when
+iterated, yields the spec-required ascending (file_path, pos) order for free,
+so callers no longer have to pre-sort their input. A negative pos is rejected
+with DataInvalid. The batch is still built from the writer's shared crate
+internal Arrow schema, and empty input yields a valid 0-row batch.
+
+* refactor(writer): model position deletes as a crate-internal PositionDeletes accumulator
+
+Following blackmwk's review of the redesigned position delete assembly,
+replace the free position_delete_batch function with a small crate-internal
+PositionDeletes accumulator. Callers build up deletes with insert(path, pos)
+and render them once via to_record_batch().
+
+Positions are now taken as u64: a row position is non-negative by
+construction, so the old negative-i64 rejection is gone. The batch's Int64
+pos column is filled with a checked u64-to-i64 conversion that returns
+DataInvalid rather than panicking on a value past i64::MAX. Rows stay keyed
+by a BTreeMap<String, RoaringTreemap>, so iteration yields the spec-required
+(file_path, pos) order with duplicate pairs removed, and the two columns are
+now built with Arrow StringBuilder and Int64Builder instead of intermediate
+Vecs. The batch is assembled against the writer's shared
+position_delete_arrow_schema, and an empty accumulator still yields a valid
+0-row batch.
+
+Nothing outside the crate consumes this yet, so the whole surface is
+pub(crate) and the module carries a dead-code allowance until the write-path
+plumbing lands. The public API drops the position_delete_batch entry
+accordingly.
+
+* refactor(writer): stream PositionDeletes as fixed-size record batches
+
+Follow-up to blackmwk's review on #3230.
+
+- Add PositionDeletes::to_record_batches(max_rows), a lazy iterator that
+  builds each fixed-size batch on demand instead of materializing the whole
+  delete set at once, bounding peak memory over large delete sets. It walks
+  the paths and positions in sorted (file_path, pos) order, splitting on
+  max_rows boundaries; a path whose positions overflow one batch resumes in
+  the next. A max_rows of 0 yields a single DataInvalid error rather than
+  panicking, and the stream stops after any error.
+- Build the file_path column with StringBuilder::append_value_n, appending
+  each path's run within a batch in one call rather than once per row.
+- Factor a shared private build_batch helper so to_record_batch (single
+  batch) and to_record_batches share the column-building logic.
+- Document that duplicate (file_path, pos) inserts collapse silently, which
+  is intentional for position deletes.
+
+* refactor(writer): debug_assert against duplicate and oversized position deletes",615af68da85f2cc6e5139aa180c939214de91d32,3230,false,,3,681,5,crates
