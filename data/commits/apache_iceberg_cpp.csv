@@ -9009,3 +9009,46 @@ Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 
 Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",26303393ccf16e6d63ed08cef8a447c0d496e2c3,962,false,Copilot App; Kevin Liu,5,141,165,.github; ci; src
+apache/iceberg-cpp,ddbd2eef3d16f6a4b111f8a1c7ac14b144d8b06d,ddbd2ee,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-29T10:58:01+08:00,GitHub,noreply@github.com,2026-09-29T10:58:01+08:00,chore(deps): bump the codeql-action group with 2 updates (#970),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.38.0 to 4.38.1
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/b96794f015dfd88f77b49b1c93e0fa7110f94c63...1c5b675653bb5c22dbe9b12b556ec555138e09fd)
+
+Updates `github/codeql-action/analyze` from 4.38.0 to 4.38.1
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/b96794f015dfd88f77b49b1c93e0fa7110f94c63...1c5b675653bb5c22dbe9b12b556ec555138e09fd)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.38.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.38.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",450863e776aa13d3ef3e71bf44af30f07405efc8,970,false,dependabot[bot],1,2,2,.github
+apache/iceberg-cpp,8a186fe3a9822107f2e9358ddd5f0c21bac6ce97,8a186fe,Manu Zhang,OwenZhang1990@gmail.com,2026-09-29T10:59:41+08:00,GitHub,noreply@github.com,2026-09-29T10:59:41+08:00,chore: bump version to 0.5.0-SNAPSHOT (#968),Co-authored-by: Claude Opus 5.5 (1M context) <noreply@anthropic.com>,ddbd2eef3d16f6a4b111f8a1c7ac14b144d8b06d,968,false,Claude Opus 5.5 (1M context),2,2,2,CMakeLists.txt; cmake_modules
+apache/iceberg-cpp,bdc52460329108001506c43632c177b104b38559,bdc5246,aryan9948,aryansinghthree@gmail.com,2026-09-29T08:35:49+05:30,GitHub,noreply@github.com,2026-09-29T11:05:49+08:00,fix: MurmurHash3 file paths in LICENSE (#971),,8a186fe3a9822107f2e9358ddd5f0c21bac6ce97,971,false,,1,1,1,LICENSE
+apache/iceberg-cpp,3c5715c66fb4d4306c54eec4aac327e2897f800b,3c5715c,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-09-29T11:19:32+08:00,GitHub,noreply@github.com,2026-09-29T11:19:32+08:00,refactor(io): hand out S3 delegates by shared_ptr and build them off the lock (#898),"ResolvingFileIO::FileIOForPath held its mutex across FileIORegistry::Load and
+the delegate's SetStorageCredentials, so building the first S3 client (which
+can look up a bucket region) stalled every other operation on the resolver.
+It now loads without the lock and caches the result only if no credential
+install happened meanwhile; otherwise it loads again with the new
+credentials. Delegates retired by an install are torn down outside the lock.
+
+Tests now exercise real IO where the old ones stopped short: the multi-prefix
+DeleteFiles test failed URI parsing before reaching any delegate, and the
+concurrency test only built input-file wrappers. The replacements write,
+delete and read through the test object store, and the stress test waits
+for every worker to run before installing.",bdc52460329108001506c43632c177b104b38559,898,false,,7,373,67,src

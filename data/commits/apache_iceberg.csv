@@ -7531,3 +7531,44 @@ apache/iceberg,9872c84c9f4963e2ed01491e62b630a050de9fe7,9872c84,mithun-sudo,1289
 apache/iceberg,55794516bcca63834a89018884fffc5a5b1bfdb0,5579451,pvary,peter.vary.apache@gmail.com,2026-09-28T11:37:57+02:00,GitHub,noreply@github.com,2026-09-28T11:37:57+02:00,Flink: Fix flaky TestFlinkIcebergSinkV2 > testDeleteStats() (#18241),,9872c84c9f4963e2ed01491e62b630a050de9fe7,18241,false,,8,44,16,flink
 apache/iceberg,e689699fa6392a2da9aa10870f0d4de575ae23c1,e689699,kumarpritam863,148938310+kumarpritam863@users.noreply.github.com,2026-09-28T17:23:13+05:30,GitHub,noreply@github.com,2026-09-28T13:53:13+02:00,Flink: Fix dynamic sink HASH distribution check for nested equality/partition fields (#18296),,55794516bcca63834a89018884fffc5a5b1bfdb0,18296,false,,8,432,28,flink
 apache/iceberg,587f7984ff811b1240b0ccf8e34e73e1a52f94d0,587f798,Sho Tanaka,4620750+tsho@users.noreply.github.com,2026-09-29T04:13:13+09:00,GitHub,noreply@github.com,2026-09-28T14:13:13-05:00,Arrow: Cover null decimal values with defaults across batches (#18271),,e689699fa6392a2da9aa10870f0d4de575ae23c1,18271,false,,1,24,8,arrow
+apache/iceberg,6eb21e9315daa52705a26ff82a70912ae3a47a9b,6eb21e9,Yuya Ebihara,ebyhry@gmail.com,2026-09-29T05:49:23+09:00,GitHub,noreply@github.com,2026-09-28T13:49:23-07:00,Build: Bump software.amazon.awssdk:bom from 2.54.17 to 2.55.1 (#18289),"Bumps software.amazon.awssdk:bom from 2.54.17 to 2.55.1.
+
+---
+updated-dependencies:
+- dependency-name: software.amazon.awssdk:bom
+  dependency-version: 2.55.1
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",587f7984ff811b1240b0ccf8e34e73e1a52f94d0,18289,false,dependabot[bot],3,85,85,aws-bundle; gradle; kafka-connect
+apache/iceberg,01cf810cd096fb5ff94e165a8bcb5ae161e7aea8,01cf810,Steven Zhen Wu,stevenz3wu@gmail.com,2026-09-28T16:31:37-07:00,GitHub,noreply@github.com,2026-09-28T16:31:37-07:00,Core: Add modified file and row counts to ManifestInfo (#18212),"* Core: Add modified file and row counts to ManifestInfo
+
+The v4 AMT entry-structure spec gives MODIFIED its own
+modified_files_count (524) and modified_rows_count (525) fields.",6eb21e9315daa52705a26ff82a70912ae3a47a9b,18212,false,,6,225,15,core
+apache/iceberg,9719db6d616ba9e2c2d922071ef8c148b9f81849,9719db6,Ryan Blue,blue@apache.org,2026-09-28T16:32:39-07:00,GitHub,noreply@github.com,2026-09-28T17:32:39-06:00,Core: V4 refactor metrics config (#18269),,01cf810cd096fb5ff94e165a8bcb5ae161e7aea8,18269,false,,24,273,144,core; orc; parquet; spark
+apache/iceberg,b60b3c8c46cc9720741e16f2d80ae9e62fdb3bdf,b60b3c8,Uros,221401595+uros-b@users.noreply.github.com,2026-09-29T03:32:07+02:00,GitHub,noreply@github.com,2026-09-28T18:32:07-07:00,Spark 4.2: Enable DSv2 cache invalidation test for session schema change (#18298),"Spark 4.2: Enable cache invalidation test fixed by SPARK-55631
+
+testCachedTableWithSessionSchemaChangeAndExternalWrite was disabled pending SPARK-55631 (ALTER TABLE should invalidate cache), which is fixed in Spark 4.2.0. Enable it in the Spark 4.2 module.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",9719db6d616ba9e2c2d922071ef8c148b9f81849,18298,false,Isaac,1,0,2,spark
+apache/iceberg,7ba28c352c0e1f9833e5abd7d0c09ad8e9969f2a,7ba28c3,Huaxin Gao,huaxin.gao11@gmail.com,2026-09-28T18:38:27-07:00,GitHub,noreply@github.com,2026-09-28T18:38:27-07:00,Spec: Forbid writing new equality deletes in v4 (#17783),"* Spec: Forbid writing new equality deletes in v4
+
+* address comments
+
+* address comments
+
+* address comments
+
+* address comments
+
+* address comments
+
+* address comments
+
+* address comments",b60b3c8c46cc9720741e16f2d80ae9e62fdb3bdf,17783,false,,1,13,4,format
+apache/iceberg,7d6d369157f61be85add25aaf2dfcc78f456ccbc,7d6d369,Sushant Raikar,sushant.s.raikar@gmail.com,2026-09-28T23:15:55-07:00,GitHub,noreply@github.com,2026-09-28T23:15:55-07:00,Core: Bound Idempotency-Key retries to the advertised key lifetime (#18070),"Auto-retrying a keyed mutation could previously fire after the server's advertised Idempotency-Key lifetime elapsed, at which point the server no longer dedupes the key and could apply the mutation twice. This records when a request is first sent (in HTTPClient.execute) and, for requests carrying an Idempotency-Key, declines a retry once the elapsed time since the first attempt plus the next retry interval would reach the advertised lifetime. The lifetime from GET /v1/config is plumbed through the client properties into ExponentialHttpRequestRetryStrategy; a non-positive window declines all keyed retries, while an absent or unparseable one leaves the bound disabled. The check applies to the response and network-exception retry paths; non-keyed and idempotent requests are unaffected.
+
+Per Yufei's review, the check compares against the upper bound of the next retry interval (Retry-After verbatim, or exponential backoff plus its maximum jitter) rather than a freshly sampled value, so a retry the check permits cannot then sleep longer than checked and overshoot the window.",7ba28c352c0e1f9833e5abd7d0c09ad8e9969f2a,18070,false,,5,333,38,core
+apache/iceberg,48330b8dacab6662242d252b39c8444190979bb2,48330b8,Mithun M,128903122+mithun-sudo@users.noreply.github.com,2026-09-29T12:47:43+05:30,GitHub,noreply@github.com,2026-09-29T09:17:43+02:00,"Flink: Backport case-insensitive DataConverter fix to 1.20, 2.1, and 2.2 (#18295)",,7d6d369157f61be85add25aaf2dfcc78f456ccbc,18295,false,,15,354,51,flink

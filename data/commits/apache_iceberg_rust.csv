@@ -31709,3 +31709,56 @@ title or body mentions DataFusion.
 
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",f64575819ec5d61a1d8ffd7740831a2cb64df5cd,3278,false,Copilot App,2,63,0,.github
 apache/iceberg-rust,5a91091c53a5dfebcc8f85f78f0eeedb269d0b87,5a91091,Oleks V,comphead@users.noreply.github.com,2026-09-28T18:08:55Z,GitHub,noreply@github.com,2026-09-28T18:08:55Z,chore: Extending collaborator list to help with review capacity (#3289),Co-authored-by: ovoievodin <o_voievodin@apple.com>,86d6618804a902eac10f09c09a565aca5dad0d46,3289,false,ovoievodin,1,1,0,.asf.yaml
+apache/iceberg-rust,8cb2adeddb4f8da1ca7bd86ca303337f011c12e2,8cb2ade,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-09-28T18:41:04Z,GitHub,noreply@github.com,2026-09-28T18:41:04Z,fix(python): raise instead of panicking in the manifest bindings (#3241),"There's some assorted places that we need to raise errors instead
+of panicking.",5a91091c53a5dfebcc8f85f78f0eeedb269d0b87,3241,false,,3,86,21,bindings
+apache/iceberg-rust,deab0692f6df211a396d6fc0ad21811f8b6c8491,deab069,Noritaka Sekiyama,moomindani@gmail.com,2026-09-29T11:49:43Z,GitHub,noreply@github.com,2026-09-29T11:49:43Z,refactor(spec): make UnboundPartitionField fields private and carry source-ids (#3267),"* Make UnboundPartitionField fields private and carry source-ids
+
+The four public fields are replaced by accessors, and the derived builder's
+visibility is limited to the crate, so an instance can only be built inside
+the crate or read out of a partition spec JSON. That is what lets the struct
+guarantee its own invariant: source_ids always holds at least one id.
+
+source_ids: Vec<i32> replaces source_id: i32. source_id() returns the single
+id, and an error for a multi-argument field rather than quietly handing back
+the first one. The serde module reads either spelling -- source-id, or
+source-ids for a v3 multi-argument transform -- and writes back the one that
+matches the field.
+
+Binding a multi-argument field now fails with a clear error. A bound
+PartitionField still carries a single source_id, so until that struct is
+converted there is nowhere to put the extra ids, and failing loudly beats
+dropping them on the way into TableCreation or TableUpdate::AddSpec.
+
+* Reject source-id and source-ids together in UnboundPartitionField
+
+PyIceberg already treats the two spellings as mutually exclusive, and no
+writer emits both, so accepting a matching pair only let the two readers
+disagree. Also name both spellings in the missing-id error and note why
+check_transform_compatibility rejects a multi-argument field.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Make UnboundPartitionField buildable and pass it to add_partition_field
+
+Address review: the UnboundPartitionField builder and with_field_id are
+public, since an unbound field is not expected to be validated yet, and
+UnboundPartitionSpecBuilder::add_partition_field now takes the field
+rather than a single source id, name and transform.
+
+With the builder public an empty source_ids can be built, so serializing
+one no longer panics and both spec builders reject it with a clear error.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Validate UnboundPartitionField when it is built
+
+Address review: the builder's build() now returns
+Result<UnboundPartitionField> and rejects an empty source_ids, following
+FileScanTask. Deserialization goes through the same builder, so the check
+lives in one place and the spec builders no longer need their own.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",8cb2adeddb4f8da1ca7bd86ca303337f011c12e2,3267,false,Isaac,13,821,316,crates
