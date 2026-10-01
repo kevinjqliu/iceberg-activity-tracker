@@ -31762,3 +31762,138 @@ Co-authored-by: Isaac <no-reply@databricks.com>
 ---------
 
 Co-authored-by: Isaac <no-reply@databricks.com>",8cb2adeddb4f8da1ca7bd86ca303337f011c12e2,3267,false,Isaac,13,821,316,crates
+apache/iceberg-rust,71e571e531618371499eaf3c995e30c69910e2d9,71e571e,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-09-30T19:24:54Z,GitHub,noreply@github.com,2026-09-30T19:24:54Z,refactor(reader): build Arrow reader metadata once (#3242),"* refactor(reader): build Arrow reader metadata once
+
+* refactor(reader): address review feedback on metadata rebuild
+
+- Defer materializing an owned Arrow schema until a rebuild is actually
+  needed; the embedded-IDs/no-INT96/no-row-number fast path now returns
+  early without cloning.
+- Interpolate missing_field_ids, install_row_number, and the resulting
+  schema into the ArrowReaderMetadata error message so failures identify
+  which transform was active.
+- Add a regression test covering the combined path: a field-id-less file
+  with INT96 timestamps and a _pos projection, asserting coerced
+  timestamps and the row-number column together.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* refactor(reader): address remaining review feedback
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",deab0692f6df211a396d6fc0ad21811f8b6c8491,3242,false,Isaac,1,162,94,crates
+apache/iceberg-rust,36eae2969b0773ee5b6f23d9be230fd0a17ffe92,36eae29,Xander,zander181@googlemail.com,2026-09-30T19:25:21Z,GitHub,noreply@github.com,2026-09-30T19:25:21Z,refactor(scan) move test utils to test_utils.rs (#3107),"* refactor(scan) move test utils to test_utils.rs
+
+* move things around
+
+* move
+
+* fix
+
+* comments",71e571e531618371499eaf3c995e30c69910e2d9,3107,false,,20,1503,1349,Cargo.lock; crates
+apache/iceberg-rust,de19a3986fbdf399f09f71cd8c08e2573630c80f,de19a39,Dhruv Arya,dhruv.arya@databricks.com,2026-10-01T08:00:37Z,GitHub,noreply@github.com,2026-10-01T08:00:37Z,fix: avoid lost-wakeup hang in get_equality_delete_predicate_for_delete_file_path (#3268),"* fix: avoid lost-wakeup hang in get_equality_delete_predicate_for_delete_file_path
+
+The equality-delete loader signals completion with Notify::notify_waiters(),
+which stores no permit and only wakes Notified futures created before the call.
+get_equality_delete_predicate_for_delete_file_path observed the Loading state,
+released the read lock, and only then created the Notified future; a
+notify_waiters() fired in that window is lost and the await hangs forever.
+
+Create the Notified (via notified_owned) while still holding the read lock, so
+it is guaranteed to precede any notify_waiters() and be delivered.
+
+Signed-off-by: Dhruv Arya <aryadhruv@gmail.com>
+
+* docs: explain why building Notified under the read lock prevents the lost wakeup
+
+State the mechanism rather than the outcome: notified_owned() snapshots tokio's
+notify_waiters_calls counter at construction, and holding the read lock orders
+that snapshot before insert_equality_delete can advance it. This keeps a later
+refactor from moving notified_owned() out from under the lock unnoticed.
+
+Signed-off-by: Dhruv Arya <aryadhruv@gmail.com>
+
+---------
+
+Signed-off-by: Dhruv Arya <aryadhruv@gmail.com>
+Co-authored-by: Dhruv Arya <aryadhruv@gmail.com>",36eae2969b0773ee5b6f23d9be230fd0a17ffe92,3268,false,Dhruv Arya,1,8,3,crates
+apache/iceberg-rust,19603861d545f8edbc5016e45cb1bacb0579cbf8,1960386,kid,lucian1412@outlook.com,2026-10-01T14:54:21Z,GitHub,noreply@github.com,2026-10-01T14:54:21Z,feat: add core COW rewrite primitive (#2752),"* feat: add core COW rewrite primitive
+
+Add a core copy-on-write rewrite primitive that plans candidate data
+files, applies a caller-provided RecordBatch rewriter, writes
+replacement data files, and returns removed/added/unchanged file lists
+for future overwrite-style commit actions.
+
+- Plan candidates through the existing scan path so manifest pruning
+  and delete-file application stay consistent with normal reads; the
+  row predicate is cleared only for the full-file rewrite input.
+- Stream rewritten batches to the replacement writer: buffer only the
+  prefix before the first changed batch, then open the writer lazily;
+  unchanged files open no writer, fully-deleted files produce no
+  replacement.
+- Bind the replacement writer and partition key to the planned
+  snapshot's schema so rewrites survive schema evolution.
+- Build the replacement parquet writer via
+  ParquetWriterBuilder::from_table_properties so replacement files
+  honor the table's write.parquet.* properties, carry the table's
+  encryption manager so encrypted tables are not downgraded to
+  plaintext, and refuse to run when write.format.default is not
+  parquet.
+- Keep the planner internal; CowRewriteBuilder is the only public
+  entry and CowRewriteFile fields sit behind accessors.
+
+Cover delete-style, update-style, no-op, full-file delete, no-match
+delete, delete-file planning, writer edge cases, schema evolution,
+multi-source replacement path uniqueness, and partition-value
+preservation (including the null partition) end-to-end.
+
+Part of #2269.
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
+* fix: address COW rewrite review comments
+
+- derive the effective change flag as `changed || output.is_none()` so a
+  rewriter returning {changed: false, output: None} cannot silently drop
+  rows while leaving the file marked unchanged; add regression tests
+- treat a candidate whose visible rows are all removed by delete files as
+  removed with no replacement, so it can be compacted away with its
+  delete files instead of landing in unchanged_data_files forever
+- honor write.object-storage.enabled when building replacement writers
+  (add the missing table property) so object-storage-layout tables keep
+  hash-entropy paths
+- count output_rows only for rows actually written to replacement files
+- derive Debug for CowBatchRewrite
+- document the sync rewriter contract, the read-only CowRewriteFile
+  surface, and the prefix buffer's whole-file worst case
+- drop avoidable FileScanTask/DataFile clones and replace the writer
+  expect() with a let-else invariant
+
+* fix(cow_rewrite): flush kept prefix after a dropped batch
+
+A dropped batch could mark a file changed while skipping the Some(output) branch that initialized the writer and flushed kept rows. Open the writer whenever a changed file has buffered or current output, then flush the prefix independently of the current batch output. Cover the keep-first/drop-second data-loss case and full coverage by a real position-delete file; clarify delete-file and schema contracts.
+
+* fix(cow_rewrite): guard partition preservation and document rewrite() trade-offs
+
+Address the three non-blocking follow-ups from the approval review of
+apache/iceberg-rust#2752:
+
+- Surface the prefix-buffer memory ceiling in the public rewrite()
+  rustdoc: a file that never changes (or whose first change is at EOF)
+  buffers its entire decoded contents, one file at a time, which can be
+  several GB for a compaction-sized file.
+- Add a debug-only partition guard: replacement files record the source
+  partition verbatim, so a rewriter that mutates a partition-source
+  column would silently write rows under a partition they do not belong
+  to. In debug builds every emitted batch is checked against the source
+  file's partition; release builds are unchanged.
+- Document in the module docs that keeping the source partition spec and
+  staying unsorted is, like the snapshot-schema choice, a deliberate
+  divergence from Java's RewriteDataFiles / Spark DML.
+
+* fix(cow_rewrite): use relocated scan test fixture
+
+---------
+
+Co-authored-by: Claude <noreply@anthropic.com>",de19a3986fbdf399f09f71cd8c08e2573630c80f,2752,false,Claude,10,2468,14,crates
