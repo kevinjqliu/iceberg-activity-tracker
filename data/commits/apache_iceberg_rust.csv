@@ -31897,3 +31897,57 @@ apache/iceberg-rust#2752:
 ---------
 
 Co-authored-by: Claude <noreply@anthropic.com>",de19a3986fbdf399f09f71cd8c08e2573630c80f,2752,false,Claude,10,2468,14,crates
+apache/iceberg-rust,fc682d7a050cdc05e2b90ccf04192034dc8f1a1c,fc682d7,Jeremy Schoemaker,jeremy@shoemoney.com,2026-10-02T09:57:27Z,GitHub,noreply@github.com,2026-10-02T09:57:27Z,fix(spec): Harden decimal and fixed type string parsing (#3256),"* fix(spec): Harden decimal and fixed type string parsing
+
+deserialize_decimal and deserialize_fixed used trim_start_matches and
+trim_end_matches, which strip repeated occurrences and never require the
+prefix, so ""decimal(decimal(5, 2)))))"" and ""fixed[16"" both parsed
+successfully. Precision was also unbounded, so ""decimal(50, 2)"" was
+accepted into Schema and TableMetadata even though the crate's own
+MAX_DECIMAL_PRECISION is 38, and the failure only surfaced much later in
+Arrow or Avro conversion.
+
+Parse strictly with strip_prefix and strip_suffix, and reject precision
+outside 1..=38 and scale greater than precision.
+
+Signed-off-by: Jeremy Schoemaker <jeremy@shoemoney.com>
+
+* fix(spec): Clarify zero precision errors and verify serde roundtrips
+
+* test(spec): cover decimal and fixed parsing edge cases
+
+* fix(spec): align decimal serde validation with constructor
+
+* fix(spec): preserve type parse errors and canonical serde coverage
+
+---------
+
+Signed-off-by: Jeremy Schoemaker <jeremy@shoemoney.com>",19603861d545f8edbc5016e45cb1bacb0579cbf8,3256,false,,1,214,16,crates
+apache/iceberg-rust,e9c22bf7148a2fadd8dc94879371866dea89c883,e9c22bf,Minh Vu,vuhoangminh97@gmail.com,2026-10-02T09:57:45Z,GitHub,noreply@github.com,2026-10-02T09:57:45Z,perf(arrow): skip rebuilding projected arrays without parent nulls (#3282),"* perf(arrow): skip rebuilding top-level projected arrays
+
+* perf(arrow): drop in-crate benchmark harness
+
+* perf(arrow): skip rebuilding nested projected arrays
+
+* perf(arrow): tighten projector zero-copy path
+
+* perf(arrow): polish projector zero-copy path",fc682d7a050cdc05e2b90ccf04192034dc8f1a1c,3282,false,,1,144,16,crates
+apache/iceberg-rust,ffa864bf2fd3ba27ff221746f993d4bf7810440b,ffa864b,Anoop Johnson,anoop@apache.org,2026-10-02T13:57:07Z,GitHub,noreply@github.com,2026-10-02T13:57:07Z,fix(reader): page-index pruning drops rows for INT32/INT64 decimals (#3314),"Page-index bounds for INT32/INT64 columns were built as Int/Long literals
+regardless of the Iceberg field type. For decimal fields, query datums use
+Int128, and Datum::partial_cmp only compares decimals when both sides are
+Int128, so every comparison returned None. This silently pruned all matching
+pages for inequality and IN predicates when page-index row selection was
+enabled.
+
+Convert INT32/INT64 page bounds to Int128 for decimal fields, matching the
+row-group statistics path.
+
+Follow-up: FIXED_LEN_BYTE_ARRAY decimals (precision > 18) still get no
+page-index pruning, even though the row-group stats path decodes them. This
+only over-selects pages (never drops rows) and is pre-existing. Decoding them
+here later must guard against truncated ColumnIndex bounds
+(column_index_truncate_length).
+
+Closes #3264
+
+Co-authored-by: Fokko Driesprong <fokko@apache.org>",e9c22bf7148a2fadd8dc94879371866dea89c883,3314,false,Fokko Driesprong,1,259,6,crates

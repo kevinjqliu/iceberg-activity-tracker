@@ -30281,3 +30281,124 @@ Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
 ---------
 
 Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>",dd935d836bbfcd85d2431b3b6ef5e9f76eb1e226,1999,false,,4,237,3,catalog; website
+apache/iceberg-go,c5c4272905234a73c6d68d7b4e86e6b340013f58,c5c4272,Matt Topol,zotthewizard@gmail.com,2026-10-01T14:59:26-04:00,GitHub,noreply@github.com,2026-10-01T14:59:26-04:00,fix(catalog/sql): widen the write-retry budget for lock contention (#2036),"* fix(catalog/sql): widen the write-retry budget for lock contention
+
+Concurrent CreateTable/CreateView against a SQLite catalog could fail with
+SQLITE_BUSY instead of ErrTableAlreadyExists/ErrViewAlreadyExists.
+
+SQLite serializes writers, and the write transaction in these paths reads
+(namespace existence, identifier availability) before it inserts. A lock
+conflict on that upgrade is reported immediately and does not consult the busy
+handler, so a busy timeout cannot absorb it -- only retrying the whole
+transaction can, which retrySerializableWriteTx already does. The budget was
+just too small: 3 attempts with 10ms/20ms backoff is 30ms of waiting, and a
+loaded machine holds the write lock longer than that. When the budget ran out
+before the winning transaction committed, the losing caller saw the driver's
+lock error rather than the catalog conflict it should report.
+
+Raise the budget to 6 attempts (~310ms). It costs nothing without contention,
+since the delays only apply between failed attempts.
+
+This was observed as a flaky TestConcurrentTableViewCollisionReturnsCatalogSentinel,
+which failed on main and on unrelated pull requests.
+
+The new regression test makes the contention deterministic by holding the
+database write lock for longer than the old budget; it fails before this change
+and passes after.
+
+Signed-off-by: Matt Topol <zotthewizard@gmail.com>
+
+* fix(catalog/sql): tighten contention test margin, document cross-dialect budget
+
+---------
+
+Signed-off-by: Matt Topol <zotthewizard@gmail.com>",f7e2667e318f61f249dadd82657b540cce13f9f2,2036,false,,2,88,1,catalog
+apache/iceberg-go,d66ab48ff812ee12af66a97e491de104e14f0aa4,d66ab48,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-01T21:37:20+02:00,GitHub,noreply@github.com,2026-10-01T15:37:20-04:00,feat(rest): expose catalog labels on the loaded table and view (#2068),"Thread the labels decoded from load responses onto the returned Table and
+View. Table gains a WithLabels option and a Labels() accessor; View gains a
+functional-options constructor with the same. LoadTable, RegisterTable,
+CreateTable, LoadView, RegisterView, CreateView, and UpdateView forward the
+response labels (viewResponse now decodes them too). The commit path keeps
+labels on the returned table too: doCommit and Transaction.StagedTable thread
+them through the rebuilt table, and Refresh re-hydrates them from the reloaded
+table. Labels() returns nil when the catalog returned none, aliases the table's
+labels so callers must treat the result as read-only, and labels are excluded
+from Table.Equals and View.Equals as transient state.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",c5c4272905234a73c6d68d7b4e86e6b340013f58,2068,false,Isaac,7,527,10,catalog; table; view
+apache/iceberg-go,b5cff239dc63e05f6af491517cf0ed0b132a1268,b5cff23,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-02T12:58:08+02:00,GitHub,noreply@github.com,2026-10-02T12:58:08+02:00,feat(rest)!: make SigV4 backend optional (#2060),"* feat(rest): make SigV4 backend optional
+
+Move AWS SigV4 signing out of `catalog/rest` into `catalog/rest/sigv4`, so plain REST users no longer pull in the AWS SDK.
+
+Breaking change: `rest.WithAwsConfig` is removed. Use `sigv4.WithAwsConfig(...)` and add a blank import of `catalog/rest/sigv4` to enable SigV4 signing.
+
+Follows the driver pattern established for cloud IO in #696.
+
+* fix(rest): resolve SigV4 signing scope through a signer factory
+
+Addresses review feedback on #2060.
+
+* Update website/src/configuration.md
+
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>
+
+* feat(rest): sign SigV4 with catalog-property credentials via the backend
+
+Carry the property-credential signing from #1999 into the optional sigv4
+backend, now that catalog/rest no longer links the AWS SDK.
+
+SignerConfig gains a Props field holding the post-override catalog properties,
+and resolveSigner passes opts.additionalProps through it. staticCredsFromProps
+and the rest.* alias keys move into catalog/rest/sigv4, where the registered
+signer factory builds a static credentials provider from the s3.* / rest.*
+properties and falls back to the AWS default chain. An explicit
+sigv4.WithAwsConfig fully specifies the credentials and never consults the
+properties.
+
+The cross-origin signing guard stays in core RoundTrip: it is signer-agnostic,
+so it now also covers a signer installed verbatim via WithSigner. Tests move
+with the code - the staticCredsFromProps table and the props-credential
+end-to-end test live in the sigv4 package, while the cross-origin redirect test
+stays in core and drives the guard through a marking signer.
+
+---------
+
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",d66ab48ff812ee12af66a97e491de104e14f0aa4,2060,false,Matt Topol,8,1028,546,catalog; cmd; website
+apache/iceberg-go,b8685e6abc7ab405570b0213c2041365f9250d75,b8685e6,Enes Keles,eneskeles81@gmail.com,2026-10-02T18:41:14+03:00,GitHub,noreply@github.com,2026-10-02T11:41:14-04:00,feat(literals): convert primitive variants in VariantLiteral.To (#2088),"* feat(literals): convert primitive variants in VariantLiteral.To
+
+Signed-off-by: Enes Keles <eneskeles81@gmail.com>
+
+* document VariantLiteral.To and keep ErrBadCast on inner cast errors
+
+Signed-off-by: Enes Keles <eneskeles81@gmail.com>
+
+---------
+
+Signed-off-by: Enes Keles <eneskeles81@gmail.com>",b5cff239dc63e05f6af491517cf0ed0b132a1268,2088,false,,3,174,16,literals.go; literals_test.go; variant_cast.go
+apache/iceberg-go,103620f105776726514b59f27938fd3155390612,103620f,Animesh Kumar,61719828+CaptainAni187@users.noreply.github.com,2026-10-02T23:07:41+05:30,GitHub,noreply@github.com,2026-10-02T13:37:41-04:00,fix(table): stop MetadataBuilder.Build from growing the metadata log (#2095),"* fix(table): stop MetadataBuilder.Build from growing the metadata log
+
+buildCommonMetadata appended the previous metadata file to b.metadataLog
+and trimmed it in place, so every Build() on a builder with changes left
+one more identical entry behind. Transactions call Build() several times
+before committing: a copy-on-write delete builds once per rewritten file,
+and StagedTable() and Transaction.Scan build again. A staged table after a
+delete that rewrote two files listed the same previous metadata file five
+times. Persisted metadata was not affected, because catalogs rebuild from
+the base and the updates.
+
+Extend and trim a copy of the log instead, so Build() leaves the builder
+unchanged and returns the same log however often it runs.
+
+Closes #2091
+
+Signed-off-by: Animesh Kumar <kanimesh187@gmail.com>
+
+* refactor(table): share the metadata log trim and cover the no-changes build
+
+Address review on #2095: clone the log on both paths of buildCommonMetadata, move the trim into a pure trimMetadataLog helper that TrimMetadataLogs also uses, assert on the builder's own log, add a test for a build without changes, and reword the copy-on-write test comment.
+
+Signed-off-by: Animesh Kumar <kanimesh187@gmail.com>
+
+---------
+
+Signed-off-by: Animesh Kumar <kanimesh187@gmail.com>",b8685e6abc7ab405570b0213c2041365f9250d75,2095,false,,3,137,8,table
+apache/iceberg-go,82f0fb19bc638dc954d942e5cd998b14670fa4c9,82f0fb1,Revanth,revanthcse1@gmail.com,2026-10-02T13:03:00-05:00,GitHub,noreply@github.com,2026-10-02T14:03:00-04:00,fix: decimal to int literal conversion ignores scale (#2096),,103620f105776726514b59f27938fd3155390612,2096,false,,3,227,6,exprs_test.go; literals.go; literals_test.go

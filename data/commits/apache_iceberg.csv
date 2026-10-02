@@ -7624,3 +7624,34 @@ Co-authored-by: Daniel Weeks <daniel.c.weeks@gmail.com>
 Co-authored-by: Marco Kroll <marco.h.kroll+iceberg@gmail.com>",8f825e6e19088f5b0db2e5095f49bd18ffafeb92,18203,false,Alex Stephen; Daniel Weeks; Marco Kroll,22,550,0,api; core; open-api
 apache/iceberg,6a47c21477e432d42cc74a5b01f5c6d854b3db80,6a47c21,Neelesh Salian,nssalian@users.noreply.github.com,2026-10-01T08:37:53-07:00,GitHub,noreply@github.com,2026-10-01T09:37:53-06:00,Docs: Add release notes for 1.12.0 (#18313),,ca670d771a41f98ef8c407d9b6fe46eeb0a82e0e,18313,false,,3,219,4,site
 apache/iceberg,574e44670b8502479b5c74d0edf0b9190d235af4,574e446,Ryan Blue,blue@apache.org,2026-10-01T10:01:01-07:00,GitHub,noreply@github.com,2026-10-01T11:01:01-06:00,"Core: Return all metrics field IDs, in schema order (#18331)",,6a47c21477e432d42cc74a5b01f5c6d854b3db80,18331,false,,7,512,258,core
+apache/iceberg,8102f4cb60e23d53efaa5a15c87756dbadb06602,8102f4c,Matt Topol,zotthewizard@gmail.com,2026-10-01T21:37:28-04:00,GitHub,noreply@github.com,2026-10-01T18:37:28-07:00,Site: Add Iceberg-Go 0.7.0 release blog post (#18341),,574e44670b8502479b5c74d0edf0b9190d235af4,18341,false,,1,176,0,site
+apache/iceberg,f051a32bdf243114d148e8d2db1a937f12bfc6ab,f051a32,Charlie Chen,jchen264@uw.edu,2026-10-01T22:36:10-07:00,GitHub,noreply@github.com,2026-10-02T07:36:10+02:00,Delta: Use POSIX separator for data file paths (#17872),,8102f4cb60e23d53efaa5a15c87756dbadb06602,17872,false,,1,1,2,delta-lake
+apache/iceberg,dad714b8f0d8ce5e3d2a5f8e2f487dcb71a32100,dad714b,Thomas Thornton,thomaswilliamthornton@gmail.com,2026-10-02T03:56:11-07:00,GitHub,noreply@github.com,2026-10-02T12:56:11+02:00,kafka connect: use a stable coordinator transactional id to fence stale coordinators (#18039),"* kafka connect: use a stable coordinator transactional id to fence stale coordinators
+
+Signed-off-by: Thomas Thornton <thomaswilliamthornton@gmail.com>
+
+* kafka connect: assert exception message in coordinator fencing tests
+
+Signed-off-by: Thomas Thornton <thomaswilliamthornton@gmail.com>
+
+* kafka connect: skip transaction abort for fenced producers and improve fencing tests
+
+Signed-off-by: Thomas Thornton <thomaswilliamthornton@gmail.com>
+
+---------
+
+Signed-off-by: Thomas Thornton <thomaswilliamthornton@gmail.com>",f051a32bdf243114d148e8d2db1a937f12bfc6ab,18039,false,,13,381,64,kafka-connect
+apache/iceberg,52ea8a497f2565a789cd5626c6716ca809a263ec,52ea8a4,Anoop Johnson,anoop@apache.org,2026-10-02T06:07:02-07:00,GitHub,noreply@github.com,2026-10-02T07:07:02-06:00,"API, Core: Add toString to StructProjection and StructLikeUtil (#18342)",,dad714b8f0d8ce5e3d2a5f8e2f487dcb71a32100,18342,false,,3,59,0,api; core
+apache/iceberg,c81a26185257cca14fdfaf7e9ff9d6db881a5939,c81a261,Anoop Johnson,anoop@apache.org,2026-10-02T09:35:16-07:00,GitHub,noreply@github.com,2026-10-02T09:35:16-07:00,Core: Project tracked-file partitions onto the resolved spec (#18108),"TrackedFileAdapters exposed the manifest's union-type partition tuple
+unchanged while reporting the file's own spec ID. Residual evaluation and
+partition-constant injection read the tuple by the spec's field ordinals, so
+on partition-evolved tables a later spec's field (at a different position in
+the union than in its own spec) was read from the wrong slot, silently
+dropping rows or injecting null partition constants.
+
+Project each file's partition onto its resolved spec's partition type before
+exposing it, so partition() is always in the file's own spec order.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",52ea8a497f2565a789cd5626c6716ca809a263ec,18108,false,Isaac,5,338,65,core
+apache/iceberg,190ae2b4630b3ef649209b7a086cc1e94be4c017,190ae2b,Joe Hamman,jhamman1@gmail.com,2026-10-02T10:09:39-07:00,GitHub,noreply@github.com,2026-10-02T10:09:39-07:00,Docs: Add Earthmover to vendors page (#18286),Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>,c81a26185257cca14fdfaf7e9ff9d6db881a5939,18286,false,Claude Fable 5.1,1,4,0,site
+apache/iceberg,7f5027ceac28e667e6b10f447bf7da9d13c98658,7f5027c,Manu Zhang,OwenZhang1990@gmail.com,2026-10-03T01:54:30+08:00,GitHub,noreply@github.com,2026-10-02T10:54:30-07:00,Build: Ignore jackson-core CVEs shaded into parquet-jackson (#18346),,190ae2b4630b3ef649209b7a086cc1e94be4c017,18346,false,,1,4,0,.github
