@@ -31954,3 +31954,185 @@ Co-authored-by: Fokko Driesprong <fokko@apache.org>",e9c22bf7148a2fadd8dc9487937
 apache/iceberg-rust,3c91b3942ab40ec005dfbb9fdbccea848392cccb,3c91b39,NoahKusaba,97474796+NoahKusaba@users.noreply.github.com,2026-10-02T18:56:13Z,GitHub,noreply@github.com,2026-10-02T18:56:13Z,feat(catalog-loader): add with_runtime to BoxedCatalogBuilder (#3286),"* init
 
 * address review: doc sibling methods, tidy test, note break in changelog",ffa864bf2fd3ba27ff221746f993d4bf7810440b,3286,false,,3,93,4,CHANGELOG.md; crates
+apache/iceberg-rust,8e81f33daa31e495b94ef9e0bc5ff614355f451c,8e81f33,Oleks V,comphead@users.noreply.github.com,2026-10-04T15:36:50Z,GitHub,noreply@github.com,2026-10-04T15:36:50Z,ci: check dependency licenses with cargo-deny on every PR (#3293),"* ci: check dependency licenses with cargo-deny on every PR
+
+Run `dev/release/dependencies.sh check` in the `lint` job, so a dependency
+whose license is not allowed by `deny.toml` fails the pull request instead
+of being found at release time.
+
+Set `[graph] all-features = true` in `deny.toml`. Without it, cargo-deny
+only follows default features. Since #3143 that graph no longer includes
+the optional OpenDAL backends, so the check skipped the MPL-2.0 crates that
+`deny.toml` has exceptions for.
+
+Closes #3234.
+
+* Tighten docs/comments, reuse dependencies.sh in create_rc.sh
+
+- Trim comments and docs that over-explain.
+- Condense the CONTRIBUTING.md license guidance.
+- create_rc.sh calls dependencies.sh check so the release uses the
+  pinned cargo-deny version, same as CI.
+- Drop unused bzip2-1.0.6 from the deny.toml allow-list.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",3c91b3942ab40ec005dfbb9fdbccea848392cccb,3293,false,Copilot App; Kevin Liu,8,30,22,.github; CONTRIBUTING.md; Makefile; deny.toml; dev; website
+apache/iceberg-rust,af1da4c5bc86178c38c1c6db0578bdd9fb7021e3,af1da4c,Oleks V,comphead@users.noreply.github.com,2026-10-04T16:06:52Z,GitHub,noreply@github.com,2026-10-04T16:06:52Z,feat(storage-opendal)!: make the per-IO-operation timeout configurable (#3263),"* feat(storage-opendal)!: make the per-IO-operation timeout configurable
+
+`iceberg-storage-opendal` wraps every FileIO operator in `TimeoutLayer::new()`,
+whose 10s `io_timeout` bounds each `read`/`write` and each method call on a
+returned reader or writer. Nothing in the property or builder surface can
+override it, so an operation that legitimately needs longer fails
+deterministically: the `RetryLayer` above re-sends the same request, which
+cannot fit in the budget either.
+
+Add `client.io-timeout-ms`, parsed into an `OpenDalClientConfig` built with
+`#[derive(Properties)]` and handed to `TimeoutLayer::with_io_timeout`. The
+config's fields are private, so later client settings such as retry are
+additive rather than breaking. The default is unchanged.
+
+BREAKING CHANGE: `OpenDalStorage` variants carry a `client` field, and
+`OpenDalStorage::Memory` is now a struct variant.
+
+* refactor(storage-opendal): address review feedback on the IO timeout
+
+Quote the rejected value in the parse error, so an empty input shows as
+`value: """"`. `TimeoutLayer` exposes no getters, so a new test compares
+its `Debug` output to pin `DEFAULT_IO_TIMEOUT_MS` to OpenDAL's default.
+The parsing test now uses the constant instead of repeating the literal.
+
+Add a serde round-trip test for the `client` field, including a payload
+that omits it. Drop the `DEFAULT` associated const, which only fed a
+fallback arm that cannot run. Update the upstream
+`test_writer_close_returns_stored_size` for the struct variant, and reuse
+`StorageConfig::with_prop` and `empty_resolving_storage` in the tests.
+
+* refactor(storage-opendal): rename the IO timeout key to opendal.io-timeout-ms
+
+Only `iceberg-storage-opendal` honors the key, so namespace it under
+`opendal.` and define it as `OPENDAL_IO_TIMEOUT_MS` next to
+`OpenDalClientConfig`, rather than in `iceberg::io`. This matches how
+`ADLS_SAS_TOKEN` and `GCS_ALLOW_ANONYMOUS` sit next to the configs that
+parse them. With the key moved, the `iceberg` crate needs no change.
+
+* refactor(storage-opendal): rename the client field to client_config
+
+`client` reads like an HTTP client handle. Rename the field on every
+`OpenDalStorage` variant, and the `OpenDalStorage::client()` accessor,
+to `client_config` to match `OpenDalClientConfig`. `opendal_config`
+would be ambiguous next to the backend `config` field, which holds an
+OpenDAL config too.
+
+`test_default_io_timeout_matches_opendal` compares `Debug` output. Both
+sides go through the same derived impl, so a format change cannot make
+them differ. A `Debug` that stopped printing `io_timeout` would make the
+check pass vacuously, so also assert that a different `io_timeout`
+produces a different string.
+
+* fix(storage-opendal): reject a zero IO timeout when deserializing
+
+`parse_io_timeout_ms` rejected zero, but the derived `Deserialize` did
+not go through it. A serialized `OpenDalStorage` carrying
+`""io_timeout_ms"": 0` was rebuilt without error, and the zero reached
+`TimeoutLayer`.
+
+Store the timeout as a `NonZeroU64`. `str::parse` and serde's
+`NonZeroU64` impl both reject zero, so both construction paths share
+one check. The serialized form is still a plain integer. The generated
+getter now returns `&NonZeroU64`, because the `Properties` derive only
+returns by value for the primitive types it recognizes.
+
+The parsing test also covers the edges of the valid range. `1` and
+`u64::MAX` are accepted, and `u64::MAX + 1` is rejected.
+
+* refactor(storage-opendal): return the IO timeout as a Duration
+
+`OpenDalClientConfig::io_timeout_ms()` returned `&NonZeroU64`, because the
+`Properties` derive only returns primitives by value. Replace the generated
+getter with `io_timeout()`, which returns a `Duration`, and keep the
+millisecond field private.
+
+Expose the default as `OPENDAL_IO_TIMEOUT_MS_DEFAULT`, following the
+`*_DEFAULT` consts in `iceberg`, so the key's doc links to it instead of
+repeating the number. Keep the `ParseIntError` as the source of a rejected
+value, as `parse_pool_property` does, so the message says why it failed.
+
+Document that the serialized form of `OpenDalStorage` is not stable across
+crate versions, as `FileIO::serialize_all` already does for its own.
+
+Test that the configured timeout reaches `TimeoutLayer`. A memory operator
+behind `ConcurrentLimitLayer::new(0)` stalls every IO call, and paused tokio
+time skips the wait and the retry backoff. Check propagation through
+`OpenDalResolvingStorage` for every enabled scheme, not only S3.
+
+* refactor(storage-opendal): take the client config defaults from the derive
+
+Build `OpenDalClientConfig::default()` from `from_properties` with no
+properties, so each default is declared once in `#[property]` and serde
+and `from_properties` cannot disagree as settings are added.
+
+Say in the `parse_io_timeout_ms` doc that it exists to quote the value
+and name the unit, and that `NonZeroU64` is what rejects zero. Fold the
+valid-value asserts in the parsing test into one loop.
+
+* refactor(storage-opendal): build the client config default directly
+
+`Default` delegated to `from_properties` with no properties and called
+`expect`. A later setting without a `#[property]` default would make it
+panic, and because of the container-level `#[serde(default)]`, serde
+calls `default()` on every `client_config` it deserializes. Build the
+struct directly, and keep the two defaults equal with
+`test_default_matches_property_defaults`.
+
+Name OpenDAL's 60-second control-operation budget in the
+`OPENDAL_IO_TIMEOUT_MS` doc, along with the calls it covers here,
+`exists` and `metadata`. `test_default_timeouts_match_opendal` now pins
+both defaults that the doc states.
+
+Pin the serialized-form break with a test that rejects the old
+`""LocalFs""`, `""Memory""` and `{""Memory"": null}` forms. Match the stall
+test's error on `{ timeout: 45 }`, so a 450-second budget cannot pass.
+
+* refactor(storage-opendal): keep the client config accessors crate-private
+
+`OpenDalStorage::client_config()`, `OpenDalClientConfig::io_timeout()` and
+`OPENDAL_IO_TIMEOUT_MS_DEFAULT` have no callers outside the crate. Keep them
+out of the public API so they can be exposed later without a breaking change.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* refactor(storage-opendal): trim redundant docs, comments and test
+
+Fold the `u64` default into the `NonZeroU64` const, drop
+`test_default_matches_property_defaults` (one field, one shared const), shorten
+docs and comments that restated the code, and keep the original `op` binding in
+the `Memory` arm of `create_operator`.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* docs(storage-opendal): clarify the IO timeout and serialization docs
+
+Name OpenDAL's `io_timeout` and `timeout` settings so it is clear the property
+bounds each IO call per retry attempt and leaves control operations such as
+`stat` at 60 seconds. Align the `OpenDalStorage` serialization note with the
+wording on `FileIO::serialize_all`.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* test(storage-opendal): check OpenDalStorageFactory propagates the IO timeout
+
+Every `OpenDalStorageFactory::build` arm could fall back to the default
+`OpenDalClientConfig` without any test failing. Build each enabled backend with
+a 45000 ms timeout and read it back from the serialized storage.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: ovoievodin <o_voievodin@apple.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",8e81f33daa31e495b94ef9e0bc5ff614355f451c,3263,false,Copilot App; ovoievodin; Kevin Liu,5,387,24,Cargo.lock; crates
