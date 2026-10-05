@@ -7682,3 +7682,16 @@ updated-dependencies:
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",411c38b58c5208dd8e972a394f0e409db32458ac,18370,false,dependabot[bot],1,1,1,.github
 apache/iceberg,94250b2527f9e24082134be7da247ff5fc55df8c,94250b2,Neelesh Salian,nssalian@users.noreply.github.com,2026-10-04T09:49:33-07:00,GitHub,noreply@github.com,2026-10-04T09:49:33-07:00,Site: Add 1.12.0 release blog post (#18344),,a5f46053bf78b3fb91699d76ecda93737dec6b51,18344,false,,1,210,0,site
+apache/iceberg,2c0dd406fc1269810074006e49c5ded061feedf1,2c0dd40,Manu Zhang,OwenZhang1990@gmail.com,2026-10-05T19:22:12+08:00,GitHub,noreply@github.com,2026-10-05T13:22:12+02:00,Build: Ignore CVE-2026-68494 shaded into parquet-jackson (#18358),,94250b2527f9e24082134be7da247ff5fc55df8c,18358,false,,1,1,1,.github
+apache/iceberg,b7e6af325fc7b372fc707ef24b760ac64e706954,b7e6af3,Neelesh Salian,nssalian@users.noreply.github.com,2026-10-05T12:04:46-07:00,GitHub,noreply@github.com,2026-10-05T21:04:46+02:00,Core: Order Variant metadata dictionary and object fields by UTF-8 byte order (#17726),* Core: Order Variant field names by unsigned UTF-8 byte order per VariantEncoding.md,2c0dd406fc1269810074006e49c5ded061feedf1,17726,false,,12,194,21,api; core; kafka-connect; parquet
+apache/iceberg,17d375a0ed3a9213935f59e04404b83c64e982a6,17d375a,Hongyue/Steve Zhang,hongyue.apache@gmail.com,2026-10-05T13:39:22-07:00,GitHub,noreply@github.com,2026-10-05T14:39:22-06:00,Spark: Use merge append by default for streaming writes (#18332),"Spark 3.5, 4.0, 4.1, 4.2: Use merge append by default for streaming writes
+
+Flip the default of the `use-merge-append-for-streaming` write option from
+false to true, so streaming appends merge manifests on commit instead of
+accumulating a small manifest per commit.
+
+The option was added in 1.12 (#17347, #17403) defaulting to fast append to
+give users a release to adjust in case anything relied on the one-manifest-
+per-commit behavior. Now that 1.12 has shipped, flip the default for 1.13.
+
+Fast append remains available by setting the option to false.",b7e6af325fc7b372fc707ef24b760ac64e706954,18332,false,,5,5,5,docs; spark

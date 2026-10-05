@@ -30407,3 +30407,249 @@ apache/iceberg-go,fa5309b3624d5798bde69722b279366bb7f39846,fa5309b,Alessandro No
 * Fix REST path segment encoding
 
 * Keep view payload names unencoded",82f0fb19bc638dc954d942e5cd998b14670fa4c9,2074,false,,4,111,26,catalog
+apache/iceberg-go,79e13a1d02c911d4db731a6bf3ffcde5f877a465,79e13a1,starpact,58423997+starpact@users.noreply.github.com,2026-10-06T01:26:37+08:00,GitHub,noreply@github.com,2026-10-05T19:26:37+02:00,fix(table): keep Parquet metrics complete without stats (#2051),"* fix(table): keep Parquet metrics complete without stats
+
+* test(table): harden Parquet metrics regression test
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+---------
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",fa5309b3624d5798bde69722b279366bb7f39846,2051,false,Claude Opus 5.5,2,29,2,table
+apache/iceberg-go,8ff80185af86555cf99e5844a62cf6e31c271efd,8ff8018,Bilal Akhtar,me@itsbilal.com,2026-10-05T15:03:42-04:00,GitHub,noreply@github.com,2026-10-05T21:03:42+02:00,feat(rest): add RefreshTableCredentials call to rest catalog (#2075),"* feat(catalog): add RefreshTableCredentials call to catalog
+
+This change exposes the table credential REST catalog endpoint as a
+top-level method on catalogs. This is useful for when a table.Table is
+seeded with a specific metadata location directly using table.New, but
+is lacking temporarily-vended storage credentials to do any file scans.
+
+* CR suggestion + one more rebase fix
+
+* CR suggestions
+
+* nit on comment
+
+* another nit",79e13a1d02c911d4db731a6bf3ffcde5f877a465,2075,false,,6,605,9,catalog; table
+apache/iceberg-go,b8ee7dd647dbe6b5e66dbdfb58f40519399a1104,b8ee7dd,Minh Vu,vuhoangminh97@gmail.com,2026-10-05T21:13:06+02:00,GitHub,noreply@github.com,2026-10-05T21:13:06+02:00,perf(table): deduplicate equality delete metadata setup (#2025),,8ff80185af86555cf99e5844a62cf6e31c271efd,2025,false,,7,599,91,table
+apache/iceberg-go,0df6c6f313555e17b8c5ef7c880098427e980ffe,0df6c6f,İrem Çağın Yurttürk,cagin.yurtturk@getbruin.com,2026-10-05T22:17:43+03:00,GitHub,noreply@github.com,2026-10-05T21:17:43+02:00,feat(catalog/glue): support Amazon S3 Tables federated catalogs (#2001),"* feat(catalog/glue): support Amazon S3 Tables federated catalogs
+
+Tables in a Glue database federated to Amazon S3 Tables (ConnectionType
+aws:s3tables) could not be created through the Glue catalog: the service
+assigns storage itself, so the generic client-side location resolution
+fails with ""no default path set"".
+
+Detect the federated database and create such tables in two phases,
+mirroring pyiceberg: create a minimal Glue entry so S3 Tables allocates
+storage, read the assigned location, write Iceberg metadata to it, then
+repoint the Glue entry. The allocated entry is rolled back on any later
+failure. An explicit location is rejected for these tables, and a missing
+version id is treated as a failed commit.
+
+S3 Tables entries also report a service-specific Glue TableType (e.g.
+""customer""), so getRawTable now accepts any entry marked as Iceberg via
+the table_type parameter, not only EXTERNAL_TABLE.
+
+Adds unit coverage for detection, the two-phase create, location
+rejection, every rollback path, and the relaxed TableType gate, plus a
+gated live integration test.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* fix(catalog/glue): don't roll back S3 Tables table on reload failure
+
+The final LoadTable ran inside the create's rollback scope, so a
+transient read failure after a successful commit deleted an
+already-created table (and reclaimed its storage). Move the reload out
+of that scope: only allocate/write/commit failures roll back now, which
+also matches the generic create path. Document that S3 Tables keeps its
+own Glue TableType on the commit update.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* test(catalog/glue): reload a service TableType in the S3 Tables create test
+
+Have the successful create path's mocked reload return a service-specific
+TableType (""customer""), so the happy path also exercises the relaxed
+getRawTable gate rather than only EXTERNAL_TABLE.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* address review: lazy federation detection and scope getRawTable relaxation
+
+- CreateTable now tries the generic path first and only probes for S3 Tables
+  federation when location resolution fails with ErrNoDefaultLocation. This
+  removes the redundant GetDatabase on default creates and avoids a new
+  glue:GetDatabase requirement on explicit-location creates.
+- Export internal.ErrNoDefaultLocation so the probe matches it via errors.Is
+  instead of the error string.
+- Scope the relaxed getRawTable TableType gate to entries actually federated
+  to S3 Tables (Table.FederatedTable.ConnectionType == aws:s3tables), so
+  non-federated databases keep their pre-existing behavior.
+- Tests: prove explicit-location creates skip the probe, prove a non-federated
+  iceberg-param table is still rejected, and update federated mocks.
+
+* address review: reject explicit S3 Tables location, soften federation probe
+
+- CreateTable rejects an explicit location for a federated S3 Tables
+  database instead of silently creating a table outside managed storage.
+- isS3TablesDatabase treats AccessDeniedException as not-federated so a
+  caller lacking glue:GetDatabase still reaches the generic create path.
+- Document the two residual create failures left to the service.
+- Tighten the metadata-write-failure test to assert the write error.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* catalog/glue: best-effort clean up S3 Tables metadata on commit failure
+
+When UpdateTable fails after WriteMetadata, the rollback now best-effort
+deletes the written metadata object before dropping the minimal Glue entry.
+For S3 Tables the managed location may be unreachable, so the removal error
+is ignored and reclaiming any remainder is left to the service, as documented.
+The existing UpdateTable-failure test now asserts the metadata file is gone.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* catalog/glue: make stranded S3 Tables entry droppable and harden the commit
+
+- DropTable/getRawTable now accept a minimal federated S3 Tables entry
+  (format=ICEBERG, no table_type), so a double-failure leftover is cleaned
+  up through DropTable, restoring parity with pyiceberg's delete_table.
+- The UpdateTable repoint preserves the service-assigned TableType instead
+  of forcing EXTERNAL_TABLE, which S3 Tables rejects on write; a unit test
+  now asserts the TableType we send.
+- The rollback DeleteTable runs on a context detached from a cancelled
+  create (context.WithoutCancel + timeout) and joins errors with errors.Join.
+- isS3TablesDatabase guards against a nil Database from getDatabase.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* catalog/glue: keep the live-proven EXTERNAL_TABLE on the S3 Tables repoint
+
+Sending the allocated entry's own TableType was untested against S3 Tables
+and races the service's federation (nil right after CreateTable, ""customer""
+once federated). Live testing confirmed S3 Tables accepts EXTERNAL_TABLE on
+the repoint, so send it unconditionally and assert it in the unit test.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* catalog/glue: note S3 Tables ignores the repoint TableType (verified live)
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* fix(catalog/glue): write table metadata with the catalog AWS config
+
+The metadata writes in CreateTable, commitS3TablesTable, and CommitTable used
+a bare context, so the S3 FileIO resolver fell back to LoadDefaultConfig. A
+catalog built with WithAwsConfig or glue.* static credentials would then call
+Glue as the configured principal but PUT metadata as the ambient one (or fail
+despite valid configured credentials). Wrap the context with the catalog's AWS
+config before each write, matching RegisterTable and convertGlueToIceberg; for
+commitS3TablesTable this also covers the staged.FS metadata cleanup.
+
+* test(catalog/glue): mock GetDatabase in TestGlueCreateTableAlreadyExists
+
+Merging main brought in TestGlueCreateTableAlreadyExists, which does an
+explicit-location create. CreateTable now consults the database up front to
+reject federated S3 Tables locations, so the test must mock GetDatabase; a
+non-federated result lets it take the generic path and assert the
+AlreadyExists mapping. In real AWS a missing glue:GetDatabase surfaces as
+AccessDenied, which isS3TablesDatabase already treats as non-federated.
+
+* address review: resolve federation up front and harden S3 Tables create
+
+- CreateTable now fetches the database once and decides S3 Tables federation for
+  both default and explicit-location creates, reusing the result for namespace
+  properties so staging issues no second GetDatabase. This also catches catalogs
+  with a `warehouse` property, where the previous lazy probe let a federated
+  create write outside the managed storage.
+- Map AlreadyExistsException from the S3 Tables allocate step to
+  catalog.ErrTableAlreadyExists, matching the other create paths.
+- Reject RenameTable for federated S3 Tables tables, whose managed storage the
+  copy-then-delete rename cannot safely repoint.
+- Replace isS3TablesDatabase with lookupDatabase (AccessDenied/NotFound tolerant)
+  and extract namespacePropsFromDatabase.
+
+Tests: credential-boundary regression tests (memfs FileIO recording the ctx AWS
+config) for CreateTable, commitS3TablesTable incl. the fs.Remove cleanup, and
+CommitTable; warehouse-set federated create; allocate AlreadyExists; rename
+rejection; catalog-id pinning; and AssertExpectations on the fall-through test.
+
+* Trim comments
+
+* Address review nits
+
+---------
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>",b8ee7dd647dbe6b5e66dbdfb58f40519399a1104,2001,false,,2,1092,9,catalog
+apache/iceberg-go,9cd5a0559ca0ca5e947fcf4da94f52972c7774b4,9cd5a05,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-05T23:02:54+02:00,GitHub,noreply@github.com,2026-10-05T23:02:54+02:00,refactor(table)!: extract orphan cleanup into table/maintenance (#2086),"* refactor(table)!: extract orphan cleanup into table/maintenance
+
+This is Slice 1 of issue #2083, breaking pre-v1 relocation of the orphan cleanup
+service from the table package into a dedicated table/maintenance package.
+
+Changes:
+- Create new table/maintenance package with Service facade
+- Move DeleteOrphanFiles, PlanOrphanFiles, ExecuteOrphanCleanup, and PurgeFiles
+  methods from table.Table to maintenance.Service
+- Move exported types: OrphanCleanupOption, OrphanCleanupResult, OrphanCleanupPlan,
+  OrphanFile, PrefixMismatchMode (and constants)
+- Move helper functions: WithLocation, WithFilesOlderThan, WithDryRun,
+  WithDeleteFunc, WithCleanupMaxConcurrency, WithPrefixMismatchMode,
+  WithEqualSchemes, WithEqualAuthorities
+- Export IsGCEnabled from table package (was unexported isGCEnabled)
+- Update all callers in catalog/ and cmd/iceberg/ to use new API:
+  maintenance.New(tbl).DeleteOrphanFiles(...) instead of tbl.DeleteOrphanFiles(...)
+- Move tests to table/maintenance package
+- Update IsGCEnabled references in transaction.go and updates.go
+
+The new public entry shape maintains ergonomic parity with the original API.
+To use orphan cleanup: create a maintenance service with maintenance.New(table),
+then call its methods.
+
+BREAKING: table.DeleteOrphanFiles, table.PlanOrphanFiles, table.ExecuteOrphanCleanup,
+and table.PurgeFiles are no longer available on table.Table. Use table/maintenance
+package instead.
+
+* style(table): gofmt the moved orphan-cleanup test
+
+table/maintenance/orphan_cleanup_test.go was not gofmt-clean after the move (a
+block comment needed re-indentation), which failed the golangci-lint gofmt check
+in CI. Formatting only, no behavior change.
+
+* refactor(table/maintenance): use free functions and restore dropped tests
+
+Address review feedback on the orphan-cleanup extraction:
+
+- Replace the Service facade with free functions that take the table as their
+  first argument (maintenance.DeleteOrphanFiles(ctx, tbl, ...)), matching
+  table/compaction, and update all callers in catalog/ and cmd/iceberg/. This
+  avoids freezing a stateful constructor at v1; a deprecation shim on
+  table.Table is impossible anyway because table/maintenance imports table.
+- Rename the four generic options to the WithCleanup* prefix
+  (WithCleanupLocation/DryRun/DeleteFunc/FilesOlderThan) for consistency with
+  WithCleanupMaxConcurrency before the names freeze.
+- Restore the tests and benchmarks dropped in the move: the statistics- and
+  tombstone-reference tests, the manifest-dedup and concurrency-limit tests,
+  the negative-/zero-age retention checks, and the PurgeFiles and manifest-list
+  benchmarks, porting their shared IO and manifest helpers into the package.
+- Document table.IsGCEnabled's parsing rules now that it is exported, and add a
+  package doc comment.
+- Fix website/src/api.md and releases.md (with a moved-symbols compatibility
+  note), and add a `make vet` target running `go vet -tags=integration ./...`
+  (wired into CI) so the moved //go:build integration test stays compiled.
+
+* docs(table/maintenance): document OrphanCleanupOption and the WithCleanup* options
+
+Add one-line doc comments with defaults to OrphanCleanupOption,
+WithCleanupLocation (table data location), WithCleanupFilesOlderThan (72h),
+and WithCleanupDryRun (false), now that the WithCleanup* names are fixed for v1.",0df6c6f313555e17b8c5ef7c880098427e980ffe,2086,false,,21,581,264,.github; Makefile; catalog; cmd; maintenance}; table; website
+apache/iceberg-go,c1dad7f57e427b8a1ce52c9ac85b3f3edd38366a,c1dad7f,Alessandro Nori,alessandro.nori@datadoghq.com,2026-10-05T23:03:34+02:00,GitHub,noreply@github.com,2026-10-05T23:03:34+02:00,chore(rest): Avoid fatal assertions in test handlers (#2103),"* Avoid fatal assertions in handlers
+
+* Expand raw-name request coverage
+
+* Fix lint in request test
+
+* Remove remaining fatal handler assertions
+
+* Rename request payload decoder
+
+* Remove remaining fatal handler calls",9cd5a0559ca0ca5e947fcf4da94f52972c7774b4,2103,false,,6,594,199,catalog

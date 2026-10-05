@@ -32136,3 +32136,44 @@ Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 Co-authored-by: ovoievodin <o_voievodin@apple.com>
 Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",8e81f33daa31e495b94ef9e0bc5ff614355f451c,3263,false,Copilot App; ovoievodin; Kevin Liu,5,387,24,Cargo.lock; crates
+apache/iceberg-rust,ecba0b537a1f78ec8125c1a26f6dfab3f95b509e,ecba0b5,Andy Grove,agrove@apache.org,2026-10-04T21:10:38Z,GitHub,noreply@github.com,2026-10-04T21:10:38Z,fix(transform): floor day transform for pre-epoch timestamps (#3323),"* fix(transform): floor day transform for pre-epoch timestamps
+
+`Day::day_timestamp_micro` and `Day::day_timestamp_nano` took the whole
+seconds of a timestamp with `/`, which truncates toward zero, while the
+fraction of the second came from `rem_euclid`, which floors. For a
+negative timestamp that is not on a whole second the seconds came out
+one too high, so a timestamp in the last second of a day before
+1969-12-31 got the next day.
+
+Compute the day with `div_euclid` on the length of a day instead, the
+way `Hour` already does. This gives the same days as Iceberg Java's
+`DateTimeUtil`, except for a pre-epoch timestamp exactly 999999
+microseconds (999999999 nanoseconds) after midnight, which Java puts in
+the day before. iceberg-rust already returned the calendar day for
+those, as PyIceberg and the `year`, `month` and `hour` transforms do,
+and following Java there would make the transform non-monotonic.
+
+Files written before this change can hold those rows one day too high.
+Inclusive projection already widens pre-epoch `day` predicates by one
+day to cover such files, as Java does, but only for `timestamp`
+columns. Apply it to every timestamp type.
+
+* refactor(transform): list timestamp types for day projection adjustment
+
+Match how transform.rs lists the timestamp types elsewhere, and keep the
+adjustment opt-in if `day` ever gains another source type. No behavior
+change: `day` accepts `date` and the four timestamp types.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* chore(transform): trim day transform comments
+
+Drop comments that narrate history or restate the test code. The
+history is in the PR description.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",af1da4c5bc86178c38c1c6db0578bdd9fb7021e3,3323,false,Copilot App; Kevin Liu,2,105,56,crates
