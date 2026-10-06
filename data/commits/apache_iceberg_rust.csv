@@ -32177,3 +32177,34 @@ Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 
 Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",af1da4c5bc86178c38c1c6db0578bdd9fb7021e3,3323,false,Copilot App; Kevin Liu,2,105,56,crates
+apache/iceberg-rust,f2409e9f5eaff1c643985013d927e17fdf16e6ec,f2409e9,Liang-Chi Hsieh,viirya@gmail.com,2026-10-06T17:48:48Z,GitHub,noreply@github.com,2026-10-06T17:48:48Z,fix: fill schema-added nested columns with typed NULL arrays on read (#2635),"* fix: fill schema-added nested columns with typed NULL arrays on read
+
+When a column of a nested type (list, map, or a struct with nested
+children) is added to the table schema after data files were written,
+reading those older files failed with ""unexpected target column type"":
+the helpers that materialize missing columns only handled primitive
+types plus structs with primitive-only children, via hand-written
+per-type NULL branches.
+
+Build the all-NULL column with arrow's new_null_array instead, which
+supports every Arrow type (including arbitrarily nested ones), and drop
+the per-type NULL branches from create_primitive_array_repeated and
+create_primitive_array_single_element.
+
+Closes #2618
+
+* test(arrow): restructure #2618 nested-null test; trim comments
+
+Address review feedback on #2635:
+- Extract the evolved schema into `schema_with_added_nested_columns` and
+  reorder the test to read top-to-bottom as a story (old file -> evolved
+  schema -> expect typed NULLs), per @kevinjqliu.
+- Assert the all-NULL struct still carries its full nested shape (child
+  fields `a` and the nested list `ys`), locking in that the type-preserving
+  new_null_array fill keeps nested children.
+- Trim the over-explanatory comments on the new_null_array NULL-fill paths and
+  note that the literal `1` is new_null_array's row count.
+
+* test: cover typed null helpers and clarify struct default support
+
+* test: compare full evolved schema and link default follow-up",ecba0b537a1f78ec8125c1a26f6dfab3f95b509e,2635,false,,2,269,139,crates
