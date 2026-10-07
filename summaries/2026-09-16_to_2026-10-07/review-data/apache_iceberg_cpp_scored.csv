@@ -1,0 +1,243 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-cpp,6988eb067a92e6ea5445f8810b2bbe5bc6b86e40,6988eb0,Manu Zhang,OwenZhang1990@gmail.com,2026-09-16T22:28:38+08:00,GitHub,noreply@github.com,2026-09-16T22:28:38+08:00,feat: add lazy scan planning streams (#873),"Scan planning currently materializes manifest entries and file scan tasks before returning. This change adds fallible, single-pass streams so callers can consume entries and tasks incrementally or stop early.
+
+- Add `DataTableScan::PlanFilesStream()` and `ManifestGroup::PlanFilesStream()`. The eager `PlanFiles()` methods collect the stream into a vector.
+- Add `ManifestReader::EntriesStream()` and `LiveEntriesStream()` as the reader implementation extension points. `Entries()` and `LiveEntries()` collect these streams for eager callers.
+- Rename the pull utility from `Iterator<T>` to `Stream<T>`, with `ManifestEntryStream` and `FileScanTaskStream` aliases and corresponding owning `*Ptr` aliases. `Next()` returns `Result<std::optional<T>>`; errors and exhaustion are terminal, and `ToVector()` collects the remaining values.
+- Distinguish explicit empty selections from default projections: `Select({})` selects no user columns, while `Select({""*""})` or omitting `Select()` selects all columns. Table projections still include fields required by filters, and an explicit empty selection conflicts with an explicit projection schema.
+- Preserve partition values needed for delete matching and residual evaluation under narrow projections. Read statistics needed for equality-delete matching, then drop statistics the caller did not request.
+- Report scan metrics on exhaustion or early stream destruction, without emitting a successful report after a planning error.
+
+Streams own their reader or planning resources and may outlive the object that created them. A configured executor is borrowed and must remain alive until the planning stream is destroyed. Serial planning opens one data manifest at a time; executor-backed planning opens at most 32 matching manifest streams per batch and consumes their entries incrementally. `DataTableScan` uses the configured executor when there is more than one data manifest or more than one delete manifest.
+
+Snapshot and manifest-list metadata remain materialized, and delete manifests are read eagerly to build the delete-file index before returning the planning stream.
+
+API changes: include `iceberg/util/stream.h` and use `Stream<T>` in place of `Iterator<T>`. `ManifestGroup::PlanFiles()` and `PlanFilesStream()` consume the group and require an rvalue, such as `std::move(*group).PlanFilesStream()`. Custom manifest readers implement `EntriesStream()` and `LiveEntriesStream()` and return streams that remain valid after reader destruction. `DataTableScan::PlanFiles()` retains its existing caller syntax and eager result type.
+
+Validation: built `manifest_test` and `scan_test` with CMake and ran `ctest --test-dir build --output-on-failure -R '^(manifest_test|scan_test)$'`; both suites passed. Coverage includes empty and wildcard projections, equality and position deletes, partition isolation, executor-backed planning, stream lifetimes, and scan reporting. `git diff --check` passed.",6361791d70d19f3638e7a929d8d4661aa8c26a46,873,false,,18,1227,314,example; src; stream.h; stream_test.cc,86,6,92,base; feature/api verb; strategic: manifest; medium file count; large churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.21,Core: Fix compute_table_stats failures with concurrent writes,- feat: add lazy scan planning streams (#873) (Thanks Manu Zhang!)
+apache/iceberg-cpp,168cb52b90c279679c37f1c7cf481194a839148b,168cb52,Gang Wu,ustcwg@gmail.com,2026-09-20T17:43:12+08:00,GitHub,noreply@github.com,2026-09-20T17:43:12+08:00,fix(manifest): preserve snapshot ID inheritance semantics (#947),"fix(manifest): preserve snapshot ID inheritance state
+
+Represent ManifestFile::added_snapshot_id as optional to distinguish an
+inheritance-ready null ID from a literal -1.
+
+Reuse manifests only when the ID is null, rewrite explicit -1 manifests
+with the commit snapshot ID, and continue requiring the field when
+writing manifest lists.",b2f1fcd6ad335c7aa7ddf3cb7ec967b4fbefe424,947,false,,19,163,49,src,75,7,82,base; fix; important area: manifest; strategic: manifest; medium file count; medium churn; correctness signal; has PR number; LanceDB similarity 0.23,Spark 4.1: Add Merge WriteSummary to Snapshot Summary,- fix(manifest): preserve snapshot ID inheritance semantics (#947) (Thanks Gang Wu!)
+apache/iceberg-cpp,ad83c1d97fb62634448481a12d1e6051657bd55b,ad83c1d,Manu Zhang,OwenZhang1990@gmail.com,2026-09-22T09:40:43+08:00,GitHub,noreply@github.com,2026-09-22T09:40:43+08:00,fix: align boolean parsing with Iceberg Java (#951),"Boolean values were parsed ad hoc in four places, and not consistently:
+`arrow_s3_file_io.cc` rejected anything that was not ""true"" or ""false"",
+while `config.h`, `auth_managers.cc` and `rest_catalog.cc` read any
+unrecognized value as false. Each site spelled out the ""true""/""false""
+literals itself, and `StringUtils` covered only numbers.
+
+Add `StringUtils::ParseBoolean()`, which mirrors Java's
+Boolean.parseBoolean, and `PropertyUtil::PropertyAsBoolean()` /
+`PropertyUtil::PropertyAsOptionalBoolean()`, which mirror Java's
+PropertyUtil.propertyAsBoolean and propertyAsNullableBoolean, and read
+every boolean through them.
+
+That settles the codebase on Java's contract: ""true"" ignoring case reads
+as true, and every other value reads as false. `s3.path-style-access` and
+`s3.ssl.enabled` change behavior accordingly: a malformed value used to
+fail the FileIO build and now reads as false, as it does in Java, whose
+S3FileIOProperties reads both with PropertyUtil.propertyAsBoolean. The
+test that pinned the old behavior is rewritten to pin the new one.
+
+Co-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>",168cb52b90c279679c37f1c7cf481194a839148b,951,false,Claude Opus 5 (1M context),11,154,30,src,65,6,71,base; fix; strategic: catalog; community signal: fileio; medium file count; co-authored; has PR number; LanceDB similarity 0.21,Fix incorrect partition bounds calculation in manifest on deletion,- fix: align boolean parsing with Iceberg Java (#951) (Thanks Manu Zhang and Claude Opus 5 (1M context)!)
+apache/iceberg-cpp,bec0ceb6e644acafb09b2a0b16ca91bbff952265,bec0ceb,Joey,1517874642@qq.com,2026-09-16T10:06:48+08:00,GitHub,noreply@github.com,2026-09-16T10:06:48+08:00,fix(manifest): write null instead of empty list/map for unset optional DataFile fields (#934),"AppendIntList, AppendIntMap, and AppendBinaryMap in
+src/iceberg/arrow_row_builder.cc always call ArrowArrayFinishElement()
+after appending entries, even when the input container is empty. This
+produced an empty-but-non-null list/map element rather than a null
+element whenever one of DataFile's optional list/map fields
+(split_offsets, equality_ids, column_sizes, value_counts,
+null_value_counts, nan_value_counts, lower_bounds, upper_bounds) was
+unset.
+
+Add an empty check to each of these helpers that delegates to the
+existing AppendNull() instead of finishing an empty element.
+AppendStringMap (used for required properties-style maps) is
+intentionally left unchanged.
+
+Add unit test coverage in arrow_row_builder_test.cc asserting that
+AppendIntList/AppendIntMap/AppendBinaryMap write a null element (not
+an empty one) for empty input, alongside existing non-empty-input
+coverage.
+
+Co-authored-by: joeyyjwang <joeyyjwang@tencent.com>",307adb1cc272f830fdbae1b1ee241acd92451657,934,false,joeyyjwang,2,117,0,src,58,6,64,base; fix; important area: manifest; strategic: manifest; co-authored; has PR number; LanceDB similarity 0.21,Core: Add manifest partition pruning to DV validation in MergingSnapshotProducer,- fix(manifest): write null instead of empty list/map for unset optional DataFile fields (#934) (Thanks Joey and joeyyjwang!)
+apache/iceberg-cpp,6361791d70d19f3638e7a929d8d4661aa8c26a46,6361791,wzhuo,wngzhuo@gmail.com,2026-09-16T17:09:59+08:00,GitHub,noreply@github.com,2026-09-16T17:09:59+08:00,feat(inspect): implement streaming SnapshotsTable scans (#801),"- Add Scan() virtual method and Scan() convenience overload to MetadataTable
+- Add SnapshotSelection struct for time-travel snapshot resolution
+- Add supports_time_travel() concrete method driven by kind()
+- Implement SnapshotsTable::Scan() to materialize snapshot rows via ArrowRowBuilder",bec0ceb6e644acafb09b2a0b16ca91bbff952265,801,false,,14,752,137,src,45,7,52,base; feature/api verb; medium file count; medium churn; has PR number; LanceDB similarity 0.24,[SPEC] Add relative paths to v4 spec,- feat(inspect): implement streaming SnapshotsTable scans (#801) (Thanks wzhuo!)
+apache/iceberg-cpp,48738fc64ab70ef2ebe5653faf91c88efe65c23d,48738fc,Junwang Zhao,zhjwpku@gmail.com,2026-09-20T16:23:39+08:00,GitHub,noreply@github.com,2026-09-20T16:23:39+08:00,refactor: rename SnapshotCache to SnapshotReader (#945),"Name the class after its role of reading a snapshot's manifests, and
+document that it loads and caches the manifest list on first access.
+Update call sites and local variable names to match, preserving behavior.",35c5df1f12ef16357cdac212d3bcfed7b364ba2a,945,false,,13,101,100,src,40,8,48,base; strategic: manifest; medium file count; medium churn; has PR number; LanceDB similarity 0.27,Core: Add properties to InMemoryFileIO,- refactor: rename SnapshotCache to SnapshotReader (#945) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,bdc52460329108001506c43632c177b104b38559,bdc5246,aryan9948,aryansinghthree@gmail.com,2026-09-29T08:35:49+05:30,GitHub,noreply@github.com,2026-09-29T11:05:49+08:00,fix: MurmurHash3 file paths in LICENSE (#971),,8a186fe3a9822107f2e9358ddd5f0c21bac6ce97,971,false,,1,1,1,LICENSE,40,7,47,base; fix; release/security/notice signal; has PR number; LanceDB similarity 0.24,Core: Fix BinPackRewriteFilePlanner producing incorrect output file count with max-files-to-rewrite,- fix: MurmurHash3 file paths in LICENSE (#971) (Thanks aryan9948!)
+apache/iceberg-cpp,a1c947b9e6219976cb1560fdc7fdb7878c1b4bc6,a1c947b,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-09-19T08:06:43-07:00,GitHub,noreply@github.com,2026-09-19T23:06:43+08:00,feat(logging): add transaction commit lifecycle logging (#890),,4475fa87268ac2edcb26a8f1e3db207bc03cc986,890,false,,1,70,5,src,37,8,45,base; feature/api verb; has PR number; LanceDB similarity 0.28,"CI: Make CVE scan blocking on PRs, informational on main",- feat(logging): add transaction commit lifecycle logging (#890) (Thanks kamcheungting-db!)
+apache/iceberg-cpp,3c5715c66fb4d4306c54eec4aac327e2897f800b,3c5715c,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-09-29T11:19:32+08:00,GitHub,noreply@github.com,2026-09-29T11:19:32+08:00,refactor(io): hand out S3 delegates by shared_ptr and build them off the lock (#898),"ResolvingFileIO::FileIOForPath held its mutex across FileIORegistry::Load and
+the delegate's SetStorageCredentials, so building the first S3 client (which
+can look up a bucket region) stalled every other operation on the resolver.
+It now loads without the lock and caches the result only if no credential
+install happened meanwhile; otherwise it loads again with the new
+credentials. Delegates retired by an install are torn down outside the lock.
+
+Tests now exercise real IO where the old ones stopped short: the multi-prefix
+DeleteFiles test failed URI parsing before reaching any delegate, and the
+concurrency test only built input-file wrappers. The replacements write,
+delete and read through the test object store, and the stress test waits
+for every worker to run before installing.",bdc52460329108001506c43632c177b104b38559,898,false,,7,373,67,src,40,3,43,base; important area: io; strategic: storage; medium file count; medium churn; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,OpenAPI: Promote the S3 signing endpoint to the main spec,- refactor(io): hand out S3 delegates by shared_ptr and build them off the lock (#898) (Thanks Jiajia Li!)
+apache/iceberg-cpp,4475fa87268ac2edcb26a8f1e3db207bc03cc986,4475fa8,Junwang Zhao,zhjwpku@gmail.com,2026-09-19T12:43:17+08:00,GitHub,noreply@github.com,2026-09-19T12:43:17+08:00,fix: make table updates retryable and cleanup-safe (#868),,525d60f372c11226998f27c4d9f4e2ee063bbe2c,868,false,,33,1650,448,src,36,6,42,base; fix; large file count; large churn; has PR number; LanceDB similarity 0.19,Core: Fix useSnapshotSchema logic and projection in RESTTableScan,- fix: make table updates retryable and cleanup-safe (#868) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,d2a3112aab458ab506f810298c0f93f4e5ee7d66,d2a3112,Manu Zhang,OwenZhang1990@gmail.com,2026-10-04T23:36:42+08:00,GitHub,noreply@github.com,2026-10-04T23:36:42+08:00,doc: add release history for release v0.4.0 (#969),Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>,3c5715c66fb4d4306c54eec4aac327e2897f800b,969,false,Claude Opus 5.5,1,17,2,mkdocs,28,3,31,base; feature/api verb; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Site: Updates for 1.10.1 Release <Huaxin Gao>,- doc: add release history for release v0.4.0 (#969) (Thanks Manu Zhang and Claude Opus 5.5!)
+apache/iceberg-cpp,450863e776aa13d3ef3e71bf44af30f07405efc8,450863e,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-25T03:01:56+01:00,GitHub,noreply@github.com,2026-09-24T19:01:56-07:00,ci: replace MinIO with RustFS in S3 tests (#962),"* ci: replace MinIO with RustFS in S3 tests
+
+Use RustFS 1.0.0 for Docker and native test fixtures, and initialize the S3 bucket with the AWS CLI.
+
+Generated-by: Codex
+
+* ci: improve RustFS startup diagnostics and readiness
+
+Expose server logs, retry bucket initialization, verify native downloads, and disable the unused console.
+
+Generated-by: Codex
+
+* ci: use generic object store naming and improve startup diagnostics
+
+- Rename the CI step to ""Start Object Store""
+- Enable shell tracing in start_object_store.sh
+- Print the native server log only when it was started natively
+- Replace MinIO-specific wording in S3 comments
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",26303393ccf16e6d63ed08cef8a447c0d496e2c3,962,false,Copilot App; Kevin Liu,5,141,165,.github; ci; src,16,3,19,base; medium file count; medium churn; multi-area change; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Docs: Add informational properties section for table comment,"- ci: replace MinIO with RustFS in S3 tests (#962) (Thanks Sreesh Maheshwar, Copilot App, and Kevin Liu!)"
+apache/iceberg-cpp,2aaea26d23e025791aadb4084bbfd76f8bc65321,2aaea26,Manu Zhang,OwenZhang1990@gmail.com,2026-09-22T09:40:58+08:00,GitHub,noreply@github.com,2026-09-22T09:40:58+08:00,chore: prepare 0.4.0 release version (#953),,ad83c1d97fb62634448481a12d1e6051657bd55b,953,false,,1,1,1,cmake_modules,12,5,17,base; has PR number; LanceDB similarity 0.17,Site: Updates for 1.10.1 Release <Huaxin Gao>,- chore: prepare 0.4.0 release version (#953) (Thanks Manu Zhang!)
+apache/iceberg-cpp,525d60f372c11226998f27c4d9f4e2ee063bbe2c,525d60f,Junwang Zhao,zhjwpku@gmail.com,2026-09-17T20:57:37+08:00,GitHub,noreply@github.com,2026-09-17T20:57:37+08:00,build: remove Meson build support (#935),,6988eb067a92e6ea5445f8810b2bbe5bc6b86e40,935,false,,43,5,1734,.devcontainer; .github; .gitignore; .pre-commit-config.yaml; README.md; cmake_modules; meson.build; meson.options; mkdocs; requirements.txt; src; subprojects,8,3,11,base; feature/api verb; large file count; large churn; multi-area change; downrank low-signal sync item; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,"Core, Data: File Format API interfaces",- build: remove Meson build support (#935) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,26303393ccf16e6d63ed08cef8a447c0d496e2c3,2630339,Manu Zhang,OwenZhang1990@gmail.com,2026-09-23T23:59:36+08:00,GitHub,noreply@github.com,2026-09-23T23:59:36+08:00,docs: link CLAUDE.md to AGENTS.md (#957),"Claude Code reads CLAUDE.md, so it did not pick up the shared agent
+instructions in AGENTS.md. Check in CLAUDE.md as a symlink to AGENTS.md.
+
+Co-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>",64dc66f159bd62c9817a96d74cbce767268934d0,957,false,Claude Opus 5 (1M context),1,1,0,CLAUDE.md,3,3,6,base; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Add runtime dependency guard for all bundled shadow JAR artifacts,- docs: link CLAUDE.md to AGENTS.md (#957) (Thanks Manu Zhang and Claude Opus 5 (1M context)!)
+apache/iceberg-cpp,35c5df1f12ef16357cdac212d3bcfed7b364ba2a,35c5df1,Junwang Zhao,zhjwpku@gmail.com,2026-09-20T10:25:34+08:00,GitHub,noreply@github.com,2026-09-20T10:25:34+08:00,docs: clarify contribution conventions for agents (#910),,a1c947b9e6219976cb1560fdc7fdb7878c1b4bc6,910,false,,1,5,0,AGENTS.md,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Flink: SQL support for dynamic iceberg sink,- docs: clarify contribution conventions for agents (#910) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,8a186fe3a9822107f2e9358ddd5f0c21bac6ce97,8a186fe,Manu Zhang,OwenZhang1990@gmail.com,2026-09-29T10:59:41+08:00,GitHub,noreply@github.com,2026-09-29T10:59:41+08:00,chore: bump version to 0.5.0-SNAPSHOT (#968),Co-authored-by: Claude Opus 5.5 (1M context) <noreply@anthropic.com>,ddbd2eef3d16f6a4b111f8a1c7ac14b144d8b06d,968,false,Claude Opus 5.5 (1M context),2,2,2,CMakeLists.txt; cmake_modules,-40,3,-37,base; multi-area change; co-authored; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,Spark 4.1: Rename expectedSchema to projection for clarity,- chore: bump version to 0.5.0-SNAPSHOT (#968) (Thanks Manu Zhang and Claude Opus 5.5 (1M context)!)
+apache/iceberg-cpp,64dc66f159bd62c9817a96d74cbce767268934d0,64dc66f,Manu Zhang,OwenZhang1990@gmail.com,2026-09-22T11:37:02+08:00,GitHub,noreply@github.com,2026-09-22T11:37:02+08:00,chore: bump avro to 209a373 to preserve adjust-to-utc on primitives (#954),"Move the avro-cpp pin from 997d50d to 209a373 (current main, 74 commits).
+The C++ changes in the range are a std::formatter fix for C++23 builds
+(#3815), a JSON decoder fix for the lone low surrogate U+DFFF (#3841),
+and AVRO-4351, which makes avro-cpp keep custom attributes on primitive
+schema nodes when parsing and printing schema JSON.
+
+AVRO-4351 is what matters here. `GetAdjustToUtc()` reads ""adjust-to-utc""
+off the primitive node, and the reader takes its file schema from the Avro
+file header. With the old pin the attribute was dropped both when the
+writer printed the header and when the reader parsed it, so every
+timestamp read from a file looked like it had no timezone and projecting
+a `timestamptz` or `timestamptz_ns` column out of an Avro file failed with
+""Cannot read Iceberg type"". No test wrote and re-read a timestamptz
+column through a real file, so this went unnoticed.
+
+Add schema-level projection tests that parse ""adjust-to-utc"" from JSON,
+and file-level round trips that write timestamptz columns, assert the
+attribute is present in the physical file schema, and read them back.
+All of them fail on the old pin and pass on the new one.
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>",2aaea26d23e025791aadb4084bbfd76f8bc65321,954,false,Claude Fable 5.1,4,112,1,cmake_modules; src,-40,3,-37,base; multi-area change; co-authored; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,OpenAPI: Promote the S3 signing endpoint to the main spec,- chore: bump avro to 209a373 to preserve adjust-to-utc on primitives (#954) (Thanks Manu Zhang and Claude Fable 5.1!)
+apache/iceberg-cpp,85f8a840083e2c5123a365ee55533bb50c390f1c,85f8a84,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-04T23:58:12+08:00,GitHub,noreply@github.com,2026-10-04T23:58:12+08:00,chore(deps): bump the codeql-action group with 2 updates (#984),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.38.1 to 4.38.2
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/1c5b675653bb5c22dbe9b12b556ec555138e09fd...2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2)
+
+Updates `github/codeql-action/analyze` from 4.38.1 to 4.38.2
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/1c5b675653bb5c22dbe9b12b556ec555138e09fd...2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.38.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.38.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",d2a3112aab458ab506f810298c0f93f4e5ee7d66,984,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#984) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,ddbd2eef3d16f6a4b111f8a1c7ac14b144d8b06d,ddbd2ee,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-29T10:58:01+08:00,GitHub,noreply@github.com,2026-09-29T10:58:01+08:00,chore(deps): bump the codeql-action group with 2 updates (#970),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.38.0 to 4.38.1
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/b96794f015dfd88f77b49b1c93e0fa7110f94c63...1c5b675653bb5c22dbe9b12b556ec555138e09fd)
+
+Updates `github/codeql-action/analyze` from 4.38.0 to 4.38.1
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/b96794f015dfd88f77b49b1c93e0fa7110f94c63...1c5b675653bb5c22dbe9b12b556ec555138e09fd)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.38.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.38.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",450863e776aa13d3ef3e71bf44af30f07405efc8,970,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#970) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,b2f1fcd6ad335c7aa7ddf3cb7ec967b4fbefe424,b2f1fcd,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-20T16:26:29+08:00,GitHub,noreply@github.com,2026-09-20T16:26:29+08:00,chore(deps): bump zizmorcore/zizmor-action from 0.6.3 to 0.6.4 (#950),"Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.6.3 to 0.6.4.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/70fb788f84895a7701f5643d103d587e460b5c99...cc914d7f3750a2d13d75c7f184a1060aa0e9d482)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.6.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7b344f12837942fe8efbc75d9c6ebb9697fb94d3,950,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,Licenses / Notices / Dependencies / Bundles <Thanks Blue and Kevin>,- chore(deps): bump zizmorcore/zizmor-action from 0.6.3 to 0.6.4 (#950) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,7b344f12837942fe8efbc75d9c6ebb9697fb94d3,7b344f1,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-20T16:26:14+08:00,GitHub,noreply@github.com,2026-09-20T16:26:14+08:00,chore(deps): bump the codeql-action group with 2 updates (#949),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.9 to 4.38.0
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/cdf488f595d80d6e07e03d4674febd5ab45fa938...b96794f015dfd88f77b49b1c93e0fa7110f94c63)
+
+Updates `github/codeql-action/analyze` from 4.37.9 to 4.38.0
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/cdf488f595d80d6e07e03d4674febd5ab45fa938...b96794f015dfd88f77b49b1c93e0fa7110f94c63)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.38.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.38.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",48738fc64ab70ef2ebe5653faf91c88efe65c23d,949,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#949) (Thanks dependabot[bot]!)

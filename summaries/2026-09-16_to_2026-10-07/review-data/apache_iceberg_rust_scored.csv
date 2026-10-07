@@ -1,0 +1,850 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-rust,19603861d545f8edbc5016e45cb1bacb0579cbf8,1960386,kid,lucian1412@outlook.com,2026-10-01T14:54:21Z,GitHub,noreply@github.com,2026-10-01T14:54:21Z,feat: add core COW rewrite primitive (#2752),"* feat: add core COW rewrite primitive
+
+Add a core copy-on-write rewrite primitive that plans candidate data
+files, applies a caller-provided RecordBatch rewriter, writes
+replacement data files, and returns removed/added/unchanged file lists
+for future overwrite-style commit actions.
+
+- Plan candidates through the existing scan path so manifest pruning
+  and delete-file application stay consistent with normal reads; the
+  row predicate is cleared only for the full-file rewrite input.
+- Stream rewritten batches to the replacement writer: buffer only the
+  prefix before the first changed batch, then open the writer lazily;
+  unchanged files open no writer, fully-deleted files produce no
+  replacement.
+- Bind the replacement writer and partition key to the planned
+  snapshot's schema so rewrites survive schema evolution.
+- Build the replacement parquet writer via
+  ParquetWriterBuilder::from_table_properties so replacement files
+  honor the table's write.parquet.* properties, carry the table's
+  encryption manager so encrypted tables are not downgraded to
+  plaintext, and refuse to run when write.format.default is not
+  parquet.
+- Keep the planner internal; CowRewriteBuilder is the only public
+  entry and CowRewriteFile fields sit behind accessors.
+
+Cover delete-style, update-style, no-op, full-file delete, no-match
+delete, delete-file planning, writer edge cases, schema evolution,
+multi-source replacement path uniqueness, and partition-value
+preservation (including the null partition) end-to-end.
+
+Part of #2269.
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
+* fix: address COW rewrite review comments
+
+- derive the effective change flag as `changed || output.is_none()` so a
+  rewriter returning {changed: false, output: None} cannot silently drop
+  rows while leaving the file marked unchanged; add regression tests
+- treat a candidate whose visible rows are all removed by delete files as
+  removed with no replacement, so it can be compacted away with its
+  delete files instead of landing in unchanged_data_files forever
+- honor write.object-storage.enabled when building replacement writers
+  (add the missing table property) so object-storage-layout tables keep
+  hash-entropy paths
+- count output_rows only for rows actually written to replacement files
+- derive Debug for CowBatchRewrite
+- document the sync rewriter contract, the read-only CowRewriteFile
+  surface, and the prefix buffer's whole-file worst case
+- drop avoidable FileScanTask/DataFile clones and replace the writer
+  expect() with a let-else invariant
+
+* fix(cow_rewrite): flush kept prefix after a dropped batch
+
+A dropped batch could mark a file changed while skipping the Some(output) branch that initialized the writer and flushed kept rows. Open the writer whenever a changed file has buffered or current output, then flush the prefix independently of the current batch output. Cover the keep-first/drop-second data-loss case and full coverage by a real position-delete file; clarify delete-file and schema contracts.
+
+* fix(cow_rewrite): guard partition preservation and document rewrite() trade-offs
+
+Address the three non-blocking follow-ups from the approval review of
+apache/iceberg-rust#2752:
+
+- Surface the prefix-buffer memory ceiling in the public rewrite()
+  rustdoc: a file that never changes (or whose first change is at EOF)
+  buffers its entire decoded contents, one file at a time, which can be
+  several GB for a compaction-sized file.
+- Add a debug-only partition guard: replacement files record the source
+  partition verbatim, so a rewriter that mutates a partition-source
+  column would silently write rows under a partition they do not belong
+  to. In debug builds every emitted batch is checked against the source
+  file's partition; release builds are unchanged.
+- Document in the module docs that keeping the source partition spec and
+  staying unsorted is, like the snapshot-schema choice, a deliberate
+  divergence from Java's RewriteDataFiles / Spark DML.
+
+* fix(cow_rewrite): use relocated scan test fixture
+
+---------
+
+Co-authored-by: Claude <noreply@anthropic.com>",de19a3986fbdf399f09f71cd8c08e2573630c80f,2752,false,Claude,10,2468,14,crates,104,8,112,"base; feature/api verb; strategic: compaction, copy-on-write, encryption, manifest, rewritedatafiles, storage, variant; summary signal: compaction, copy-on-write, rewritedatafiles; medium file count; large churn; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.27",OpenAPI: Add CatalogObjectIdentifier schema,- feat: add core COW rewrite primitive (#2752) (Thanks kid and Claude!)
+apache/iceberg-rust,f3e41d5321d0043697041f1353eb47d46f2b4b1d,f3e41d5,Liang-Chi Hsieh,viirya@gmail.com,2026-09-21T21:26:11Z,GitHub,noreply@github.com,2026-09-21T21:26:11Z,feat(transaction): support transform-based sort orders (#2765),"* feat(transaction): support transform-based sort orders
+
+ReplaceSortOrderAction only supported sorting by a column's raw value:
+`asc`/`desc` hardcoded Transform::Identity and only accepted a column name.
+Java's SortOrderBuilder.asc/desc accept a Term, which can be a transform
+expression (bucket[N], year, truncate[W], ...).
+
+Add asc_with_transform / desc_with_transform. asc/desc are unchanged (same
+signature and behavior) and now delegate to the new methods with
+Transform::Identity, so no existing caller is affected.
+
+Transform-compatibility with the source column's type is checked at commit
+time via the existing SortOrder::builder().build(schema) -> check_compatibility
+path, matching the timing of Java's SortOrder.Builder.build() -- the spec-level
+type was already general (SortField.transform, check_compatibility already
+validate arbitrary transforms); only the transaction-layer API was narrow.
+
+Scope: this only extends the metadata-declaration API. Whether the write path
+sorts data to match a table's declared sort order -- for any transform,
+including the pre-existing identity case -- is a separate, pre-existing gap
+untouched here.
+
+Closes #2764
+
+* test(transaction): metadata.json round-trip test for transform sort orders
+
+Per review: commit a transform-based sort order through the in-crate memory
+catalog (which serializes the updated metadata to a metadata.json file via
+TableMetadata::write_to), then reload the table (TableMetadata::read_from
+parses that file) and assert the transforms survive the JSON round-trip.
+
+* docs(transaction): note intended Term convergence; hoist test imports
+
+Per review: document on asc_with_transform/desc_with_transform that once
+Term becomes transform-carrying (#2665), sort-order declaration is expected
+to converge on Term-based asc/desc (as in Java's SortOrderBuilder) and the
+_with_transform variants can be deprecated. Also hoist the use statements
+scattered inside test fns to the test module top for consistency.
+
+* fix(transaction): validate sort transforms and preserve input errors
+
+* chore: update public API snapshot for sort transforms
+
+* fix(sort): use consistent validation errors and document void policy",53eccc5f0892eb27b4af940e5e10993dc6ab9e4a,2765,false,,3,210,35,crates,85,4,89,"base; feature/api verb; strategic: catalog, round-trip, variant; summary signal: round-trip; medium churn; correctness signal; has PR number; LanceDB similarity 0.14",Flink: TableMaintenance Support Coordinator Lock,- feat(transaction): support transform-based sort orders (#2765) (Thanks Liang-Chi Hsieh!)
+apache/iceberg-rust,af1da4c5bc86178c38c1c6db0578bdd9fb7021e3,af1da4c,Oleks V,comphead@users.noreply.github.com,2026-10-04T16:06:52Z,GitHub,noreply@github.com,2026-10-04T16:06:52Z,feat(storage-opendal)!: make the per-IO-operation timeout configurable (#3263),"* feat(storage-opendal)!: make the per-IO-operation timeout configurable
+
+`iceberg-storage-opendal` wraps every FileIO operator in `TimeoutLayer::new()`,
+whose 10s `io_timeout` bounds each `read`/`write` and each method call on a
+returned reader or writer. Nothing in the property or builder surface can
+override it, so an operation that legitimately needs longer fails
+deterministically: the `RetryLayer` above re-sends the same request, which
+cannot fit in the budget either.
+
+Add `client.io-timeout-ms`, parsed into an `OpenDalClientConfig` built with
+`#[derive(Properties)]` and handed to `TimeoutLayer::with_io_timeout`. The
+config's fields are private, so later client settings such as retry are
+additive rather than breaking. The default is unchanged.
+
+BREAKING CHANGE: `OpenDalStorage` variants carry a `client` field, and
+`OpenDalStorage::Memory` is now a struct variant.
+
+* refactor(storage-opendal): address review feedback on the IO timeout
+
+Quote the rejected value in the parse error, so an empty input shows as
+`value: """"`. `TimeoutLayer` exposes no getters, so a new test compares
+its `Debug` output to pin `DEFAULT_IO_TIMEOUT_MS` to OpenDAL's default.
+The parsing test now uses the constant instead of repeating the literal.
+
+Add a serde round-trip test for the `client` field, including a payload
+that omits it. Drop the `DEFAULT` associated const, which only fed a
+fallback arm that cannot run. Update the upstream
+`test_writer_close_returns_stored_size` for the struct variant, and reuse
+`StorageConfig::with_prop` and `empty_resolving_storage` in the tests.
+
+* refactor(storage-opendal): rename the IO timeout key to opendal.io-timeout-ms
+
+Only `iceberg-storage-opendal` honors the key, so namespace it under
+`opendal.` and define it as `OPENDAL_IO_TIMEOUT_MS` next to
+`OpenDalClientConfig`, rather than in `iceberg::io`. This matches how
+`ADLS_SAS_TOKEN` and `GCS_ALLOW_ANONYMOUS` sit next to the configs that
+parse them. With the key moved, the `iceberg` crate needs no change.
+
+* refactor(storage-opendal): rename the client field to client_config
+
+`client` reads like an HTTP client handle. Rename the field on every
+`OpenDalStorage` variant, and the `OpenDalStorage::client()` accessor,
+to `client_config` to match `OpenDalClientConfig`. `opendal_config`
+would be ambiguous next to the backend `config` field, which holds an
+OpenDAL config too.
+
+`test_default_io_timeout_matches_opendal` compares `Debug` output. Both
+sides go through the same derived impl, so a format change cannot make
+them differ. A `Debug` that stopped printing `io_timeout` would make the
+check pass vacuously, so also assert that a different `io_timeout`
+produces a different string.
+
+* fix(storage-opendal): reject a zero IO timeout when deserializing
+
+`parse_io_timeout_ms` rejected zero, but the derived `Deserialize` did
+not go through it. A serialized `OpenDalStorage` carrying
+`""io_timeout_ms"": 0` was rebuilt without error, and the zero reached
+`TimeoutLayer`.
+
+Store the timeout as a `NonZeroU64`. `str::parse` and serde's
+`NonZeroU64` impl both reject zero, so both construction paths share
+one check. The serialized form is still a plain integer. The generated
+getter now returns `&NonZeroU64`, because the `Properties` derive only
+returns by value for the primitive types it recognizes.
+
+The parsing test also covers the edges of the valid range. `1` and
+`u64::MAX` are accepted, and `u64::MAX + 1` is rejected.
+
+* refactor(storage-opendal): return the IO timeout as a Duration
+
+`OpenDalClientConfig::io_timeout_ms()` returned `&NonZeroU64`, because the
+`Properties` derive only returns primitives by value. Replace the generated
+getter with `io_timeout()`, which returns a `Duration`, and keep the
+millisecond field private.
+
+Expose the default as `OPENDAL_IO_TIMEOUT_MS_DEFAULT`, following the
+`*_DEFAULT` consts in `iceberg`, so the key's doc links to it instead of
+repeating the number. Keep the `ParseIntError` as the source of a rejected
+value, as `parse_pool_property` does, so the message says why it failed.
+
+Document that the serialized form of `OpenDalStorage` is not stable across
+crate versions, as `FileIO::serialize_all` already does for its own.
+
+Test that the configured timeout reaches `TimeoutLayer`. A memory operator
+behind `ConcurrentLimitLayer::new(0)` stalls every IO call, and paused tokio
+time skips the wait and the retry backoff. Check propagation through
+`OpenDalResolvingStorage` for every enabled scheme, not only S3.
+
+* refactor(storage-opendal): take the client config defaults from the derive
+
+Build `OpenDalClientConfig::default()` from `from_properties` with no
+properties, so each default is declared once in `#[property]` and serde
+and `from_properties` cannot disagree as settings are added.
+
+Say in the `parse_io_timeout_ms` doc that it exists to quote the value
+and name the unit, and that `NonZeroU64` is what rejects zero. Fold the
+valid-value asserts in the parsing test into one loop.
+
+* refactor(storage-opendal): build the client config default directly
+
+`Default` delegated to `from_properties` with no properties and called
+`expect`. A later setting without a `#[property]` default would make it
+panic, and because of the container-level `#[serde(default)]`, serde
+calls `default()` on every `client_config` it deserializes. Build the
+struct directly, and keep the two defaults equal with
+`test_default_matches_property_defaults`.
+
+Name OpenDAL's 60-second control-operation budget in the
+`OPENDAL_IO_TIMEOUT_MS` doc, along with the calls it covers here,
+`exists` and `metadata`. `test_default_timeouts_match_opendal` now pins
+both defaults that the doc states.
+
+Pin the serialized-form break with a test that rejects the old
+`""LocalFs""`, `""Memory""` and `{""Memory"": null}` forms. Match the stall
+test's error on `{ timeout: 45 }`, so a 450-second budget cannot pass.
+
+* refactor(storage-opendal): keep the client config accessors crate-private
+
+`OpenDalStorage::client_config()`, `OpenDalClientConfig::io_timeout()` and
+`OPENDAL_IO_TIMEOUT_MS_DEFAULT` have no callers outside the crate. Keep them
+out of the public API so they can be exposed later without a breaking change.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* refactor(storage-opendal): trim redundant docs, comments and test
+
+Fold the `u64` default into the `NonZeroU64` const, drop
+`test_default_matches_property_defaults` (one field, one shared const), shorten
+docs and comments that restated the code, and keep the original `op` binding in
+the `Memory` arm of `create_operator`.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* docs(storage-opendal): clarify the IO timeout and serialization docs
+
+Name OpenDAL's `io_timeout` and `timeout` settings so it is clear the property
+bounds each IO call per retry attempt and leaves control operations such as
+`stat` at 60 seconds. Align the `OpenDalStorage` serialization note with the
+wording on `FileIO::serialize_all`.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* test(storage-opendal): check OpenDalStorageFactory propagates the IO timeout
+
+Every `OpenDalStorageFactory::build` arm could fall back to the default
+`OpenDalClientConfig` without any test failing. Build each enabled backend with
+a 45000 ms timeout and read it back from the serialized storage.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: ovoievodin <o_voievodin@apple.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",8e81f33daa31e495b94ef9e0bc5ff614355f451c,3263,false,Copilot App; ovoievodin; Kevin Liu,5,387,24,Cargo.lock; crates,78,7,85,"base; strategic: opendal, round-trip, storage, variant; summary signal: round-trip; community signal: fileio; medium file count; medium churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.22",Make StandardEncryptionManager serializable,"- feat(storage-opendal)!: make the per-IO-operation timeout configurable (#3263) (Thanks Oleks V, Copilot App, ovoievodin, and Kevin Liu!)"
+apache/iceberg-rust,deab0692f6df211a396d6fc0ad21811f8b6c8491,deab069,Noritaka Sekiyama,moomindani@gmail.com,2026-09-29T11:49:43Z,GitHub,noreply@github.com,2026-09-29T11:49:43Z,refactor(spec): make UnboundPartitionField fields private and carry source-ids (#3267),"* Make UnboundPartitionField fields private and carry source-ids
+
+The four public fields are replaced by accessors, and the derived builder's
+visibility is limited to the crate, so an instance can only be built inside
+the crate or read out of a partition spec JSON. That is what lets the struct
+guarantee its own invariant: source_ids always holds at least one id.
+
+source_ids: Vec<i32> replaces source_id: i32. source_id() returns the single
+id, and an error for a multi-argument field rather than quietly handing back
+the first one. The serde module reads either spelling -- source-id, or
+source-ids for a v3 multi-argument transform -- and writes back the one that
+matches the field.
+
+Binding a multi-argument field now fails with a clear error. A bound
+PartitionField still carries a single source_id, so until that struct is
+converted there is nowhere to put the extra ids, and failing loudly beats
+dropping them on the way into TableCreation or TableUpdate::AddSpec.
+
+* Reject source-id and source-ids together in UnboundPartitionField
+
+PyIceberg already treats the two spellings as mutually exclusive, and no
+writer emits both, so accepting a matching pair only let the two readers
+disagree. Also name both spellings in the missing-id error and note why
+check_transform_compatibility rejects a multi-argument field.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Make UnboundPartitionField buildable and pass it to add_partition_field
+
+Address review: the UnboundPartitionField builder and with_field_id are
+public, since an unbound field is not expected to be validated yet, and
+UnboundPartitionSpecBuilder::add_partition_field now takes the field
+rather than a single source id, name and transform.
+
+With the builder public an empty source_ids can be built, so serializing
+one no longer panics and both spec builders reject it with a clear error.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Validate UnboundPartitionField when it is built
+
+Address review: the builder's build() now returns
+Result<UnboundPartitionField> and rejects an empty source_ids, following
+FileScanTask. Deserialization goes through the same builder, so the check
+lives in one place and the spec builders no longer need their own.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",8cb2adeddb4f8da1ca7bd86ca303337f011c12e2,3267,false,Isaac,13,821,316,crates,74,6,80,"base; important area: spec; strategic: v3, variant; medium file count; large churn; co-authored; correctness signal; has PR number; LanceDB similarity 0.19",Core: Fix useSnapshotSchema logic and projection in RESTTableScan,- refactor(spec): make UnboundPartitionField fields private and carry source-ids (#3267) (Thanks Noritaka Sekiyama and Isaac!)
+apache/iceberg-rust,fc682d7a050cdc05e2b90ccf04192034dc8f1a1c,fc682d7,Jeremy Schoemaker,jeremy@shoemoney.com,2026-10-02T09:57:27Z,GitHub,noreply@github.com,2026-10-02T09:57:27Z,fix(spec): Harden decimal and fixed type string parsing (#3256),"* fix(spec): Harden decimal and fixed type string parsing
+
+deserialize_decimal and deserialize_fixed used trim_start_matches and
+trim_end_matches, which strip repeated occurrences and never require the
+prefix, so ""decimal(decimal(5, 2)))))"" and ""fixed[16"" both parsed
+successfully. Precision was also unbounded, so ""decimal(50, 2)"" was
+accepted into Schema and TableMetadata even though the crate's own
+MAX_DECIMAL_PRECISION is 38, and the failure only surfaced much later in
+Arrow or Avro conversion.
+
+Parse strictly with strip_prefix and strip_suffix, and reject precision
+outside 1..=38 and scale greater than precision.
+
+Signed-off-by: Jeremy Schoemaker <jeremy@shoemoney.com>
+
+* fix(spec): Clarify zero precision errors and verify serde roundtrips
+
+* test(spec): cover decimal and fixed parsing edge cases
+
+* fix(spec): align decimal serde validation with constructor
+
+* fix(spec): preserve type parse errors and canonical serde coverage
+
+---------
+
+Signed-off-by: Jeremy Schoemaker <jeremy@shoemoney.com>",19603861d545f8edbc5016e45cb1bacb0579cbf8,3256,false,,1,214,16,crates,71,8,79,base; fix; important area: spec; strategic: occ; medium churn; correctness signal; has PR number; LanceDB similarity 0.25,Flink: Support UUID type in Avro and Parquet readers and writers,- fix(spec): Harden decimal and fixed type string parsing (#3256) (Thanks Jeremy Schoemaker!)
+apache/iceberg-rust,8030cf44445b3f957e367515e9d3c5eeb00f104d,8030cf4,Manu Zhang,OwenZhang1990@gmail.com,2026-09-17T08:16:13Z,GitHub,noreply@github.com,2026-09-17T08:16:13Z,feat(spec): add unknown primitive type support (#2773),"* feat(spec): add unknown primitive type support
+
+Co-authored-by: Codex <codex@openai.com>
+
+* fix(arrow): validate row ID synthesis inputs
+
+* fix(spec): centralize unknown field validation
+
+* fix(spec): address unknown type review feedback
+
+* fix(spec): address remaining review feedback
+
+* fix(spec): centralize dropped partition source handling
+
+* fix(inspect): recover historical partition bounds
+
+* fix(spec): validate default partition sources on metadata load
+
+* Revert ""fix(inspect): recover historical partition bounds""
+
+This reverts commit 6403d4898edd03b433c64965b1ed7195686a0330.
+
+---------
+
+Co-authored-by: Codex <codex@openai.com>",8193cce4b3cfe4608738cdf36e0ddf74a15a415b,2773,false,Codex,16,599,104,crates,63,8,71,base; feature/api verb; important area: spec; medium file count; medium churn; co-authored; has PR number; LanceDB similarity 0.27,OpenAPI: Add CatalogObjectIdentifier schema,- feat(spec): add unknown primitive type support (#2773) (Thanks Manu Zhang!)
+apache/iceberg-rust,8e81f33daa31e495b94ef9e0bc5ff614355f451c,8e81f33,Oleks V,comphead@users.noreply.github.com,2026-10-04T15:36:50Z,GitHub,noreply@github.com,2026-10-04T15:36:50Z,ci: check dependency licenses with cargo-deny on every PR (#3293),"* ci: check dependency licenses with cargo-deny on every PR
+
+Run `dev/release/dependencies.sh check` in the `lint` job, so a dependency
+whose license is not allowed by `deny.toml` fails the pull request instead
+of being found at release time.
+
+Set `[graph] all-features = true` in `deny.toml`. Without it, cargo-deny
+only follows default features. Since #3143 that graph no longer includes
+the optional OpenDAL backends, so the check skipped the MPL-2.0 crates that
+`deny.toml` has exceptions for.
+
+Closes #3234.
+
+* Tighten docs/comments, reuse dependencies.sh in create_rc.sh
+
+- Trim comments and docs that over-explain.
+- Condense the CONTRIBUTING.md license guidance.
+- create_rc.sh calls dependencies.sh check so the release uses the
+  pinned cargo-deny version, same as CI.
+- Drop unused bzip2-1.0.6 from the deny.toml allow-list.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",3c91b3942ab40ec005dfbb9fdbccea848392cccb,3293,false,Copilot App; Kevin Liu,8,30,22,.github; CONTRIBUTING.md; Makefile; deny.toml; dev; website,64,6,70,base; strategic: opendal; medium file count; multi-area change; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.19,"CI: Make CVE scan blocking on PRs, informational on main","- ci: check dependency licenses with cargo-deny on every PR (#3293) (Thanks Oleks V, Copilot App, and Kevin Liu!)"
+apache/iceberg-rust,3c91b3942ab40ec005dfbb9fdbccea848392cccb,3c91b39,NoahKusaba,97474796+NoahKusaba@users.noreply.github.com,2026-10-02T18:56:13Z,GitHub,noreply@github.com,2026-10-02T18:56:13Z,feat(catalog-loader): add with_runtime to BoxedCatalogBuilder (#3286),"* init
+
+* address review: doc sibling methods, tidy test, note break in changelog",ffa864bf2fd3ba27ff221746f993d4bf7810440b,3286,false,,3,93,4,CHANGELOG.md; crates,62,6,68,base; feature/api verb; strategic: catalog; multi-area change; has PR number; LanceDB similarity 0.21,Core: Add properties to InMemoryFileIO,- feat(catalog-loader): add with_runtime to BoxedCatalogBuilder (#3286) (Thanks NoahKusaba!)
+apache/iceberg-rust,f64575819ec5d61a1d8ffd7740831a2cb64df5cd,f645758,Andrei Tserakhau,laskoviymishka@gmail.com,2026-09-27T02:03:28Z,GitHub,noreply@github.com,2026-09-27T02:03:28Z,feat(writer): add PositionDeleteInput builder (#3230),"* feat(writer): add PositionDeleteInput builder
+
+Add PositionDeleteInputBuilder, a small helper that assembles a
+spec-conforming position delete RecordBatch from (path, pos) rows.
+
+The batch has exactly the two required position delete columns
+(file_path: Utf8, pos: Int64), both non-null and carrying the reserved
+field ids, so it passes PositionDeleteFileWriter's per-batch validation
+and can be handed straight to that writer. An empty builder still
+produces a valid 0-row batch.
+
+To keep a single source of truth for the field-id wiring, the Arrow
+schema is no longer hand-wired in the builder. This commit un-gates the
+previously test-only POSITION_DELETE_ARROW_SCHEMA static and
+position_delete_arrow_schema() helper in position_delete_writer.rs,
+making the helper pub(crate), and the builder now obtains the shared
+Arrow projection through it as a cheap Arc clone.
+
+extend accepts any iterator of (Into<String>, i64) rows, and build
+debug-asserts the paths/positions length invariant. The module docs
+note that rows are materialized into two heap Vecs before the batch is
+built (so very large inputs should use one builder per write batch),
+that the optional third row column is not supported yet, and that
+position delete files are a v2 construct which v3 forbids, so a
+format-version gate must be applied at the transaction/commit layer.
+
+Relates to #340 and #2218.
+
+* refactor(writer): replace PositionDeleteInput builder with a sorted position_delete_batch fn
+
+Per review, collapse the PositionDeleteInputBuilder surface
+(new/with_capacity/push/extend/len/is_empty/build) into a single free
+function, position_delete_batch(rows). A FooBuilder is expected to build a
+Foo, but the builder's build() only returned a bare RecordBatch, so a plain
+function reads more clearly and keeps the API as tight as possible.
+
+The function collects rows into a BTreeMap<String, RoaringTreemap> keyed by
+file path. This deduplicates repeated (file_path, pos) pairs and, when
+iterated, yields the spec-required ascending (file_path, pos) order for free,
+so callers no longer have to pre-sort their input. A negative pos is rejected
+with DataInvalid. The batch is still built from the writer's shared crate
+internal Arrow schema, and empty input yields a valid 0-row batch.
+
+* refactor(writer): model position deletes as a crate-internal PositionDeletes accumulator
+
+Following blackmwk's review of the redesigned position delete assembly,
+replace the free position_delete_batch function with a small crate-internal
+PositionDeletes accumulator. Callers build up deletes with insert(path, pos)
+and render them once via to_record_batch().
+
+Positions are now taken as u64: a row position is non-negative by
+construction, so the old negative-i64 rejection is gone. The batch's Int64
+pos column is filled with a checked u64-to-i64 conversion that returns
+DataInvalid rather than panicking on a value past i64::MAX. Rows stay keyed
+by a BTreeMap<String, RoaringTreemap>, so iteration yields the spec-required
+(file_path, pos) order with duplicate pairs removed, and the two columns are
+now built with Arrow StringBuilder and Int64Builder instead of intermediate
+Vecs. The batch is assembled against the writer's shared
+position_delete_arrow_schema, and an empty accumulator still yields a valid
+0-row batch.
+
+Nothing outside the crate consumes this yet, so the whole surface is
+pub(crate) and the module carries a dead-code allowance until the write-path
+plumbing lands. The public API drops the position_delete_batch entry
+accordingly.
+
+* refactor(writer): stream PositionDeletes as fixed-size record batches
+
+Follow-up to blackmwk's review on #3230.
+
+- Add PositionDeletes::to_record_batches(max_rows), a lazy iterator that
+  builds each fixed-size batch on demand instead of materializing the whole
+  delete set at once, bounding peak memory over large delete sets. It walks
+  the paths and positions in sorted (file_path, pos) order, splitting on
+  max_rows boundaries; a path whose positions overflow one batch resumes in
+  the next. A max_rows of 0 yields a single DataInvalid error rather than
+  panicking, and the stream stops after any error.
+- Build the file_path column with StringBuilder::append_value_n, appending
+  each path's run within a batch in one call rather than once per row.
+- Factor a shared private build_batch helper so to_record_batch (single
+  batch) and to_record_batches share the column-building logic.
+- Document that duplicate (file_path, pos) inserts collapse silently, which
+  is intentional for position deletes.
+
+* refactor(writer): debug_assert against duplicate and oversized position deletes",615af68da85f2cc6e5139aa180c939214de91d32,3230,false,,3,681,5,crates,61,7,68,"base; feature/api verb; strategic: v3, variant; medium churn; has PR number; LanceDB similarity 0.24",Core: Add implementations of v4 TrackedFile interfaces,- feat(writer): add PositionDeleteInput builder (#3230) (Thanks Andrei Tserakhau!)
+apache/iceberg-rust,c9a25b23b7645f3af0e9dfd7e85d8cf646901c55,c9a25b2,Xander,zander181@googlemail.com,2026-09-23T21:20:18Z,GitHub,noreply@github.com,2026-09-23T21:20:18Z,fix(encryption) [18/N] wire in ags1 file length for tamper proofing (#3236),"* feat(encryption) [18N] wire in ags1 file length for tamper proofing
+
+* remove debug
+
+* expect
+
+* fix test
+
+* fix opendal
+
+* make more clear
+
+* Add oversized tests
+
+* don't do unreachable
+
+* import fix
+
+* Assert length in streaming tests
+
+* DRAFT try key_metadata_with_length
+
+* fix(encryption): address key metadata length review",830bb886542527f4e8956f03040e7c407b621401,3236,false,,20,568,178,CHANGELOG.md; crates,57,6,63,"base; fix; strategic: encryption, opendal; large file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.19",Add TCK tests for Schema Evolution in BaseFormatModelTests,- fix(encryption) [18/N] wire in ags1 file length for tamper proofing (#3236) (Thanks Xander!)
+apache/iceberg-rust,e694eea42032a3f0898ccee33f5d3dd0ca9cd24b,e694eea,Xander,zander181@googlemail.com,2026-09-22T19:40:50Z,GitHub,noreply@github.com,2026-09-22T19:40:50Z,Introduce invalid data error macro (#2928),"* Introduce invalid data error macro
+
+* fix
+
+* comments
+
+* fix
+
+* fix
+
+---------
+
+Co-authored-by: blackmwk <257669749+blackmwk@users.noreply.github.com>",bb1e4a4861f02377489eff818b75138f414c4cb0,2928,false,blackmwk,77,1134,2094,crates,56,7,63,base; feature/api verb; large file count; large churn; co-authored; has PR number; LanceDB similarity 0.24,Flink: Backport Add the possibility to use Coordinator Lock when using Flink SQL to 2.0 and 1.20,- Introduce invalid data error macro (#2928) (Thanks Xander and blackmwk!)
+apache/iceberg-rust,8cb2adeddb4f8da1ca7bd86ca303337f011c12e2,8cb2ade,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-09-28T18:41:04Z,GitHub,noreply@github.com,2026-09-28T18:41:04Z,fix(python): raise instead of panicking in the manifest bindings (#3241),"There's some assorted places that we need to raise errors instead
+of panicking.",5a91091c53a5dfebcc8f85f78f0eeedb269d0b87,3241,false,,3,86,21,bindings,40,5,45,base; fix; strategic: manifest; has PR number; LanceDB similarity 0.18,Fix Internal to Generic conversion of TIMESTAMP_NANO,- fix(python): raise instead of panicking in the manifest bindings (#3241) (Thanks Alex Stephen!)
+apache/iceberg-rust,53eccc5f0892eb27b4af940e5e10993dc6ab9e4a,53eccc5,Anoop Johnson,anoop@apache.org,2026-09-21T20:18:28Z,GitHub,noreply@github.com,2026-09-21T20:18:28Z,fix(cache): drop schema-id from the manifest-list cache key (#3235),"* fix(cache): drop schema-id from the manifest-list cache key
+
+ObjectCache::get_manifest_list built the cache key from
+snapshot.schema_id().unwrap(), but schema-id is optional on snapshots in
+every table version (v1-v3 per spec, and already read as Option<SchemaId>),
+so a snapshot that omits it panicked on every scan (the object cache is on
+by default).
+
+schema-id does not belong in this key: ManifestListReader::load parses the
+manifest list from its bytes and the table format version only and never
+reads schema-id, and the manifest-list location is already unique per
+snapshot.
+
+* Fix import
+
+* Harden test",832a4eba7a732baebbbd7f76bb6fd6225f1db1e9,3235,false,,1,50,4,crates,40,5,45,"base; fix; strategic: manifest, v3; has PR number; LanceDB similarity 0.18",Hive: Update view query in HMS when replacing view <wuya>,- fix(cache): drop schema-id from the manifest-list cache key (#3235) (Thanks Anoop Johnson!)
+apache/iceberg-rust,492234eb43b1aceee1b9379d5c676e4635b5d4d7,492234e,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-17T23:32:03Z,GitHub,noreply@github.com,2026-09-17T23:32:03Z,ci: run security audit for merge queue (#3245),"* ci: make merge queue checks reliable
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci: keep website checks optional
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",5d2c755d663e5694a0058bf40fcf2c7b662562d6,3245,false,Copilot App,1,1,4,.github,35,6,41,base; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.21,API: Optimize NOT IN and != predicates for single-value partition manifests,- ci: run security audit for merge queue (#3245) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-rust,830bb886542527f4e8956f03040e7c407b621401,830bb88,Anoop Johnson,anoop@apache.org,2026-09-22T21:36:02Z,GitHub,noreply@github.com,2026-09-22T21:36:02Z,fix(cache): drop format-version from the manifest-list cache key (#3259),"* fix(cache): drop format-version from the manifest-list cache key
+
+The manifest-list cache key now uses the location alone; format_version
+is no longer part of it.
+
+ManifestList::parse_with_version(bytes, version) is a pure function of
+its inputs, the bytes are immutable and uniquely identified by their
+location, and an ObjectCache is bound to a single table. So
+format_version can never disambiguate two lookups at the same location.
+
+The only case where it could differ for one cache is an in-place format
+upgrade (v1 -> v2 mid-cache-lifetime). Dropping it is more correct there:
+the cache serves the original correct v1 parse instead of a miss that
+would reparse the v1 bytes under v2.
+
+Adds test_get_manifest_list_ignores_format_version, asserting two lookups
+at one location under different format versions return the same cached Arc.
+
+Follow-up to the review thread on #3235:
+https://github.com/apache/iceberg-rust/pull/3235#discussion_r4024075908
+
+* PR feedback",e5a18042b244e61556e8ac7daa33450f3c97cb07,3259,false,,1,114,10,crates,37,3,40,base; fix; strategic: manifest; correctness signal; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,OpenAPI: Include storage credentials for PlanTableScanResponse/FetchPlanningResultResponse on plan completed given include-credentials flag is set,- fix(cache): drop format-version from the manifest-list cache key (#3259) (Thanks Anoop Johnson!)
+apache/iceberg-rust,a1de3a10f0916de2be39b886008b5763329767ac,a1de3a1,Gabriel,45515538+gabotechs@users.noreply.github.com,2026-09-17T18:32:32Z,GitHub,noreply@github.com,2026-09-17T18:32:32Z,chore: remove migrated DataFusion integration crates (#3228),Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>,8030cf44445b3f957e367515e9d3c5eeb00f104d,3228,false,Kevin Liu,66,144,13978,Cargo.lock; Cargo.toml; README.md; bindings; crates,36,4,40,base; large file count; large churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.14,Core: Add builders for v4 structs,- chore: remove migrated DataFusion integration crates (#3228) (Thanks Gabriel and Kevin Liu!)
+apache/iceberg-rust,ffa864bf2fd3ba27ff221746f993d4bf7810440b,ffa864b,Anoop Johnson,anoop@apache.org,2026-10-02T13:57:07Z,GitHub,noreply@github.com,2026-10-02T13:57:07Z,fix(reader): page-index pruning drops rows for INT32/INT64 decimals (#3314),"Page-index bounds for INT32/INT64 columns were built as Int/Long literals
+regardless of the Iceberg field type. For decimal fields, query datums use
+Int128, and Datum::partial_cmp only compares decimals when both sides are
+Int128, so every comparison returned None. This silently pruned all matching
+pages for inequality and IN predicates when page-index row selection was
+enabled.
+
+Convert INT32/INT64 page bounds to Int128 for decimal fields, matching the
+row-group statistics path.
+
+Follow-up: FIXED_LEN_BYTE_ARRAY decimals (precision > 18) still get no
+page-index pruning, even though the row-group stats path decodes them. This
+only over-selects pages (never drops rows) and is pre-existing. Decoding them
+here later must guard against truncated ColumnIndex bounds
+(column_index_truncate_length).
+
+Closes #3264
+
+Co-authored-by: Fokko Driesprong <fokko@apache.org>",e9c22bf7148a2fadd8dc94879371866dea89c883,3314,false,Fokko Driesprong,1,259,6,crates,27,7,34,base; fix; medium churn; co-authored; has PR number; LanceDB similarity 0.24,OpenAPI: Include storage credentials for PlanTableScanResponse/FetchPlanningResultResponse on plan completed given include-credentials flag is set,- fix(reader): page-index pruning drops rows for INT32/INT64 decimals (#3314) (Thanks Anoop Johnson and Fokko Driesprong!)
+apache/iceberg-rust,615af68da85f2cc6e5139aa180c939214de91d32,615af68,Anoop Johnson,anoop@apache.org,2026-09-26T09:28:36Z,GitHub,noreply@github.com,2026-09-26T09:28:36Z,fix(expr): decode BYTE_ARRAY page-index bounds by field type (#3247),"* fix(expr): decode BYTE_ARRAY page-index bounds by field type
+
+The page index evaluator decoded every BYTE_ARRAY min/max bound as a
+UTF-8 string via String::from_utf8(..).unwrap(), panicking during scan
+pruning whenever a binary (or byte-encoded decimal) column carried a
+predicate. Convert the bound according to the field's primitive type
+instead: string, binary, or decimal.
+
+* PR feedback
+
+* Round2 feedback
+
+* Fix trace",9a2111a914e9b17fdc039700186056ec14fae606,3247,false,,1,343,33,crates,24,10,34,base; fix; medium churn; has PR number; LanceDB similarity 0.33,Bump to Parquet 1.17.0,- fix(expr): decode BYTE_ARRAY page-index bounds by field type (#3247) (Thanks Anoop Johnson!)
+apache/iceberg-rust,ecba0b537a1f78ec8125c1a26f6dfab3f95b509e,ecba0b5,Andy Grove,agrove@apache.org,2026-10-04T21:10:38Z,GitHub,noreply@github.com,2026-10-04T21:10:38Z,fix(transform): floor day transform for pre-epoch timestamps (#3323),"* fix(transform): floor day transform for pre-epoch timestamps
+
+`Day::day_timestamp_micro` and `Day::day_timestamp_nano` took the whole
+seconds of a timestamp with `/`, which truncates toward zero, while the
+fraction of the second came from `rem_euclid`, which floors. For a
+negative timestamp that is not on a whole second the seconds came out
+one too high, so a timestamp in the last second of a day before
+1969-12-31 got the next day.
+
+Compute the day with `div_euclid` on the length of a day instead, the
+way `Hour` already does. This gives the same days as Iceberg Java's
+`DateTimeUtil`, except for a pre-epoch timestamp exactly 999999
+microseconds (999999999 nanoseconds) after midnight, which Java puts in
+the day before. iceberg-rust already returned the calendar day for
+those, as PyIceberg and the `year`, `month` and `hour` transforms do,
+and following Java there would make the transform non-monotonic.
+
+Files written before this change can hold those rows one day too high.
+Inclusive projection already widens pre-epoch `day` predicates by one
+day to cover such files, as Java does, but only for `timestamp`
+columns. Apply it to every timestamp type.
+
+* refactor(transform): list timestamp types for day projection adjustment
+
+Match how transform.rs lists the timestamp types elsewhere, and keep the
+adjustment opt-in if `day` ever gains another source type. No behavior
+change: `day` accepts `date` and the four timestamp types.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* chore(transform): trim day transform comments
+
+Drop comments that narrate history or restate the test code. The
+history is in the PR description.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",af1da4c5bc86178c38c1c6db0578bdd9fb7021e3,3323,false,Copilot App; Kevin Liu,2,105,56,crates,23,8,31,base; fix; co-authored; has PR number; LanceDB similarity 0.26,Fix BigQuery dependency leak into runtime JARs,"- fix(transform): floor day transform for pre-epoch timestamps (#3323) (Thanks Andy Grove, Copilot App, and Kevin Liu!)"
+apache/iceberg-rust,f2409e9f5eaff1c643985013d927e17fdf16e6ec,f2409e9,Liang-Chi Hsieh,viirya@gmail.com,2026-10-06T17:48:48Z,GitHub,noreply@github.com,2026-10-06T17:48:48Z,fix: fill schema-added nested columns with typed NULL arrays on read (#2635),"* fix: fill schema-added nested columns with typed NULL arrays on read
+
+When a column of a nested type (list, map, or a struct with nested
+children) is added to the table schema after data files were written,
+reading those older files failed with ""unexpected target column type"":
+the helpers that materialize missing columns only handled primitive
+types plus structs with primitive-only children, via hand-written
+per-type NULL branches.
+
+Build the all-NULL column with arrow's new_null_array instead, which
+supports every Arrow type (including arbitrarily nested ones), and drop
+the per-type NULL branches from create_primitive_array_repeated and
+create_primitive_array_single_element.
+
+Closes #2618
+
+* test(arrow): restructure #2618 nested-null test; trim comments
+
+Address review feedback on #2635:
+- Extract the evolved schema into `schema_with_added_nested_columns` and
+  reorder the test to read top-to-bottom as a story (old file -> evolved
+  schema -> expect typed NULLs), per @kevinjqliu.
+- Assert the all-NULL struct still carries its full nested shape (child
+  fields `a` and the nested list `ys`), locking in that the type-preserving
+  new_null_array fill keeps nested children.
+- Trim the over-explanatory comments on the new_null_array NULL-fill paths and
+  note that the literal `1` is new_null_array's row count.
+
+* test: cover typed null helpers and clarify struct default support
+
+* test: compare full evolved schema and link default follow-up",ecba0b537a1f78ec8125c1a26f6dfab3f95b509e,2635,false,,2,269,139,crates,24,6,30,base; fix; medium churn; has PR number; LanceDB similarity 0.20,"CI: Make CVE scan blocking on PRs, informational on main",- fix: fill schema-added nested columns with typed NULL arrays on read (#2635) (Thanks Liang-Chi Hsieh!)
+apache/iceberg-rust,de19a3986fbdf399f09f71cd8c08e2573630c80f,de19a39,Dhruv Arya,dhruv.arya@databricks.com,2026-10-01T08:00:37Z,GitHub,noreply@github.com,2026-10-01T08:00:37Z,fix: avoid lost-wakeup hang in get_equality_delete_predicate_for_delete_file_path (#3268),"* fix: avoid lost-wakeup hang in get_equality_delete_predicate_for_delete_file_path
+
+The equality-delete loader signals completion with Notify::notify_waiters(),
+which stores no permit and only wakes Notified futures created before the call.
+get_equality_delete_predicate_for_delete_file_path observed the Loading state,
+released the read lock, and only then created the Notified future; a
+notify_waiters() fired in that window is lost and the await hangs forever.
+
+Create the Notified (via notified_owned) while still holding the read lock, so
+it is guaranteed to precede any notify_waiters() and be delivered.
+
+Signed-off-by: Dhruv Arya <aryadhruv@gmail.com>
+
+* docs: explain why building Notified under the read lock prevents the lost wakeup
+
+State the mechanism rather than the outcome: notified_owned() snapshots tokio's
+notify_waiters_calls counter at construction, and holding the read lock orders
+that snapshot before insert_equality_delete can advance it. This keeps a later
+refactor from moving notified_owned() out from under the lock unnoticed.
+
+Signed-off-by: Dhruv Arya <aryadhruv@gmail.com>
+
+---------
+
+Signed-off-by: Dhruv Arya <aryadhruv@gmail.com>
+Co-authored-by: Dhruv Arya <aryadhruv@gmail.com>",36eae2969b0773ee5b6f23d9be230fd0a17ffe92,3268,false,Dhruv Arya,1,8,3,crates,23,6,29,base; fix; co-authored; has PR number; LanceDB similarity 0.19,REST Spec: Add unregister table endpoint,- fix: avoid lost-wakeup hang in get_equality_delete_predicate_for_delete_file_path (#3268) (Thanks Dhruv Arya!)
+apache/iceberg-rust,bb1e4a4861f02377489eff818b75138f414c4cb0,bb1e4a4,Anoop Johnson,anoop@apache.org,2026-09-21T21:42:58Z,GitHub,noreply@github.com,2026-09-21T21:42:58Z,perf(expr): resolve row group stats once per eq/in/starts_with leaf (#3254),"The eq, in, and starts_with row-group metric checks each read both the
+lower and upper bound via min_value and max_value, and each of those
+independently re-runs stats_and_type_for_field_id.
+
+Resolve the stats and type once per leaf and decode each bound in place,
+so the lower and upper bounds still decode lazily.",f3e41d5321d0043697041f1353eb47d46f2b4b1d,3254,false,,1,18,6,crates,20,9,29,base; fix; has PR number; LanceDB similarity 0.32,Flink: Support UUID type in Avro and Parquet readers and writers,- perf(expr): resolve row group stats once per eq/in/starts_with leaf (#3254) (Thanks Anoop Johnson!)
+apache/iceberg-rust,5d2c755d663e5694a0058bf40fcf2c7b662562d6,5d2c755,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-17T23:05:34Z,GitHub,noreply@github.com,2026-09-17T23:05:34Z,fix: update rustls to 0.23.45 (#3244),Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>,a1de3a10f0916de2be39b886008b5763329767ac,3244,false,Copilot App,1,8,8,Cargo.lock,23,6,29,base; fix; co-authored; has PR number; LanceDB similarity 0.20,Add Flink Quickstart docker image,- fix: update rustls to 0.23.45 (#3244) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-rust,832a4eba7a732baebbbd7f76bb6fd6225f1db1e9,832a4eb,blackmwk,257669749+blackmwk@users.noreply.github.com,2026-09-18T13:10:20Z,GitHub,noreply@github.com,2026-09-18T13:10:20Z,ci: fix Rust cache action casing for ASF allowlist (#3249),,492234eb43b1aceee1b9379d5c676e4635b5d4d7,3249,false,,3,6,6,.github,20,6,26,base; fix; has PR number; LanceDB similarity 0.21,"Core, Spark 4.1: Fix distributed planning for CoW operations",- ci: fix Rust cache action casing for ASF allowlist (#3249) (Thanks blackmwk!)
+apache/iceberg-rust,36eae2969b0773ee5b6f23d9be230fd0a17ffe92,36eae29,Xander,zander181@googlemail.com,2026-09-30T19:25:21Z,GitHub,noreply@github.com,2026-09-30T19:25:21Z,refactor(scan) move test utils to test_utils.rs (#3107),"* refactor(scan) move test utils to test_utils.rs
+
+* move things around
+
+* move
+
+* fix
+
+* comments",71e571e531618371499eaf3c995e30c69910e2d9,3107,false,,20,1503,1349,Cargo.lock; crates,21,3,24,base; large file count; large churn; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Spark 4.1: Rename expectedSchema to projection for clarity,- refactor(scan) move test utils to test_utils.rs (#3107) (Thanks Xander!)
+apache/iceberg-rust,86d6618804a902eac10f09c09a565aca5dad0d46,86d6618,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-09-28T17:09:53Z,GitHub,noreply@github.com,2026-09-28T17:09:53Z,ci: auto-label DataFusion issues and PRs (#3278),"ci: auto-label issues and PRs that mention DataFusion
+
+Contributors without triage permission cannot add labels. Use
+github/issue-labeler to apply the datafusion label when an issue or PR
+title or body mentions DataFusion.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",f64575819ec5d61a1d8ffd7740831a2cb64df5cd,3278,false,Copilot App,2,63,0,.github,15,8,23,base; co-authored; has PR number; LanceDB similarity 0.27,Bump to Parquet 1.17.0,- ci: auto-label DataFusion issues and PRs (#3278) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-rust,9a2111a914e9b17fdc039700186056ec14fae606,9a2111a,Minh Vu,vuhoangminh97@gmail.com,2026-09-25T21:32:09Z,GitHub,noreply@github.com,2026-09-25T21:32:09Z,fix(spec): format pre-epoch timestamptz values (#2892),"* fix(spec): format pre-epoch timestamptz values
+
+* fix(spec): strengthen pre-epoch timestamptz regression
+
+* style: format temporal conversion
+
+* test(spec): match chrono fractional timestamp display
+
+* test(spec): match trimmed timestamp fraction",119fad92c891c95a7819d87e4195407b3f7c0578,2892,false,,2,38,6,crates,20,3,23,base; fix; important area: spec; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Core: Fix rewriting delete manifests in RewriteTablePathUtil,- fix(spec): format pre-epoch timestamptz values (#2892) (Thanks Minh Vu!)
+apache/iceberg-rust,e5a18042b244e61556e8ac7daa33450f3c97cb07,e5a1804,Shawn Chang,schang@apache.org,2026-09-22T20:55:05Z,GitHub,noreply@github.com,2026-09-22T20:55:05Z,RFC: Stateful Transaction Action (#2620),"* rfc only
+
+* update rfc
+
+* make it more readable
+
+* update rfc
+
+* update rfc
+
+* remove default impl for cleanup
+
+* box self",e694eea42032a3f0898ccee33f5d3dd0ca9cd24b,2620,false,,1,442,0,docs,16,5,21,base; medium churn; has PR number; LanceDB similarity 0.17,"API, Core: Align offsets of field stats with Design doc / Spec",- RFC: Stateful Transaction Action (#2620) (Thanks Shawn Chang!)
+apache/iceberg-rust,e9c22bf7148a2fadd8dc94879371866dea89c883,e9c22bf,Minh Vu,vuhoangminh97@gmail.com,2026-10-02T09:57:45Z,GitHub,noreply@github.com,2026-10-02T09:57:45Z,perf(arrow): skip rebuilding projected arrays without parent nulls (#3282),"* perf(arrow): skip rebuilding top-level projected arrays
+
+* perf(arrow): drop in-crate benchmark harness
+
+* perf(arrow): skip rebuilding nested projected arrays
+
+* perf(arrow): tighten projector zero-copy path
+
+* perf(arrow): polish projector zero-copy path",fc682d7a050cdc05e2b90ccf04192034dc8f1a1c,3282,false,,1,144,16,crates,12,8,20,base; has PR number; LanceDB similarity 0.27,Spec: Add v4 content stats representation,- perf(arrow): skip rebuilding projected arrays without parent nulls (#3282) (Thanks Minh Vu!)
+apache/iceberg-rust,5a91091c53a5dfebcc8f85f78f0eeedb269d0b87,5a91091,Oleks V,comphead@users.noreply.github.com,2026-09-28T18:08:55Z,GitHub,noreply@github.com,2026-09-28T18:08:55Z,chore: Extending collaborator list to help with review capacity (#3289),Co-authored-by: ovoievodin <o_voievodin@apple.com>,86d6618804a902eac10f09c09a565aca5dad0d46,3289,false,ovoievodin,1,1,0,.asf.yaml,15,5,20,base; co-authored; has PR number; LanceDB similarity 0.17,"API, CORE, Flink, Spark: Deprecate Snapshot.changes Methods with SnapshotChange Utility",- chore: Extending collaborator list to help with review capacity (#3289) (Thanks Oleks V and ovoievodin!)
+apache/iceberg-rust,119fad92c891c95a7819d87e4195407b3f7c0578,119fad9,Oleks V,comphead@users.noreply.github.com,2026-09-24T18:51:51Z,GitHub,noreply@github.com,2026-09-24T18:51:51Z,ci: replace MinIO with RustFS for integration tests (#3273),"* ci: replace MinIO with RustFS for integration tests
+
+`quay.io/minio/minio` no longer allows anonymous pulls, so
+`make docker-up` fails and the integration tests cannot start.
+DataFusion hit the same failure and switched to RustFS in
+apache/datafusion#25706. PyIceberg moved to RustFS earlier in
+apache/iceberg-python#3928.
+
+Run `rustfs/rustfs:1.0.0` as the shared S3 service instead. It keeps
+the `admin`/`password` credentials, the 9000/9001 ports, and
+virtual-hosted-style access through `RUSTFS_SERVER_DOMAINS` and the
+bucket aliases. The healthcheck uses `/health/ready`, which waits for
+storage and IAM. The `mc` bucket setup becomes `curl --aws-sigv4` run
+from the RustFS image, and the public bucket policy is dropped because
+no test reads anonymously.
+
+Point the REST fixture, HMS, and Spark at `http://rustfs:9000`, and
+rename the MinIO-specific test helpers and the
+`ICEBERG_TEST_MINIO_ENDPOINT` override to RustFS.
+
+Closes #3272
+
+* ci: use vendor-neutral object-store naming for S3 test service
+
+Rename the RustFS service, hostname, bucket aliases, test helpers and env
+var to a generic object-store name (matching PyIceberg), so future
+backend swaps only need an image change.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci: fail fast and gate readiness on test bucket creation
+
+Treat any non-200/409 response as a failure instead of ignoring it, and
+add a healthcheck so `docker compose up --wait` blocks until the buckets
+exist.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci: remove orphan containers on docker-up
+
+Renaming the minio service leaves stale containers holding port 9000 for
+anyone with a previously started stack; clean them up automatically.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci: make create-buckets a one-shot job
+
+RustFS returns 200 when re-creating an existing bucket, so plain chained
+curl -f calls are idempotent. Replace the status-code parsing, marker-file
+healthcheck and tail with a one-shot container, and gate spark-iceberg on
+its successful completion.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: ovoievodin <o_voievodin@apple.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c9a25b23b7645f3af0e9dfd7e85d8cf646901c55,3273,false,Copilot App; ovoievodin; Kevin Liu,11,65,74,Makefile; crates; dev; website,12,3,15,base; medium file count; multi-area change; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.31; capped LanceDB boost for routine/low-signal commit,Docs: Add informational properties section for table comment,"- ci: replace MinIO with RustFS for integration tests (#3273) (Thanks Oleks V, Copilot App, ovoievodin, and Kevin Liu!)"
+apache/iceberg-rust,71e571e531618371499eaf3c995e30c69910e2d9,71e571e,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-09-30T19:24:54Z,GitHub,noreply@github.com,2026-09-30T19:24:54Z,refactor(reader): build Arrow reader metadata once (#3242),"* refactor(reader): build Arrow reader metadata once
+
+* refactor(reader): address review feedback on metadata rebuild
+
+- Defer materializing an owned Arrow schema until a rebuild is actually
+  needed; the embedded-IDs/no-INT96/no-row-number fast path now returns
+  early without cloning.
+- Interpolate missing_field_ids, install_row_number, and the resulting
+  schema into the ArrowReaderMetadata error message so failures identify
+  which transform was active.
+- Add a regression test covering the combined path: a field-id-less file
+  with INT96 timestamps and a _pos projection, asserting coerced
+  timestamps and the row-number column together.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* refactor(reader): address remaining review feedback
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",deab0692f6df211a396d6fc0ad21811f8b6c8491,3242,false,Isaac,1,162,94,crates,4,3,7,base; medium churn; co-authored; downrank routine build/deps; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,Include key metadata in manifest tables (Spark 4.1),- refactor(reader): build Arrow reader metadata once (#3242) (Thanks kamcheungting-db and Isaac!)

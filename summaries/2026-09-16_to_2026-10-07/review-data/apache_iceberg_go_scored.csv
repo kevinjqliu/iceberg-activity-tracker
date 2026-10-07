@@ -1,0 +1,1807 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-go,3a0d02b71989cf044208fdd1473feac29358e594,3a0d02b,Sevban Bayrak,41579645+sevbanbayrak@users.noreply.github.com,2026-10-01T11:08:42+03:00,GitHub,noreply@github.com,2026-10-01T10:08:42+02:00,fix(table/dv): read deletion vectors by content_offset when the file is not a Puffin container (#2071),"* fix(table/dv): read deletion vectors by content_offset when the file is not a Puffin container
+
+Databricks writes deletion vectors for IcebergCompatV3 (UniForm) tables as a
+Delta deletion_vector_*.bin file: a one-byte version prefix followed by
+deletion-vector-v1 blobs, with no Puffin header or footer. The manifest entry
+is well-formed (file_format=PUFFIN, referenced_data_file, content_offset,
+content_size_in_bytes point at a valid blob), and the Java reference reader
+(BaseDeleteLoader.readDV) reads such files because it never consults the
+Puffin footer: it reads content_size_in_bytes bytes at content_offset.
+
+ReadDV/ReadDVs opened the file with puffin.NewReader first and failed with
+""puffin: invalid header magic"" on these tables.
+
+- puffin: NewReader wraps the header-magic and too-small errors in a new
+  sentinel, ErrNotPuffinFile, so callers can detect ""no Puffin container"".
+- table/dv: when the DV file is not a Puffin container, fall back to reading
+  the blobs directly at content_offset (Java parity). The blob's length,
+  magic and CRC-32 are still verified by DeserializeDV and the decoded
+  cardinality is validated against the manifest record_count; footer-only
+  checks (blob type, referenced-data-file property, cardinality property)
+  are skipped with a slog warning. Real Puffin files keep the existing
+  strict path unchanged.
+
+Verified against a Databricks Unity Catalog IcebergCompatV3 table read through
+the UC Iceberg REST catalog with vended credentials: 968,980 rows after
+1,020 deletes + 1,020 updates, matching the SQL result; copy-on-write and
+non-DV tables unaffected.
+
+Fixes #2070
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01MqCR5xLuYcb7Baw6Xbj4be
+
+* fix(table/dv): scope ErrNotPuffinFile to magic-first, reuse the open handle for bare DV reads
+
+Review follow-up:
+
+- puffin.NewReader checks the header magic before the minimum-size guard.
+  ErrNotPuffinFile is returned only when the file is too short to hold the
+  magic or the leading bytes are not PFA1; a file that starts with the magic
+  but is truncated keeps the plain ""puffin: file too small"" error, so a
+  partial upload of a real Puffin file is never routed to the bare-blob path.
+- openDVReader returns the still-open file (nil reader) on ErrNotPuffinFile;
+  readBareDVs reads from that handle instead of reopening the path.
+- readBareDVs no longer re-runs validateDVFile (both callers validate before
+  dispatch; documented), reads blobs in content_offset order and restores
+  input order, and logs the ""not a Puffin container"" warning once per file
+  path, after the first blob decoded.
+- Tests: truncated / corrupt-footer Puffin files fail without wrapping
+  ErrNotPuffinFile; bare blob with corrupt CRC surfaces the ""blob at offset""
+  wrap; reversed-offset input keeps output order; puffin size test uses a
+  valid-magic short file plus a too-short-for-magic case.
+
+Re-verified against a fresh Databricks IcebergCompatV3 table with two
+deletion vectors: 999,000 rows / 1,000 updated markers, matching SQL.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01MqCR5xLuYcb7Baw6Xbj4be
+
+---------
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>",2987cc761b30a32331d4483c800af5d84ad4f37c,2071,false,Claude Fable 5.1,4,227,11,puffin; table,111,9,120,"base; fix; important area: table; strategic: catalog, copy-on-write, deletion vector, manifest, puffin, v3; summary signal: copy-on-write, deletion-vector; deletion vector signal; medium churn; multi-area change; co-authored; correctness signal; has PR number; LanceDB similarity 0.31",Kafka Connect: fix table UUID check,- fix(table/dv): read deletion vectors by content_offset when the file is not a Puffin container (#2071) (Thanks Sevban Bayrak and Claude Fable 5.1!)
+apache/iceberg-go,0df6c6f313555e17b8c5ef7c880098427e980ffe,0df6c6f,İrem Çağın Yurttürk,cagin.yurtturk@getbruin.com,2026-10-05T22:17:43+03:00,GitHub,noreply@github.com,2026-10-05T21:17:43+02:00,feat(catalog/glue): support Amazon S3 Tables federated catalogs (#2001),"* feat(catalog/glue): support Amazon S3 Tables federated catalogs
+
+Tables in a Glue database federated to Amazon S3 Tables (ConnectionType
+aws:s3tables) could not be created through the Glue catalog: the service
+assigns storage itself, so the generic client-side location resolution
+fails with ""no default path set"".
+
+Detect the federated database and create such tables in two phases,
+mirroring pyiceberg: create a minimal Glue entry so S3 Tables allocates
+storage, read the assigned location, write Iceberg metadata to it, then
+repoint the Glue entry. The allocated entry is rolled back on any later
+failure. An explicit location is rejected for these tables, and a missing
+version id is treated as a failed commit.
+
+S3 Tables entries also report a service-specific Glue TableType (e.g.
+""customer""), so getRawTable now accepts any entry marked as Iceberg via
+the table_type parameter, not only EXTERNAL_TABLE.
+
+Adds unit coverage for detection, the two-phase create, location
+rejection, every rollback path, and the relaxed TableType gate, plus a
+gated live integration test.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* fix(catalog/glue): don't roll back S3 Tables table on reload failure
+
+The final LoadTable ran inside the create's rollback scope, so a
+transient read failure after a successful commit deleted an
+already-created table (and reclaimed its storage). Move the reload out
+of that scope: only allocate/write/commit failures roll back now, which
+also matches the generic create path. Document that S3 Tables keeps its
+own Glue TableType on the commit update.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* test(catalog/glue): reload a service TableType in the S3 Tables create test
+
+Have the successful create path's mocked reload return a service-specific
+TableType (""customer""), so the happy path also exercises the relaxed
+getRawTable gate rather than only EXTERNAL_TABLE.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* address review: lazy federation detection and scope getRawTable relaxation
+
+- CreateTable now tries the generic path first and only probes for S3 Tables
+  federation when location resolution fails with ErrNoDefaultLocation. This
+  removes the redundant GetDatabase on default creates and avoids a new
+  glue:GetDatabase requirement on explicit-location creates.
+- Export internal.ErrNoDefaultLocation so the probe matches it via errors.Is
+  instead of the error string.
+- Scope the relaxed getRawTable TableType gate to entries actually federated
+  to S3 Tables (Table.FederatedTable.ConnectionType == aws:s3tables), so
+  non-federated databases keep their pre-existing behavior.
+- Tests: prove explicit-location creates skip the probe, prove a non-federated
+  iceberg-param table is still rejected, and update federated mocks.
+
+* address review: reject explicit S3 Tables location, soften federation probe
+
+- CreateTable rejects an explicit location for a federated S3 Tables
+  database instead of silently creating a table outside managed storage.
+- isS3TablesDatabase treats AccessDeniedException as not-federated so a
+  caller lacking glue:GetDatabase still reaches the generic create path.
+- Document the two residual create failures left to the service.
+- Tighten the metadata-write-failure test to assert the write error.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* catalog/glue: best-effort clean up S3 Tables metadata on commit failure
+
+When UpdateTable fails after WriteMetadata, the rollback now best-effort
+deletes the written metadata object before dropping the minimal Glue entry.
+For S3 Tables the managed location may be unreachable, so the removal error
+is ignored and reclaiming any remainder is left to the service, as documented.
+The existing UpdateTable-failure test now asserts the metadata file is gone.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* catalog/glue: make stranded S3 Tables entry droppable and harden the commit
+
+- DropTable/getRawTable now accept a minimal federated S3 Tables entry
+  (format=ICEBERG, no table_type), so a double-failure leftover is cleaned
+  up through DropTable, restoring parity with pyiceberg's delete_table.
+- The UpdateTable repoint preserves the service-assigned TableType instead
+  of forcing EXTERNAL_TABLE, which S3 Tables rejects on write; a unit test
+  now asserts the TableType we send.
+- The rollback DeleteTable runs on a context detached from a cancelled
+  create (context.WithoutCancel + timeout) and joins errors with errors.Join.
+- isS3TablesDatabase guards against a nil Database from getDatabase.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* catalog/glue: keep the live-proven EXTERNAL_TABLE on the S3 Tables repoint
+
+Sending the allocated entry's own TableType was untested against S3 Tables
+and races the service's federation (nil right after CreateTable, ""customer""
+once federated). Live testing confirmed S3 Tables accepts EXTERNAL_TABLE on
+the repoint, so send it unconditionally and assert it in the unit test.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* catalog/glue: note S3 Tables ignores the repoint TableType (verified live)
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* fix(catalog/glue): write table metadata with the catalog AWS config
+
+The metadata writes in CreateTable, commitS3TablesTable, and CommitTable used
+a bare context, so the S3 FileIO resolver fell back to LoadDefaultConfig. A
+catalog built with WithAwsConfig or glue.* static credentials would then call
+Glue as the configured principal but PUT metadata as the ambient one (or fail
+despite valid configured credentials). Wrap the context with the catalog's AWS
+config before each write, matching RegisterTable and convertGlueToIceberg; for
+commitS3TablesTable this also covers the staged.FS metadata cleanup.
+
+* test(catalog/glue): mock GetDatabase in TestGlueCreateTableAlreadyExists
+
+Merging main brought in TestGlueCreateTableAlreadyExists, which does an
+explicit-location create. CreateTable now consults the database up front to
+reject federated S3 Tables locations, so the test must mock GetDatabase; a
+non-federated result lets it take the generic path and assert the
+AlreadyExists mapping. In real AWS a missing glue:GetDatabase surfaces as
+AccessDenied, which isS3TablesDatabase already treats as non-federated.
+
+* address review: resolve federation up front and harden S3 Tables create
+
+- CreateTable now fetches the database once and decides S3 Tables federation for
+  both default and explicit-location creates, reusing the result for namespace
+  properties so staging issues no second GetDatabase. This also catches catalogs
+  with a `warehouse` property, where the previous lazy probe let a federated
+  create write outside the managed storage.
+- Map AlreadyExistsException from the S3 Tables allocate step to
+  catalog.ErrTableAlreadyExists, matching the other create paths.
+- Reject RenameTable for federated S3 Tables tables, whose managed storage the
+  copy-then-delete rename cannot safely repoint.
+- Replace isS3TablesDatabase with lookupDatabase (AccessDenied/NotFound tolerant)
+  and extract namespacePropsFromDatabase.
+
+Tests: credential-boundary regression tests (memfs FileIO recording the ctx AWS
+config) for CreateTable, commitS3TablesTable incl. the fs.Remove cleanup, and
+CommitTable; warehouse-set federated create; allocate AlreadyExists; rename
+rejection; catalog-id pinning; and AssertExpectations on the fall-through test.
+
+* Trim comments
+
+* Address review nits
+
+---------
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>",b8ee7dd647dbe6b5e66dbdfb58f40519399a1104,2001,false,,2,1092,9,catalog,110,6,116,"base; feature/api verb; important area: catalog; strategic: catalog, storage; community signal: fileio; large churn; correctness signal; has PR number; LanceDB similarity 0.21","Core, REST: Add support for overwrite in RegisterTableRequest",- feat(catalog/glue): support Amazon S3 Tables federated catalogs (#2001) (Thanks İrem Çağın Yurttürk!)
+apache/iceberg-go,63ced822ca9c7d6534306e58dda3ed6daad8e115,63ced82,Jeremy Schoemaker,jeremy@shoemoney.com,2026-09-22T16:45:07-05:00,GitHub,noreply@github.com,2026-09-22T23:45:07+02:00,fix(manifest): support nanosecond timestamp partitions (#2034),"* fix(manifest): support nanosecond timestamp partition types in Avro schema
+
+partitionTypeToAvroSchema had no arm for TimestampNsType or
+TimestampTzNsType, so any v3 table partitioned on a timestamp_ns or
+timestamptz_ns column fell through to ""unsupported partition type"" and
+could not have a manifest written at all. NewManifestWriter calls
+partitionTypeToAvroSchema before anything else, so the failure is
+unconditional.
+
+The read side already handles these types: the manifest decoder switches
+on atype.TimestampNanos, and catalog/rest/scan_task_decoder.go maps both
+ns types to atype.TimestampNanos. The library could read partitions it
+could not write.
+
+Add TimestampNsNode and TimestampTzNsNode to the internal Avro schema
+nodes, using atype.TimestampNanos with adjust-to-utc false and true
+respectively, mirroring the existing micros nodes, and wire both ns
+types into the partition type switch.
+
+Signed-off-by: Jeremy Schoemaker <jeremy@shoemoney.com>
+
+* fix(manifest): finalize nanosecond partition statistics
+
+Signed-off-by: Jeremy Schoemaker <jeremy@shoemoney.com>
+
+---------
+
+Signed-off-by: Jeremy Schoemaker <jeremy@shoemoney.com>",28cd1baa51ad36e082f2e320470592675c4db0a8,2034,false,,4,125,1,internal; manifest.go; schema_conversions.go; schema_conversions_test.go,103,7,110,"base; feature/api verb; fix; important area: manifest; strategic: catalog, manifest, partition statistics, v3; community signal: timestampnanos; multi-area change; has PR number; LanceDB similarity 0.22",Introduce foundational types for V4 manifest support,- fix(manifest): support nanosecond timestamp partitions (#2034) (Thanks Jeremy Schoemaker!)
+apache/iceberg-go,5ed1a6e69a5a065853156b69592ae0995b2ab5ad,5ed1a6e,Minh Vu,vuhoangminh97@gmail.com,2026-09-21T21:06:39+02:00,GitHub,noreply@github.com,2026-09-21T15:06:39-04:00,perf(table): load deletion-vector Puffin groups lazily (#1968),"* perf(table): load deletion-vector Puffin groups lazily
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): reject empty deletion vector references
+
+* fix(table): preserve lazy deletion vector cache
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",5288171327637ffa0fd8e636215c8c1f5374d324,1968,false,,7,616,246,table,99,8,107,"base; important area: table; strategic: deletion vector, puffin; summary signal: deletion vector, deletion-vector; deletion vector signal; medium file count; medium churn; correctness signal; has PR number; LanceDB similarity 0.28",Docs: Add informational properties section for table comment,- perf(table): load deletion-vector Puffin groups lazily (#1968) (Thanks Minh Vu!)
+apache/iceberg-go,9cd5a0559ca0ca5e947fcf4da94f52972c7774b4,9cd5a05,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-05T23:02:54+02:00,GitHub,noreply@github.com,2026-10-05T23:02:54+02:00,refactor(table)!: extract orphan cleanup into table/maintenance (#2086),"* refactor(table)!: extract orphan cleanup into table/maintenance
+
+This is Slice 1 of issue #2083, breaking pre-v1 relocation of the orphan cleanup
+service from the table package into a dedicated table/maintenance package.
+
+Changes:
+- Create new table/maintenance package with Service facade
+- Move DeleteOrphanFiles, PlanOrphanFiles, ExecuteOrphanCleanup, and PurgeFiles
+  methods from table.Table to maintenance.Service
+- Move exported types: OrphanCleanupOption, OrphanCleanupResult, OrphanCleanupPlan,
+  OrphanFile, PrefixMismatchMode (and constants)
+- Move helper functions: WithLocation, WithFilesOlderThan, WithDryRun,
+  WithDeleteFunc, WithCleanupMaxConcurrency, WithPrefixMismatchMode,
+  WithEqualSchemes, WithEqualAuthorities
+- Export IsGCEnabled from table package (was unexported isGCEnabled)
+- Update all callers in catalog/ and cmd/iceberg/ to use new API:
+  maintenance.New(tbl).DeleteOrphanFiles(...) instead of tbl.DeleteOrphanFiles(...)
+- Move tests to table/maintenance package
+- Update IsGCEnabled references in transaction.go and updates.go
+
+The new public entry shape maintains ergonomic parity with the original API.
+To use orphan cleanup: create a maintenance service with maintenance.New(table),
+then call its methods.
+
+BREAKING: table.DeleteOrphanFiles, table.PlanOrphanFiles, table.ExecuteOrphanCleanup,
+and table.PurgeFiles are no longer available on table.Table. Use table/maintenance
+package instead.
+
+* style(table): gofmt the moved orphan-cleanup test
+
+table/maintenance/orphan_cleanup_test.go was not gofmt-clean after the move (a
+block comment needed re-indentation), which failed the golangci-lint gofmt check
+in CI. Formatting only, no behavior change.
+
+* refactor(table/maintenance): use free functions and restore dropped tests
+
+Address review feedback on the orphan-cleanup extraction:
+
+- Replace the Service facade with free functions that take the table as their
+  first argument (maintenance.DeleteOrphanFiles(ctx, tbl, ...)), matching
+  table/compaction, and update all callers in catalog/ and cmd/iceberg/. This
+  avoids freezing a stateful constructor at v1; a deprecation shim on
+  table.Table is impossible anyway because table/maintenance imports table.
+- Rename the four generic options to the WithCleanup* prefix
+  (WithCleanupLocation/DryRun/DeleteFunc/FilesOlderThan) for consistency with
+  WithCleanupMaxConcurrency before the names freeze.
+- Restore the tests and benchmarks dropped in the move: the statistics- and
+  tombstone-reference tests, the manifest-dedup and concurrency-limit tests,
+  the negative-/zero-age retention checks, and the PurgeFiles and manifest-list
+  benchmarks, porting their shared IO and manifest helpers into the package.
+- Document table.IsGCEnabled's parsing rules now that it is exported, and add a
+  package doc comment.
+- Fix website/src/api.md and releases.md (with a moved-symbols compatibility
+  note), and add a `make vet` target running `go vet -tags=integration ./...`
+  (wired into CI) so the moved //go:build integration test stays compiled.
+
+* docs(table/maintenance): document OrphanCleanupOption and the WithCleanup* options
+
+Add one-line doc comments with defaults to OrphanCleanupOption,
+WithCleanupLocation (table data location), WithCleanupFilesOlderThan (72h),
+and WithCleanupDryRun (false), now that the WithCleanup* names are fixed for v1.",0df6c6f313555e17b8c5ef7c880098427e980ffe,2086,false,,21,581,264,.github; Makefile; catalog; cmd; maintenance}; table; website,96,8,104,"base; important area: table; strategic: catalog, compaction, maintenance, manifest; summary signal: compaction, maintenance; large file count; medium churn; multi-area change; release/security/notice signal; has PR number; LanceDB similarity 0.27","Core, Spark 4.1: Fix distributed planning for CoW operations",- refactor(table)!: extract orphan cleanup into table/maintenance (#2086) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,7dd7364930b6c888aa939a4fe19038ea51cc1086,7dd7364,Badal Prasad Singh,badal@datazip.io,2026-09-24T02:47:03+05:30,GitHub,noreply@github.com,2026-09-23T23:17:03+02:00,fix(table): validate deletion vector fields in RowDelta (#2004 follow-up) (#2016),"* fix: reject dvs below v3
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* minor follow ups
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* chore: minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",21e85b611b13625a340cfe29f0344fbd1cc0d54f,2016,false,,7,158,115,table,95,7,102,"base; fix; important area: table; strategic: deletion vector, v3; summary signal: deletion vector; deletion vector signal; medium file count; medium churn; has PR number; LanceDB similarity 0.25",Core: v4 table metadata location should be optional,- fix(table): validate deletion vector fields in RowDelta (#2004 follow-up) (#2016) (Thanks Badal Prasad Singh!)
+apache/iceberg-go,f6c158f78d1895b0f963bdf13542f81dd08d4acf,f6c158f,KranzL,50032317+KranzL@users.noreply.github.com,2026-09-21T15:06:54-04:00,GitHub,noreply@github.com,2026-09-21T15:06:54-04:00,feat(table): add tunables to bound compaction pipeline memory (#1993),"* Add tunables bounding compaction pipeline memory
+
+The compaction read+write pipeline had fixed memory characteristics:
+the scanner decodes read.parquet.batch-size rows per Arrow batch
+(131072 by default) with no per-scan override, and each rolling data
+writer buffers up to 64 record batches in its input channel with no way
+to lower or raise that bound. On wide rows the product of those two
+numbers dominates a compaction worker's peak memory.
+
+- WithArrowBatchSize scan option caps the rows decoded per Arrow batch
+  for one scan, overriding the table's read.parquet.batch-size without
+  mutating caller-supplied scan options.
+- The rolling data writers' record channel capacity (default 64
+  batches) is now configurable via the WithRecordBatchBufferSize write
+  option, threaded through recordWritingArgs to the writer factory. It
+  applies to both the fanout and the clustered write paths, which share
+  the rolling writer.
+- WithParquetRowGroupLimit write option overrides the table's
+  write.parquet.row-group-limit per write, bounding rows buffered per
+  row group before each flush.
+- Compaction group options forward all three into
+  ExecuteCompactionGroup: WithCompactionReadBatchSize,
+  WithCompactionRecordBatchBufferSize, and
+  WithCompactionParquetRowGroupLimit.
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>
+
+* Fix WithRecordBatchBufferSize
+
+* WithArrowBatchSize fix
+
+* WithCompactionReadBatchSize comment fix
+
+* WithArrowBatchSize
+
+---------
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>",f3dc938de4efe69f46a22355f08750fb77a0a5a3,1993,false,,9,499,32,table,92,6,98,"base; feature/api verb; important area: table; strategic: clustered, compaction; summary signal: clustered, compaction; medium file count; medium churn; has PR number; LanceDB similarity 0.19","Core, Spark: Adds a Table Property for Relying on Identifier Fields",- feat(table): add tunables to bound compaction pipeline memory (#1993) (Thanks KranzL!)
+apache/iceberg-go,d66ab48ff812ee12af66a97e491de104e14f0aa4,d66ab48,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-01T21:37:20+02:00,GitHub,noreply@github.com,2026-10-01T15:37:20-04:00,feat(rest): expose catalog labels on the loaded table and view (#2068),"Thread the labels decoded from load responses onto the returned Table and
+View. Table gains a WithLabels option and a Labels() accessor; View gains a
+functional-options constructor with the same. LoadTable, RegisterTable,
+CreateTable, LoadView, RegisterView, CreateView, and UpdateView forward the
+response labels (viewResponse now decodes them too). The commit path keeps
+labels on the returned table too: doCommit and Transaction.StagedTable thread
+them through the rebuilt table, and Refresh re-hydrates them from the reloaded
+table. Labels() returns nil when the catalog returned none, aliases the table's
+labels so callers must treat the result as read-only, and labels are excluded
+from Table.Equals and View.Equals as transient state.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",c5c4272905234a73c6d68d7b4e86e6b340013f58,2068,false,Isaac,7,527,10,catalog; table; view,88,7,95,base; feature/api verb; important area: rest; strategic: catalog; medium file count; medium churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.23,OpenAPI: Promote the S3 signing endpoint to the main spec,- feat(rest): expose catalog labels on the loaded table and view (#2068) (Thanks Andrei Tserakhau and Isaac!)
+apache/iceberg-go,f3dc938de4efe69f46a22355f08750fb77a0a5a3,f3dc938,Andrei Tserakhau,laskoviymishka@gmail.com,2026-09-21T21:06:46+02:00,GitHub,noreply@github.com,2026-09-21T15:06:46-04:00,feat(rest): add catalog labels to the load table/view read path (#2013),"Add the iceberg.Labels and iceberg.FieldLabel value types and decode the
+optional ""labels"" object from LoadTableResult and LoadViewResult responses.
+Labels are catalog-provided, transient enrichment and are never persisted to
+metadata; field labels are keyed by field ID and tolerate dropped columns.
+
+This decodes labels off the wire only; exposing them on the loaded table and
+view follows in a later change.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",5ed1a6e69a5a065853156b69592ae0995b2ab5ad,2013,false,Isaac,4,227,0,catalog; labels.go; labels_test.go,84,10,94,base; feature/api verb; important area: rest; strategic: catalog; medium churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.32,Flink: Support UUID type in Avro and Parquet readers and writers,- feat(rest): add catalog labels to the load table/view read path (#2013) (Thanks Andrei Tserakhau and Isaac!)
+apache/iceberg-go,8ff80185af86555cf99e5844a62cf6e31c271efd,8ff8018,Bilal Akhtar,me@itsbilal.com,2026-10-05T15:03:42-04:00,GitHub,noreply@github.com,2026-10-05T21:03:42+02:00,feat(rest): add RefreshTableCredentials call to rest catalog (#2075),"* feat(catalog): add RefreshTableCredentials call to catalog
+
+This change exposes the table credential REST catalog endpoint as a
+top-level method on catalogs. This is useful for when a table.Table is
+seeded with a specific metadata location directly using table.New, but
+is lacking temporarily-vended storage credentials to do any file scans.
+
+* CR suggestion + one more rebase fix
+
+* CR suggestions
+
+* nit on comment
+
+* another nit",79e13a1d02c911d4db731a6bf3ffcde5f877a465,2075,false,,6,605,9,catalog; table,85,8,93,"base; feature/api verb; important area: rest; strategic: catalog, storage; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.28",Core: Implement register view for REST catalog,- feat(rest): add RefreshTableCredentials call to rest catalog (#2075) (Thanks Bilal Akhtar!)
+apache/iceberg-go,2d73e1e32fef8b72557eb505e0f98f4e4ec53ada,2d73e1e,Neelesh Salian,nssalian@users.noreply.github.com,2026-09-22T08:40:04-07:00,GitHub,noreply@github.com,2026-09-22T17:40:04+02:00,"feat(table): adopt arrow-go 18.8, fast-path shredded variant extract, restore parquet dict fallback (#2002)","* feat(table): adopt arrow-go 18.8 and fast-path shredded variant extract
+
+Signed-off-by: Neelesh Salian <n_salian@apple.com>
+
+* fix(table): harden variant extract fast path per review
+
+Signed-off-by: Neelesh Salian <n_salian@apple.com>
+
+* fold null variant wrapper as absent key, poll ctx, unwrap dict in dict-fallback walk
+
+* PR comment fixes
+
+* PR remainder fixes
+
+---------
+
+Signed-off-by: Neelesh Salian <n_salian@apple.com>",833e10c12cc37219b335bcb34639d5e0a8aa9721,2002,false,,16,1421,86,go.mod; go.sum; table; variant_extract.go,82,7,89,base; important area: table; strategic: variant; community signal: shredded variant; medium file count; large churn; multi-area change; has PR number; LanceDB similarity 0.24,Flink: Support writing shredded variant,"- feat(table): adopt arrow-go 18.8, fast-path shredded variant extract, restore parquet dict fallback (#2002) (Thanks Neelesh Salian!)"
+apache/iceberg-go,a51a6c27364bc93188c017734f6c1c7edfcbed48,a51a6c2,Stéphane Loeuillet,stephane.loeuillet@kaiko.com,2026-10-06T19:46:07+02:00,GitHub,noreply@github.com,2026-10-06T13:46:07-04:00,fix(catalog/rest): don't bind the cached vended-credential FileIO to the caller's context (#2079),"* fix(catalog/rest): don't bind the cached vended-credential FileIO to the caller's context
+
+vendedCredentialRefresher.loadFS caches the FileIO it builds and hands it
+to every later caller, but built it with the first caller's ctx. The GCS
+filesystem keeps the context it is opened with, so once that ctx was
+cancelled every later operation through the table failed with
+context.Canceled, even when called with a live context. Any writer that
+scopes each commit to its own context (e.g. context.WithTimeout) saw
+every commit after the first fail. Renewal had the same issue, and so
+did prefixScopedIO, which stores the ctx and opens filesystems lazily.
+
+Build the cached IO from context.WithoutCancel(ctx): values are kept,
+cancellation is not. fetchCreds still honours ctx.
+
+Fixes #2078
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Stephane Loeuillet <stephane.loeuillet@kaiko.com>
+
+* fix(catalog/rest): let the refresher own the vended FileIO's lifetime
+
+Review follow-up. Detaching the cached IO from the caller's cancellation
+left close() as the only teardown, and renewal replaced the cached IO
+without closing it, so a superseded IO's background work leaked.
+
+The refresher now opens the IO on its own cancellable context, derived
+from context.WithoutCancel(ctx). Renewal installs the new IO, then closes
+the superseded one and cancels its context; a failed renewal cancels only
+the context it created and keeps the cached IO. close() closes the IO and
+cancels its context.
+
+newPrefixScopedIO keeps the context it is given (documented): that is how
+close reaches the filesystems it opens lazily.
+
+Tests: renewal is asserted to rebuild the IO on a distinct context, keep
+values, and retire the old IO; close and a failed renewal are covered;
+first-caller value inheritance is documented rather than promised; checked
+type assertion.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Stephane Loeuillet <stephane.loeuillet@kaiko.com>
+
+* fix(catalog/rest): keep the superseded vended FileIO usable on renewal
+
+Review follow-up. Closing and cancelling the superseded IO on renewal
+broke callers still holding it (manifest planning batches, partial
+rewrites, concurrent scans and writes on derived tables), and the leak it
+guarded against does not exist for the gocloud backends. replaceIO is
+swap-only again; close() still closes the current IO and cancels its
+context.
+
+Tests now run on a real blobfs.FileIO over memblob, opened on the
+context it is given: the cached IO is used after the first caller's
+cancellation, and the IO from before a renewal is used after it (this
+fails with ""blob: Bucket has been closed"" on the previous commit). The
+NotSame check, which tested the context's implementation rather than the
+renewal, is gone.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Stephane Loeuillet <stephane.loeuillet@kaiko.com>
+
+* fix(catalog/rest): document why the vended IO keeps ctx values; drop unused test field
+
+Review nits: the S3 factory reads its base AWS config from the context values WithoutCancel keeps, so say so next to it; contextCapturingScheme.scheme was never read.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Stephane Loeuillet <stephane.loeuillet@kaiko.com>
+
+* docs(catalog/rest): say why replaceIO drops the superseded cancel
+
+Review nit: calling it would end the context that callers still holding the old IO run on.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Stephane Loeuillet <stephane.loeuillet@kaiko.com>
+
+---------
+
+Signed-off-by: Stephane Loeuillet <stephane.loeuillet@kaiko.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",a55d53478e8860b2e88531af14bc9181c1077d90,2079,false,Claude Opus 5.5,2,281,20,catalog,80,7,87,"base; fix; important area: catalog, rest; strategic: catalog, manifest; community signal: fileio; medium churn; co-authored; has PR number; LanceDB similarity 0.22",Spark: Enable remote scan planning with REST catalog <Eduard Tudenhoefner>,- fix(catalog/rest): don't bind the cached vended-credential FileIO to the caller's context (#2079) (Thanks Stéphane Loeuillet and Claude Opus 5.5!)
+apache/iceberg-go,9c5fbf875deb642ca015e0156ce4ae567094a4df,9c5fbf8,Revanth,revanthcse1@gmail.com,2026-10-06T12:45:58-05:00,GitHub,noreply@github.com,2026-10-06T13:45:58-04:00,fix(table): reject copy-on-write commits that would drop concurrent deletes (#2099),"* fix(table): reject copy-on-write commits that would drop concurrent deletes (#2090)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* test(table): cover concurrent delete on a file copy-on-write leaves untouched
+
+Signed-off-by: Revanth Ch <revanthcse1@gmail.com>
+
+---------
+
+Signed-off-by: Revanth Ch <revanthcse1@gmail.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",a02c518dd21162ce3371bc89b8aee3d2c92add21,2099,false,Claude Opus 5.5,2,214,0,table,74,11,85,base; fix; important area: table; strategic: copy-on-write; summary signal: copy-on-write; medium churn; co-authored; has PR number; LanceDB similarity 0.36,Core: Fix metadata table scans with useRef by preserving metadata schema,- fix(table): reject copy-on-write commits that would drop concurrent deletes (#2099) (Thanks Revanth and Claude Opus 5.5!)
+apache/iceberg-go,f7e2667e318f61f249dadd82657b540cce13f9f2,f7e2667,İrem Çağın Yurttürk,cagin.yurtturk@getbruin.com,2026-10-01T21:43:14+03:00,GitHub,noreply@github.com,2026-10-01T20:43:14+02:00,fix(catalog/rest): sign SigV4 with credentials from catalog properties (#1999),"* fix(catalog/rest): sign SigV4 with credentials from catalog properties
+
+The REST catalog's SigV4 signer only used the AWS default credential chain
+(config.LoadDefaultConfig), ignoring the s3.* credential properties passed to
+the catalog. This forced callers targeting AWS SigV4 REST catalogs (S3 Tables,
+Glue) to export AWS_* environment variables even when they supplied credentials
+via catalog properties.
+
+Build a static credentials provider from s3.access-key-id / s3.secret-access-key
+/ s3.session-token when present, and only fall back to the default chain
+otherwise. An explicitly provided aws.Config (WithAwsConfig) still wins.
+
+This mirrors the same gap tracked for the Python client in
+apache/iceberg-python#2070.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* test(catalog/rest): pin SigV4 props-cred signing; error on partial creds
+
+Address review feedback:
+- Add TestSigV4SignsWithPropsCredentials, which asserts the SigV4 Authorization
+  header is signed with the credentials from catalog properties. This pins the
+  wiring: removing the cfg.Credentials assignment makes the test fail.
+- staticCredsFromProps now returns an error when only one of the access-key /
+  secret-access-key pair is set, instead of silently falling back to the ambient
+  default identity. Neither set still falls back to the default chain.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* docs(catalog/rest): document SigV4 signing credential precedence
+
+Address review feedback (minor): the SigV4 signing identity resolves as
+WithAwsConfig > s3.* catalog properties > AWS default credential chain. Document
+this on WithSigV4 and in the rest.sigv4-enabled configuration reference.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+* fix(catalog/rest): error on incomplete SigV4 creds via ValidateStaticCredentials
+
+Delegate staticCredsFromProps to internal/awsconfig.ValidateStaticCredentials so
+a token-only s3.session-token (no access/secret key) returns the
+ErrIncompleteStaticCredentials sentinel instead of silently dropping to the
+default credential chain. Add a token-only test case and assert the sentinel via
+errors.Is. Document the s3.* vs Java rest.* divergence in the WithSigV4 godoc and
+configuration.md.
+
+* feat(catalog/rest): accept Java rest.* SigV4 credential aliases
+
+Accept rest.access-key-id / rest.secret-access-key / rest.session-token as
+aliases for the s3.* signing-credential properties, resolved per field with the
+s3.* keys taking precedence. This lets operators migrating from the Java client
+configure SigV4 signing with the property names they already use instead of
+silently falling through to the AWS default credential chain.
+
+* fix(catalog/rest): harden SigV4 credential boundaries
+
+Two credential-boundary fixes for the props-based SigV4 signing path:
+
+- Resolve the credential tuple atomically per namespace. Resolving each field
+  independently let a partial s3.* pair be completed with a rest.* field (or
+  inherit an unrelated rest.* token), signing as a hybrid identity that still
+  passed validation. Now if any s3.* field is set we validate and use only the
+  s3.* tuple, otherwise only the rest.* tuple; never backfill across namespaces.
+
+- Do not re-sign a cross-origin redirect. sessionTransport signed every hop, so
+  a redirect to a different origin exposed the SigV4 Authorization header and
+  session token to an unconfigured host. Signing is now skipped when the request
+  origin (scheme/host/effective port) differs from the configured catalog origin.
+
+Tests cover the mixed-partial and s3-pair-plus-rest-token cases and assert a
+cross-origin redirect target receives neither the Authorization header nor the
+session token. Also closes a response body left open in an existing test.
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>
+
+---------
+
+Signed-off-by: iremcaginyurtturk <cagin.yurtturk@getbruin.com>",dd935d836bbfcd85d2431b3b6ef5e9f76eb1e226,1999,false,,4,237,3,catalog; website,76,9,85,"base; fix; important area: catalog, rest; strategic: catalog, v4; medium churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.31",AWS: Merge catalog properties with properties prefixed with client.credentials-provider. <Thomas Powell>,- fix(catalog/rest): sign SigV4 with credentials from catalog properties (#1999) (Thanks İrem Çağın Yurttürk!)
+apache/iceberg-go,5b1bfc39a04e8e5dc516b38ec2cc96c064a75334,5b1bfc3,Minh Vu,vuhoangminh97@gmail.com,2026-09-18T14:39:44+02:00,GitHub,noreply@github.com,2026-09-18T14:39:44+02:00,perf(table): cache snapshot manifests across scans (#1970),"* perf(table): cache snapshot manifests across scans
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover canceled snapshot manifest waiters
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): bound snapshot manifest cache
+
+* fix(table): address snapshot manifest cache review feedback
+
+* fix(table): make snapshot manifest cache cancellation-safe
+
+* fix(table): tighten snapshot manifest cache behavior
+
+* fix(table): reuse cached manifests in metadata inspectors
+
+* fix(table): preserve cancellation in manifest cache reads
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover canceled manifest set reads
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",faa9868504e607a7dcea2efc1270465534ee97c1,1970,false,,16,1505,54,table; website,76,8,84,base; important area: table; strategic: manifest; medium file count; large churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.25,Core: Unlink table metadata's last-updated timestamp from snapshot timestamp,- perf(table): cache snapshot manifests across scans (#1970) (Thanks Minh Vu!)
+apache/iceberg-go,a55d53478e8860b2e88531af14bc9181c1077d90,a55d534,Revanth,revanthcse1@gmail.com,2026-10-06T12:46:03-05:00,GitHub,noreply@github.com,2026-10-06T13:46:03-04:00,fix: support variant literals in IsIn/NotIn sets (#2097),"* fix: support variant literals in IsIn/NotIn sets
+
+* test: pin variant set bind error and cover primitive-column bind",9c5fbf875deb642ca015e0156ce4ae567094a4df,2097,false,,3,145,0,exprs_test.go; literal_set_internal_test.go; utils.go,70,8,78,base; feature/api verb; fix; strategic: variant; multi-area change; has PR number; LanceDB similarity 0.28,"Core, REST: Add support for overwrite in RegisterTableRequest",- fix: support variant literals in IsIn/NotIn sets (#2097) (Thanks Revanth!)
+apache/iceberg-go,c59e14f0f7ed7616c5dd59a965851fec75ea67ff,c59e14f,Minh Vu,vuhoangminh97@gmail.com,2026-09-18T14:36:24+02:00,GitHub,noreply@github.com,2026-09-18T14:36:24+02:00,perf(table): parallelize non-bulk PurgeFiles deletion (#1973),"* perf(table): parallelize non-bulk purge deletion
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(catalog): synchronize parallel purge callbacks
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): address purge deletion review feedback
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): address purge deletion review feedback
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): pin purge cancellation and worker limits
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): preserve purge deletion errors
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",3eccc01e0986d81cb89ec7421c57652291a6011d,1973,false,,7,486,73,catalog; io; table; website,72,6,78,base; important area: table; strategic: catalog; medium file count; medium churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.20,Core: Move Hadoop conf serialization into SerializableConfiguration,- perf(table): parallelize non-bulk PurgeFiles deletion (#1973) (Thanks Minh Vu!)
+apache/iceberg-go,dce9757b17bbb526d48c0594f1f3c84d8990b5d2,dce9757,KranzL,50032317+KranzL@users.noreply.github.com,2026-09-23T17:17:52-04:00,GitHub,noreply@github.com,2026-09-23T23:17:52+02:00,perf(table): bound the scan reorder heap at scan concurrency above one (#2039),"* perf(table): add lagging-task reorder heap benchmark and test
+
+BenchmarkArrowScanReorderHeapLaggingTask in
+table/arrow_scanner_reorder_bench_test.go scans M single-batch data
+files at WithMaxConcurrency(4) with the Open of task 0's file gated
+until the other M - 1 files have been read, and reports the peak
+HeapInuse delta while the gate is closed and the number of batches the
+other files produced in that window. On Apple M3 Pro, 11 cores,
+go1.25.9, -count=3, the delta is 4.7 MB at M = 8, 20 to 23 MB at
+M = 32 and 96 MB at M = 128, with M - 1 batches held every time.
+
+TestArrowScanReorderHeapBoundedWhileHeadTaskLags in
+table/arrow_scanner_reorder_test.go runs the same scan inside a
+testing/synctest bubble. synctest.Wait returns once every scan
+goroutine is durably blocked, so the count of out-of-order batches the
+pipeline holds is read at a fixed point with no sleeps, both before a
+fix (all M - 1 other files are read) and after one (workers park on
+credits). It asserts the count never exceeds numWorkers x K with K = 2
+as reorderCreditsPerWorker. On main it fails with 31 held batches
+against a bound of 8, then releases the gate, checks that every row
+arrives and checks that the CheckedAllocator is empty.
+
+Refs #2038.
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>
+
+* perf(table): bound the scan reorder heap at scan concurrency above one
+
+Each scan worker in recordBatchesFromTasksAndDeletes and in
+makePositionDeleteRecordsForFilter now holds a task credit. The worker
+takes the credit before it takes a task, the credit rides on the
+task's Last record, and it comes back when the iterator's consumer
+takes that record, when the deferred drain loop takes it, or when
+MakeSequencedChanWithDiscard discards it at close. A worker waiting
+for its credit also waits on the scan context, so cancellation still
+stops it. Error records carry no credit.
+
+A worker therefore cannot start its next task while any batch of its
+previous task is still in the records channel, the reorder heap or
+the sequenced channel. While the head task lags, each other worker
+finishes one task and parks, so the heap holds at most numWorkers - 1
+tasks instead of every task the free workers can reach. Decoding
+inside a task is not throttled and the head task's worker never waits.
+
+Per-batch credits, as #2038 proposed, were measured first on
+BenchmarkArrowScanManyFilesAndBatches (32 files of 32 one-row batches,
+concurrency 4): K = 2 took 141.6 ms/op against 69.4 ms/op on main,
+K = 8 took 127.9 ms/op and K = 32 took 78.7 ms/op, because the batches
+a free worker may run ahead are the scan's parallelism. With the
+per-task credit that benchmark is within noise of main in interleaved
+runs (benchstat, n = 10: +0.4%, -0.2% and +1.5% on the three
+sub-benchmarks), and BenchmarkArrowScanReorderHeapLaggingTask holds 3
+gated batches and 2.0 to 2.3 MB of peak heap delta for M = 8, 32 and
+128, where main holds M - 1 batches and 4.7, 20 to 25 and 95 MB.
+
+The doc on WithCompactionArrowBatchSize now states the bound that
+holds, workers x (rows in the largest task + n) +
+(recordBatchBufferSize + 2) x n rows, and WithCompactionScanConcurrency
+says its worker count multiplies the read-side term.
+
+TestArrowScanReorderHeapBoundedWhileHeadTaskLags asserts the bound of
+(numWorkers - 1) x maxInFlightTasksPerWorker completed out-of-order
+tasks. TestArrowScanReorderCancelWhileWorkersWaitForTaskCredits
+cancels the scan while the free workers are parked and checks that the
+iterator returns context.Canceled, every scan goroutine exits and every
+batch is released.
+
+Fixes #2038.
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>
+
+* perf(table): hand the scan credit to exactly one record and test the compaction bound
+
+recordSink now tracks whether its worker holds a credit and hands it to
+exactly one record: the task's Last record in send, or the error record
+in fail when no Last record was sent. processRecords can send Last and
+then return an error from the reader or the deferred close, so fail
+hands off nil in that case. No path abandons a credit any more, and a
+worker that failed and went back to reserve would wait only until its
+error record leaves the sequenced channel. The three delete-loader
+error sites in recordBatchesFromTasksAndDeletes go through sink.fail,
+so fail is the only path that puts an error record into records.
+recordSink is a pointer built only by newRecordSink, so a nil sink
+panics on first use instead of hanging on a nil channel send. The nil
+guard in acquire is gone; taskCredits is declared before
+enumeratedRecord.
+
+Scan.ReadTasks now states the bound for the general scan: each worker
+holds the decoded batches of at most one task until the iterator has
+returned them, so the batches waiting behind a slow early task total at
+most the worker count times the rows in the largest task, rounded up to
+a multiple of the batch size, and one large file among small ones still
+holds its whole decoded contents while it waits. ToArrowRecords and
+WithMaxConcurrency point at that paragraph.
+
+TestRecordSinkHandsOffCreditOnce covers fail without Last, Last followed
+by fail, and that reserve blocks while the credit is out.
+TestExecuteCompactionGroupRecordPipelineBounded drives
+ExecuteCompactionGroup with four scan workers and a writer queue of two
+over 32 single-batch files inside testing/synctest, gating task 0 in
+Open and then the output file in Create, and checks 3 fully read tasks
+while task 0 is gated and exactly 8 while the writer is gated, the two
+terms of the bound on WithCompactionArrowBatchSize counted in tasks.
+With the credit gate disabled the counts are 31 and 32.
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>
+
+* test(table): write uncompressed parquet in the synctest compaction fixture
+
+TestExecuteCompactionGroupRecordPipelineBounded wrote zstd parquet
+inside its synctest bubble. arrow-go keeps zstd encoders in a global
+sync.Pool and klauspost's Encoder creates its encoders channel on first
+use, so the first zstd write inside the bubble left a pooled encoder
+whose channel belongs to the bubble. When a later test reused that
+encoder, go1.25.9 failed the whole package with ""receive on synctest
+channel from outside bubble"" (seen in TestClusteredWriter on the
+ubuntu and macos go1.25.9 jobs; go1.26.1 passes). Locally the pool was
+usually cleared by GC before the next zstd write, which is why the
+suite passed here; with GOGC=off it fails every time.
+
+The reorder fixture now sets write.parquet.compression-codec to
+uncompressed, so no codec pool is touched inside the bubble. With
+GOGC=off the pair TestExecuteCompactionGroupRecordPipelineBounded and
+TestClusteredWriter passes three times in a row.
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>
+
+---------
+
+Signed-off-by: KranzL <50032317+KranzL@users.noreply.github.com>",7dd7364930b6c888aa939a4fe19038ea51cc1086,2039,false,,8,681,47,table,67,9,76,"base; important area: table; strategic: clustered, compaction; summary signal: compaction; medium file count; medium churn; has PR number; LanceDB similarity 0.28","API, Core: Add overwrite-aware table registration",- perf(table): bound the scan reorder heap at scan concurrency above one (#2039) (Thanks KranzL!)
+apache/iceberg-go,b5cff239dc63e05f6af491517cf0ed0b132a1268,b5cff23,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-02T12:58:08+02:00,GitHub,noreply@github.com,2026-10-02T12:58:08+02:00,feat(rest)!: make SigV4 backend optional (#2060),"* feat(rest): make SigV4 backend optional
+
+Move AWS SigV4 signing out of `catalog/rest` into `catalog/rest/sigv4`, so plain REST users no longer pull in the AWS SDK.
+
+Breaking change: `rest.WithAwsConfig` is removed. Use `sigv4.WithAwsConfig(...)` and add a blank import of `catalog/rest/sigv4` to enable SigV4 signing.
+
+Follows the driver pattern established for cloud IO in #696.
+
+* fix(rest): resolve SigV4 signing scope through a signer factory
+
+Addresses review feedback on #2060.
+
+* Update website/src/configuration.md
+
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>
+
+* feat(rest): sign SigV4 with catalog-property credentials via the backend
+
+Carry the property-credential signing from #1999 into the optional sigv4
+backend, now that catalog/rest no longer links the AWS SDK.
+
+SignerConfig gains a Props field holding the post-override catalog properties,
+and resolveSigner passes opts.additionalProps through it. staticCredsFromProps
+and the rest.* alias keys move into catalog/rest/sigv4, where the registered
+signer factory builds a static credentials provider from the s3.* / rest.*
+properties and falls back to the AWS default chain. An explicit
+sigv4.WithAwsConfig fully specifies the credentials and never consults the
+properties.
+
+The cross-origin signing guard stays in core RoundTrip: it is signer-agnostic,
+so it now also covers a signer installed verbatim via WithSigner. Tests move
+with the code - the staticCredsFromProps table and the props-credential
+end-to-end test live in the sigv4 package, while the cross-origin redirect test
+stays in core and drives the guard through a marking signer.
+
+---------
+
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",d66ab48ff812ee12af66a97e491de104e14f0aa4,2060,false,Matt Topol,8,1028,546,catalog; cmd; website,67,7,74,"base; important area: rest; strategic: catalog, v4; medium file count; large churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.23",Make StandardEncryptionManager serializable,- feat(rest)!: make SigV4 backend optional (#2060) (Thanks Andrei Tserakhau and Matt Topol!)
+apache/iceberg-go,1857b7b0097da80b9b3e4562484cc382f5b5436c,1857b7b,Revanth,revanthcse1@gmail.com,2026-09-22T14:41:31-05:00,GitHub,noreply@github.com,2026-09-22T21:41:31+02:00,"feat(rest): add scan-planning retries, telemetry, and documentation (#2020)","* feat(rest): add scan-planning retries, telemetry, and documentation
+
+* fix(rest): address scan-planning review feedback",85396eb3449670980f6118faae6f972af7ce7d4f,2020,false,,12,909,29,README.md; catalog; expr_json_test.go; go.mod; internal; table,65,8,73,base; feature/api verb; important area: rest; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.27,REST Spec: clarify uniqueness of ETags for table metadata responses,"- feat(rest): add scan-planning retries, telemetry, and documentation (#2020) (Thanks Revanth!)"
+apache/iceberg-go,d7ced4a7b27bc456066d38236af97c6b2e4e3ee0,d7ced4a,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T10:27:10+02:00,GitHub,noreply@github.com,2026-10-06T10:27:10+02:00,perf(table): avoid cloning cached snapshot manifests (#2112),"* perf(table): avoid cloning cached snapshot manifests
+
+* test(table): benchmark cached manifest access
+
+* perf(table): document borrowed manifest slice contract",89c5e6415f704590c6cc566e822419bb14ef0768,2112,false,,11,56,9,table,59,6,65,base; fix; important area: table; strategic: manifest; medium file count; has PR number; LanceDB similarity 0.21,Core: Unlink table metadata's last-updated timestamp from snapshot timestamp,- perf(table): avoid cloning cached snapshot manifests (#2112) (Thanks Minh Vu!)
+apache/iceberg-go,3eccc01e0986d81cb89ec7421c57652291a6011d,3eccc01,Minh Vu,vuhoangminh97@gmail.com,2026-09-18T14:20:30+02:00,GitHub,noreply@github.com,2026-09-18T14:20:30+02:00,perf(table): filter overwrite manifests concurrently (#2005),"* perf(table): filter overwrite manifests concurrently
+
+* perf(table): unify overwrite manifest filtering",3861625c8645f60a32afc044807bb3de218783fb,2005,false,,6,864,281,table,59,6,65,base; important area: table; strategic: manifest; medium file count; large churn; has PR number; LanceDB similarity 0.20,"API, Core: Add overwrite-aware table registration",- perf(table): filter overwrite manifests concurrently (#2005) (Thanks Minh Vu!)
+apache/iceberg-go,3a8cf684e259c3216578922325f8aaf94a2933e3,3a8cf68,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T10:22:24+02:00,GitHub,noreply@github.com,2026-10-06T10:22:24+02:00,perf(table): fast-path unfiltered scan evaluators (#2107),"* perf(table): fast-path unfiltered scan evaluators
+
+* perf(table): fast-path unfiltered manifest evaluator
+
+* test(table): cover unfiltered manifest fast path
+
+* test(table): benchmark unfiltered metrics evaluation",87c9223c07068fff4b336e4631b70d6bc77b753e,2107,false,,6,213,39,table,55,8,63,base; important area: table; strategic: manifest; medium file count; medium churn; has PR number; LanceDB similarity 0.25,"API, Core: Add overwrite-aware table registration",- perf(table): fast-path unfiltered scan evaluators (#2107) (Thanks Minh Vu!)
+apache/iceberg-go,b8015668744505e48628367a508fce0cf4c165de,b801566,Badal Prasad Singh,badal@datazip.io,2026-09-17T02:36:24+05:30,GitHub,noreply@github.com,2026-09-16T23:06:24+02:00,fix(table): reject dvs added to tables below v3  (#2004),"* fix: reject dvs below v3
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* add test
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",c9deccc5531c5cf0283e0150e7ae6a98c366f0fd,2004,false,,3,119,4,table,55,6,61,base; fix; important area: table; strategic: v3; has PR number; LanceDB similarity 0.19,Add idempotency adapter and E2E coverage,- fix(table): reject dvs added to tables below v3  (#2004) (Thanks Badal Prasad Singh!)
+apache/iceberg-go,c9deccc5531c5cf0283e0150e7ae6a98c366f0fd,c9deccc,Ajitesh Singh,ajiteshjs@gmail.com,2026-09-16T01:24:35-07:00,GitHub,noreply@github.com,2026-09-16T10:24:35+02:00,fix(table): convert int-backed decimal row group bounds (#2009),"Parquet plain-encodes INT32/INT64-backed decimal statistics little-endian,
+while an Iceberg bound is big-endian two's complement. TestRowGroup stored
+the stat bytes as bounds unchanged, so they decoded to unrelated values and
+pruned row groups that do match, silently dropping rows from scan results.
+
+Reverse the stat bytes for those two physical types before storing them,
+in a parquetStatsBounds helper that any evaluator populating bounds from
+Parquet statistics should go through. FIXED_LEN_BYTE_ARRAY-backed decimals
+are already big-endian in Parquet and pass through untouched. The reversed
+4- or 8-byte bounds are wider than the spec's minimum width, but they are
+only used in memory and UnmarshalBinary is width-tolerant, so they decode
+as-is. arrow-go plain-encodes little-endian on big-endian hosts too, so the
+conversion does not depend on the host architecture.
+
+Closes #1876
+
+
+
+Claude-Session: https://claude.ai/code/session_01Vjw9UhcAFA8jpcrFdfrBTk
+
+Signed-off-by: Ajitesh Singh <ajiteshjs@gmail.com>
+Co-authored-by: Claude Opus 5 <noreply@anthropic.com>",8832cf696b5cc2a54767b5f2fa4c06b138c04495,2009,false,Claude Opus 5,2,279,2,table,54,7,61,base; fix; important area: table; medium churn; co-authored; correctness signal; has PR number; LanceDB similarity 0.24,Flink: Support Variant to Flink 2.1,- fix(table): convert int-backed decimal row group bounds (#2009) (Thanks Ajitesh Singh and Claude Opus 5!)
+apache/iceberg-go,c5c4272905234a73c6d68d7b4e86e6b340013f58,c5c4272,Matt Topol,zotthewizard@gmail.com,2026-10-01T14:59:26-04:00,GitHub,noreply@github.com,2026-10-01T14:59:26-04:00,fix(catalog/sql): widen the write-retry budget for lock contention (#2036),"* fix(catalog/sql): widen the write-retry budget for lock contention
+
+Concurrent CreateTable/CreateView against a SQLite catalog could fail with
+SQLITE_BUSY instead of ErrTableAlreadyExists/ErrViewAlreadyExists.
+
+SQLite serializes writers, and the write transaction in these paths reads
+(namespace existence, identifier availability) before it inserts. A lock
+conflict on that upgrade is reported immediately and does not consult the busy
+handler, so a busy timeout cannot absorb it -- only retrying the whole
+transaction can, which retrySerializableWriteTx already does. The budget was
+just too small: 3 attempts with 10ms/20ms backoff is 30ms of waiting, and a
+loaded machine holds the write lock longer than that. When the budget ran out
+before the winning transaction committed, the losing caller saw the driver's
+lock error rather than the catalog conflict it should report.
+
+Raise the budget to 6 attempts (~310ms). It costs nothing without contention,
+since the delays only apply between failed attempts.
+
+This was observed as a flaky TestConcurrentTableViewCollisionReturnsCatalogSentinel,
+which failed on main and on unrelated pull requests.
+
+The new regression test makes the contention deterministic by holding the
+database write lock for longer than the old budget; it fails before this change
+and passes after.
+
+Signed-off-by: Matt Topol <zotthewizard@gmail.com>
+
+* fix(catalog/sql): tighten contention test margin, document cross-dialect budget
+
+---------
+
+Signed-off-by: Matt Topol <zotthewizard@gmail.com>",f7e2667e318f61f249dadd82657b540cce13f9f2,2036,false,,2,88,1,catalog,55,5,60,base; fix; important area: catalog; strategic: catalog; has PR number; LanceDB similarity 0.17,Core: Fix row ID assignment for EXISTING entry during a manifest merge,- fix(catalog/sql): widen the write-retry budget for lock contention (#2036) (Thanks Matt Topol!)
+apache/iceberg-go,861b4cad0d46c9011f81f08648c14704150e657d,861b4ca,Neelesh Salian,nssalian@users.noreply.github.com,2026-09-28T15:08:14-07:00,GitHub,noreply@github.com,2026-09-29T00:08:14+02:00,"refactor(catalog): move namespace-property helper into catalog/internal, drop go:linkname (#2066)","* refactor(catalog): move namespace-property helper into catalog/internal, drop go:linkname
+
+* PR fixes",89a9104ec3639d38ab07e4461721cb5270e95571,2066,false,,6,194,76,catalog,55,5,60,base; important area: catalog; strategic: catalog; medium file count; medium churn; has PR number; LanceDB similarity 0.17,Core: Freshness-aware table loading in REST catalog,"- refactor(catalog): move namespace-property helper into catalog/internal, drop go:linkname (#2066) (Thanks Neelesh Salian!)"
+apache/iceberg-go,b5bb5b547d48a09c564be649807b6cde4bc711a2,b5bb5b5,Minh Vu,vuhoangminh97@gmail.com,2026-09-23T19:48:23+02:00,GitHub,noreply@github.com,2026-09-23T19:48:23+02:00,perf(table): avoid redundant filter cache schema traversal (#2028),"* perf(table): avoid redundant filter cache schema traversal
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): benchmark physical filter schema keys
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(table): compact physical schema key types
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): preserve unexpected schema key panics
+
+Recover only explicitly marked invalid inputs, retain typed-nil rejection,
+and cover compact type-tag uniqueness and panic propagation.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",63ced822ca9c7d6534306e58dda3ed6daad8e115,2028,false,,4,399,43,table,51,8,59,base; fix; important area: table; medium churn; correctness signal; has PR number; LanceDB similarity 0.26,"API, Core: Add overwrite-aware table registration",- perf(table): avoid redundant filter cache schema traversal (#2028) (Thanks Minh Vu!)
+apache/iceberg-go,57ae3f8589c5e11f3be282221cc40c358f3b16f0,57ae3f8,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-10-01T00:58:48-07:00,GitHub,noreply@github.com,2026-10-01T09:58:48+02:00,Add AssignFreshSchemaIDsWithBase (#2076),"* feat(schema): add AssignFreshSchemaIDsWithBase
+
+Port Java's TypeUtil.assignFreshIds(schema, baseSchema, nextId). Fields
+whose full column name exists in the base schema reuse its ID; all
+others get fresh IDs from nextID. This lets callers evolve a table
+schema declaratively without reusing retired column IDs, by passing the
+current schema as base and counting up from last-column-id.
+
+AssignFreshSchemaIDs now delegates to the new function with a nil base.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* fix(schema): return errors instead of panicking in AssignFreshSchemaIDsWithBase
+
+- Start the default nextID counter after base.HighestFieldID() so fresh
+  IDs can't collide with IDs reused from base.
+- Check for duplicate field IDs before building the schema, so a nextID
+  that returns IDs that are too low gives an error instead of a panic.
+- Return an error for identifier field IDs that aren't in the schema,
+  instead of mapping them to 0.
+- Document the nextID range and case-sensitive name matching.
+- Rename setFreshIDs.visiting to source.
+- Add tests for list<struct>, the nil nextID path, and new and stale
+  identifier fields.
+
+* fix(schema): assign sibling field IDs before recursing
+
+Java's AssignFreshIds.struct gives IDs to all fields of a struct before
+visiting their nested types. We handed out IDs depth-first, so nested
+schemas got different IDs than Java (and Rust, per the old TODOs in
+TestReassignIds) would give them.
+
+This changes the IDs AssignFreshSchemaIDs gives new tables with nested
+columns, so the table fixtures that hardcoded the old order are updated.
+
+---------
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",7a3dcb4ec5b656e1a02a03b6e1103e8974840f15,2076,false,Claude Opus 5.5,4,323,60,schema.go; schema_test.go; table,49,8,57,base; feature/api verb; medium churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.28,"Core, Spark: Adds a Table Property for Relying on Identifier Fields",- Add AssignFreshSchemaIDsWithBase (#2076) (Thanks Alex Stephen and Claude Opus 5.5!)
+apache/iceberg-go,103620f105776726514b59f27938fd3155390612,103620f,Animesh Kumar,61719828+CaptainAni187@users.noreply.github.com,2026-10-02T23:07:41+05:30,GitHub,noreply@github.com,2026-10-02T13:37:41-04:00,fix(table): stop MetadataBuilder.Build from growing the metadata log (#2095),"* fix(table): stop MetadataBuilder.Build from growing the metadata log
+
+buildCommonMetadata appended the previous metadata file to b.metadataLog
+and trimmed it in place, so every Build() on a builder with changes left
+one more identical entry behind. Transactions call Build() several times
+before committing: a copy-on-write delete builds once per rewritten file,
+and StagedTable() and Transaction.Scan build again. A staged table after a
+delete that rewrote two files listed the same previous metadata file five
+times. Persisted metadata was not affected, because catalogs rebuild from
+the base and the updates.
+
+Extend and trim a copy of the log instead, so Build() leaves the builder
+unchanged and returns the same log however often it runs.
+
+Closes #2091
+
+Signed-off-by: Animesh Kumar <kanimesh187@gmail.com>
+
+* refactor(table): share the metadata log trim and cover the no-changes build
+
+Address review on #2095: clone the log on both paths of buildCommonMetadata, move the trim into a pure trimMetadataLog helper that TrimMetadataLogs also uses, assert on the builder's own log, add a test for a build without changes, and reword the copy-on-write test comment.
+
+Signed-off-by: Animesh Kumar <kanimesh187@gmail.com>
+
+---------
+
+Signed-off-by: Animesh Kumar <kanimesh187@gmail.com>",b8685e6abc7ab405570b0213c2041365f9250d75,2095,false,,3,137,8,table,52,3,55,"base; fix; important area: table; strategic: catalog, copy-on-write; summary signal: copy-on-write; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit",Kafka Connect: fix table UUID check,- fix(table): stop MetadataBuilder.Build from growing the metadata log (#2095) (Thanks Animesh Kumar!)
+apache/iceberg-go,0c8e3498c7ca94bc00be2b89f7981619565c5b9d,0c8e349,Minh Vu,vuhoangminh97@gmail.com,2026-09-18T23:41:55+02:00,GitHub,noreply@github.com,2026-09-18T23:41:55+02:00,perf(table): clone largest equality delete set (#2026),"* perf(table): clone largest equality delete set
+
+* perf(table): reserve equality delete group storage
+
+* perf(table): fast path small equality delete groups",5b1bfc39a04e8e5dc516b38ec2cc96c064a75334,2026,false,,2,58,5,table,47,8,55,base; important area: table; strategic: storage; has PR number; LanceDB similarity 0.25,"API, Core: Add overwrite-aware table registration",- perf(table): clone largest equality delete set (#2026) (Thanks Minh Vu!)
+apache/iceberg-go,76c653b8ad08d9adb517f8b45b07e42bdcf29d60,76c653b,Andrei Tserakhau,laskoviymishka@gmail.com,2026-09-27T12:08:24+02:00,GitHub,noreply@github.com,2026-09-27T12:08:24+02:00,refactor(table): drop pterm from library path (#2061),"Render schema mismatch output with `text/tabwriter` instead of `pterm`.
+This removes `pterm`/`atomicgo.dev/keyboard` from `table` and `catalog/rest` imports and fixes js/wasm builds.
+
+Output stays equivalent, but is returned only in the error with no stdout side effect.
+`pterm` remains used by the CLI.",117ed43540787032c078f3df55333145ad83ac6f,2061,false,,2,22,18,table,47,7,54,base; important area: table; strategic: catalog; has PR number; LanceDB similarity 0.22,Core: Unlink table metadata's last-updated timestamp from snapshot timestamp,- refactor(table): drop pterm from library path (#2061) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,85121cbde006091263c8035b90bd76a34b3d7460,85121cb,Andrei Tserakhau,laskoviymishka@gmail.com,2026-09-24T19:04:46+02:00,GitHub,noreply@github.com,2026-09-24T10:04:46-07:00,fix(codec): nanosecond timestamp partitions in schema fingerprint (#2052),"fix(codec): support nanosecond timestamp partitions in schema fingerprint
+
+`manifestEntrySchemaFor` rejected `timestamp_ns` / `timestamptz_ns` partition types because `writePartitionTypeFingerprint` was missing the cases already supported by `partitionTypeToAvroSchema`.
+
+Add both fingerprint cases and update the invalid-type test. Existing fingerprint/Avro parity coverage now keeps the two paths in sync.",5d377f16bc3a5da0abd59a80204e73698bde7af2,2052,false,,2,4,2,data_file_codec.go; data_file_codec_test.go,45,8,53,base; fix; strategic: manifest; multi-area change; has PR number; LanceDB similarity 0.26,Core: Fix rewriting delete manifests in RewriteTablePathUtil,- fix(codec): nanosecond timestamp partitions in schema fingerprint (#2052) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,99bf5dad1863775a7ddd42df56ded9f65017cc8e,99bf5da,Badal Prasad Singh,badal@datazip.io,2026-09-26T03:01:07+05:30,GitHub,noreply@github.com,2026-09-25T23:31:07+02:00,fix(table): replace files must only match live files when removing data and delete files (#2058),"* fix
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+* chore: minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>
+
+---------
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",7536627ab9a538b64bd0f86d7a9bdf5ec74180b1,2058,false,,7,458,68,table,43,8,51,base; fix; important area: table; medium file count; medium churn; has PR number; LanceDB similarity 0.25,Kafka Connect: fix table UUID check,- fix(table): replace files must only match live files when removing data and delete files (#2058) (Thanks Badal Prasad Singh!)
+apache/iceberg-go,bb56f57f8eb24e03112222fbb6ab925326909a8b,bb56f57,Ferhat Elmas,elmas.ferhat@gmail.com,2026-09-30T15:43:52+02:00,GitHub,noreply@github.com,2026-09-30T15:43:52+02:00,ci: enable modernize linter (#2072),Signed-off-by: Ferhat Elmas <elmas.ferhat@gmail.com>,861b4cad0d46c9011f81f08648c14704150e657d,2072,false,,19,34,58,.golangci.yml; catalog; data_file_codec.go; data_file_codec_test.go; io; manifest_projection_test.go; table,46,4,50,base; feature/api verb; medium file count; multi-area change; has PR number; LanceDB similarity 0.14,Core: Fix compute_table_stats failures with concurrent writes,- ci: enable modernize linter (#2072) (Thanks Ferhat Elmas!)
+apache/iceberg-go,28cd1baa51ad36e082f2e320470592675c4db0a8,28cd1ba,Minh Vu,vuhoangminh97@gmail.com,2026-09-22T23:44:05+02:00,GitHub,noreply@github.com,2026-09-22T23:44:05+02:00,perf(table): prune parquet row groups by dictionary (#2006),"* perf(table): prune parquet row groups by dictionary
+
+* perf(table): tighten dictionary pruning
+
+* fix(table): remove redundant benchmark capture
+
+* fix(table): address dictionary pruning review feedback
+
+* perf(table): make dictionary pruning adaptive
+
+* fix(table): harden dictionary row group pruning
+
+* perf(table): accelerate large dictionary predicates
+
+* fix(table): address dictionary pruning review",1857b7b0097da80b9b3e4562484cc382f5b5436c,2006,false,,9,1384,21,table,39,10,49,base; important area: table; medium file count; large churn; has PR number; LanceDB similarity 0.33,Bump to Parquet 1.17.0,- perf(table): prune parquet row groups by dictionary (#2006) (Thanks Minh Vu!)
+apache/iceberg-go,79e13a1d02c911d4db731a6bf3ffcde5f877a465,79e13a1,starpact,58423997+starpact@users.noreply.github.com,2026-10-06T01:26:37+08:00,GitHub,noreply@github.com,2026-10-05T19:26:37+02:00,fix(table): keep Parquet metrics complete without stats (#2051),"* fix(table): keep Parquet metrics complete without stats
+
+* test(table): harden Parquet metrics regression test
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+---------
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",fa5309b3624d5798bde69722b279366bb7f39846,2051,false,Claude Opus 5.5,2,29,2,table,38,8,46,base; fix; important area: table; co-authored; has PR number; LanceDB similarity 0.28,Kafka Connect: fix table UUID check,- fix(table): keep Parquet metrics complete without stats (#2051) (Thanks starpact and Claude Opus 5.5!)
+apache/iceberg-go,77fdbbb159d93abe5bed548a229cfb5ed77c0291,77fdbbb,Samani G. Gikandi,samani@gojulas.com,2026-09-21T09:20:49-07:00,GitHub,noreply@github.com,2026-09-21T18:20:49+02:00,fix(table): fixes handling of partition specs w/ nested fields (#2014) (#2015),"* fix(table): fixes handling of partition specs w/ nested fields (#2014)
+
+Closes #2014
+
+Today when planning writes we use `arrow.Schema.FieldIndices` to resolve
+the arrow field index from a field name. This doesn't work for nested
+fields such as `user.last_name` because the API above only consults the
+top level schema rather than traversing nested structs.
+
+This diff adds a test to repro this and updates `newPartitionExtractionPlan`
+to properly handle nested fields. I checked the existing benchmarks
+before and after and found no performance impact.
+
+Signed-off-by: Samani G. Gikandi <samani@gojulas.com>
+
+* fixup! fix(table): fixes handling of partition specs w/ nested fields (#2014)
+
+* fixes regression w/ column names with literal `.`
+* updates implementation to handle nested field names with dots
+* makes resolveColumnChain fallible and propagates errors on type
+  assertion
+* adds additional tests covering complex schemas, schemas w/ nested
+  dotted field names, multiple layers of nesting, and data that doesn't
+  match the schema
+
+---------
+
+Signed-off-by: Samani G. Gikandi <samani@gojulas.com>",0c8e3498c7ca94bc00be2b89f7981619565c5b9d,2015,false,,2,426,11,table,39,7,46,base; fix; important area: table; medium churn; has PR number; LanceDB similarity 0.24,Fix Internal to Generic conversion of TIMESTAMP_NANO,- fix(table): fixes handling of partition specs w/ nested fields (#2014) (#2015) (Thanks Samani G. Gikandi!)
+apache/iceberg-go,3d24714a9bd4280eda2b1c2355d8127e61691df4,3d24714,jj.lee,63435794+jx2lee@users.noreply.github.com,2026-09-18T17:19:56+09:00,GitHub,noreply@github.com,2026-09-18T10:19:56+02:00,fix(glue): return ErrNamespaceAlreadyExists for duplicate namespaces (#2012),"* fix(glue): return ErrNamespaceAlreadyExists for duplicate namespaces
+
+* map Glue AlreadyExistsException to catalog sentinels",fd547716756bea78179cb15b6a376978107e4f2a,2012,false,,2,172,0,catalog,40,6,46,base; fix; strategic: catalog; has PR number; LanceDB similarity 0.19,JDBC: JDBC Catalog should handle Postgres exception for duplicate keys,- fix(glue): return ErrNamespaceAlreadyExists for duplicate namespaces (#2012) (Thanks jj.lee!)
+apache/iceberg-go,0b0828bffd8ba7f50e18cbafa59d6a4b8e5df2f6,0b0828b,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T10:28:44+02:00,GitHub,noreply@github.com,2026-10-06T10:28:44+02:00,perf(rest): parse numeric scan partition values directly (#2115),"* perf(rest): parse numeric scan partition values directly
+
+* fix(rest): preserve quoted numeric partition values",5cfdc159da378531c388487472644010a0e43cd3,2115,false,,3,180,13,catalog,39,6,45,base; important area: rest; correctness signal; has PR number; LanceDB similarity 0.21,"API, Core: Scan API for partition stats <gaborkaszab>",- perf(rest): parse numeric scan partition values directly (#2115) (Thanks Minh Vu!)
+apache/iceberg-go,fa5309b3624d5798bde69722b279366bb7f39846,fa5309b,Alessandro Nori,alessandro.nori@datadoghq.com,2026-10-02T22:12:37+02:00,GitHub,noreply@github.com,2026-10-02T16:12:37-04:00,fix(rest): Encode identifier path segments (#2074),"* Encode table names in REST paths
+
+* Fix REST path segment encoding
+
+* Keep view payload names unencoded",82f0fb19bc638dc954d942e5cd998b14670fa4c9,2074,false,,4,111,26,catalog,35,10,45,base; fix; important area: rest; has PR number; LanceDB similarity 0.32,Core: Freshness-aware table loading in REST catalog,- fix(rest): Encode identifier path segments (#2074) (Thanks Alessandro Nori!)
+apache/iceberg-go,89a9104ec3639d38ab07e4461721cb5270e95571,89a9104,Minh Vu,vuhoangminh97@gmail.com,2026-09-28T13:00:13+02:00,GitHub,noreply@github.com,2026-09-28T13:00:13+02:00,perf(table): filter position-delete reads by file path (#1937),perf(table): filter lazy position-delete reads by file path,76c653b8ad08d9adb517f8b45b07e42bdcf29d60,1937,false,,6,1076,50,table,39,5,44,base; important area: table; medium file count; large churn; has PR number; LanceDB similarity 0.18,Bump to Parquet 1.17.0,- perf(table): filter position-delete reads by file path (#1937) (Thanks Minh Vu!)
+apache/iceberg-go,92b80fcca182afebc7090f968a8153b7e3aed04c,92b80fc,Minh Vu,vuhoangminh97@gmail.com,2026-09-21T18:21:13+02:00,GitHub,noreply@github.com,2026-09-21T18:21:13+02:00,perf(table): avoid schema clone in remote wildcard projection (#2027),"* perf(table): avoid schema clone in remote wildcard projection
+
+* perf(table): reuse remote projection name index
+
+* fix(table): keep remote projection name index private
+
+Keep the borrowed root-field traversal and use the existing FindColumnName
+accessor instead of exposing the schema's cached map. Match the internal
+import alias used by the table package.
+
+Add coverage for cold and warm caches, nested defaults, field ordering,
+independent projection results, and concurrent schema readers.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",77fdbbb159d93abe5bed548a229cfb5ed77c0291,2027,false,,2,106,1,table,35,9,44,base; fix; important area: table; has PR number; LanceDB similarity 0.30,Spark 4.1: Initial support for MERGE INTO schema evolution,- perf(table): avoid schema clone in remote wildcard projection (#2027) (Thanks Minh Vu!)
+apache/iceberg-go,b8685e6abc7ab405570b0213c2041365f9250d75,b8685e6,Enes Keles,eneskeles81@gmail.com,2026-10-02T18:41:14+03:00,GitHub,noreply@github.com,2026-10-02T11:41:14-04:00,feat(literals): convert primitive variants in VariantLiteral.To (#2088),"* feat(literals): convert primitive variants in VariantLiteral.To
+
+Signed-off-by: Enes Keles <eneskeles81@gmail.com>
+
+* document VariantLiteral.To and keep ErrBadCast on inner cast errors
+
+Signed-off-by: Enes Keles <eneskeles81@gmail.com>
+
+---------
+
+Signed-off-by: Enes Keles <eneskeles81@gmail.com>",b5cff239dc63e05f6af491517cf0ed0b132a1268,2088,false,,3,174,16,literals.go; literals_test.go; variant_cast.go,37,6,43,base; strategic: variant; multi-area change; has PR number; LanceDB similarity 0.19,Core: Prevent exceptions in ExpressionUtil for unpartitioned tables,- feat(literals): convert primitive variants in VariantLiteral.To (#2088) (Thanks Enes Keles!)
+apache/iceberg-go,3861625c8645f60a32afc044807bb3de218783fb,3861625,Revanth,revanthcse1@gmail.com,2026-09-18T04:01:21-05:00,GitHub,noreply@github.com,2026-09-18T11:01:21+02:00,fix: ensure REST scan planning produces tasks equivalent to local planning (#2019),fix: align REST scan planning with local task splitting and nested field serialization,3d24714a9bd4280eda2b1c2355d8127e61691df4,2019,false,,6,657,20,catalog; expr_json.go; expr_json_test.go; exprs.go; table,33,10,43,base; fix; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.34,Spark: Enable remote scan planning with REST catalog <Eduard Tudenhoefner>,- fix: ensure REST scan planning produces tasks equivalent to local planning (#2019) (Thanks Revanth!)
+apache/iceberg-go,b8ee7dd647dbe6b5e66dbdfb58f40519399a1104,b8ee7dd,Minh Vu,vuhoangminh97@gmail.com,2026-10-05T21:13:06+02:00,GitHub,noreply@github.com,2026-10-05T21:13:06+02:00,perf(table): deduplicate equality delete metadata setup (#2025),,8ff80185af86555cf99e5844a62cf6e31c271efd,2025,false,,7,599,91,table,35,7,42,base; important area: table; medium file count; medium churn; has PR number; LanceDB similarity 0.24,Core: v4 table metadata location should be optional,- perf(table): deduplicate equality delete metadata setup (#2025) (Thanks Minh Vu!)
+apache/iceberg-go,7a3dcb4ec5b656e1a02a03b6e1103e8974840f15,7a3dcb4,Enes Keles,eneskeles81@gmail.com,2026-10-01T00:47:56+03:00,GitHub,noreply@github.com,2026-09-30T23:47:56+02:00,fix(table): count nulls in row group value counts (#2087),Signed-off-by: Enes Keles <eneskeles81@gmail.com>,96acf3731636165ad0f4ae431bb9589e3a360cf2,2087,false,,2,65,1,table,35,7,42,base; fix; important area: table; has PR number; LanceDB similarity 0.22,Core: Unlink table metadata's last-updated timestamp from snapshot timestamp,- fix(table): count nulls in row group value counts (#2087) (Thanks Enes Keles!)
+apache/iceberg-go,85396eb3449670980f6118faae6f972af7ce7d4f,85396eb,Badal Prasad Singh,badal@datazip.io,2026-09-23T00:47:33+05:30,GitHub,noreply@github.com,2026-09-22T21:17:33+02:00,fix(table): report cancellation when the scan iterator channel closes (#2035),"minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",2d73e1e32fef8b72557eb505e0f98f4e4ec53ada,2035,false,,1,4,0,table,35,7,42,base; fix; important area: table; has PR number; LanceDB similarity 0.25,Kafka Connect: fix table UUID check,- fix(table): report cancellation when the scan iterator channel closes (#2035) (Thanks Badal Prasad Singh!)
+apache/iceberg-go,325bbbe303c8eec3fb927d78beebb48660dfd510,325bbbe,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T19:46:11+02:00,GitHub,noreply@github.com,2026-10-06T13:46:11-04:00,perf(rest): avoid unused partition metadata maps (#2119),"* perf(rest): avoid unused partition metadata maps
+
+* test(rest): benchmark null and small partition workloads",a51a6c27364bc93188c017734f6c1c7edfcbed48,2119,false,,3,160,30,catalog,35,5,40,base; fix; important area: rest; has PR number; LanceDB similarity 0.18,Spark 4.1: Refactor metadata column references to use asRef() method,- perf(rest): avoid unused partition metadata maps (#2119) (Thanks Minh Vu!)
+apache/iceberg-go,7aee8e9731cdf97e245de9c53e150434033ff004,7aee8e9,Minh Vu,vuhoangminh97@gmail.com,2026-09-30T18:59:07+02:00,GitHub,noreply@github.com,2026-09-30T12:59:07-04:00,feat(table): build transformed dynamic partition predicates (#1675),"* feat(expr): bind predicates over transform terms
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(expr): reject unknown transform predicates
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* feat(table): match transformed dynamic partitions
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(expr): satisfy dynamic transform lint
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover transformed rewrite filters
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): preserve dynamic partition source paths
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): validate dynamic partition transforms before matching
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover transformed overwrite predicate evaluation
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): satisfy partition predicate lint
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): validate dynamic overwrite partition values
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): support source-less void partitions
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): trim dynamic partition predicate validation
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(table): satisfy nlreturn
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(codec): support ns timestamps in schema fingerprint
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(codec): align ns timestamp cache validation
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* ci: refresh integration checks against latest main
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",8b678af570a95e83415d1728dc3175f8691715e8,1675,false,,5,671,76,partitions.go; partitions_test.go; table,37,3,40,base; important area: table; medium file count; medium churn; multi-area change; correctness signal; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,Core: Unlink table metadata's last-updated timestamp from snapshot timestamp,- feat(table): build transformed dynamic partition predicates (#1675) (Thanks Minh Vu!)
+apache/iceberg-go,b46a9275634b2b8cb7384709c05ea498ef495711,b46a927,Minh Vu,vuhoangminh97@gmail.com,2026-09-23T19:48:43+02:00,GitHub,noreply@github.com,2026-09-23T19:48:43+02:00,perf(codec): avoid rebuilding partition schema on schema-cache hits (#2029),"* perf(codec): avoid rebuilding partition schema on cache hits
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(codec): avoid cloning partition source types
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(codec): compact partition schema fingerprint types
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(codec): split schema cache benchmarks
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(codec): guard partition fingerprint compatibility
+
+Cross-check fingerprint type support against Avro conversion, cover
+multi-field parameterized schemas and name boundaries, and share the
+integer encoder.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",b5bb5b547d48a09c564be649807b6cde4bc711a2,2029,false,,4,497,10,data_file_codec.go; data_file_codec_bench_test.go; data_file_codec_fingerprint_test.go; data_file_codec_test.go,29,11,40,base; fix; medium churn; multi-area change; has PR number; LanceDB similarity 0.38,Core: Cache PartitionData template in PartitionsTable to avoid rebuilding Avro schema per partition,- perf(codec): avoid rebuilding partition schema on schema-cache hits (#2029) (Thanks Minh Vu!)
+apache/iceberg-go,89c5e6415f704590c6cc566e822419bb14ef0768,89c5e64,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T10:26:30+02:00,GitHub,noreply@github.com,2026-10-06T10:26:30+02:00,perf(table): append inspect partition values directly (#2116),"* perf(table): append inspect partition values directly
+
+* test(table): cover mixed and special partition values",63168435f877fdf2084b550427dcd9df2a747ed4,2116,false,,3,395,15,table,31,7,38,base; important area: table; medium churn; has PR number; LanceDB similarity 0.23,Fix BigQuery dependency leak into runtime JARs,- perf(table): append inspect partition values directly (#2116) (Thanks Minh Vu!)
+apache/iceberg-go,87c9223c07068fff4b336e4631b70d6bc77b753e,87c9223,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T10:22:04+02:00,GitHub,noreply@github.com,2026-10-06T10:22:04+02:00,perf(table): skip metadata clone for duplicate requirements (#2105),"* perf(table): skip metadata clone for duplicate requirements
+
+* test(table): assert duplicate apply keeps metadata builder
+
+* test(table): cover duplicate requirements with updates",c1dad7f57e427b8a1ce52c9ac85b3f3edd38366a,2105,false,,2,52,4,table,27,11,38,base; important area: table; has PR number; LanceDB similarity 0.38,Introduce foundational types for V4 manifest support,- perf(table): skip metadata clone for duplicate requirements (#2105) (Thanks Minh Vu!)
+apache/iceberg-go,630e13005310eeddc1d17a0ba472655a3dd3be0a,630e130,Minh Vu,vuhoangminh97@gmail.com,2026-09-21T18:22:05+02:00,GitHub,noreply@github.com,2026-09-21T18:22:05+02:00,perf: optimize FIFO packing for lookback one (#2033),"* perf(internal): reuse FIFO packing storage with one-bin lookback
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(internal): rotate FIFO lookback-one bins in place
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",0d83b0845b646d9c257c7dce02115b0868f5ba8b,2033,false,,2,164,2,internal,32,6,38,base; strategic: storage; has PR number; LanceDB similarity 0.22,Spark: Support writing shredded variant in Iceberg-Spark,- perf: optimize FIFO packing for lookback one (#2033) (Thanks Minh Vu!)
+apache/iceberg-go,faa9868504e607a7dcea2efc1270465534ee97c1,faa9868,Minh Vu,vuhoangminh97@gmail.com,2026-09-18T14:39:27+02:00,GitHub,noreply@github.com,2026-09-18T14:39:27+02:00,perf(metadata): avoid re-cloning defensive schema copies (#1990),"* perf(metadata): avoid re-cloning defensive schema copies
+
+* fix(table): deep-copy sort order transforms
+
+* perf(table): avoid duplicate partition spec cloning
+
+* perf(table): avoid redundant lineage schema copies
+
+* perf(hive): avoid duplicate schema field copies
+
+* test: harden metadata copy regression coverage
+
+* test: harden metadata clone coverage
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test: cover partition metadata getter isolation
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",c59e14f0f7ed7616c5dd59a965851fec75ea67ff,1990,false,,13,252,112,catalog; internal; metadata_columns.go; partitions.go; partitions_internal_test.go; table; view,33,5,38,base; fix; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.18,Spark: Enable remote scan planning with REST catalog <Eduard Tudenhoefner>,- perf(metadata): avoid re-cloning defensive schema copies (#1990) (Thanks Minh Vu!)
+apache/iceberg-go,54652ebae3b3eee15318af5854df7c775a9d6601,54652eb,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T20:16:12+02:00,GitHub,noreply@github.com,2026-10-06T20:16:12+02:00,perf(table): reuse snapshot history in partitions metadata (#2120),,f023ab7c937e5b70386ac4d20f6906811a7b6702,2120,false,,2,169,2,table,27,10,37,base; important area: table; has PR number; LanceDB similarity 0.32,Core: v4 table metadata location should be optional,- perf(table): reuse snapshot history in partitions metadata (#2120) (Thanks Minh Vu!)
+apache/iceberg-go,82f0fb19bc638dc954d942e5cd998b14670fa4c9,82f0fb1,Revanth,revanthcse1@gmail.com,2026-10-02T13:03:00-05:00,GitHub,noreply@github.com,2026-10-02T14:03:00-04:00,fix: decimal to int literal conversion ignores scale (#2096),,103620f105776726514b59f27938fd3155390612,2096,false,,3,227,6,exprs_test.go; literals.go; literals_test.go,29,6,35,base; fix; medium churn; multi-area change; has PR number; LanceDB similarity 0.21,Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,- fix: decimal to int literal conversion ignores scale (#2096) (Thanks Revanth!)
+apache/iceberg-go,e17f2ee1fc1882b00f6c8d6db82003c1e752c5cf,e17f2ee,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T19:46:26+02:00,GitHub,noreply@github.com,2026-10-06T13:46:26-04:00,perf(schema): avoid repeated column path copies (#2130),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,8f7a65bf968d27c520c743e9e5d95e2786d8b0d0,2130,false,,3,217,1,schema.go; schema_column_path_bench_test.go; schema_column_path_test.go,29,5,34,base; fix; medium churn; multi-area change; has PR number; LanceDB similarity 0.16,Spark: Initial support for 4.1.0 <manuzhang>,- perf(schema): avoid repeated column path copies (#2130) (Thanks Minh Vu!)
+apache/iceberg-go,63168435f877fdf2084b550427dcd9df2a747ed4,6316843,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T10:24:27+02:00,GitHub,noreply@github.com,2026-10-06T10:24:27+02:00,perf(table): pre-size partition data map during file finalization (#2114),"* perf(table): pre-size partition data map during file finalization
+
+* test(table): benchmark partition map growth boundaries",3a8cf684e259c3216578922325f8aaf94a2933e3,2114,false,,2,2,2,table,27,7,34,base; important area: table; has PR number; LanceDB similarity 0.22,Fix incorrect partition bounds calculation in manifest on deletion,- perf(table): pre-size partition data map during file finalization (#2114) (Thanks Minh Vu!)
+apache/iceberg-go,c1dad7f57e427b8a1ce52c9ac85b3f3edd38366a,c1dad7f,Alessandro Nori,alessandro.nori@datadoghq.com,2026-10-05T23:03:34+02:00,GitHub,noreply@github.com,2026-10-05T23:03:34+02:00,chore(rest): Avoid fatal assertions in test handlers (#2103),"* Avoid fatal assertions in handlers
+
+* Expand raw-name request coverage
+
+* Fix lint in request test
+
+* Remove remaining fatal handler assertions
+
+* Rename request payload decoder
+
+* Remove remaining fatal handler calls",9cd5a0559ca0ca5e947fcf4da94f52972c7774b4,2103,false,,6,594,199,catalog,31,3,34,base; fix; important area: rest; medium file count; medium churn; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"API, Core: Align offsets of field stats with Design doc / Spec",- chore(rest): Avoid fatal assertions in test handlers (#2103) (Thanks Alessandro Nori!)
+apache/iceberg-go,d65c69add21ef84e40b64b3accf229c5c8135430,d65c69a,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T18:33:12+02:00,GitHub,noreply@github.com,2026-10-06T18:33:12+02:00,perf(partitions): avoid temporary fields in PartitionType (#2121),,0b0828bffd8ba7f50e18cbafa59d6a4b8e5df2f6,2121,false,,3,180,10,partitions.go; partitions_test.go; partitions_type_bench_test.go,25,6,31,base; fix; multi-area change; has PR number; LanceDB similarity 0.19,Spark: Add sort_by parameter to rewrite_manifests procedure,- perf(partitions): avoid temporary fields in PartitionType (#2121) (Thanks Minh Vu!)
+apache/iceberg-go,0d83b0845b646d9c257c7dce02115b0868f5ba8b,0d83b08,Revanth,revanthcse1@gmail.com,2026-09-21T11:21:42-05:00,GitHub,noreply@github.com,2026-09-21T18:21:42+02:00,test(io): avoid real Azure IO in credential tests (#2018),"* test(io): avoid real Azure IO in credential tests
+
+Signed-off-by: Revanth Ch <revanthcse1@gmail.com>
+
+* test(io): verify production Azure credential factory types
+
+* tighten Azure credential factory test assertion
+
+---------
+
+Signed-off-by: Revanth Ch <revanthcse1@gmail.com>",92b80fcca182afebc7090f968a8153b7e3aed04c,2018,false,,3,132,34,go.mod; io,28,3,31,base; fix; important area: io; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Flink: Dynamic Sink: Add case-insensitive field matching,- test(io): avoid real Azure IO in credential tests (#2018) (Thanks Revanth!)
+apache/iceberg-go,8f7a65bf968d27c520c743e9e5d95e2786d8b0d0,8f7a65b,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T19:46:22+02:00,GitHub,noreply@github.com,2026-10-06T13:46:22-04:00,perf(transforms): avoid redundant decimal truncate modulus (#2129),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,e21ff17b762d5f2d7cb9140b19acf8fcf0859348,2129,false,,3,112,4,transforms.go; transforms_decimal_bench_test.go; transforms_test.go,25,5,30,base; fix; multi-area change; has PR number; LanceDB similarity 0.16,Evaluating dependency changes,- perf(transforms): avoid redundant decimal truncate modulus (#2129) (Thanks Minh Vu!)
+apache/iceberg-go,95b1243b7fab234d55c7bede47dfc13fddbf2167,95b1243,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T19:46:15+02:00,GitHub,noreply@github.com,2026-10-06T13:46:15-04:00,perf(expr): speed up bound literal set copies (#2126),"* perf(expr): speed up bound literal set copies
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(expr): avoid rehashing bound literal set copies
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",325bbbe303c8eec3fb927d78beebb48660dfd510,2126,false,,5,284,10,bound_set_literal_view.go; bound_set_literal_view_bench_test.go; bound_set_literal_view_internal_test.go; bound_set_literal_view_test.go; exprs.go,25,5,30,base; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.18,Spark 4.1: Add Merge WriteSummary to Snapshot Summary,- perf(expr): speed up bound literal set copies (#2126) (Thanks Minh Vu!)
+apache/iceberg-go,117ed43540787032c078f3df55333145ad83ac6f,117ed43,Matt Topol,zotthewizard@gmail.com,2026-09-26T13:01:02-04:00,GitHub,noreply@github.com,2026-09-26T13:01:02-04:00,docs: expand security threat model (#1886),"* docs: expand security threat model
+
+* docs: define availability boundary
+
+* docs: refine security threat model
+
+* docs: clarify security boundary definitions
+
+Signed-off-by: Matt Topol <matt@columnar.tech>
+
+* docs: align out-of-scope reassess triggers
+
+Out-of-scope categories 4 (malicious catalog) and 5 (equivalent-harm)
+omitted the availability-boundary trigger that the section header and the
+in-scope preamble both apply to every default. A malicious control plane
+pushing Iceberg Go past the documented Puffin blob-size limit therefore
+read as lower-confidence under category 4 while in-scope treated it as
+reviewable. All eight categories now carry the trigger.
+
+Also align two smaller inconsistencies:
+
+- Boundary 6 now lists ""bypasses an operator-selected restriction"" among
+  its reassess conditions, matching Boundary 1.
+- The Scanner Calibration closer now says ""Iceberg Go-owned shared state
+  crossing separately constructed catalog or client instances"" rather than
+  the unqualified ""shared state"", preserving the caller-owned carve-out
+  that Boundary 5 and Out-of-Scope 6 establish.
+
+---------
+
+Signed-off-by: Matt Topol <matt@columnar.tech>",99bf5dad1863775a7ddd42df56ded9f65017cc8e,1886,false,,1,410,132,SECURITY-THREAT-MODEL.md,24,5,29,base; medium churn; release/security/notice signal; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.15,Spark 4.1: Rename expectedSchema to projection for clarity,- docs: expand security threat model (#1886) (Thanks Matt Topol!)
+apache/iceberg-go,e21ff17b762d5f2d7cb9140b19acf8fcf0859348,e21ff17,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T19:46:19+02:00,GitHub,noreply@github.com,2026-10-06T13:46:19-04:00,perf(name_mapping): reuse copied names during updates (#2127),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,95b1243b7fab234d55c7bede47dfc13fddbf2167,2127,false,,3,233,14,name_mapping.go; name_mapping_bench_test.go; name_mapping_test.go,21,6,27,base; medium churn; multi-area change; has PR number; LanceDB similarity 0.19,Core: v4 table metadata location should be optional,- perf(name_mapping): reuse copied names during updates (#2127) (Thanks Minh Vu!)
+apache/iceberg-go,2987cc761b30a32331d4483c800af5d84ad4f37c,2987cc7,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-10-01T00:59:38-07:00,GitHub,noreply@github.com,2026-10-01T09:59:38+02:00,Schema compatibility functions (#2073),"* Schema compatibility functions
+
+* quick changes
+
+* PR comments",57ae3f8589c5e11f3be282221cc40c358f3b16f0,2073,false,,3,788,27,schema_compatibility.go; schema_compatibility_test.go; table,21,6,27,base; medium churn; multi-area change; has PR number; LanceDB similarity 0.20,Core: Cache PartitionData template in PartitionsTable to avoid rebuilding Avro schema per partition,- Schema compatibility functions (#2073) (Thanks Alex Stephen!)
+apache/iceberg-go,7536627ab9a538b64bd0f86d7a9bdf5ec74180b1,7536627,Minh Vu,vuhoangminh97@gmail.com,2026-09-25T10:59:30+02:00,GitHub,noreply@github.com,2026-09-25T10:59:30+02:00,perf(table): reuse partition path formatting plan (#1958),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,a2b91aee208daeffc3d955d5bb54a549a9149df6,1958,false,,5,198,3,table,20,3,23,base; important area: table; medium file count; medium churn; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Core: Unlink table metadata's last-updated timestamp from snapshot timestamp,- perf(table): reuse partition path formatting plan (#1958) (Thanks Minh Vu!)
+apache/iceberg-go,5d377f16bc3a5da0abd59a80204e73698bde7af2,5d377f1,Revanth,revanthcse1@gmail.com,2026-09-23T16:27:33-05:00,GitHub,noreply@github.com,2026-09-23T23:27:33+02:00,docs(io): document ADLS managed identity property divergence (#2024),"* docs(io): document ADLS managed identity property divergence
+
+* docs(io): clarify ADLS authentication precedence and property
+
+* docs(io): clarify ADLS auth precedence and cross-client property differences",dce9757b17bbb526d48c0594f1f3c84d8990b5d2,2024,false,,2,49,10,io; website,20,3,23,base; important area: io; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,Flink: Support writing shredded variant,- docs(io): document ADLS managed identity property divergence (#2024) (Thanks Revanth!)
+apache/iceberg-go,5cfdc159da378531c388487472644010a0e43cd3,5cfdc15,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T10:27:39+02:00,GitHub,noreply@github.com,2026-10-06T10:27:39+02:00,perf(glue): reuse schema metadata when building Glue columns (#2113),"* perf(glue): reuse schema metadata when building Glue columns
+
+* test(glue): benchmark documented schema columns
+
+* perf(glue): borrow schema fields during column conversion",d7ced4a7b27bc456066d38236af97c6b2e4e3ee0,2113,false,,2,121,8,catalog,12,8,20,base; has PR number; LanceDB similarity 0.26,Core: Fix metadata table scans with useRef by preserving metadata schema,- perf(glue): reuse schema metadata when building Glue columns (#2113) (Thanks Minh Vu!)
+apache/iceberg-go,fd547716756bea78179cb15b6a376978107e4f2a,fd54771,Badal Prasad Singh,badal@datazip.io,2026-09-18T13:48:01+05:30,GitHub,noreply@github.com,2026-09-18T10:18:01+02:00,test(rest): widen the cancel grace in the stalled cancel tests (#2017),"test: raise the grace
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",b8015668744505e48628367a508fce0cf4c165de,2017,false,,2,8,6,catalog,15,3,18,base; important area: rest; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.16; capped LanceDB boost for routine/low-signal commit,OpenAPI: Promote the S3 signing endpoint to the main spec,- test(rest): widen the cancel grace in the stalled cancel tests (#2017) (Thanks Badal Prasad Singh!)
+apache/iceberg-go,a2b91aee208daeffc3d955d5bb54a549a9149df6,a2b91ae,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-09-24T23:43:39+01:00,GitHub,noreply@github.com,2026-09-24T15:43:39-07:00,ci: replace MinIO with RustFS in integration tests (#2055),"* ci: replace MinIO with RustFS in integration tests
+
+Use RustFS 1.0.0 and AWS CLI bucket setup for the shared S3 test fixture.
+
+Generated-by: Codex
+Signed-off-by: Sreesh Maheshwar <maheshwarsreesh@gmail.com>
+
+* ci: apply the shared S3 configuration to Spark 3.5
+
+Copy spark-defaults.conf into the Spark 3.5 image so it uses object-store instead of the inherited MinIO endpoint.
+
+Generated-by: Codex
+Signed-off-by: Sreesh Maheshwar <maheshwarsreesh@gmail.com>
+
+* ci: preserve the Spark 3.5 image catalog configuration
+
+Override only the inherited S3 endpoint, retaining the demo catalog and history-server settings.
+
+Generated-by: Codex
+Signed-off-by: Sreesh Maheshwar <maheshwarsreesh@gmail.com>
+
+* ci: make RustFS fixture startup reliable and observable
+
+Expose server logs, retry bucket initialization, and rebuild the Spark fixture so local images pick up its endpoint configuration.
+
+Generated-by: Codex
+Signed-off-by: Sreesh Maheshwar <maheshwarsreesh@gmail.com>
+
+* ci: empty the warehouse bucket on setup
+
+Clear any existing objects in the warehouse bucket during create-bucket
+so re-running integration setup starts from a clean state, as before.
+Also update a leftover object store reference in the CLI docs.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci: share spark-defaults.conf with the Spark 3.5 image
+
+Copy the repo's spark-defaults.conf into the Spark 3.5 image, as the
+Spark 4 image already does, so both use one catalog configuration
+instead of rewriting the base image's config.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Signed-off-by: Sreesh Maheshwar <maheshwarsreesh@gmail.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",85121cbde006091263c8035b90bd76a34b3d7460,2055,false,Copilot App; Kevin Liu,12,76,57,.github; CONTRIBUTING.md; Makefile; README.md; catalog; hadoop_s3_integration_test.go; internal; io; website,12,3,15,base; medium file count; multi-area change; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,"API, CORE, Flink, Spark: Deprecate Snapshot.changes Methods with SnapshotChange Utility","- ci: replace MinIO with RustFS in integration tests (#2055) (Thanks Sreesh Maheshwar, Copilot App, and Kevin Liu!)"
+apache/iceberg-go,94f3ec6321c4ccafea808c9dd2708dcbf8526712,94f3ec6,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-01T18:50:37+02:00,GitHub,noreply@github.com,2026-10-01T12:50:37-04:00,refactor(internal): move test mocks to internal/iomock (#2080),"refactor(internal): move test mocks to internal/iomock, unlink testify from the library
+
+MockFS, MockFSReadFile and MockFile lived in internal/mock_fs.go, a non-test
+file in package internal that imports github.com/stretchr/testify/mock. Because
+the root iceberg package imports internal, every consumer that used iceberg-go
+only for its types linked testify (and its objx and yaml deps) into their
+production binary.
+
+Move the mocks to a dedicated internal/iomock package that only _test.go files
+import. The root iceberg package's dependency closure loses testify, objx and
+go.yaml.in/yaml/v3: for a types-only consumer that is 7 fewer packages and 3
+fewer modules, with no test framework linked into production. testify remains a
+test dependency of the module.
+
+No production code referenced these mocks; only test files did, and they now
+import internal/iomock.",3a0d02b71989cf044208fdd1473feac29358e594,2080,false,,6,34,33,iomock}; manifest_test.go; table; view,9,3,12,base; medium file count; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Fix Internal to Generic conversion of TIMESTAMP_NANO,- refactor(internal): move test mocks to internal/iomock (#2080) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,21e85b611b13625a340cfe29f0344fbd1cc0d54f,21e85b6,Neelesh Salian,nssalian@users.noreply.github.com,2026-09-23T12:29:28-07:00,GitHub,noreply@github.com,2026-09-23T21:29:28+02:00,"docs: document variant type, field-extract filtering, and shredding (#2045)","* docs: document variant type, field-extract filtering, and shredding
+
+* PR comment fixes and cleanup",b46a9275634b2b8cb7384709c05ea498ef495711,2045,false,,6,136,2,website,4,3,7,base; medium file count; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Flink: Support UUID type in Avro and Parquet readers and writers,"- docs: document variant type, field-extract filtering, and shredding (#2045) (Thanks Neelesh Salian!)"
+apache/iceberg-go,f023ab7c937e5b70386ac4d20f6906811a7b6702,f023ab7,Minh Vu,vuhoangminh97@gmail.com,2026-10-06T19:46:29+02:00,GitHub,noreply@github.com,2026-10-06T13:46:29-04:00,docs: mark rewrite manifests as supported (#2128),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,e17f2ee1fc1882b00f6c8d6db82003c1e752c5cf,2128,false,,1,1,1,website,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Core: Move Hadoop conf serialization into SerializableConfiguration,- docs: mark rewrite manifests as supported (#2128) (Thanks Minh Vu!)
+apache/iceberg-go,61f59fafeef5c8190fc0e3184b773dbf36aa4f9d,61f59fa,Andrei Tserakhau,laskoviymishka@gmail.com,2026-09-30T18:34:59+02:00,GitHub,noreply@github.com,2026-09-30T12:34:59-04:00,docs: refresh V3 feature status (#2053),"Update the matrix to match current V3 support:
+
+* mark partitioned DV writes as supported
+* split Geometry/Geography status and note deferred geography/nested bounds
+* clarify encryption metadata support vs file-level encryption
+* add StatisticsFile / PartitionStatisticsFile support and NDV roadmap status",bb56f57f8eb24e03112222fbb6ab925326909a8b,2053,false,,1,7,3,website,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,Spark 4.1 | 4.0 | 3.5 | 3.4: Fail publish_changes procedure if there's more than one matching snapshot,- docs: refresh V3 feature status (#2053) (Thanks Andrei Tserakhau!)
+apache/iceberg-go,96acf3731636165ad0f4ae431bb9589e3a360cf2,96acf37,Matt Topol,zotthewizard@gmail.com,2026-09-30T15:12:42-04:00,GitHub,noreply@github.com,2026-09-30T21:12:42+02:00,build: bump minimum Go version to 1.26 (#2077),"* fix(puffin): report LZ4 read errors when footer decoder stops early
+
+Since Go 1.27, encoding/json's Decoder.More returns true on non-EOF read
+errors, so a corrupted compressed footer surfaced as ""unexpected content
+after footer JSON"" instead of the underlying LZ4 checksum error.
+
+* build: bump minimum Go version to 1.26
+
+- go.mod: go 1.26.0
+- CI: test matrix 1.26.8 / 1.27.1; cross-compile and Arrow assertions on
+  1.27.1; integration on 1.26
+- golangci-lint v2.14.0 (v2.12.2 is built with go1.26 and panics on the
+  Go 1.27 stdlib)
+- apply modernize fixes enabled by go 1.26 (errors.AsType, new(expr),
+  reflect iterators) and drop the now-redundant pointer helpers
+- docs: Go 1.26 or later",7aee8e9731cdf97e245de9c53e150434033ff004,2077,false,,49,353,380,.github; .pre-commit-config.yaml; Makefile; README.md; catalog; cmd; codec; go.mod; literals.go; manifest.go; manifest_test.go; name_mapping_test.go; partitions.go; puffin; table; website,-31,3,-28,base; large file count; medium churn; multi-area change; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Core: Unlink table metadata's last-updated timestamp from snapshot timestamp,- build: bump minimum Go version to 1.26 (#2077) (Thanks Matt Topol!)
+apache/iceberg-go,dd935d836bbfcd85d2431b3b6ef5e9f76eb1e226,dd935d8,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-01T13:29:42-04:00,GitHub,noreply@github.com,2026-10-01T13:29:42-04:00,build(deps): bump the gomod_updates group across 1 directory with 20 updates (#2065),"---
+updated-dependencies:
+- dependency-name: cloud.google.com/go/storage
+  dependency-version: 1.68.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2
+  dependency-version: 1.47.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/config
+  dependency-version: 1.33.5
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/credentials
+  dependency-version: 1.20.5
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager
+  dependency-version: 0.4.7
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/glue
+  dependency-version: 1.160.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/s3
+  dependency-version: 1.113.1
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/smithy-go
+  dependency-version: 1.28.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/Azure/azure-sdk-for-go/sdk/storage/azblob
+  dependency-version: 1.8.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/go-sql-driver/mysql
+  dependency-version: 1.10.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/klauspost/compress
+  dependency-version: 1.20.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/pierrec/lz4/v4
+  dependency-version: 4.1.30
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/RoaringBitmap/roaring/v2
+  dependency-version: 2.28.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/twmb/avro
+  dependency-version: 1.9.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/twmb/murmur3
+  dependency-version: 1.2.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: golang.org/x/exp
+  dependency-version: 0.0.0-20260813180055-c1d0aacb2297
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: golang.org/x/oauth2
+  dependency-version: 0.37.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: golang.org/x/sync
+  dependency-version: 0.23.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: golang.org/x/term
+  dependency-version: 0.46.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: google.golang.org/api
+  dependency-version: 0.298.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",94f3ec6321c4ccafea808c9dd2708dcbf8526712,2065,false,dependabot[bot],2,140,140,go.mod; go.sum,-61,3,-58,base; medium churn; multi-area change; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.16; capped LanceDB boost for routine/low-signal commit,Spark: Fix javadoc mentioning Spark 3.3 in Spark 3.4 benchmark classes,- build(deps): bump the gomod_updates group across 1 directory with 20 updates (#2065) (Thanks dependabot[bot]!)
+apache/iceberg-go,a02c518dd21162ce3371bc89b8aee3d2c92add21,a02c518,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-06T12:51:00-04:00,GitHub,noreply@github.com,2026-10-06T12:51:00-04:00,build(deps): bump the gomod_updates group with 8 updates (#2123),"Bumps the gomod_updates group with 8 updates:
+
+| Package | From | To |
+| --- | --- | --- |
+| [github.com/aws/aws-sdk-go-v2](https://github.com/aws/aws-sdk-go-v2) | `1.47.0` | `1.47.1` |
+| [github.com/aws/aws-sdk-go-v2/config](https://github.com/aws/aws-sdk-go-v2) | `1.33.5` | `1.33.6` |
+| [github.com/aws/aws-sdk-go-v2/credentials](https://github.com/aws/aws-sdk-go-v2) | `1.20.5` | `1.20.6` |
+| [github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager](https://github.com/aws/aws-sdk-go-v2) | `0.4.9` | `0.4.10` |
+| [github.com/aws/aws-sdk-go-v2/service/glue](https://github.com/aws/aws-sdk-go-v2) | `1.162.0` | `1.164.0` |
+| [github.com/aws/aws-sdk-go-v2/service/s3](https://github.com/aws/aws-sdk-go-v2) | `1.113.3` | `1.113.4` |
+| [github.com/klauspost/compress](https://github.com/klauspost/compress) | `1.20.0` | `1.20.1` |
+| [github.com/twpayne/go-geom](https://github.com/twpayne/go-geom) | `1.6.1` | `1.7.0` |
+
+
+Updates `github.com/aws/aws-sdk-go-v2` from 1.47.0 to 1.47.1
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/v1.47.0...v1.47.1)
+
+Updates `github.com/aws/aws-sdk-go-v2/config` from 1.33.5 to 1.33.6
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/config/v1.33.5...config/v1.33.6)
+
+Updates `github.com/aws/aws-sdk-go-v2/credentials` from 1.20.5 to 1.20.6
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/mq/v1.20.5...service/mq/v1.20.6)
+
+Updates `github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager` from 0.4.9 to 0.4.10
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/feature/s3/transfermanager/v0.4.9...feature/s3/transfermanager/v0.4.10)
+
+Updates `github.com/aws/aws-sdk-go-v2/service/glue` from 1.162.0 to 1.164.0
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/ec2/v1.162.0...service/ec2/v1.164.0)
+
+Updates `github.com/aws/aws-sdk-go-v2/service/s3` from 1.113.3 to 1.113.4
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/s3/v1.113.3...service/s3/v1.113.4)
+
+Updates `github.com/klauspost/compress` from 1.20.0 to 1.20.1
+- [Release notes](https://github.com/klauspost/compress/releases)
+- [Commits](https://github.com/klauspost/compress/compare/v1.20.0...v1.20.1)
+
+Updates `github.com/twpayne/go-geom` from 1.6.1 to 1.7.0
+- [Commits](https://github.com/twpayne/go-geom/compare/v1.6.1...v1.7.0)
+
+---
+updated-dependencies:
+- dependency-name: github.com/aws/aws-sdk-go-v2
+  dependency-version: 1.47.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/config
+  dependency-version: 1.33.6
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/credentials
+  dependency-version: 1.20.6
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager
+  dependency-version: 0.4.10
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/glue
+  dependency-version: 1.164.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/s3
+  dependency-version: 1.113.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/klauspost/compress
+  dependency-version: 1.20.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/twpayne/go-geom
+  dependency-version: 1.7.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",8f11a863cf0544c276fd27d458494570d0f9ebb7,2123,false,dependabot[bot],2,64,64,go.mod; go.sum,-65,3,-62,base; multi-area change; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.16; capped LanceDB boost for routine/low-signal commit,OpenAPI: Promote the S3 signing endpoint to the main spec,- build(deps): bump the gomod_updates group with 8 updates (#2123) (Thanks dependabot[bot]!)
+apache/iceberg-go,0e042ab28b6dd87534538e3c40f51a552a7b3132,0e042ab,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-30T12:35:22-04:00,GitHub,noreply@github.com,2026-09-30T12:35:22-04:00,build(deps): bump github.com/containerd/containerd/v2 from 2.2.8 to 2.2.9 (#2059),"build(deps): bump github.com/containerd/containerd/v2
+
+Bumps [github.com/containerd/containerd/v2](https://github.com/containerd/containerd) from 2.2.8 to 2.2.9.
+- [Release notes](https://github.com/containerd/containerd/releases)
+- [Changelog](https://github.com/containerd/containerd/blob/main/RELEASES.md)
+- [Commits](https://github.com/containerd/containerd/compare/v2.2.8...v2.2.9)
+
+---
+updated-dependencies:
+- dependency-name: github.com/containerd/containerd/v2
+  dependency-version: 2.2.9
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",61f59fafeef5c8190fc0e3184b773dbf36aa4f9d,2059,false,dependabot[bot],2,3,3,go.mod; go.sum,-65,3,-62,base; multi-area change; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.13; capped LanceDB boost for routine/low-signal commit,Bump to Parquet 1.17.0,- build(deps): bump github.com/containerd/containerd/v2 from 2.2.8 to 2.2.9 (#2059) (Thanks dependabot[bot]!)
+apache/iceberg-go,8abbdeca808535500fd552f1f82dc895527b0af1,8abbdec,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-21T15:10:49-04:00,GitHub,noreply@github.com,2026-09-21T15:10:49-04:00,build(deps): bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc from 1.44.0 to 1.45.0 (#2022),"build(deps): bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
+
+Bumps [go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc](https://github.com/open-telemetry/opentelemetry-go) from 1.44.0 to 1.45.0.
+- [Release notes](https://github.com/open-telemetry/opentelemetry-go/releases)
+- [Changelog](https://github.com/open-telemetry/opentelemetry-go/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/open-telemetry/opentelemetry-go/compare/v1.44.0...v1.45.0)
+
+---
+updated-dependencies:
+- dependency-name: go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
+  dependency-version: 1.45.0
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",f6c158f78d1895b0f963bdf13542f81dd08d4acf,2022,false,dependabot[bot],2,3,3,go.mod; go.sum,-65,3,-62,base; multi-area change; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,Add runtime dependency guard for all bundled shadow JAR artifacts,- build(deps): bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc from 1.44.0 to 1.45.0 (#2022) (Thanks dependabot[bot]!)
+apache/iceberg-go,5288171327637ffa0fd8e636215c8c1f5374d324,5288171,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-21T13:56:00-04:00,GitHub,noreply@github.com,2026-09-21T13:56:00-04:00,build(deps): bump github.com/containerd/containerd/v2 from 2.2.5 to 2.2.8 (#2007),"build(deps): bump github.com/containerd/containerd/v2
+
+Bumps [github.com/containerd/containerd/v2](https://github.com/containerd/containerd) from 2.2.5 to 2.2.8.
+- [Release notes](https://github.com/containerd/containerd/releases)
+- [Changelog](https://github.com/containerd/containerd/blob/main/RELEASES.md)
+- [Commits](https://github.com/containerd/containerd/compare/v2.2.5...v2.2.8)
+
+---
+updated-dependencies:
+- dependency-name: github.com/containerd/containerd/v2
+  dependency-version: 2.2.8
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",7869b48db63baf56224ded256987aa4dc73feb42,2007,false,dependabot[bot],2,3,3,go.mod; go.sum,-65,3,-62,base; multi-area change; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.13; capped LanceDB boost for routine/low-signal commit,Bump to Parquet 1.17.0,- build(deps): bump github.com/containerd/containerd/v2 from 2.2.5 to 2.2.8 (#2007) (Thanks dependabot[bot]!)
+apache/iceberg-go,7869b48db63baf56224ded256987aa4dc73feb42,7869b48,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-21T13:55:37-04:00,GitHub,noreply@github.com,2026-09-21T13:55:37-04:00,build(deps): bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp from 1.44.0 to 1.45.0 (#2021),"build(deps): bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp
+
+Bumps [go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp](https://github.com/open-telemetry/opentelemetry-go) from 1.44.0 to 1.45.0.
+- [Release notes](https://github.com/open-telemetry/opentelemetry-go/releases)
+- [Changelog](https://github.com/open-telemetry/opentelemetry-go/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/open-telemetry/opentelemetry-go/compare/v1.44.0...v1.45.0)
+
+---
+updated-dependencies:
+- dependency-name: go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp
+  dependency-version: 1.45.0
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",55a554fab7f80f7e95dc0ee02505308d4ac52c6b,2021,false,dependabot[bot],2,12,12,go.mod; go.sum,-65,3,-62,base; multi-area change; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.16; capped LanceDB boost for routine/low-signal commit,Website: remove duplicated entries from search,- build(deps): bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp from 1.44.0 to 1.45.0 (#2021) (Thanks dependabot[bot]!)
+apache/iceberg-go,8f11a863cf0544c276fd27d458494570d0f9ebb7,8f11a86,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-06T12:50:27-04:00,GitHub,noreply@github.com,2026-10-06T12:50:27-04:00,build(deps): bump the codeql-action group with 2 updates (#2122),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.38.1 to 4.38.2
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/1c5b675653bb5c22dbe9b12b556ec555138e09fd...2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2)
+
+Updates `github/codeql-action/analyze` from 4.38.1 to 4.38.2
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/1c5b675653bb5c22dbe9b12b556ec555138e09fd...2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.38.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.38.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",d65c69add21ef84e40b64b3accf229c5c8135430,2122,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- build(deps): bump the codeql-action group with 2 updates (#2122) (Thanks dependabot[bot]!)
+apache/iceberg-go,8b678af570a95e83415d1728dc3175f8691715e8,8b678af,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-30T12:35:40-04:00,GitHub,noreply@github.com,2026-09-30T12:35:40-04:00,build(deps): bump the codeql-action group with 2 updates (#2064),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.38.0 to 4.38.1
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/b96794f015dfd88f77b49b1c93e0fa7110f94c63...1c5b675653bb5c22dbe9b12b556ec555138e09fd)
+
+Updates `github/codeql-action/analyze` from 4.38.0 to 4.38.1
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/b96794f015dfd88f77b49b1c93e0fa7110f94c63...1c5b675653bb5c22dbe9b12b556ec555138e09fd)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.38.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.38.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",0e042ab28b6dd87534538e3c40f51a552a7b3132,2064,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- build(deps): bump the codeql-action group with 2 updates (#2064) (Thanks dependabot[bot]!)
+apache/iceberg-go,833e10c12cc37219b335bcb34639d5e0a8aa9721,833e10c,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-21T15:11:28-04:00,GitHub,noreply@github.com,2026-09-21T15:11:28-04:00,build(deps): bump the codeql-action group with 2 updates (#2030),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.37.9 to 4.38.0
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/cdf488f595d80d6e07e03d4674febd5ab45fa938...b96794f015dfd88f77b49b1c93e0fa7110f94c63)
+
+Updates `github/codeql-action/analyze` from 4.37.9 to 4.38.0
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/cdf488f595d80d6e07e03d4674febd5ab45fa938...b96794f015dfd88f77b49b1c93e0fa7110f94c63)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.38.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.38.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",8abbdeca808535500fd552f1f82dc895527b0af1,2030,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- build(deps): bump the codeql-action group with 2 updates (#2030) (Thanks dependabot[bot]!)
+apache/iceberg-go,55a554fab7f80f7e95dc0ee02505308d4ac52c6b,55a554f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-09-21T13:55:10-04:00,GitHub,noreply@github.com,2026-09-21T13:55:10-04:00,build(deps): bump zizmorcore/zizmor-action from 0.6.3 to 0.6.4 (#2031),"Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.6.3 to 0.6.4.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/70fb788f84895a7701f5643d103d587e460b5c99...cc914d7f3750a2d13d75c7f184a1060aa0e9d482)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.6.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",630e13005310eeddc1d17a0ba472655a3dd3be0a,2031,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Spark 4.1: Rename expectedSchema to projection for clarity,- build(deps): bump zizmorcore/zizmor-action from 0.6.3 to 0.6.4 (#2031) (Thanks dependabot[bot]!)
