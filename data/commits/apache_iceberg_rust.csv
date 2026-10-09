@@ -32375,3 +32375,165 @@ Co-authored-by: Matt Butrovich <mbutrovich@users.noreply.github.com>
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 Co-authored-by: blackmwk <257669749+blackmwk@users.noreply.github.com>
 Co-authored-by: Matt Butrovich <mbutrovich@users.noreply.github.com>",ab047b5e2f6e2ba6b999731653a3f7722b84e6f7,3337,false,Copilot App; Matt Butrovich; blackmwk,2,50,0,.github; AGENTS.md
+apache/iceberg-rust,7f9691fc7ed395ecb062a14ae918cb3707f22d30,7f9691f,Jannik Steinmann,jannik.steinmann@datadoghq.com,2026-10-08T23:55:44Z,GitHub,noreply@github.com,2026-10-08T23:55:44Z,feat(rest_catalog::auth) Contextual Sessions (#3081),"* Add trait method `AuthManager::contextual_session`
+
+* Implement contextual session handling
+
+* Produce an auth_session per operation and re-use it for multiple Http
+requests
+
+* Rename client to RestCatalogClient
+
+* Mark context in contextual_session as used in API docs
+
+* Drop Java-derived comment on releasing resources
+
+* Revert ""Produce an auth_session per operation and re-use it for multiple Http""
+
+This reverts commit 32a9dc5f2f1e35012bdcc48fcd9167af0fcc585b.
+
+* Expand test coverage
+
+* Pass auth session to client on each call
+
+This prevents cloning the HeaderMap of the client because a new session
+is passed for every HTTP request anyway
+
+* Leave post_form unauthenticated
+
+* Implementor guidance",776648bee4c52ece8a057cfcf0d7756416299ba8,3081,false,,4,422,168,crates
+apache/iceberg-rust,49b91d1c9508758f116bdc6947d2f2cba9f9980b,49b91d1,Danny C Jones,djonesoa@amazon.com,2026-10-09T08:59:03Z,GitHub,noreply@github.com,2026-10-09T08:59:03Z,"chore: Remove generated DEPENDENCIES.rust.tsv files, and associated scripts and guides (#3338)",,7f9691fc7ed395ecb062a14ae918cb3707f22d30,3338,false,,18,9,5318,.licenserc.yaml; Makefile; bindings; crates; dev; website
+apache/iceberg-rust,b0d8baaf966813f82363279db46d6688bf455d24,b0d8baa,hylin,linhongyu510@gmail.com,2026-10-09T12:36:50Z,GitHub,noreply@github.com,2026-10-09T12:36:50Z,fix(scan): validate deletion vector delete tasks (#3145),"* docs: design delete task validation
+
+* fix(scan): validate delete task construction
+
+* refactor(scan): use validated delete task builder
+
+* refactor(scan): centralize deletion vector validation
+
+* style(scan): format validated delete task changes
+
+* fix(scan): satisfy public API and license checks
+
+* test(scan): adapt merged reader fixtures
+
+* refactor(scan): encapsulate delete file metadata
+
+* fix(scan): propagate invalid delete task errors
+
+* fix(scan): unwrap the delete-file builder in the scan test
+
+`FileScanTaskDeleteFile::builder().build()` returns `Result` since this
+branch made it validate deletion-vector metadata, and this call site was
+missed, so `cargo check --all-targets` failed with E0308 once the branch
+was rebased onto a main that also compiles the lib test target.
+
+The task built here is a complete equality delete, so validation cannot
+fail; `.unwrap()` matches how the other tests in this file build tasks.
+
+* refactor(scan): make delete-file byte offsets unsigned
+
+Addresses @blackmwk's review. content_offset and content_size_in_bytes
+are byte quantities, so Option<u64> makes a negative unrepresentable
+instead of something every layer re-checks.
+
+That collapses the three findings into one change:
+
+- 'Why not change it to u64?' / 'Ditto': the getters and fields are u64.
+- 'This duplicates a lot.': the duplication existed only to build the
+  'deletion vector' vs 'delete file' prefix for two near-identical
+  negative-value errors. Both are gone, and the remaining presence
+  checks collapse to one lookup plus one error site.
+- 'I think this should also apply to non deletion vector?': it now does,
+  and unconditionally. The i64 -> u64 conversion happens once in
+  TryFrom<&DeleteFileContext>, where the manifest value enters, so every
+  delete-file kind is covered rather than only Puffin position deletes.
+
+Also addresses @mbutrovich's deserialization concern from the same
+review: FileScanTaskDeleteFile derives plain Deserialize, so a scan plan
+rebuilt on a worker never passes through build(). With u64 fields, serde
+itself rejects a negative offset, so a hand-written or corrupted plan
+fails before any loader code runs -- stronger than the runtime check it
+replaces.
+
+Downstream, validate_deletion_vector_task loses its two
+u64::try_from conversions; the values are already u64.
+
+Tests: the negative cases moved from the builder to the manifest
+boundary (test_delete_context_rejects_negative_*), including the non-DV
+case, and the two loader tests now assert serde refuses the value.
+
+cargo test -p iceberg --lib: 1683 passed, 0 failed.
+cargo fmt --all -- --check and cargo clippy -p iceberg --all-targets
+-D warnings: clean. public-api.txt updated for the two getters.
+
+Signed-off-by: linhongyu510 <linhongyu510@gmail.com>
+
+* refactor(scan): validate delete files on deserialize and enforce size pairing
+
+Address review follow-ups on the delete-file validation design:
+
+- Route FileScanTaskDeleteFile deserialization through a FileScanTaskDeleteFileSerde
+  mirror that builds via builder().build(), so a deletion vector rebuilt from a
+  serialized scan plan (planner->worker path) passes validate() like a manifest-
+  built task. A malformed plan now fails at deserialize time instead of reaching a
+  loader expect/ok_or_else.
+- Enforce the spec pairing rule for every delete-file kind: content_size_in_bytes
+  is required whenever content_offset is present, not only for deletion vectors.
+- Replace two builder-only duplicate tests with one driving the missing-coordinate
+  check through get_deletes_for_data_file, where the manifest entry is converted.
+- Reword PR-history-laden comments to describe the code as it is now.
+
+cargo test -p iceberg --lib: 1683 passed, 0 failed.
+
+* docs(scan): clarify deletion vector loader extraction
+
+---------
+
+Signed-off-by: linhongyu510 <linhongyu510@gmail.com>
+Co-authored-by: linhongyu510 <linhongyu510@users.noreply.github.com>
+Co-authored-by: linhongyu510 <mailto:linhongyu510@gmail.com>",49b91d1c9508758f116bdc6947d2f2cba9f9980b,3145,false,linhongyu510,11,707,286,crates
+apache/iceberg-rust,5b82ab99aeaf50bf4f5b3b776ac9cd6380a5f3e3,5b82ab9,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-10-09T16:08:16Z,GitHub,noreply@github.com,2026-10-09T16:08:16Z,perf(manifest): upgrade to apache-avro 0.22 and read manifest entries without Value (#3354),"* perf(manifest): upgrade to apache-avro 0.22 and read manifest entries without Value
+
+* add test cases, update docs
+
+* address PR feedback
+
+* address PR feedback.
+
+* address PR feedback",b0d8baaf966813f82363279db46d6688bf455d24,3354,false,,20,2409,113,Cargo.lock; Cargo.toml; crates
+apache/iceberg-rust,3c952e1719a4902334e44b648698999cf3a4214d,3c952e1,Anoop Johnson,anoop@apache.org,2026-10-09T16:15:35Z,GitHub,noreply@github.com,2026-10-09T16:15:35Z,feat(reader): page-index pruning for FIXED_LEN_BYTE_ARRAY decimals (#3328),"Decimals with precision > 18 are stored as FIXED_LEN_BYTE_ARRAY, which the
+page-index evaluator skipped, so inequality and IN predicates on them got no
+page pruning (over-selection only, never dropped rows). Decode those bounds
+with i128_from_be_bytes, matching the row-group statistics path.
+
+Guard against truncated ColumnIndex bounds: a bound whose width differs from
+the column's declared type_length signals a column_index_truncate_length
+truncation, and a truncated byte prefix no longer preserves the two's
+complement numeric ordering of decimals. Reject it so the column skips pruning
+rather than decode the wrong number. parquet-rs never truncates decimal column
+indexes, so this only defends against files written by other implementations.
+
+Benchmark
+
+A throwaway benchmark on a 1,000,000-row single-column decimal(30,2) file
+(precision > 18 -> FIXED_LEN_BYTE_ARRAY), 100 pages in one row group, read
+fully in memory so timing is decode-only. A `col > threshold` predicate sweeps
+selectivity. ""read full file"" is today's behavior (FLBA decimals skip page
+pruning); ""read ms"" applies the page-index RowSelection this change produces.
+
+    1,000,000 rows in 100 pages, 1 row group
+    read full file : 3.431 ms
+
+      predicate (keep) | rows read | eval us | read ms | speedup
+                   1%  |    10,000 |    17.5 |   0.038 |   90.0x
+                  10%  |   100,000 |    17.1 |   0.330 |   10.4x
+                  50%  |   500,000 |    16.6 |   1.629 |    2.1x
+                 100%  | 1,000,000 |    16.3 |   3.397 |    1.0x
+
+The win tracks predicate selectivity; eval() adds a constant ~17 us per row
+group per scan, negligible against the millisecond read. The benefit only
+materializes where page-index row selection runs: MoR tables or
+with_row_selection_enabled(true). Reproducer in the PR description.
+
+Follow-up to #3314.",5b82ab99aeaf50bf4f5b3b776ac9cd6380a5f3e3,3328,false,,1,314,8,crates

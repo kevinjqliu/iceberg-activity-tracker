@@ -9083,3 +9083,17 @@ updated-dependencies:
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",d2a3112aab458ab506f810298c0f93f4e5ee7d66,984,false,dependabot[bot],1,2,2,.github
 apache/iceberg-cpp,79fdb86853450397f64a4bc22ad93d1cf0eb44c9,79fdb86,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-10-08T23:46:13+08:00,GitHub,noreply@github.com,2026-10-08T23:46:13+08:00,feat(rest): load table credentials from the LoadCredentials endpoint (#899),,85f8a840083e2c5123a365ee55533bb50c390f1c,899,false,,14,362,29,src
+apache/iceberg-cpp,fa29f665641703dd793553e174afdcf5529bd414,fa29f66,rohanjain101,38412262+rohanjain101@users.noreply.github.com,2026-10-08T18:51:02-07:00,GitHub,noreply@github.com,2026-10-09T09:51:02+08:00,fix(cmake): record avro-cpp as system dependency in installed config (#987),"The installed iceberg-config.cmake called find_dependency(Avro), but the package found is avro-cpp, which does not provide an Avro package. Closes #973
+
+Co-authored-by: Rohan Jain <rohanjain@microsoft.com>",79fdb86853450397f64a4bc22ad93d1cf0eb44c9,987,false,Rohan Jain,1,1,1,cmake_modules
+apache/iceberg-cpp,dab8664f8650bbe65f4081da7895dff487a8be41,dab8664,Ping Liu,155605620+PingLiuPing@users.noreply.github.com,2026-10-09T19:30:22+08:00,GitHub,noreply@github.com,2026-10-09T19:30:22+08:00,feat: make public headers consumable as C++20 in compat mode (#936),"Enable C++20 consumers to include and use iceberg-cpp’s installed public headers when the library is built with ICEBERG_CXX20_COMPAT=ON, while keeping iceberg-cpp implementation code and internal workflows on C++23. C++23 remains the default public API.
+
+Restore the vendored iceberg::expected backport — brings back src/iceberg/compat/expected.h from #40 (removed by [#139](https://github.com/apache/iceberg-cpp/pull/139)), with its test and LICENSE entry. unexpected's comparison operators now go through error().
+
+cpp20_compatibility_test compiles all public headers as C++20, and the C++20 example links against an installed compatibility package.
+
+Fix #928",fa29f665641703dd793553e174afdcf5529bd414,936,false,,73,4740,196,.github; .pre-commit-config.yaml; CMakeLists.txt; LICENSE; README.md; ci; cmake_modules; example; mkdocs; src
+apache/iceberg-cpp,70b2b6a1a8b256d15469760d077ebede631ce689,70b2b6a,liuxiaoyu,45345701+MisterRaindrop@users.noreply.github.com,2026-10-09T22:25:35+08:00,GitHub,noreply@github.com,2026-10-09T22:25:35+08:00,feat(hive): add Iceberg-to-HMS schema and record conversion helpers (#904),,dab8664f8650bbe65f4081da7895dff487a8be41,904,false,,10,1015,11,cmake_modules; src
+apache/iceberg-cpp,5a9d91a399f00a691fb2498720414c0e455d967b,5a9d91a,rohanjain101,38412262+rohanjain101@users.noreply.github.com,2026-10-09T07:28:30-07:00,GitHub,noreply@github.com,2026-10-09T22:28:30+08:00,fix: move int128_t and uint128_t aliases into the iceberg namespace (#972),"The aliases were declared at global scope in the public header iceberg/util/int128.h. Any consumer that includes an iceberg header then gets global int128_t and uint128_t names, which conflict with other libraries or application code that define the same names. All uses in the project are already inside namespace iceberg, so this change is source compatible within the project.
+
+Co-authored-by: Rohan Jain <rohanjain@microsoft.com>",70b2b6a1a8b256d15469760d077ebede631ce689,972,false,Rohan Jain,1,10,3,src
