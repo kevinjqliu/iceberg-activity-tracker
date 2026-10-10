@@ -7151,3 +7151,23 @@ updated-dependencies:
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",80e9041c6a4a3ae27b8bbb7b6a7ab0295766d2a4,4059,false,dependabot[bot],1,15,15,uv.lock
+apache/iceberg-python,0a536e40259ecf85adee264d19d2080500a07b82,0a536e4,Kaanchan Krishna,krishnakaanchan@gmail.com,2026-10-10T12:37:22Z,GitHub,noreply@github.com,2026-10-10T12:37:22Z,PyArrow: Derive the ADLS account from the location when it is not configured (#3936),"* PyArrow: Derive the ADLS account from the location when it is not configured
+
+_initialize_azure_fs took no netloc, unlike the S3 and HDFS initialisers next to
+it, so the account could only come from adls.account-name and the account in an
+abfss location was dropped. Pass the netloc through and fall back to the account
+in its host part. An explicit adls.account-name still wins, same precedence as
+FsspecFileIO. The fallback is gated on the userinfo part being present, since a
+container only netloc carries no account.
+
+* Remove unnecessary comment",068aae50402285657b41f5357acb67672b0a053d,3936,false,,2,48,4,pyiceberg; tests
+apache/iceberg-python,b32392dcbafd3b92415a5b5dc0444722ca2091d9,b32392d,Mohamed Laghdaf Dadda,30777718+med9110@users.noreply.github.com,2026-10-10T12:38:16Z,GitHub,noreply@github.com,2026-10-10T12:38:16Z,Avro: Replace manual slots with dataclass slots (#4091),"Use slots=True for ListReader and MapReader instead of
+manually declaring __slots__.
+
+Preserve the original dataclass fields and use two-argument
+super() for compatibility with slotted dataclasses.
+
+Internal cached attributes now use the inherited instance
+dictionary instead of dedicated slots.
+
+Refs #4086",0a536e40259ecf85adee264d19d2080500a07b82,4091,false,,1,4,6,pyiceberg

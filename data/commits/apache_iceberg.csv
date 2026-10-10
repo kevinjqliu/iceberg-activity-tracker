@@ -7773,3 +7773,17 @@ apache/iceberg,32b3d20b8ada6c349c58cb0fd2f4305fed6997b2,32b3d20,Akash Malbari,ak
 * Core: Avoid asserting iterator exception message",cfc5504ad8b806c253b2a5773c0078a7b1a7b79b,18382,false,,2,15,1,core
 apache/iceberg,4eb9cb7c3d53cb8080724eebf6e6898871ee23b0,4eb9cb7,Manu Zhang,OwenZhang1990@gmail.com,2026-10-09T09:33:58+08:00,GitHub,noreply@github.com,2026-10-08T18:33:58-07:00,Spark 4.2: Fix view rename target namespace (#18255),,32b3d20b8ada6c349c58cb0fd2f4305fed6997b2,18255,false,,3,50,6,spark
 apache/iceberg,063a80a9a7427794890dae740c08521627100ee4,063a80a,Anoop Johnson,anoop@apache.org,2026-10-09T11:10:57-07:00,GitHub,noreply@github.com,2026-10-09T11:10:57-07:00,Core: Move v4 format_version from tracked file to manifest info (#18418),"Move the v4 format_version field (0: PRE-V4, 4: V4) off every tracked file and onto manifest_info as a required field (ID 521), so it is tracked only for manifest entries. The tracked_file field ID 157 is removed, and the TrackedManifestFile adapter sources formatVersion() from manifest_info.",4eb9cb7c3d53cb8080724eebf6e6898871ee23b0,18418,false,,13,143,93,core
+apache/iceberg,79bc69a51da6d95ccd6da6d46ef156c74e30b8cf,79bc69a,Eduard Tudenhoefner,etudenhoefner@gmail.com,2026-10-09T20:57:19+02:00,GitHub,noreply@github.com,2026-10-09T11:57:19-07:00,"API, Core, Parquet, Spark: Update avg_value_size_in_bytes to total_bytes (#18310)",,063a80a9a7427794890dae740c08521627100ee4,18310,false,,41,379,233,api; core; open-api; parquet; spark
+apache/iceberg,0f3131f02fc2560bd122f3b323d13ea935892eb3,0f3131f,mengna-lin,mengna_lin@apple.com,2026-10-09T17:21:13-07:00,GitHub,noreply@github.com,2026-10-09T17:21:13-07:00,Aliyun: Add AliyunKeyManagementClient for client-side encryption (#18210),"* Aliyun: Add AliyunKeyManagementClient for client-side encryption
+
+Add an Alibaba Cloud KMS implementation of the KeyManagementClient SPI so
+tables using Iceberg envelope encryption can wrap/unwrap data keys with
+Aliyun KMS, at parity with AwsKeyManagementClient. The aliyun module
+previously supported only OSS.
+
+- AliyunKeyManagementClient: wrapKey, unwrapKey, and server-side
+  generateKey; supportsKeyGeneration() returns true.
+- AliyunClientFactory#newKmsClient: build the KMS client from
+  client.region, resolving credentials from access key/secret/token and
+  falling back to the default chain (env vars, RRSA/OIDC, ECS RAM role).
+- AliyunProperties: add client.region and kms.data-key-spec (default AES_256).",79bc69a51da6d95ccd6da6d46ef156c74e30b8cf,18210,false,,11,558,4,aliyun; build.gradle; core; docs; gradle

@@ -32537,3 +32537,115 @@ materializes where page-index row selection runs: MoR tables or
 with_row_selection_enabled(true). Reproducer in the PR description.
 
 Follow-up to #3314.",5b82ab99aeaf50bf4f5b3b776ac9cd6380a5f3e3,3328,false,,1,314,8,crates
+apache/iceberg-rust,1f3bc34058e3f3e45336bc5428f37b92649a608b,1f3bc34,Feng Zhang,f.feng.zhang@gmail.com,2026-10-09T17:29:50Z,GitHub,noreply@github.com,2026-10-09T17:29:50Z,fix(spec): treat -0.0 and 0.0 as distinct float literals (#3327),"* fix(spec): treat -0.0 and 0.0 as distinct float literals
+
+PrimitiveLiteral equality and ordering now follow Java's Float.compare and
+Double.compare: -0.0 is less than 0.0 and all NaNs are equal. This stops the
+partitioned writers, the record batch splitter and the delete file index from
+merging -0.0 and 0.0 identity partitions.
+
+Closes #3325
+
+* Address review: fail closed in PrimitiveLiteral fallback, test IN
+
+- Handle AboveMax and BelowMin explicitly and return None when the
+  fallback arm sees two values of the same variant, with a debug
+  assertion, instead of calling them equal.
+- Cite the spec's partition equality rule and document the
+  variant_index ordering invariant.
+- Stop pinning the cross-variant order in tests.
+- Test IN with signed zeros in the expression evaluator.",3c952e1719a4902334e44b648698999cf3a4214d,3327,false,,8,483,9,crates
+apache/iceberg-rust,e8ec7f8403554496db976700eb993459e0ab7f9b,e8ec7f8,Danny C Jones,djonesoa@amazon.com,2026-10-09T22:31:27Z,GitHub,noreply@github.com,2026-10-09T22:31:27Z,chore(release): port the dependency license check from shell to Python (#3379),"This change migrates from the old shell script for cargo-deny to a new Python script.
+This new script will contain logic for dealing with dependencies and their licenses. This commit simply translates the existing logic.
+
+In later changes, this script will be extended with:
+- Clarifications for existing dependencies where licenses are misreported, with additional verifications added in the script itself
+- Logic for generating the attribution documentation for the pyiceberg-core package.",1f3bc34058e3f3e45336bc5428f37b92649a608b,3379,false,,7,113,153,.github; Makefile; dev; website
+apache/iceberg-rust,b8467510f8da71b8f180affdef7b1a2d3dd4cfa9,b846751,Jiajia Li,lijiajia@outlook.com,2026-10-09T23:17:10Z,GitHub,noreply@github.com,2026-10-09T23:17:10Z,feat(rest): add a SigV4 request signer (#3082),"* feat(rest): add a SigV4 request signer
+
+* fix(rest): mute aws-sigv4 tracing and tighten payload hashing
+
+The crate traces the request it signs, and its redaction list covers
+`authorization` but not the `Original-` copy we make, so a delegate's
+bearer token could reach trace logs. Also reject non-UTF-8 headers
+rather than leave them unsigned, and hash a present-but-empty body as
+Java does.
+
+* refactor(rest): take credentials per call, as Java's signer does
+
+Java holds one `Aws4Signer` across sessions and resolves credentials from
+an `AwsCredentialsProvider` per request, so the signer itself carries no
+credential state. Follow that: drop `AwsCredentials`, take the AWS
+crate's `Credentials` as a `sign` argument, and leave the provider to the
+auth session.
+
+Also sign `HttpRequest` rather than the concrete request type, name the
+amz headers, split `convert_headers`/`update_request_headers` after their
+Java counterparts, collapse the one-file `sigv4` module, and put the AWS
+dependencies behind a `sigv4` feature.
+
+* docs(rest): trim the SigV4 signer comments
+
+* refactor(rest): break sign_at into named steps
+
+* docs(rest): state the redirect and log-always limits of the signer
+
+* fix(rest): keep relocation headers out of the signature, and the tracing flag untouched
+
+* docs(rest): name the log bridge that stays unmuted
+
+* docs(rest): log-always also bypasses the muted subscriber
+
+* fix(rest): return an error instead of unwrapping the content hash header
+
+* refactor(rest): make PayloadHashMode non_exhaustive and SigV4Signer::new take impl Into<String>
+
+* docs(rest): note the base64 header quirk and credential freshness
+
+* docs(rest): keep the plus note next to the rewrite it explains
+
+* fix(rest): spell out the headers Java leaves unsigned
+
+* test(rest): check signatures against Iceberg Java
+
+* test(rest): pin the signing tests to a fixed time
+
+* test(rest): check standard mode against the AWS test suite
+
+* test(rest): drop the helper-only AWS vector and the hmac dev-dependency
+
+* fix(rest): decide the tracing mute with public tracing API
+
+* docs(rest): tighten the payload hash and credential notes
+
+* test(rest): bound the live-clock stamp by readings around the call
+
+* chore(rest): update the public API for the signer changes
+
+* docs(rest): simplify the SigV4 signer comments
+
+* refactor(rest): build SigV4Signer with a typed builder
+
+* fix(rest): propagate a failed userinfo strip instead of signing the URL as is
+
+* docs(rest): name the flag the tracing mute is gated to avoid
+
+* docs(rest): say that as_bytes merges an absent body with an empty one
+
+* chore(rest): update the public API for the signer builder
+
+* fix(rest): validate requests before signing
+
+* fix(rest): address SigV4 review findings",e8ec7f8403554496db976700eb993459e0ab7f9b,3082,false,,7,1286,0,Cargo.lock; Cargo.toml; crates
+apache/iceberg-rust,b2e90754b1f9eaea741d353d51ae644aa9cef479,b2e9075,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-09T23:19:20Z,GitHub,noreply@github.com,2026-10-09T23:19:20Z,chore(deps): Bump fsspec from 2026.4.0 to 2026.6.0 in /bindings/python (#3366),"Bumps [fsspec](https://github.com/fsspec/filesystem_spec) from 2026.4.0 to 2026.6.0.
+- [Commits](https://github.com/fsspec/filesystem_spec/compare/2026.4.0...2026.6.0)
+
+---
+updated-dependencies:
+- dependency-name: fsspec
+  dependency-version: 2026.6.0
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",b8467510f8da71b8f180affdef7b1a2d3dd4cfa9,3366,false,dependabot[bot],1,3,3,bindings
