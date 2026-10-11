@@ -9102,3 +9102,39 @@ apache/iceberg-cpp,66d7ef5c75db7fbdb710d115a5ad52fc12eb677c,66d7ef5,advancedxy,8
 apache/iceberg-cpp,b409051bd019ea8afb92e2a7ea280fcc5ff03e85,b409051,YinZheng-Sun,57469177+YinZheng-Sun@users.noreply.github.com,2026-10-10T14:34:05+08:00,GitHub,noreply@github.com,2026-10-10T14:34:05+08:00,fix(parquet): accept Decimal32 and Decimal64 during schema projection (#992),,66d7ef5c75db7fbdb710d115a5ad52fc12eb677c,992,false,,3,82,2,src
 apache/iceberg-cpp,84fb526b312c03021c8e0952207d836039342998,84fb526,Gang Wu,ustcwg@gmail.com,2026-10-10T17:43:36+08:00,GitHub,noreply@github.com,2026-10-10T17:43:36+08:00,fix: prevent copying and moving StructLikeAccessor (#993),,b409051bd019ea8afb92e2a7ea280fcc5ff03e85,993,false,,1,6,0,src
 apache/iceberg-cpp,a88f88a0ba5a3ce4d1b6cd1876483a668d8cf871,a88f88a,Byeonggyu Park,byeonggyu1214@gmail.com,2026-10-10T18:50:41+09:00,GitHub,noreply@github.com,2026-10-10T17:50:41+08:00,feat: fold IS NULL/NOT NULL predicates on unknown type (#983),,84fb526b312c03021c8e0952207d836039342998,983,false,,2,26,2,src
+apache/iceberg-cpp,44e29e109e461e7c9069855c9a90442002580d23,44e29e1,Xinli Shang,xinlishang@gmail.com,2026-10-11T09:30:30+09:00,GitHub,noreply@github.com,2026-10-11T08:30:30+08:00,feat: add CherryPickOperation and wire SnapshotManager::Cherrypick (#926),"Adds `CherryPickOperation` and implements `SnapshotManager::Cherrypick()`, which was a TODO stub.
+
+Follows Java's `CherryPickOperation`: appends re-apply their added files, dynamic overwrites (`replace-partitions`) re-apply adds and deletes and are rejected if a replaced partition changed, and anything else can only be fast-forward. Records `source-snapshot-id` and `published-wap-id`, and rejects a WAP id that was already published.
+
+Like Java, the operation is reachable only through `Transaction`, not `Table`.
+
+Fast-forwards also follow Java: `Apply()` returns the picked snapshot itself when it is a child of the current state, so no new snapshot is created. Because that decision is re-evaluated on every apply, a commit retry against moved metadata replays the pick on top of the new state instead of being rejected.
+
+Tests ported from Java `TestSnapshotManager` and `TestWapWorkflow`, plus regression coverage for commit retries and the fast-forward/replay transitions.
+
+Part of #637.",a88f88a0ba5a3ce4d1b6cd1876483a668d8cf871,926,false,,14,1302,8,src
+apache/iceberg-cpp,0919f96b042e0fb832578d5eeb35574d69f55e4b,0919f96,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-10-11T06:05:56-07:00,GitHub,noreply@github.com,2026-10-11T21:05:56+08:00,refactor(serde): move DataFile JSON handling from REST to core (#974),,44e29e109e461e7c9069855c9a90442002580d23,974,false,,6,535,484,src
+apache/iceberg-cpp,ecf36247c6abbfaee591a0c89f8c5055344e3a1b,ecf3624,YangJie,yangjie01@baidu.com,2026-10-11T09:16:30-04:00,GitHub,noreply@github.com,2026-10-11T21:16:30+08:00,fix(expression): return a parse error for non-string type nodes in expression JSON (#982),"IsTransformTerm, NamedReferenceFromJson, both LiteralFromJson
+overloads, and ExpressionFromJson read the 'type' discriminator with
+json[kType].get<std::string>() guarded only by contains(), so a
+present-but-non-string 'type' (e.g. a number) threw an uncaught
+nlohmann type_error out of the Result-returning parse API. Check
+is_string() first, matching the sibling OperationTypeFromJson guard,
+so malformed expression JSON yields JsonParseError instead of an
+escaped exception.",0919f96b042e0fb832578d5eeb35574d69f55e4b,982,false,,2,34,6,src
+apache/iceberg-cpp,c712948f8cd29e14a3d83ae7070b3724579d34ac,c712948,Manu Zhang,OwenZhang1990@gmail.com,2026-10-11T21:19:38+08:00,GitHub,noreply@github.com,2026-10-11T21:19:38+08:00,refactor: move each TableScan subclass to its own file (#994),"Move DataTableScan, IncrementalAppendScan and IncrementalChangelogScan
+into data_table_scan.{h,cc}, incremental_append_scan.{h,cc} and
+incremental_changelog_scan.{h,cc}. table_scan.{h,cc} keep TableScan,
+IncrementalScan, TableScanBuilder, the scan task types and
+TableScanContext.
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",ecf36247c6abbfaee591a0c89f8c5055344e3a1b,994,false,Claude Opus 5.5,16,731,487,example; src
+apache/iceberg-cpp,ed6608de5d3095550dd1631d9d0a4073b3034e1e,ed6608d,YangJie,yangjie01@baidu.com,2026-10-11T09:21:45-04:00,GitHub,noreply@github.com,2026-10-11T21:21:45+08:00,fix(json): return a parse error for a list type missing 'element' (#997),"ListTypeFromJson read the nested element type with the raw const
+json[kElement] accessor, which is undefined behavior (an assertion in
+debug nlohmann builds) when a list type object is missing the required
+'element' key. Use GetJsonValue<nlohmann::json>(json, kElement) like
+the sibling MapTypeFromJson does, so malformed schema or table-metadata
+JSON yields JsonParseError instead of asserting.",c712948f8cd29e14a3d83ae7070b3724579d34ac,997,false,,2,13,1,src
+apache/iceberg-cpp,87ed9632fda681fdfaa9d884a0ce47942aff3e56,87ed963,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-10-11T06:55:34-07:00,GitHub,noreply@github.com,2026-10-11T21:55:34+08:00,fix(serde): make DataFile JSON compatible with Java Iceberg (#975),,ed6608de5d3095550dd1631d9d0a4073b3034e1e,975,false,,3,470,52,src
+apache/iceberg-cpp,0a22087d6fae7b26a6dacd9a64e3ef93239700ea,0a22087,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-10-11T07:54:45-07:00,GitHub,noreply@github.com,2026-10-11T22:54:45+08:00,feat(serde): support standalone FileScanTask JSON in core (#939),,87ed9632fda681fdfaa9d884a0ce47942aff3e56,939,false,,6,851,68,src
+apache/iceberg-cpp,cbca7d268f5a96848eb40de5fa5bfe8c763e1e98,cbca7d2,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-10-11T08:24:58-07:00,GitHub,noreply@github.com,2026-10-11T23:24:58+08:00,fix(serde): reject invalid schema and partition IDs in JSON (#940),,0a22087d6fae7b26a6dacd9a64e3ef93239700ea,940,false,,4,190,17,src
