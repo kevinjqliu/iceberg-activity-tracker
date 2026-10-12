@@ -7789,3 +7789,169 @@ previously supported only OSS.
 - AliyunProperties: add client.region and kms.data-key-spec (default AES_256).",79bc69a51da6d95ccd6da6d46ef156c74e30b8cf,18210,false,,11,558,4,aliyun; build.gradle; core; docs; gradle
 apache/iceberg,140f4654bfcc90d3a728b74cff9f2fa8f92182d9,140f465,Steven Zhen Wu,stevenz3wu@gmail.com,2026-10-10T13:16:25-07:00,GitHub,noreply@github.com,2026-10-10T14:16:25-06:00,Core: Drop equality_ids from v4 TrackedFile (#18427),"Generated-by: Cursor Grok 4.7
 Co-authored-by: Cursor <cursoragent@cursor.com>",0f3131f02fc2560bd122f3b323d13ea935892eb3,18427,false,Cursor,11,32,298,core
+apache/iceberg,0b3176629060a7c0706ebfa7b393b01283a0ef41,0b31766,Jaeyeon Park,donionbs7@gmail.com,2026-10-12T03:22:48+09:00,GitHub,noreply@github.com,2026-10-11T20:22:48+02:00,Kafka Connect: Preserve explicit null values instead of replacing them with schema defaults (#17653),"Struct.get() substitutes the schema default value when the stored value
+is null, which silently turns an explicit null into the default. The
+bundled SMTs now copy fields with getWithoutDefault, and the sink's own
+reads (RecordConverter, including the variant conversion path, and
+route-field extraction) are gated by a new option,
+iceberg.tables.replace-null-with-default (default true, which preserves
+the current behavior).
+
+Closes #17652
+
+Locks in that the null-gated schema walk emits no events when the table
+schema matches, and the same events as the default-substitution path
+when the record schema has drifted.
+
+Renames fieldValue to fieldValueFromStruct to match RecordUtils, caches
+replace-null-with-default in the constructor, and logs a warning when an
+explicit null lands on a required column.
+
+Leads with the option semantics, documents the required-column failure
+mode and schema-force-optional mitigation, notes the JSON converter's
+own replace.null.with.default (default true since Kafka 3.5.0), and
+states that the bundled SMTs always preserve explicit nulls.",140f4654bfcc90d3a728b74cff9f2fa8f92182d9,17653,false,,17,530,30,docs; kafka-connect
+apache/iceberg,32f0914f9aaa51a7fb17570b1e6e241d2f7658db,32f0914,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-11T14:42:20-07:00,GitHub,noreply@github.com,2026-10-11T14:42:20-07:00,Build: Bump joda-time:joda-time from 2.14.4 to 2.15.0 (#18451),"Bumps [joda-time:joda-time](https://github.com/JodaOrg/joda-time) from 2.14.4 to 2.15.0.
+- [Release notes](https://github.com/JodaOrg/joda-time/releases)
+- [Changelog](https://github.com/JodaOrg/joda-time/blob/main/RELEASE-NOTES.txt)
+- [Commits](https://github.com/JodaOrg/joda-time/compare/v2.14.4...v2.15.0)
+
+---
+updated-dependencies:
+- dependency-name: joda-time:joda-time
+  dependency-version: 2.15.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",0b3176629060a7c0706ebfa7b393b01283a0ef41,18451,false,dependabot[bot],1,1,1,gradle
+apache/iceberg,c4e71162ddf36916f55e67320bc6aa03bce45e70,c4e7116,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-11T14:43:07-07:00,GitHub,noreply@github.com,2026-10-11T14:43:07-07:00,Build: Bump software.amazon.awssdk:bom from 2.55.1 to 2.55.11 (#18452),"Bumps software.amazon.awssdk:bom from 2.55.1 to 2.55.11.
+
+---
+updated-dependencies:
+- dependency-name: software.amazon.awssdk:bom
+  dependency-version: 2.55.11
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",32f0914f9aaa51a7fb17570b1e6e241d2f7658db,18452,false,dependabot[bot],1,1,1,gradle
+apache/iceberg,87fed79bf013d77fee320c63b4ce5353c7355e5a,87fed79,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-11T14:43:45-07:00,GitHub,noreply@github.com,2026-10-11T14:43:45-07:00,Build: Bump guava from 33.7.1-jre to 33.7.2-jre (#18453),"Bumps `guava` from 33.7.1-jre to 33.7.2-jre.
+
+Updates `com.google.guava:guava` from 33.7.1-jre to 33.7.2-jre
+- [Release notes](https://github.com/google/guava/releases)
+- [Commits](https://github.com/google/guava/commits)
+
+Updates `com.google.guava:guava-testlib` from 33.7.1-jre to 33.7.2-jre
+- [Release notes](https://github.com/google/guava/releases)
+- [Commits](https://github.com/google/guava/commits)
+
+---
+updated-dependencies:
+- dependency-name: com.google.guava:guava
+  dependency-version: 33.7.2-jre
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+- dependency-name: com.google.guava:guava-testlib
+  dependency-version: 33.7.2-jre
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",c4e71162ddf36916f55e67320bc6aa03bce45e70,18453,false,dependabot[bot],1,1,1,gradle
+apache/iceberg,3d13e4e26cb3ed31c31951012564b9613af4765c,3d13e4e,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-11T14:44:15-07:00,GitHub,noreply@github.com,2026-10-11T14:44:15-07:00,Build: Bump gradle/actions/setup-gradle from 6.3.0 to 6.4.0 (#18454),"Bumps [gradle/actions/setup-gradle](https://github.com/gradle/actions) from 6.3.0 to 6.4.0.
+- [Release notes](https://github.com/gradle/actions/releases)
+- [Commits](https://github.com/gradle/actions/compare/9c971963bec38e04b3d30dcc455b5382be2fdbfb...3f5f9adaf7d9fecd50b5935e54106014257a94e6)
+
+---
+updated-dependencies:
+- dependency-name: gradle/actions/setup-gradle
+  dependency-version: 6.4.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",87fed79bf013d77fee320c63b4ce5353c7355e5a,18454,false,dependabot[bot],13,17,17,.github
+apache/iceberg,0cd2faaf45b605f61d9d046df8eaab2175f39d89,0cd2faa,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-11T14:44:51-07:00,GitHub,noreply@github.com,2026-10-11T14:44:51-07:00,Build: Bump org.xerial.snappy:snappy-java from 1.1.10.8 to 1.1.10.10 (#18455),"Bumps [org.xerial.snappy:snappy-java](https://github.com/xerial/snappy-java) from 1.1.10.8 to 1.1.10.10.
+- [Release notes](https://github.com/xerial/snappy-java/releases)
+- [Commits](https://github.com/xerial/snappy-java/compare/v1.1.10.8...v1.1.10.10)
+
+---
+updated-dependencies:
+- dependency-name: org.xerial.snappy:snappy-java
+  dependency-version: 1.1.10.10
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",3d13e4e26cb3ed31c31951012564b9613af4765c,18455,false,dependabot[bot],1,1,1,kafka-connect
+apache/iceberg,ef7171b69ab93feaef402ce943ba988468a985ad,ef7171b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-11T14:45:25-07:00,GitHub,noreply@github.com,2026-10-11T14:45:25-07:00,Build: Bump com.aliyun:credentials-java from 1.0.3 to 1.0.8 (#18457),"Bumps [com.aliyun:credentials-java](https://github.com/aliyun/credentials-java) from 1.0.3 to 1.0.8.
+- [Release notes](https://github.com/aliyun/credentials-java/releases)
+- [Changelog](https://github.com/aliyun/credentials-java/blob/master/ChangeLog.txt)
+- [Commits](https://github.com/aliyun/credentials-java/commits)
+
+---
+updated-dependencies:
+- dependency-name: com.aliyun:credentials-java
+  dependency-version: 1.0.8
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",0cd2faaf45b605f61d9d046df8eaab2175f39d89,18457,false,dependabot[bot],1,1,1,gradle
+apache/iceberg,6dca1cd50484bd7b55f8483d8ef6e9da50b27f67,6dca1cd,Yuya Ebihara,ebyhry@gmail.com,2026-10-12T10:00:02+09:00,GitHub,noreply@github.com,2026-10-11T18:00:02-07:00,Build: Bump com.google.cloud:libraries-bom from 26.89.0 to 26.90.0 (#18461),"Bumps [com.google.cloud:libraries-bom](https://github.com/googleapis/google-cloud-java) from 26.89.0 to 26.90.0.
+- [Release notes](https://github.com/googleapis/google-cloud-java/releases)
+- [Changelog](https://github.com/googleapis/google-cloud-java/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/googleapis/google-cloud-java/compare/libraries-bom/v26.89.0...libraries-bom/v26.90.0)
+
+---
+updated-dependencies:
+- dependency-name: com.google.cloud:libraries-bom
+  dependency-version: 26.90.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",ef7171b69ab93feaef402ce943ba988468a985ad,18461,false,dependabot[bot],3,58,58,gcp-bundle; gradle; kafka-connect
+apache/iceberg,72c18ed57a1851f650eb8932732f1647e31ba4d8,72c18ed,Anoop Johnson,anoop@apache.org,2026-10-12T00:25:29-07:00,GitHub,noreply@github.com,2026-10-12T09:25:29+02:00,Core: Accept manifest format version >= 4 in manifest info (#18436),"Relax the manifest_info format_version validation
+ so the writer accepts V4 and any future format version
+rather than rejecting versions it doesn't yet know about.",6dca1cd50484bd7b55f8483d8ef6e9da50b27f67,18436,false,,2,4,4,core
+apache/iceberg,eee545798484047f5b4302901c306f11043fbc0b,eee5457,Damanpreet Singh,damanpreet8360@gmail.com,2026-10-12T13:09:21+05:30,GitHub,noreply@github.com,2026-10-12T09:39:21+02:00,BigQuery: Deduplicate retry handling in BigQueryMetastoreClientImpl (#17904),,72c18ed57a1851f650eb8932732f1647e31ba4d8,17904,false,,1,32,78,bigquery
+apache/iceberg,b2dac7b3d771cec674ff31db60d7e261012f621c,b2dac7b,Anurag Mantripragada,amantripragada@apple.com,2026-10-12T01:33:34-07:00,GitHub,noreply@github.com,2026-10-12T09:33:34+01:00,Spark 4.1: Add MergingSortedRowDataReader for k-way merge of sorted files (#14948),,eee545798484047f5b4302901c306f11043fbc0b,14948,false,,2,1450,0,spark
+apache/iceberg,38691635818adb63cf6e425fe8299af63593ada8,3869163,Maximilian Michels,mxm@apache.org,2026-10-12T11:06:32+02:00,GitHub,noreply@github.com,2026-10-12T11:06:32+02:00,Spark: Don't reapply stream-from-timestamp when a stream resumes (#18348),,b2dac7b3d771cec674ff31db60d7e261012f621c,18348,false,,7,294,9,docs; spark
+apache/iceberg,561a4e326fe77704e1e3e1d09507f121491a6b54,561a4e3,Vova Kolmakov,wombatukun@gmail.com,2026-10-12T16:55:53+07:00,GitHub,noreply@github.com,2026-10-12T11:55:53+02:00,Kafka Connect: Split route field path once instead of per record (#16655),"Co-authored-by: Vova Kolmakov <wombatukun@apache.org>
+Co-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",38691635818adb63cf6e425fe8299af63593ada8,16655,false,Vova Kolmakov; Claude Opus 4.8 (1M context),4,49,22,kafka-connect
+apache/iceberg,b505f935813a8ac845cb5693620ab1def19ed2d7,b505f93,Yuya Ebihara,ebyhry@gmail.com,2026-10-12T22:13:27+09:00,GitHub,noreply@github.com,2026-10-12T15:13:27+02:00,Build: Bump Parquet 1.18.1 (#18347),Co-authored-by: Fokko Driesprong <fokko@apache.org>,561a4e326fe77704e1e3e1d09507f121491a6b54,18347,false,Fokko Driesprong,12,104,87,.github; data; flink; gradle; kafka-connect; parquet; spark
+apache/iceberg,256f542d3e9f50f97fabf4ffea498f151fb44820,256f542,gaborkaszab,gaborkaszab@gmail.com,2026-10-12T18:15:27+02:00,GitHub,noreply@github.com,2026-10-12T17:15:27+01:00,"Core, Flink: Refactor InputFilesDecryptor and use EncryptingFileIO.bulkDecrypt() (#18198)",,b505f935813a8ac845cb5693620ab1def19ed2d7,18198,false,,11,258,33,core; flink
+apache/iceberg,0f070dee3aea21e963f4dd5f337b0b050f75c569,0f070de,S N Munendra,9696252+munendrasn@users.noreply.github.com,2026-10-12T22:37:51+05:30,GitHub,noreply@github.com,2026-10-12T10:07:51-07:00,GCP: Support CMEK (kms-key-name) for GCS server-side encryption (#18151),"GCSOutputStream previously supported only CSEK (gcs.encryption-key), where
+the raw key is sent to GCS on every request. This adds CMEK support via a
+new gcs.kms-key-name property: the caller passes only the Cloud KMS key
+resource name, and GCS performs encryption/decryption server-side, so the
+caller's credentials need no KMS permission.
+
+The write path emits BlobWriteOption.kmsKeyName(...) when the property is
+set; reads require no change since CMEK decryption is automatic. CSEK and
+CMEK are mutually exclusive (GCS rejects both on one object), enforced at
+property-parse time with a fail-fast Preconditions check.",256f542d3e9f50f97fabf4ffea498f151fb44820,18151,false,,4,78,1,gcp
+apache/iceberg,9961f9609a77139fe77f02ac8fe109bc40d28353,9961f96,Steven Zhen Wu,stevenz3wu@gmail.com,2026-10-12T10:10:48-07:00,GitHub,noreply@github.com,2026-10-12T10:10:48-07:00,Spec: require monotonically increasing snapshot timestamp-ms in v4 (#16294),"In format version 4 and above, a snapshot's `timestamp-ms` must be
+strictly greater than the `timestamp-ms` of its parent snapshot on
+the same branch. The requirement applies only to snapshots committed
+while the table is at format version 4 or higher; root snapshots,
+and snapshots that existed before a table was upgraded to v4, are
+not constrained.",0f070dee3aea21e963f4dd5f337b0b050f75c569,16294,false,,1,7,0,format
+apache/iceberg,cd3ae3c8051e586e5b695182db44e682b54dcca3,cd3ae3c,Raunaq Morarka,raunaqmorarka@users.noreply.github.com,2026-10-12T23:44:08+05:30,GitHub,noreply@github.com,2026-10-12T20:14:08+02:00,Core: Sweep only the transaction's own snapshots after commit (#18095),"Snapshots committed by other writers while the transaction was open
+cannot reference files it wrote, so reading their manifest lists during
+post-commit clean-up is wasted work that grows with the number of
+concurrent commits.",9961f9609a77139fe77f02ac8fe109bc40d28353,18095,false,,2,114,2,core
+apache/iceberg,843d36de699bbbacd1fc317e4ec3d824b600eccd,843d36d,John Zhuge,jzhuge@netflix.com,2026-10-12T11:38:27-07:00,GitHub,noreply@github.com,2026-10-12T11:38:27-07:00,Parquet: Prune nested structs to the projected subtree (#18336),,cd3ae3c8051e586e5b695182db44e682b54dcca3,18336,false,,3,396,2,parquet
+apache/iceberg,9747b14056b0644dae141c29ac3a5651bedbdb15,9747b14,Maximilian Michels,mxm@apache.org,2026-10-12T22:47:35+02:00,GitHub,noreply@github.com,2026-10-12T13:47:35-07:00,Spark: Backport: Don't reapply stream-from-timestamp when a stream resumes (#18348) (#18469),"Backports #18348 to Spark 3.5, 4.0 and 4.1. A query restarted from its
+checkpoint with a later stream-from-timestamp skipped the snapshots
+committed while it was down and could fail on every restart with ""Cannot
+load current offset at snapshot -1"".",843d36de699bbbacd1fc317e4ec3d824b600eccd,18469,false,,18,879,24,spark

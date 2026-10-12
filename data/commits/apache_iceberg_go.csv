@@ -30961,3 +30961,111 @@ Signed-off-by: Revanth Ch <revanthcse1@gmail.com>
 
 Signed-off-by: Revanth Ch <revanthcse1@gmail.com>",f403a02c7ae3b7e3d3ea135ee67473cc4afc3f73,2140,false,,2,56,15,table
 apache/iceberg-go,f5e2d7496f27c70c25481080724d3b586b0a94ab,f5e2d74,Revanth,revanthcse1@gmail.com,2026-10-11T08:53:32-05:00,GitHub,noreply@github.com,2026-10-11T15:53:32+02:00,feat(io/azure): authenticate with static adls.token credentials (#2163),,6e83162d8bc4d405a322fc465d78348a27a4c1bf,2163,false,,10,920,34,catalog; internal; io; website
+apache/iceberg-go,d9bf431d5a634884ad4b3c0078bc808ac15533c0,d9bf431,Animesh Kumar,61719828+CaptainAni187@users.noreply.github.com,2026-10-11T23:45:38+05:30,GitHub,noreply@github.com,2026-10-11T20:15:38+02:00,fix(view): stop MetadataBuilder.Build from growing the version log (#2109),"* fix(view): stop MetadataBuilder.Build from growing the version log
+
+view.MetadataBuilder.Build appended the pending history entry to
+b.versionLog, so building the same builder again added the entry again:
+three builds gave three version-log entries. Append to a copy instead.
+
+On the table side, updateSnapshotLog wrote the pruned log back into
+b.snapshotLog. Running it again gives the same result, so this did not
+change any output, but it was still a side effect of Build. It now
+returns the pruned log (as updatedSnapshotLog) and leaves the builder
+unchanged, like the metadata log since #2095.
+
+lastUpdatedMS stays cached on the builder after the first Build, so
+repeated builds report the same timestamp; that is now documented.
+
+Closes #2108
+
+Signed-off-by: Animesh Kumar <kanimesh187@gmail.com>
+
+* fix: make repeated builds stable and pin the pruning and expiry paths
+
+- table: compute lastUpdatedMS per Build instead of storing it on the
+  builder, so a build after more changes gets a fresh timestamp.
+- view: keep the UUID generated for a new view on the builder and reuse
+  it, so repeated builds describe the same view; SetUUID still works.
+- Document on both Build methods that they can be called more than once.
+- Tests: build twice after RemoveSnapshots, the view expiry path with
+  VersionHistorySizeKey=1, a builder from existing metadata, a stable
+  generated UUID, and a fresh timestamp after more changes.
+
+* test(view): use the embedded Metadata methods directly
+
+* fix: keep Build's guarantee scoped to the logs
+
+Per review, Build only guarantees that it doesn't write the version log
+or the snapshot log back to the builder.
+
+- table: keep lastUpdatedMS cached on the builder, as Java's
+  TableMetadata.Builder does, and say when it is set.
+- view: keep generating the UUID per build when none is assigned, as
+  Java's ViewMetadata.Builder does.
+- Tests: drop the timestamp and UUID assertions, build a three-entry
+  base version log with a history size of 2, and pin the [A, A] snapshot
+  log after moving main back to A between builds.
+- Say which calls move lastUpdatedMS after the first Build.
+- Document that updatedSnapshotLog never aliases b.snapshotLog and
+  derives pruning from b.updates.
+- Fix the [A, A] explanation and compare it with UpdateTableMetadata.
+- Rename the view expiry test, pin its one-entry log, and point to the
+  from-base test for the clear branch.
+
+---------
+
+Signed-off-by: Animesh Kumar <kanimesh187@gmail.com>",f5e2d7496f27c70c25481080724d3b586b0a94ab,2109,false,,4,160,10,table; view
+apache/iceberg-go,26e566b902ebcad7cd9d0cc1c808204af80bbbce,26e566b,Revanth,revanthcse1@gmail.com,2026-10-11T13:17:57-05:00,GitHub,noreply@github.com,2026-10-11T20:17:57+02:00,fix(table): keep full file_path bounds on v2 position delete files (#2164),,d9bf431d5a634884ad4b3c0078bc808ac15533c0,2164,false,,5,206,22,table
+apache/iceberg-go,97720316a4a206c600b9357c18d158d8eda570be,9772031,Richie Bachala,richie.bachala@gmail.com,2026-10-11T11:19:06-07:00,GitHub,noreply@github.com,2026-10-11T20:19:06+02:00,feat(catalog): add table lifecycle conformance tests and fix rename-to-existing errors (#2165),"* feat(catalog): add table lifecycle tests to the catalog conformance suite
+
+Add ListTables, DropTable, DropMissingTable, RenameTable,
+RenameTableToExisting and RenameMissingTable to catalogtest, gated by a
+new Config.SupportsRenameTable flag. SQL, REST and Hive opt in; Hadoop
+does not implement rename.
+
+Related to #1691
+
+* fix(catalog): return ErrTableAlreadyExists when renaming onto an existing table
+
+The new RenameTableToExisting conformance test found that REST and Hive
+returned untyped errors for this case. REST now maps 409 to
+ErrTableAlreadyExists, matching CreateTable. Hive checks the destination
+while holding the rename locks, matching its create path.
+
+Related to #1691
+
+* fix(hive): detect non-Iceberg tables at rename destination
+
+CheckTableExists only recognises Iceberg tables, so a non-Iceberg Hive
+table at the destination was invisible to the pre-check and AlterTable
+would return a raw metastore error.  Switch to a raw GetTable call so
+any table (Iceberg or not) at the destination is rejected with
+ErrTableAlreadyExists.
+
+Also strengthen the rename conformance test to assert that the table
+UUID survives the rename, catching backends that silently recreate
+instead of renaming.
+
+* test(catalog): verify unsupported rename and rename metadata preservation
+
+Address review feedback on the table lifecycle conformance tests:
+
+- When SupportsRenameTable is false, run RenameTableNotSupported instead
+  of skipping the rename suite, asserting RenameTable returns
+  iceberg.ErrNotImplemented and leaves the source table in place. The
+  Hadoop catalog now wraps that sentinel. Reference #1097 in the field
+  doc.
+- Assert that rename preserves the table metadata location alongside
+  its UUID, catching backends that rename by recreating the table.
+
+Signed-off-by: Richie Bachala <richie.bachala@gmail.com>
+
+---------
+
+Signed-off-by: Richie Bachala <richie.bachala@gmail.com>",26e566b902ebcad7cd9d0cc1c808204af80bbbce,2165,false,,11,281,3,catalog
+apache/iceberg-go,61318c41303d3968f4a846e1703297e8eb3a68d8,61318c4,Minh Vu,vuhoangminh97@gmail.com,2026-10-11T20:30:34+02:00,GitHub,noreply@github.com,2026-10-11T20:30:34+02:00,perf(table): avoid cloning ReadTasks for already-bound residuals (#2106),,97720316a4a206c600b9357c18d158d8eda570be,2106,false,,7,593,42,table
+apache/iceberg-go,9123839791c3e28277fc87848c4555bfc253db68,9123839,Minh Vu,vuhoangminh97@gmail.com,2026-10-11T21:22:26+02:00,GitHub,noreply@github.com,2026-10-11T21:22:26+02:00,perf(table): fast-path single int64 equality deletes (#2157),,61318c41303d3968f4a846e1703297e8eb3a68d8,2157,false,,3,509,22,table
+apache/iceberg-go,5c79cd0ef6574a87f4e1817ba3388ebf8d969aca,5c79cd0,Minh Vu,vuhoangminh97@gmail.com,2026-10-12T20:24:27+02:00,GitHub,noreply@github.com,2026-10-12T20:24:27+02:00,perf(schema): avoid visitor allocations in HighestFieldID (#2134),,9123839791c3e28277fc87848c4555bfc253db68,2134,false,,3,251,29,schema.go; schema_highest_field_id_bench_test.go; schema_test.go
+apache/iceberg-go,366dc20410649bad7d24aa12bfcd684937064ad6,366dc20,Minh Vu,vuhoangminh97@gmail.com,2026-10-12T20:24:44+02:00,GitHub,noreply@github.com,2026-10-12T20:24:44+02:00,perf(puffin): sort blob indexes when reading all blobs (#2143),,5c79cd0ef6574a87f4e1817ba3388ebf8d969aca,2143,false,,3,156,17,puffin
+apache/iceberg-go,832bdede3f3d989a8cfc00e322482017c6aeacbe,832bded,Minh Vu,vuhoangminh97@gmail.com,2026-10-12T20:29:08+02:00,GitHub,noreply@github.com,2026-10-12T20:29:08+02:00,perf(table): index equality delete metric ranges (#2148),,366dc20410649bad7d24aa12bfcd684937064ad6,2148,false,,4,1095,10,table
+apache/iceberg-go,ff7df2e56ed3391e810281b772bf27ea74d03256,ff7df2e,Minh Vu,vuhoangminh97@gmail.com,2026-10-12T21:23:20+02:00,GitHub,noreply@github.com,2026-10-12T21:23:20+02:00,perf(table): reuse bitmap indexes for positional deletes (#2146),,832bdede3f3d989a8cfc00e322482017c6aeacbe,2146,false,,5,1217,98,table

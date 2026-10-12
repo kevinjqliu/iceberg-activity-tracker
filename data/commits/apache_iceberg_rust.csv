@@ -32704,3 +32704,202 @@ apache/iceberg-rust,a76678363835a3035c38b9ab53785e9d9b762d24,a766783,Xander,zand
 * comments
 
 * starts_from",d63e8610f2152158882f8773f3745f3f32752912,3066,false,,3,525,2,crates
+apache/iceberg-rust,050ddfda869068cf2d19683e45d447314181415b,050ddfd,Ethan Woodbury,woodburyethan60@gmail.com,2026-10-11T18:16:21Z,GitHub,noreply@github.com,2026-10-11T18:16:21Z,"fix(arrow): reconcile evolved nested structs by field id, not position (#3255)","* fix(arrow): reconcile evolved nested structs by field id, not position
+
+When a struct gains a field (schema evolution) after a data file was written,
+the file's struct has fewer children than the table schema. RecordBatchTransformer
+promoted such columns with arrow_cast::cast, which matches struct/list/map children
+positionally -- so every child after the gap shifts and types collide, e.g.
+'Casting from Utf8 to Struct' when a scalar lands on an added list<struct>.
+
+Replace the flat cast with a PromotePlan that is resolved once per file when
+the BatchTransform is built: nested struct children are matched to the target
+schema by PARQUET:field_id, recursing through list/large-list/map, so the
+per-batch work is just index lookups and array assembly. Absent optional
+children are filled with typed nulls; absent required children error, as do
+absent children with an initial-default (not yet wired up for nested fields)
+and source structs whose children carry no field ids, rather than silently
+producing wrong data. Primitives still use cast for valid Iceberg promotions.
+Mirrors iceberg-java's by-field-id nested readers.
+
+Closes #2617
+
+* test(arrow): cover appended nested struct field on promote
+
+Add a unit test for struct<a, b> -> struct<a, b, c>, the append case of
+nested schema evolution. The existing middle-insert test already covers
+by-id matching; this pins the ""expected 3 got 2"" failure mode.
+
+* fix(arrow): reconcile nested reorder and rename by field id
+
+Always build a PromotePlan for a present column and pass through only
+when that plan is a no-op. equals_datatype ignored nested names and
+field ids, so a reorder or same-type rename kept the file layout.
+
+Id-less nested children still match by position when their types line
+up, which covers maps. Nested initial-default stays unsupported (#3261).
+
+* fix(arrow): error when only some nested fields have ids
+
+The positional fallback stays for a fully id-less struct. If some
+children have field ids and some do not, null-filling the rest would
+drop data, so that now errors. A same-type id-less reorder is still
+positional; it cannot be detected without ids.
+
+* fix(arrow): cast id-less nested fields by position
+
+Name mapping only stamps top-level ids. When the child counts match,
+pair by position and let build check each child, so an int still
+promotes to long. A different count, or ids on only some children,
+still errors.
+
+* test(arrow): compare remaining promote results as whole arrays
+
+Use invalid_data! for the PromotePlan DataInvalid errors, matching main.
+
+* fix(arrow): accept either list offset width from the file
+
+A Parquet Arrow schema hint can make a list column LargeList while the
+table schema is List. Main cast that column; PromotePlan rejected it.
+
+* fix(arrow): apply nested identity constants and drop LargeList targets
+
+A missing nested field that is an identity partition source takes that
+partition value before initial-default or null. schema_to_arrow_schema
+always emits List, so a LargeList target now errors instead of building
+a plan; a LargeList file column still promotes to List.
+
+The remaining promote tests compare whole arrays. Error tests check
+ErrorKind, including field ids on only some children.
+
+* Simplify PromotePlan and dedup nested promotion tests
+
+* fix(arrow): address final review on nested field-id promotion
+
+- Add a reader-level test that writes an old nested schema to Parquet and
+  reads it back through an evolved one, pinning that parquet-rs attaches
+  field ids to struct children, list elements, and map keys and values
+- Reject duplicate source field ids and nested sources read as a
+  non-nested type when the plan is built
+- Report non-struct map entries as DataInvalid
+- Pin the id-less same-type reorder fallback with a test until #1845
+- Assert map data types, since map array equality skips field names
+- Point at #3378 where the projection mask skips all-missing structs
+
+* test(arrow): cover sliced list promotion with a null slot
+
+---------
+
+Co-authored-by: Jordan Epstein <jordan.epstein@imc.com>",a76678363835a3035c38b9ab53785e9d9b762d24,3255,false,Jordan Epstein,4,1152,64,crates
+apache/iceberg-rust,2fddb1601a9af1c97a559baa9865e1494d93756c,2fddb16,Minh Vu,vuhoangminh97@gmail.com,2026-10-11T18:19:26Z,GitHub,noreply@github.com,2026-10-11T18:19:26Z,fix(spec): reject boolean literals for non-boolean types (#3334),"* fix(spec): reject boolean literals for non-boolean types
+
+* test(spec): polish boolean literal validation coverage",050ddfda869068cf2d19683e45d447314181415b,3334,false,,2,153,2,crates
+apache/iceberg-rust,9092073f988b3e6401d4ca00e2b50b7a53434ee1,9092073,NoahKusaba,97474796+NoahKusaba@users.noreply.github.com,2026-10-11T18:20:15Z,GitHub,noreply@github.com,2026-10-11T18:20:15Z,fix(arrow): strip metadata from nested fields and normalize container field names (#3303),"* fix(arrow): strip metadata from list elements and map entries
+
+strip_metadata_from_schema failed with ""Field stack underflow in list"" on
+any schema with a list or map column. MetadataStripVisitor pushed a field
+onto its stack only in before_field, which the visitor does not call for
+list elements, map keys or map values, so rebuilding those popped from an
+empty stack. Push in before_list_element, before_map_key and
+before_map_value too.
+
+The stack now holds each field's name and nullability rather than a
+Field with a placeholder type, and one pop_field helper rebuilds fields
+for struct, list, map and primitive.
+
+Document the two normalizations the function makes besides removing
+metadata, which callers comparing stripped schemas rely on: a map's
+entries field is renamed to DEFAULT_MAP_FIELD_NAME, and a
+dictionary-encoded field becomes its value type.
+
+Closes #3297
+
+* test(arrow): strip metadata from fields with repeated nested names
+
+* refactor(arrow): rename MetadataStripVisitor's field stack helpers to start_field and finish_field
+
+* docs(arrow): clarify visitor field hooks and strip_metadata_from_schema naming
+
+before_field and after_field run for every schema and struct field, not
+for list elements or map keys and values. strip_metadata_from_schema
+keeps list element names, and renames only a map's entries field.
+
+* normalize list and map field names when stripping metadata",2fddb1601a9af1c97a559baa9865e1494d93756c,3303,false,,1,325,63,crates
+apache/iceberg-rust,d3e9f456e29b10ba95f11b3a2bc5c9dc546e1d93,d3e9f45,Oleks V,comphead@users.noreply.github.com,2026-10-11T18:28:33Z,GitHub,noreply@github.com,2026-10-11T18:28:33Z,perf(reader): read leaf field IDs from metadata in the projection mask (#3396),"get_arrow_projection_mask_with_field_ids carried each leaf's field ID
+from its first pass to its second through a HashMap<FieldRef, i32>.
+Hashing an Arrow Field hashes its whole DataType and allocates a sorted
+copy of its metadata keys, and the map grew from empty. Read the ID
+from the leaf's PARQUET:field_id metadata in both passes instead.
+
+Closes #3394",9092073f988b3e6401d4ca00e2b50b7a53434ee1,3396,false,,1,11,14,crates
+apache/iceberg-rust,acd610997de78f986ece9f89c3bf476de5e1f5a5,acd6109,Minh Vu,vuhoangminh97@gmail.com,2026-10-11T18:29:22Z,GitHub,noreply@github.com,2026-10-11T18:29:22Z,perf(reader): speed up row group filtering and name mapping (#3269),"* perf(reader): optimize row group filter intersection
+
+* perf(reader): add row group intersection benchmark
+
+* style: format iceberg benchmark manifest
+
+* perf(reader): avoid allocations in name mapping lookup
+
+* perf(reader): prune row groups from split candidates
+
+* fix(reader): format tests and preallocate name mapping index
+
+* fix(reader): tighten candidate pruning and name mapping coverage",d3e9f456e29b10ba95f11b3a2bc5c9dc546e1d93,3269,false,,3,161,37,crates
+apache/iceberg-rust,693339072b87eebf075479393a8ef55182f27aca,6933390,DeviousCardi,115358213+DeviousCardi@users.noreply.github.com,2026-10-12T08:48:39Z,GitHub,noreply@github.com,2026-10-12T08:48:39Z,fix(arrow): decode short BYTE_ARRAY decimal row-group stats (#3364),"get_parquet_stat_min_as_datum / get_parquet_stat_max_as_datum decoded
+BYTE_ARRAY decimal bounds with a strict 16-byte conversion. Parquet
+stores these as minimal-length big-endian two's-complement values, so
+any bound shorter than 16 bytes failed to convert and aborted the
+row-group read.
+
+Use the variable-length, sign-extending i128_from_be_bytes helper, as
+the FIXED_LEN_BYTE_ARRAY arm already does. Bounds longer than 16 bytes
+still return DataInvalid. Empty bounds also return DataInvalid instead
+of decoding as zero, which could otherwise prune matching row groups.
+
+Closes #3280",acd610997de78f986ece9f89c3bf476de5e1f5a5,3364,false,,1,93,2,crates
+apache/iceberg-rust,b55cda1cb9e503336bdd41e2b2489415216577d7,b55cda1,Oleks V,comphead@users.noreply.github.com,2026-10-12T18:27:09Z,GitHub,noreply@github.com,2026-10-12T18:27:09Z,fix(reader): apply name mapping to nested fields (#3384),"* fix(reader): apply name mapping to nested fields
+
+apply_name_mapping_to_arrow_schema assigned field IDs to top-level
+columns only. The projection then never selected the leaves of a
+struct, list, or map in a file without embedded IDs, and those columns
+read as NULL whenever a top-level column was projected too.
+
+Apply the mapping at every depth, as Java's ApplyNameMapping does.
+Struct children are looked up within their parent's entry, and list
+elements and map keys and values as element, key, and value, whatever
+the file calls them.
+
+Closes #3374
+
+* Size collections up front, shorten comments, dedupe tests
+
+- Build each rebuilt Fields from Vec::with_capacity instead of a
+  fallible collect, and the map entries from a two-element array.
+- Size the maps and index list in
+  get_arrow_projection_mask_with_field_ids.
+- Keep one reader test for the reported struct case and cover every
+  nested Arrow type in one schema-level test.
+
+* Address review: skip entries without a field ID, pin types and errors
+
+- Treat a mapping entry without a field ID as missing, so its nested
+  fields keep no IDs either.
+- Note that the map shape checks are defensive, and report the entry
+  count when one fails.
+- Note that the projection treats ListView and LargeListView as leaves.
+- Test unmapped children, an entry without a field ID, the fixed-size
+  list size, the map ordering flag, and a predicate on a nested field.",693339072b87eebf075479393a8ef55182f27aca,3384,false,,1,322,35,crates
+apache/iceberg-rust,b154603a710d730d2f43f8af4db257cc137237ef,b154603,advancedxy,807537+advancedxy@users.noreply.github.com,2026-10-12T19:41:02Z,GitHub,noreply@github.com,2026-10-12T19:41:02Z,fix(transform): correct decimal and binary truncate literals (#3243),"* fix(transform): correct decimal and binary truncate literals
+
+The Arrow array path already preserves decimal precision and scale and
+supports binary truncation. The literal path instead reset decimal scale
+to zero and rejected binary values. For example, truncate[50](10.65)
+returned 1050 instead of 10.50.
+
+Align literal truncation with the Arrow array path: preserve the source
+decimal precision and scale, and return the first W bytes of binary
+values, or the entire value when shorter. Decimal projection boundary
+adjustments must also preserve precision and scale to keep their values
+correct before truncation.
+
+* fix(transform): address truncate literal review feedback",b55cda1cb9e503336bdd41e2b2489415216577d7,3243,false,,4,251,43,crates
