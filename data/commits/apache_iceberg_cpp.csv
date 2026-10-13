@@ -9143,3 +9143,53 @@ little-endian bitmap bytes when serializing and reading.
 
 Preserve the fixture's embedded zeros and exact wire length while
 satisfying modernize-avoid-c-arrays.",cbca7d268f5a96848eb40de5fa5bfe8c763e1e98,1001,false,,2,23,1,cmake_modules; src
+apache/iceberg-cpp,7543e8042180080d34b5ee44a6d4c18b86e47ac1,7543e80,Jiajia Li,lijiajia@outlook.com,2026-10-13T08:47:52+08:00,GitHub,noreply@github.com,2026-10-13T08:47:52+08:00,fix(io): attempt every S3 delete and report how many failed (#966),"Follow-up to https://github.com/apache/iceberg-cpp/pull/898#discussion_r4091927837.
+
+`ArrowS3FileIO::DeleteFiles` returned at the first credential prefix whose delete failed, so files under the remaining prefixes were never attempted. It now attempts every file unless task submission fails, logs deletion failures, and returns `Failed to delete N of M files`. Exceptions thrown by individual deletes are counted too.
+
+- Deletion is sequential by default. `InitializeS3FileIODeleteExecutor(Executor*)` initializes a caller-owned executor shared by all S3 FileIOs, including registry-created instances. Initialize it before the first delete; otherwise, the first delete freezes the default `nullptr`. Repeating the same pointer is allowed, but replacing it is not. The executor must remain alive until the last delete completes.
+- `s3.delete.num-threads` limits worker tasks per call, defaulting to the hardware thread count. Workers share a file index, keeping task/future storage bounded by the configured parallelism. The shared executor controls total concurrency; this property does not create or resize a thread pool.
+- Accepted tasks finish before the call exits, including when submission returns an error or throws. Submission failures are returned without falling back to the calling thread and bypassing the executor's concurrency limit. All workers use the same delegate snapshot and the caller's logger.
+
+Arrow has no public S3 batch-delete API, so each request still deletes one file. `ResolvingFileIO` keeps its existing fail-fast behavior across delegates.
+
+Tests cover deletion across allowed/denied prefixes, thrown deletes, rejected/throwing submissions, bounded task counts and concurrency, immutable executor initialization, and executor configuration for both direct and registry-created FileIOs.",274d1bbb4f46114806dc6515b2493483b47b3702,966,false,,7,553,25,mkdocs; src
+apache/iceberg-cpp,f799dcbc41a19f589123a4f5966075503347a49a,f799dcb,YinZheng-Sun,57469177+YinZheng-Sun@users.noreply.github.com,2026-10-13T10:36:43+08:00,GitHub,noreply@github.com,2026-10-13T10:36:43+08:00,fix(expression): treat constants as neutral in IsBoundVisitor (#1004),"AlwaysTrue/AlwaysFalse no longer make IsBoundVisitor fail. Constants contain no references and are now neutral when combining binding states, so And(True, unbound) is unbound and And(True, bound) is bound. Mixing bound and unbound predicates is rejected with an error. This follows Java's IsBoundVisitor.
+
+Co-authored-by: yinzhengsun <yinzhengsun@tencent.com>",7543e8042180080d34b5ee44a6d4c18b86e47ac1,1004,false,yinzhengsun,3,98,38,src
+apache/iceberg-cpp,db796cbf5d51bd74aa1cfba7647eae748d91ff05,db796cb,Manu Zhang,OwenZhang1990@gmail.com,2026-10-13T14:48:15+08:00,GitHub,noreply@github.com,2026-10-13T14:48:15+08:00,fix: preserve partition types after source columns are dropped (#999),Co-authored-by: Codex <codex@openai.com>,f799dcbc41a19f589123a4f5966075503347a49a,999,false,Codex,2,12,10,src
+apache/iceberg-cpp,bbc235910706c44dcee69202d3d8c165cede6992,bbc2359,YangJie,yangjie01@baidu.com,2026-10-13T03:15:27-04:00,GitHub,noreply@github.com,2026-10-13T15:15:27+08:00,fix(catalog): validate namespace existence in InMemoryCatalog create and register (#980),"## What
+
+`InMemoryCatalog` did not correctly check that a table's namespace exists, in two methods.
+
+`CreateTable` wrote the table metadata file before validating the namespace. Creating a table under a missing namespace returned `kNoSuchNamespace`, but on object-store `FileIO` it first left an orphaned `00000-<uuid>.metadata.json` that nothing later removes, and on the default local `FileIO` the stray write failed with a misleading `kIOError`.
+
+`RegisterTable` guarded with `if (!root_namespace_->NamespaceExists(identifier.ns))`. `NamespaceExists` returns `Result<bool>`, so `!result` tests `has_value()` rather than the bool, and a missing namespace is a value `false`, not an error. The branch was dead code, and a missing namespace surfaced as `kUnknownError` instead of `kNoSuchNamespace`.
+
+Closes #977.
+
+## How
+
+`CreateTable` now validates the namespace before writing any metadata, matching `SqlCatalog::CreateTable`. `RegisterTable` reads the metadata outside the lock, then validates the namespace and registers under a single lock: the dead `if (!NamespaceExists(...))` check (which tested the `Result<bool>`'s `has_value()` rather than the contained bool) becomes an unwrap that returns `kNoSuchNamespace`. Keeping the namespace check and the registration in one critical section leaves them atomic, and the metadata read stays off the lock. The empty (root) namespace still resolves to `true`, so ordinary table creation is unaffected.
+
+## Testing
+
+Two new tests in `in_memory_catalog_test.cc`:
+
+- `CreateTableNonexistentNamespace` — creating a table under a missing namespace returns `kNoSuchNamespace` and leaves no metadata file behind. It passes an explicit location whose `metadata/` directory already exists, so the pre-fix write lands a detectable orphan there; the zero-file assertion is what fails without the fix. The error-kind assertion alone would still pass pre-fix, because the later `UpdateTableMetadataLocation` also returns `kNoSuchNamespace` after the orphan is written.
+- `RegisterTableNonexistentNamespace` — registering under a missing namespace returns `kNoSuchNamespace`; without the fix the dead `Result<bool>` check let it fall through to `kUnknownError`.",db796cbf5d51bd74aa1cfba7647eae748d91ff05,980,false,,2,55,1,src
+apache/iceberg-cpp,de7c9ce0715c5846ab5ce3cbcaa6d90c199a5ba1,de7c9ce,YangJie,yangjie01@baidu.com,2026-10-13T03:16:52-04:00,GitHub,noreply@github.com,2026-10-13T15:16:52+08:00,fix(expression): treat COUNT(*) as referencing no fields in GetReferencedFieldIds (#981),"ReferenceVisitor::Aggregate unconditionally called
+aggregate->reference()->field_id(), but BoundAggregate::reference()
+returns nullptr for aggregates without a term such as COUNT(*), so
+GetReferencedFieldIds on a bound count(*) dereferenced null and
+crashed. Skip the insert when there is no reference; the aggregate
+then correctly contributes no field ids, matching the Java reference.",bbc235910706c44dcee69202d3d8c165cede6992,981,false,,2,23,1,src
+apache/iceberg-cpp,12a16bd592bcd841654a23ed8225dcc2caf807d3,12a16bd,Manu Zhang,OwenZhang1990@gmail.com,2026-10-13T16:02:13+08:00,GitHub,noreply@github.com,2026-10-13T16:02:13+08:00,fix(manifest): round-trip decimal partition values (#998),"Share decimal encoding across direct and generic writers, preserve signed
+values at the schema fixed width, and reject representation overflow.
+Cover exact wire bytes and decimal file round trips in both backends.
+
+Co-authored-by: Codex <codex@openai.com>",de7c9ce0715c5846ab5ce3cbcaa6d90c199a5ba1,998,false,Codex,10,258,11,src
+apache/iceberg-cpp,a036fae8ec947b6ea8da1cae36a666add5eea461,a036fae,Gang Wu,ustcwg@gmail.com,2026-10-13T17:57:12+08:00,GitHub,noreply@github.com,2026-10-13T17:57:12+08:00,fix: respect ancestor nullability when folding IS NULL/NOT NULL predicates (#995),"A required field nested in an optional struct, list, or map can be null when its
+parent is null, so IS NULL and NOT NULL must not be folded for it. Only fold
+when the field and all of its ancestors are required, matching Java's
+UnboundPredicate#bindUnaryOperation.",12a16bd592bcd841654a23ed8225dcc2caf807d3,995,false,,3,81,7,src

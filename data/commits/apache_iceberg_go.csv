@@ -31069,3 +31069,223 @@ apache/iceberg-go,5c79cd0ef6574a87f4e1817ba3388ebf8d969aca,5c79cd0,Minh Vu,vuhoa
 apache/iceberg-go,366dc20410649bad7d24aa12bfcd684937064ad6,366dc20,Minh Vu,vuhoangminh97@gmail.com,2026-10-12T20:24:44+02:00,GitHub,noreply@github.com,2026-10-12T20:24:44+02:00,perf(puffin): sort blob indexes when reading all blobs (#2143),,5c79cd0ef6574a87f4e1817ba3388ebf8d969aca,2143,false,,3,156,17,puffin
 apache/iceberg-go,832bdede3f3d989a8cfc00e322482017c6aeacbe,832bded,Minh Vu,vuhoangminh97@gmail.com,2026-10-12T20:29:08+02:00,GitHub,noreply@github.com,2026-10-12T20:29:08+02:00,perf(table): index equality delete metric ranges (#2148),,366dc20410649bad7d24aa12bfcd684937064ad6,2148,false,,4,1095,10,table
 apache/iceberg-go,ff7df2e56ed3391e810281b772bf27ea74d03256,ff7df2e,Minh Vu,vuhoangminh97@gmail.com,2026-10-12T21:23:20+02:00,GitHub,noreply@github.com,2026-10-12T21:23:20+02:00,perf(table): reuse bitmap indexes for positional deletes (#2146),,832bdede3f3d989a8cfc00e322482017c6aeacbe,2146,false,,5,1217,98,table
+apache/iceberg-go,befe7c5bc0ebae0f8794a7df164ffe9f00230fc1,befe7c5,Revanth,revanthcse1@gmail.com,2026-10-13T05:57:15-05:00,GitHub,noreply@github.com,2026-10-13T06:57:15-04:00,fix(rest): prevent credential and default header leaks on cross-origin redirects (#2098),"* fix(rest): prevent credential and default header leaks on cross-origin redirects
+
+* address feedback
+
+* fix(rest): refuse cross-origin redirects on catalog and OAuth clients",ff7df2e56ed3391e810281b772bf27ea74d03256,2098,false,,4,514,40,catalog
+apache/iceberg-go,0b9fa13f031febfb76712a7b2ba3412f3981588b,0b9fa13,Enes Keles,eneskeles81@gmail.com,2026-10-13T14:08:31+03:00,GitHub,noreply@github.com,2026-10-13T07:08:31-04:00,fix(table): keep rows where the filter is NULL in copy-on-write deletes (#2111),"* fix(table): keep rows where the filter is NULL in copy-on-write deletes
+
+Signed-off-by: Enes Keles <eneskeles81@gmail.com>
+
+* fix(table): keep NaN rows when row-group pruning the copy-on-write complement
+
+Signed-off-by: Enes Keles <eneskeles81@gmail.com>
+
+* fix(table): keep NULL rows in whole-file deletes and IsNaN deletes on old files
+
+Signed-off-by: Enes Keles <eneskeles81@gmail.com>
+
+* test(table): pin the rewrite path and NotNaN on files without the column
+
+Signed-off-by: Enes Keles <eneskeles81@gmail.com>
+
+---------
+
+Signed-off-by: Enes Keles <eneskeles81@gmail.com>",befe7c5bc0ebae0f8794a7df164ffe9f00230fc1,2111,false,,3,465,2,table
+apache/iceberg-go,9fb8cb632964921df5d6ed1c1bd66d4087aca3d8,9fb8cb6,Minh Vu,vuhoangminh97@gmail.com,2026-10-13T13:30:13+02:00,GitHub,noreply@github.com,2026-10-13T07:30:13-04:00,perf(table): fast-path IN metrics pruning with extrema (#2117),"* perf(table): fast-path IN metrics pruning with extrema
+
+* test(table): verify IN benchmark pruning results
+
+* perf(table): reuse literal comparator for IN extrema
+
+* perf(table): resolve IN extrema comparator once
+
+* perf(table): straighten IN extrema pruning
+
+* docs(expr): update extrema visitor contract
+
+* test(table): cover IN extrema dispatch and types
+
+* bench(table): label IN extrema baselines
+
+* test(expr): keep geo IN off ordering extrema path
+
+* test(table): gofmt IN extrema coverage
+
+* perf(table): reuse IN extrema comparator
+
+* perf(table): reuse manifest IN extrema comparator
+
+* test(expr): prove IN extrema borrowed dispatch
+
+* perf(table): avoid comparator closure allocation for IN extrema
+
+* test(table): cover IN extrema dispatch and overlap
+
+* test: drop redundant bound extrema dispatch coverage
+
+* refactor(table): straighten IN bound evaluation
+
+* style: gofmt bound extrema test
+
+* style: gofmt IN extrema tests
+
+* perf(table): prune oversized IN sets by extrema
+
+* test(table): pin IN extrema evaluator dispatch
+
+* test: drop duplicate geo extrema coverage
+
+* fix(table): preserve IN slow-path pruning and cover extrema dispatch
+
+* style(table): gofmt IN extrema regression tests
+
+* test(table): verify IN extrema fast paths with valid bounds
+
+Check member access with real bound extrema across five literal types and remove a condition dominated by the oversized-set return.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): pin IN extrema dispatch and comparator coverage
+
+Preserve member-scan behavior, cover supplied-extrema sentinels,
+verify comparator types, and document oversized and geo fallbacks.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(table): gofmt IN extrema comparator coverage
+
+* test(table): benchmark IN pruning across literal types
+
+Signed-off-by: Codex <codex@openai.com>
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): guard oversized IN overlap from member scans
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Signed-off-by: Codex <codex@openai.com>",0b9fa13f031febfb76712a7b2ba3412f3981588b,2117,false,,5,836,14,bound_set_extrema_internal_test.go; table; visitors.go
+apache/iceberg-go,f939fddad954f6cc554f7f37a4aff35c104608a4,f939fdd,Minh Vu,vuhoangminh97@gmail.com,2026-10-13T13:31:52+02:00,GitHub,noreply@github.com,2026-10-13T07:31:52-04:00,perf(table): specialize binary partition key lookups (#2155),"* perf(table): specialize binary partition key lookups
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover binary partition key boundaries
+
+Verify null, empty, arbitrary bytes, and separator-containing keys at both levels of binary partition grouping with exact row membership.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Signed-off-by: Codex <codex@openai.com>",9fb8cb632964921df5d6ed1c1bd66d4087aca3d8,2155,false,,3,215,12,table
+apache/iceberg-go,ff7dd1d7b34e323953f6fec8647424d3079d5e33,ff7dd1d,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-13T13:40:53+02:00,GitHub,noreply@github.com,2026-10-13T07:40:53-04:00,ci: add apidiff check for incompatible API changes (#2166),"Part of the v1.0 freeze work in #2062. After the 1.0.0 tag, any breaking
+change to the exported API needs a /v2 module, so we want CI to catch them.
+
+The new ""API compatibility"" workflow runs golang.org/x/exp/cmd/apidiff in
+module mode on every pull request. It exports the API of the base branch
+tip the PR merges onto and compares the merged result against it. Internal
+packages are skipped. The list of incompatible changes goes to the job
+summary.
+
+Until 1.0 we still make intentional breaks, so a break only fails the check
+when the PR title does not declare it with the Conventional Commits ""!""
+marker (for example ""refactor(io)!: ...""), which the repo already uses for
+breaking changes. Editing the title re-runs the check. After the tag, the
+title escape hatch can be dropped so any break fails.
+
+If apidiff itself fails, for example because the base or the PR does not
+build, the script prints the error and exits 2, so a broken build is not
+reported as an API break.
+
+The logic lives in dev/check-api-compat.sh so it can also be run locally
+against any base ref. CONTRIBUTING.md now mentions the check and the ""!""
+convention.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",f939fddad954f6cc554f7f37a4aff35c104608a4,2166,false,,3,214,0,.github; CONTRIBUTING.md; dev
+apache/iceberg-go,51aed6d58730878a560a611f97f23ef2c1e7b3a7,51aed6d,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-13T14:26:35+02:00,GitHub,noreply@github.com,2026-10-13T13:26:35+01:00,refactor(table)!: remove WitMaxConcurrency and RewriteFiles.Apply (#2177),"refactor(table)!: remove deprecated WitMaxConcurrency and RewriteFiles.Apply
+
+WitMaxConcurrency was a misspelled alias of WithMaxConcurrency. Use
+WithMaxConcurrency.
+
+RewriteFiles.Apply took three slices and had no slot for deletion vectors,
+so wiring worker output through it left the DVs of rewritten files orphaned.
+Use RewriteFiles.ApplyResult with a CompactionGroupResult instead, for
+example ApplyResult(CompactionGroupResult{OldDataFiles: deletes,
+NewDataFiles: adds, SafePosDeletes: safeDeletes}), or call DeleteFile and
+AddFile directly.
+
+This is a breaking change for callers of the removed symbols.
+
+Part of the v1.0 API cleanup in #2062.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",ff7dd1d7b34e323953f6fec8647424d3079d5e33,2177,false,,5,3,51,table; website
+apache/iceberg-go,43e5b0765a0c60c9254045606a17a4eafb3ad327,43e5b07,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-13T14:28:24+02:00,GitHub,noreply@github.com,2026-10-13T13:28:24+01:00,refactor(io/gocloud)!: remove deprecated compatibility shims (#2178),"The io/gocloud package kept aliases and wrappers that redirected to the
+per-cloud subpackages after the split in #1874 and #1961: BlobFileIO,
+KeyExtractor, ErrEmptyObjectKey and ErrUnsupportedObjectAuthority now live
+in io/gocloud/blobfs, ParseAWSConfig in io/gocloud/s3, and ParseGCSConfig in
+io/gocloud/gcs. Import those packages directly instead.
+
+io/gocloud itself still registers every gocloud-backed FileIO, and its
+registration test is kept. This is a breaking change for callers still using
+the shims.
+
+Part of the v1.0 API cleanup in #2062.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",51aed6d58730878a560a611f97f23ef2c1e7b3a7,2178,false,,3,36,148,io
+apache/iceberg-go,edf981e1f1ca21ce03b416f4eac8b536f44388f0,edf981e,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-13T14:31:11+02:00,GitHub,noreply@github.com,2026-10-13T13:31:11+01:00,refactor!: remove ManifestFile.FetchEntries and DataFile.DistinctValueCounts (#2179),"refactor!: remove deprecated ManifestFile.FetchEntries and DataFile.DistinctValueCounts
+
+ManifestFile.FetchEntries loaded every entry into memory and took no
+context. Use ManifestFile.Entries, which streams entries as an iterator:
+
+    for entry, err := range mf.Entries(fs, discardDeleted) {
+        if err != nil {
+            return err
+        }
+        // use entry
+    }
+
+or ReadManifest when a slice is needed.
+
+DataFile.DistinctValueCounts and DataFileBuilder.DistinctValueCounts exposed
+distinct_counts (field 111), which the spec deprecates in every format
+version. Writers already omitted the field, so the setter had no effect on
+the wire. The Avro field stays on the data file struct, so legacy manifests
+that carry it still decode, and writers continue to omit it. The tests now
+check both on the struct, and a codec test checks that the entry schema has
+no field 111.
+
+This is a breaking change for callers of the removed methods.
+
+Part of the v1.0 API cleanup in #2062.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",43e5b0765a0c60c9254045606a17a4eafb3ad327,2179,false,,11,80,123,codec; data_file_codec.go; data_file_codec_test.go; data_file_refs.go; manifest.go; manifest_projection_bench_test.go; manifest_test.go; table
+apache/iceberg-go,5ab0389b1ecb1dd1a508e921909d3e2bcffb26b4,5ab0389,Ajitesh Singh,ajiteshjs@gmail.com,2026-10-13T05:34:18-07:00,GitHub,noreply@github.com,2026-10-13T13:34:18+01:00,fix(io): treat ADLS Gen2 / OneLake directory blobs as directories in blobfs WalkDir (#2180),"* fix(io): walk hierarchical namespace directories in blobfs WalkDir
+
+On ADLS Gen2 accounts with a hierarchical namespace (such as OneLake),
+every directory is also stored as a 0-byte blob named after it, with no
+trailing slash. gocloud's fs.FS treats any key with an exact object as a
+file, so WalkDir stopped at the walk root and reported it as the only
+file. Orphan cleanup then listed the table location as its only orphan.
+
+WalkDir now walks a small adapter over the bucket. A key with objects
+under it is a directory, and a 0-byte blob named after a child directory
+is hidden from listings. Trailing-slash markers on flat stores behave as
+before, and the walk makes one listing per directory instead of an
+existence check plus a listing.
+
+Fixes #2159
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* docs(io): shorten walkFS comments and note empty HNS directories
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+---------
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",edf981e1f1ca21ce03b416f4eac8b536f44388f0,2180,false,Claude Opus 5.5,2,170,1,io
+apache/iceberg-go,386c9589287e8e4b411f6581bfbdcfb52fc51a63,386c958,Revanth,revanthcse1@gmail.com,2026-10-13T07:40:22-05:00,GitHub,noreply@github.com,2026-10-13T13:40:22+01:00,fix(manifest): keep referenced_data_file in v2 manifests (#2183),,5ab0389b1ecb1dd1a508e921909d3e2bcffb26b4,2183,false,,2,30,0,internal; manifest_test.go
+apache/iceberg-go,a648a3e4bb11eea3cfdf153d7a90ea81a64f3d27,a648a3e,Revanth,revanthcse1@gmail.com,2026-10-13T08:12:38-05:00,GitHub,noreply@github.com,2026-10-13T14:12:38+01:00,test(rest): fail scan-planning integration tests when the fixture lacks planning (#2184),,386c9589287e8e4b411f6581bfbdcfb52fc51a63,2184,false,,1,4,1,catalog
