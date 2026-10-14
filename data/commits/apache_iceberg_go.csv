@@ -31289,3 +31289,527 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",edf981e1f1ca21ce03b416f4eac8b536f44388f0,2180,false,Claude Opus 5.5,2,170,1,io
 apache/iceberg-go,386c9589287e8e4b411f6581bfbdcfb52fc51a63,386c958,Revanth,revanthcse1@gmail.com,2026-10-13T07:40:22-05:00,GitHub,noreply@github.com,2026-10-13T13:40:22+01:00,fix(manifest): keep referenced_data_file in v2 manifests (#2183),,5ab0389b1ecb1dd1a508e921909d3e2bcffb26b4,2183,false,,2,30,0,internal; manifest_test.go
 apache/iceberg-go,a648a3e4bb11eea3cfdf153d7a90ea81a64f3d27,a648a3e,Revanth,revanthcse1@gmail.com,2026-10-13T08:12:38-05:00,GitHub,noreply@github.com,2026-10-13T14:12:38+01:00,test(rest): fail scan-planning integration tests when the fixture lacks planning (#2184),,386c9589287e8e4b411f6581bfbdcfb52fc51a63,2184,false,,1,4,1,catalog
+apache/iceberg-go,e6e992e4ddd162770816a2d95fbafe43a161d102,e6e992e,Richie Bachala,richie.bachala@gmail.com,2026-10-13T14:12:56-07:00,GitHub,noreply@github.com,2026-10-13T22:12:56+01:00,test(catalog): table-lifecycle conformance slice with cross-namespace rename and error-mapping fixes (#2173),"* feat(catalog): add table lifecycle tests to the catalog conformance suite
+
+Add ListTables, DropTable, DropMissingTable, RenameTable,
+RenameTableToExisting and RenameMissingTable to catalogtest, gated by a
+new Config.SupportsRenameTable flag. SQL, REST and Hive opt in; Hadoop
+does not implement rename.
+
+Related to #1691
+
+* fix(catalog): return ErrTableAlreadyExists when renaming onto an existing table
+
+The new RenameTableToExisting conformance test found that REST and Hive
+returned untyped errors for this case. REST now maps 409 to
+ErrTableAlreadyExists, matching CreateTable. Hive checks the destination
+while holding the rename locks, matching its create path.
+
+Related to #1691
+
+* fix(hive): detect non-Iceberg tables at rename destination
+
+CheckTableExists only recognises Iceberg tables, so a non-Iceberg Hive
+table at the destination was invisible to the pre-check and AlterTable
+would return a raw metastore error.  Switch to a raw GetTable call so
+any table (Iceberg or not) at the destination is rejected with
+ErrTableAlreadyExists.
+
+Also strengthen the rename conformance test to assert that the table
+UUID survives the rename, catching backends that silently recreate
+instead of renaming.
+
+* test(catalog): verify unsupported rename and rename metadata preservation
+
+Address review feedback on the table lifecycle conformance tests:
+
+- When SupportsRenameTable is false, run RenameTableNotSupported instead
+  of skipping the rename suite, asserting RenameTable returns
+  iceberg.ErrNotImplemented and leaves the source table in place. The
+  Hadoop catalog now wraps that sentinel. Reference #1097 in the field
+  doc.
+- Assert that rename preserves the table metadata location alongside
+  its UUID, catching backends that rename by recreating the table.
+
+Signed-off-by: Richie Bachala <richie.bachala@gmail.com>
+
+* test(catalog): add cross-namespace rename conformance tests
+
+Extend the table lifecycle conformance suite with two rename cases where
+catalog behavior tends to diverge:
+
+- RenameTableAcrossNamespaces: a table moves to another namespace, keeps
+  its UUID, and is listed only in the destination.
+- RenameTableToMissingNamespace: renaming into a namespace that does not
+  exist returns ErrNoSuchNamespace and leaves the source table in place.
+
+The second case exposed a REST divergence. The spec's rename 404 covers
+both a missing source table and a missing destination namespace, and
+the client mapped every 404 to ErrNoSuchTable. Discriminate on the
+error type, following loadFunction, so a missing namespace reports
+ErrNoSuchNamespace as Hive and SQL already do.
+
+Signed-off-by: Richie Bachala <richie.bachala@gmail.com>
+
+* fix(catalog): address rename review feedback
+
+- rest: route the rename 404 NoSuchNamespaceException split through
+  withErrorTypeOverride, so the refinement is status-gated. A 5xx or
+  401/403 carrying that type no longer reads as ErrNoSuchNamespace.
+  Add tests for those statuses and for an empty or unknown error.type
+  falling back to ErrNoSuchTable.
+- hive: map an AlterTable already-exists rejection to
+  ErrTableAlreadyExists, covering a destination created after the
+  pre-check by a writer that skips the HMS locks.
+- catalogtest: on a rejected rename-to-existing, assert both
+  identifiers still name their original tables, not just that they
+  exist.
+- hadoop: assert the ErrNotImplemented sentinel instead of matching
+  the error message, in both the unit and integration tests.
+
+Signed-off-by: Richie Bachala <richie.bachala@gmail.com>
+
+* address round-2 review: self-rename, 409 type override, mock annotation
+
+- Add RenameTableToSelf conformance test: asserts ErrTableAlreadyExists
+  and verifies the table is unchanged, pinning the from==to divergence
+  the reviewer flagged.
+- Fix the status-gating comment and add a test for 409 carrying
+  NoSuchNamespaceException, documenting that the type override applies
+  to any mapped status (not only 404).
+- Annotate the concurrent-create mock with a note that the
+  InvalidOperationException text is verbatim HMS output.
+
+* test(catalog): accept both self-rename outcomes in conformance suite
+
+RenameTableToSelf asserted ErrTableAlreadyExists, which fails against
+the Java REST fixture: its JdbcCatalog returns early when from == to,
+treating a self-rename as a no-op success. Java's catalogs disagree on
+this (JdbcCatalog and InMemoryCatalog no-op, HiveCatalog rejects), and
+neither the REST spec nor Java's CatalogTests define the outcome.
+
+Assert only what every catalog agrees on: the rename succeeds or returns
+ErrTableAlreadyExists, and any other error fails. Either way the table
+must keep its UUID and metadata location and be listed exactly once.
+
+Signed-off-by: Richie Bachala <richie.bachala@gmail.com>
+
+* docs(catalog): cite apache/iceberg#4448 for self-rename semantics
+
+Record why RenameTableToSelf accepts both outcomes: when REST rename was
+added, a request-level check rejecting source == destination was dropped
+so servers could decide, and Java's catalogs now differ.
+
+Signed-off-by: Richie Bachala <richie.bachala@gmail.com>
+
+---------
+
+Signed-off-by: Richie Bachala <richie.bachala@gmail.com>
+Co-authored-by: Richie Bachala <16941915+richiebachala@users.noreply.github.com>
+Co-authored-by: Richie Bachala <richie.bachala@snowflake.com>",a648a3e4bb11eea3cfdf153d7a90ea81a64f3d27,2173,false,Richie Bachala,8,253,17,catalog
+apache/iceberg-go,2fc51d108dd845ce79867b94c73acc7caa3a0e60,2fc51d1,Will Roever,William.Roever@gmail.com,2026-10-14T06:21:26-07:00,GitHub,noreply@github.com,2026-10-14T09:21:26-04:00,fix(manifest): normalize file_format casing when reading manifest entries (#1984),"* fix(manifest): normalize file_format casing when reading entries
+
+Route the decoded file_format value through FileFormatFromString in
+ReadEntry so spec-conformant lowercase spellings match the FileFormat
+constants, and reject unknown formats there with the offending file path.
+
+Signed-off-by: Will Roever <william.roever@gmail.com>
+
+* fix(manifest): normalize file_format in the data file codec
+
+Signed-off-by: Will Roever <william.roever@gmail.com>
+
+* fix(manifest): drop redundant wrapping in the file format error
+
+Signed-off-by: Will Roever <william.roever@gmail.com>
+
+* test(manifest): pin the file format error message and widen the codec table
+
+Signed-off-by: Will Roever <william.roever@gmail.com>
+
+---------
+
+Signed-off-by: Will Roever <william.roever@gmail.com>",e6e992e4ddd162770816a2d95fbafe43a161d102,1984,false,,4,164,1,data_file_codec.go; data_file_codec_test.go; manifest.go; manifest_test.go
+apache/iceberg-go,0fc66726eab8eeb424449be48983ee6614c729a9,0fc6672,Hectar,84522781+hectar-glitches@users.noreply.github.com,2026-10-14T06:23:50-07:00,GitHub,noreply@github.com,2026-10-14T14:23:50+01:00,feat(encryption): add StandardEncryptionManager for generic file envelope encryption (#1620),"* feat(encryption): add StandardEncryptionManager for generic file envelope encryption.
+
+Signed-off-by: hectar-glitches <hectar@uni.minerva.edu>
+
+* fix(encryption): validate block size and decoded key metadata in StandardEncryptionManager.
+
+Signed-off-by: hectar-glitches <hectar@uni.minerva.edu>
+
+* fix(encryption): harden standard manager I/O
+
+Signed-off-by: hectar-glitches <hectar@uni.minerva.edu>
+
+* Address blockers
+
+* fix major concerns with filewriter and standardinputfile
+
+* address the major and minor issues, rename the identifier from standard to go envelope
+
+* address memory limit issue and nits
+
+* fix(encryption): add nonce-uniqueness test, bound aad-prefix length
+
+* chore(encryption): rebase onto main, fix modernize lint
+
+* feat(encryption): make StandardEncryptionManager Java-compatible
+
+Read and write the same bytes as Java's StandardEncryptionManager and
+iceberg-rust, so files can be exchanged between implementations.
+
+- Use a fixed 1 MiB plaintext block size. Remove WithBlockSize,
+  GoEnvelopeMaxBlockSize and ErrInvalidBlockSize. The reader requires
+  the stream header to declare 1 MiB.
+- Encode key metadata as StandardKeyMetadata: a version byte followed by
+  an Avro record {encryption_key, aad_prefix, file_length}. The DEK is
+  generated locally and stored raw; there is no KMS call per file. The
+  reader derives the plaintext length from file_length.
+- Write block 0 for an empty file, giving the 36-byte layout Java and
+  iceberg-rust use, and accept it on read.
+- Default the data key length to 16 bytes and rename the option to
+  WithStandardDataKeyLength.
+- Rename GoEnvelopeEncryptionManager back to StandardEncryptionManager.
+- Document that ErrOutputFileClosed is only returned after a successful
+  Close.
+
+Tests decode the writer's output with a stdlib-only AGS1 decoder, read a
+stream built the same way, and check a hand-encoded key metadata vector.
+Block-size tests now use multi-MiB payloads.
+
+* fixes to PR description, major java issue and minor issues
+
+---------
+
+Signed-off-by: hectar-glitches <hectar@uni.minerva.edu>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",2fc51d108dd845ce79867b94c73acc7caa3a0e60,1620,false,Matt Topol,2,1835,0,encryption
+apache/iceberg-go,61dff5cc8365857cdcf9a91e3194d6ace421420e,61dff5c,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-14T15:28:08+02:00,GitHub,noreply@github.com,2026-10-14T09:28:08-04:00,refactor(table): export SnapshotLogEntryAsOf for metadata-table time travel (#2150),"* refactor(table): export SnapshotLogEntryAsOf for metadata-table time travel
+
+Promote the snapshot-log time-travel resolver from the unexported
+snapshotLogEntryAsOf to the exported SnapshotLogEntryAsOf, so code outside the
+table package (the forthcoming table/inspect package) can resolve a snapshot as
+of a timestamp without reaching into table internals.
+
+Pure rename plus repoint of the in-package callers (the as-of-timestamp scan,
+Table.SnapshotAsOf, and the metadata_log_entries inspection). No behavior change.
+
+* docs(table): state the SnapshotLogEntryAsOf tie-break and test it
+
+On equal timestamps SnapshotLogEntryAsOf keeps the earliest entry in log
+order. That matches Java's SnapshotUtil.nullableSnapshotIdAsOfTime, which
+now picks the greatest eligible timestamp with a strict comparison, so a tie
+also resolves to the first entry there, and Java's metadata_log_entries
+table resolves through the same function. Behavior is unchanged; the doc
+comment now says so instead of implying order never matters.
+
+Add a table test for the exported function covering an empty log, no
+eligible entry, an out-of-order log, inclusive and exclusive matching, and
+equal timestamps.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>
+
+---------
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",0fc66726eab8eeb424449be48983ee6614c729a9,2150,false,,5,102,8,table
+apache/iceberg-go,30fd3edae7733c35fe6771b6493459bbb0141bec,30fd3ed,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-14T09:29:13-04:00,GitHub,noreply@github.com,2026-10-14T09:29:13-04:00,build(deps): bump the gomod_updates group with 22 updates (#2176),"* build(deps): bump the gomod_updates group with 22 updates
+
+Bumps the gomod_updates group with 22 updates:
+
+| Package | From | To |
+| --- | --- | --- |
+| [cloud.google.com/go/storage](https://github.com/googleapis/google-cloud-go) | `1.68.0` | `1.69.0` |
+| [github.com/Azure/azure-sdk-for-go/sdk/azcore](https://github.com/Azure/azure-sdk-for-go) | `1.23.1` | `1.23.2` |
+| [github.com/Azure/azure-sdk-for-go/sdk/storage/azblob](https://github.com/Azure/azure-sdk-for-go) | `1.8.1` | `1.8.2` |
+| [github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager](https://github.com/aws/aws-sdk-go-v2) | `0.4.10` | `0.4.13` |
+| [github.com/aws/aws-sdk-go-v2/service/glue](https://github.com/aws/aws-sdk-go-v2) | `1.164.0` | `1.167.0` |
+| [github.com/aws/aws-sdk-go-v2/service/s3](https://github.com/aws/aws-sdk-go-v2) | `1.113.4` | `1.114.0` |
+| [github.com/pierrec/lz4/v4](https://github.com/pierrec/lz4) | `4.1.30` | `4.1.33` |
+| [github.com/uptrace/bun](https://github.com/uptrace/bun) | `1.2.18` | `1.3.0` |
+| [github.com/uptrace/bun/dialect/mssqldialect](https://github.com/uptrace/bun) | `1.2.18` | `1.3.0` |
+| [github.com/uptrace/bun/dialect/mysqldialect](https://github.com/uptrace/bun) | `1.2.18` | `1.3.0` |
+| [github.com/uptrace/bun/dialect/oracledialect](https://github.com/uptrace/bun) | `1.2.18` | `1.3.0` |
+| [github.com/uptrace/bun/dialect/pgdialect](https://github.com/uptrace/bun) | `1.2.18` | `1.3.0` |
+| [github.com/uptrace/bun/dialect/sqlitedialect](https://github.com/uptrace/bun) | `1.2.18` | `1.3.0` |
+| [github.com/uptrace/bun/driver/sqliteshim](https://github.com/uptrace/bun) | `1.2.18` | `1.3.0` |
+| [github.com/uptrace/bun/extra/bundebug](https://github.com/uptrace/bun) | `1.2.18` | `1.3.0` |
+| [go.opentelemetry.io/otel](https://github.com/open-telemetry/opentelemetry-go) | `1.46.0` | `1.47.0` |
+| [go.opentelemetry.io/otel/metric](https://github.com/open-telemetry/opentelemetry-go) | `1.46.0` | `1.47.0` |
+| [go.opentelemetry.io/otel/sdk](https://github.com/open-telemetry/opentelemetry-go) | `1.46.0` | `1.47.0` |
+| [go.opentelemetry.io/otel/sdk/metric](https://github.com/open-telemetry/opentelemetry-go) | `1.46.0` | `1.47.0` |
+| [go.opentelemetry.io/otel/trace](https://github.com/open-telemetry/opentelemetry-go) | `1.46.0` | `1.47.0` |
+| [golang.org/x/sync](https://github.com/golang/sync) | `0.23.0` | `0.24.0` |
+| [google.golang.org/api](https://github.com/googleapis/google-api-go-client) | `0.299.0` | `0.300.0` |
+
+
+Updates `cloud.google.com/go/storage` from 1.68.0 to 1.69.0
+- [Release notes](https://github.com/googleapis/google-cloud-go/releases)
+- [Changelog](https://github.com/googleapis/google-cloud-go/blob/main/CHANGES.md)
+- [Commits](https://github.com/googleapis/google-cloud-go/compare/compute/v1.68.0...compute/v1.69.0)
+
+Updates `github.com/Azure/azure-sdk-for-go/sdk/azcore` from 1.23.1 to 1.23.2
+- [Release notes](https://github.com/Azure/azure-sdk-for-go/releases)
+- [Commits](https://github.com/Azure/azure-sdk-for-go/compare/sdk/azcore/v1.23.1...sdk/azcore/v1.23.2)
+
+Updates `github.com/Azure/azure-sdk-for-go/sdk/storage/azblob` from 1.8.1 to 1.8.2
+- [Release notes](https://github.com/Azure/azure-sdk-for-go/releases)
+- [Commits](https://github.com/Azure/azure-sdk-for-go/compare/sdk/azidentity/v1.8.1...sdk/azidentity/v1.8.2)
+
+Updates `github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager` from 0.4.10 to 0.4.13
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/feature/s3/transfermanager/v0.4.10...feature/s3/transfermanager/v0.4.13)
+
+Updates `github.com/aws/aws-sdk-go-v2/service/glue` from 1.164.0 to 1.167.0
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/ec2/v1.164.0...service/ec2/v1.167.0)
+
+Updates `github.com/aws/aws-sdk-go-v2/service/s3` from 1.113.4 to 1.114.0
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/s3/v1.113.4...service/s3/v1.114.0)
+
+Updates `github.com/pierrec/lz4/v4` from 4.1.30 to 4.1.33
+- [Release notes](https://github.com/pierrec/lz4/releases)
+- [Commits](https://github.com/pierrec/lz4/compare/v4.1.30...v4.1.33)
+
+Updates `github.com/uptrace/bun` from 1.2.18 to 1.3.0
+- [Release notes](https://github.com/uptrace/bun/releases)
+- [Changelog](https://github.com/uptrace/bun/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/uptrace/bun/compare/v1.2.18...v1.3.0)
+
+Updates `github.com/uptrace/bun/dialect/mssqldialect` from 1.2.18 to 1.3.0
+- [Release notes](https://github.com/uptrace/bun/releases)
+- [Changelog](https://github.com/uptrace/bun/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/uptrace/bun/compare/v1.2.18...v1.3.0)
+
+Updates `github.com/uptrace/bun/dialect/mysqldialect` from 1.2.18 to 1.3.0
+- [Release notes](https://github.com/uptrace/bun/releases)
+- [Changelog](https://github.com/uptrace/bun/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/uptrace/bun/compare/v1.2.18...v1.3.0)
+
+Updates `github.com/uptrace/bun/dialect/oracledialect` from 1.2.18 to 1.3.0
+- [Release notes](https://github.com/uptrace/bun/releases)
+- [Changelog](https://github.com/uptrace/bun/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/uptrace/bun/compare/v1.2.18...v1.3.0)
+
+Updates `github.com/uptrace/bun/dialect/pgdialect` from 1.2.18 to 1.3.0
+- [Release notes](https://github.com/uptrace/bun/releases)
+- [Changelog](https://github.com/uptrace/bun/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/uptrace/bun/compare/v1.2.18...v1.3.0)
+
+Updates `github.com/uptrace/bun/dialect/sqlitedialect` from 1.2.18 to 1.3.0
+- [Release notes](https://github.com/uptrace/bun/releases)
+- [Changelog](https://github.com/uptrace/bun/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/uptrace/bun/compare/v1.2.18...v1.3.0)
+
+Updates `github.com/uptrace/bun/driver/sqliteshim` from 1.2.18 to 1.3.0
+- [Release notes](https://github.com/uptrace/bun/releases)
+- [Changelog](https://github.com/uptrace/bun/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/uptrace/bun/compare/v1.2.18...v1.3.0)
+
+Updates `github.com/uptrace/bun/extra/bundebug` from 1.2.18 to 1.3.0
+- [Release notes](https://github.com/uptrace/bun/releases)
+- [Changelog](https://github.com/uptrace/bun/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/uptrace/bun/compare/v1.2.18...v1.3.0)
+
+Updates `go.opentelemetry.io/otel` from 1.46.0 to 1.47.0
+- [Release notes](https://github.com/open-telemetry/opentelemetry-go/releases)
+- [Changelog](https://github.com/open-telemetry/opentelemetry-go/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/open-telemetry/opentelemetry-go/compare/v1.46.0...v1.47.0)
+
+Updates `go.opentelemetry.io/otel/metric` from 1.46.0 to 1.47.0
+- [Release notes](https://github.com/open-telemetry/opentelemetry-go/releases)
+- [Changelog](https://github.com/open-telemetry/opentelemetry-go/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/open-telemetry/opentelemetry-go/compare/v1.46.0...v1.47.0)
+
+Updates `go.opentelemetry.io/otel/sdk` from 1.46.0 to 1.47.0
+- [Release notes](https://github.com/open-telemetry/opentelemetry-go/releases)
+- [Changelog](https://github.com/open-telemetry/opentelemetry-go/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/open-telemetry/opentelemetry-go/compare/v1.46.0...v1.47.0)
+
+Updates `go.opentelemetry.io/otel/sdk/metric` from 1.46.0 to 1.47.0
+- [Release notes](https://github.com/open-telemetry/opentelemetry-go/releases)
+- [Changelog](https://github.com/open-telemetry/opentelemetry-go/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/open-telemetry/opentelemetry-go/compare/v1.46.0...v1.47.0)
+
+Updates `go.opentelemetry.io/otel/trace` from 1.46.0 to 1.47.0
+- [Release notes](https://github.com/open-telemetry/opentelemetry-go/releases)
+- [Changelog](https://github.com/open-telemetry/opentelemetry-go/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/open-telemetry/opentelemetry-go/compare/v1.46.0...v1.47.0)
+
+Updates `golang.org/x/sync` from 0.23.0 to 0.24.0
+- [Commits](https://github.com/golang/sync/compare/v0.23.0...v0.24.0)
+
+Updates `google.golang.org/api` from 0.299.0 to 0.300.0
+- [Release notes](https://github.com/googleapis/google-api-go-client/releases)
+- [Changelog](https://github.com/googleapis/google-api-go-client/blob/main/CHANGES.md)
+- [Commits](https://github.com/googleapis/google-api-go-client/compare/v0.299.0...v0.300.0)
+
+---
+updated-dependencies:
+- dependency-name: cloud.google.com/go/storage
+  dependency-version: 1.69.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/Azure/azure-sdk-for-go/sdk/azcore
+  dependency-version: 1.23.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/Azure/azure-sdk-for-go/sdk/storage/azblob
+  dependency-version: 1.8.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager
+  dependency-version: 0.4.13
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/glue
+  dependency-version: 1.167.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/s3
+  dependency-version: 1.114.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/pierrec/lz4/v4
+  dependency-version: 4.1.33
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/uptrace/bun
+  dependency-version: 1.3.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/uptrace/bun/dialect/mssqldialect
+  dependency-version: 1.3.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/uptrace/bun/dialect/mysqldialect
+  dependency-version: 1.3.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/uptrace/bun/dialect/oracledialect
+  dependency-version: 1.3.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/uptrace/bun/dialect/pgdialect
+  dependency-version: 1.3.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/uptrace/bun/dialect/sqlitedialect
+  dependency-version: 1.3.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/uptrace/bun/driver/sqliteshim
+  dependency-version: 1.3.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/uptrace/bun/extra/bundebug
+  dependency-version: 1.3.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: go.opentelemetry.io/otel
+  dependency-version: 1.47.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: go.opentelemetry.io/otel/metric
+  dependency-version: 1.47.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: go.opentelemetry.io/otel/sdk
+  dependency-version: 1.47.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: go.opentelemetry.io/otel/sdk/metric
+  dependency-version: 1.47.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: go.opentelemetry.io/otel/trace
+  dependency-version: 1.47.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: golang.org/x/sync
+  dependency-version: 0.24.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: google.golang.org/api
+  dependency-version: 0.300.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+* fix: adapt to bun v1.3.0 and lz4 v4.1.33 in the gomod_updates bump
+
+bun v1.3.0 deprecates DB.AddQueryHook in favour of WithQueryHook, which
+returns a copy of the DB with the hook attached instead of mutating it.
+Reassign cat.db so the bundebug hook and the namespace race-test hooks
+stay installed; golangci-lint's SA1019 failed every unit job.
+
+lz4 v4.1.31+ makes Writer.Close fail when the written length differs
+from SizeOption, so the puffin tests could no longer build frames that
+advertise a wrong content size. Write a valid frame and rewrite its
+content-size field and header checksum instead. The reader-side lz4
+now also verifies the content size, so the size-mismatch case is
+rejected by lz4 before puffin's decoded-size check; assert
+lz4.ErrInvalidContentSize there.
+
+Signed-off-by: Matt Topol <zotthewizard@gmail.com>
+
+---------
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Signed-off-by: Matt Topol <zotthewizard@gmail.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",61dff5cc8365857cdcf9a91e3194d6ace421420e,2176,false,dependabot[bot]; Matt Topol,5,172,93,catalog; go.mod; go.sum; puffin
+apache/iceberg-go,2f4cb2831b63ed7b217fed756a4fd4d0c2536424,2f4cb28,Revanth,revanthcse1@gmail.com,2026-10-14T11:13:59-05:00,GitHub,noreply@github.com,2026-10-14T17:13:59+01:00,fix(rest): take renewal expiry from the vended credential (#2182),"* fix(rest): take renewal expiry from the vended credential
+
+* test(rest): pin vended expiry at Create, Register and Load",30fd3edae7733c35fe6771b6493459bbb0141bec,2182,false,,4,195,65,catalog
+apache/iceberg-go,c5964d1ba12897f3697fd36693edfd14b337a87f,c5964d1,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-14T18:29:19+02:00,GitHub,noreply@github.com,2026-10-14T18:29:19+02:00,fix(table): validate DV replacement on add (#2054),"Two paths still let a row delta commit more than one live deletion vector
+for a single data file:
+
+- Same-delta duplicate DVs on the fast-append path. findReplacedLiveDVs
+  collapses added DV references into a set, and when the data file has no
+  live DV yet the scan returns nothing; with no RemoveDeletes,
+  validateRemovedDeletes (which held the only duplicate-added-DV check)
+  never runs, so AddDeletes(dvA, dvB) for one data file committed two live
+  DVs. Hoist the duplicate-added-DV check into validateAddedDeletionVectors,
+  run unconditionally on every commit path.
+
+- Concurrent first-DV additions across a commit retry. Two writers based on
+  a snapshot with no DV for a data file both pass findReplacedLiveDVs. After
+  one commits, the other's add-only delta is replayable: doCommit rebuilds
+  the manifest list against the refreshed parent but did not re-check DV
+  uniqueness, so the retry could inherit the concurrent DV and commit a
+  second one. Add validateNoConcurrentReplacedDVs to RowDelta.validate: on
+  retry it walks the concurrently committed delete entries and rejects a
+  live DV added for a data file this delta also adds a DV for. It is a no-op
+  on attempt 0 (no concurrent snapshots), and a removal-carrying delta is
+  non-replayable, so there are no removals to reconcile on retry.
+
+Tests: TestRowDeltaFastAppendRejectsDuplicateAddedDVs covers the fast-append
+duplicate, and TestRowDeltaRejectsConcurrentFirstDVOnRetry drives the
+two-writer retry through the OCC scenario catalog and asserts the retry is
+rejected before a second commit attempt.",2f4cb2831b63ed7b217fed756a4fd4d0c2536424,2054,false,,2,350,77,table
+apache/iceberg-go,8eb69ef0d175b10d1f2434535a9f30eb76b2abdd,8eb69ef,Revanth,revanthcse1@gmail.com,2026-10-14T11:34:56-05:00,GitHub,noreply@github.com,2026-10-14T18:34:56+02:00,docs(table): PlanIO Close does not wait for active ReadTasks iterators (#2192),,c5964d1ba12897f3697fd36693edfd14b337a87f,2192,false,,2,9,7,table

@@ -7961,3 +7961,41 @@ storage credentials. Log only the catalog name and the missing property.
 
 Closes #17804",9747b14056b0644dae141c29ac3a5651bedbdb15,18474,false,,2,19,3,nessie
 apache/iceberg,c411138af515218070bd97674dc80feb69d678bb,c411138,GuoYu,511955993@qq.com,2026-10-14T02:07:34+08:00,GitHub,noreply@github.com,2026-10-13T20:07:34+02:00,Build: Remove stale parquet-jackson CVEs from kafka-connect-runtime trivyignore (#18483),,db43b88a6c0d470bd4f8acf08a18328750aeed20,18483,false,,1,0,7,.github
+apache/iceberg,8b08b9ea73fe92c3863863ecf5d4502a54323ec3,8b08b9e,pvary,peter.vary.apache@gmail.com,2026-10-14T00:01:22+02:00,GitHub,noreply@github.com,2026-10-13T15:01:22-07:00,Docs: Fix broken links in docs and site (#18460),"Fix links that point to missing pages or anchors.
+
+Broken anchors:
+- aws.md: flink.md#creating-catalogs-and-using-catalogs -> #adding-catalogs
+- nessie.md: flink.md#custom-catalog -> flink-ddl.md#custom-catalog
+- nessie.md: flink.md#preparation-when-using-flinks-python-api
+  -> #flinks-python-api
+- spark-quickstart.md: spark-ddl.md#create-table--as-select
+  -> #create-table-as-select
+- home.html: spark-queries/#time-travel -> #time-travel-queries-with-sql
+- hive-quickstart.md: the Hive 2.3.x / 3.1.x section was removed from the
+  Hive docs in 1.9.0, so link to the 1.8.1 docs where it still exists.
+
+Broken external links:
+- flink.md: Flink 2.3 moved the PyFlink docs to api/python/user_guide.
+- hive.md: Spark no longer hosts the 2.4.3 docs, link to latest.
+- multi-engine-support.md: fix the iceberg-flink-runtime-1.13 jar path
+  (1.2.0 -> 1.0.0, matching the jar name).
+- risingwave.md, vendors.md: RisingWave moved its Iceberg source docs.
+- vendors.md: Upsolver docs moved to help.qlik.com.
+- vendors.md: Doris renamed lakehouse-best-practices to best-practices.",c411138af515218070bd97674dc80feb69d678bb,18460,false,,10,13,13,docs; site
+apache/iceberg,2234c549de60ae6bb9cf6f319dff0f6f94df76e3,2234c54,pvary,peter.vary.apache@gmail.com,2026-10-14T00:43:25+02:00,GitHub,noreply@github.com,2026-10-13T15:43:25-07:00,Spec: Use relative links between spec documents and fix broken links (#18441),"Spec: Use relative links between spec documents
+
+Replace absolute https://iceberg.apache.org links between the spec
+documents in format/ with relative .md links, so they resolve both on
+GitHub and on the generated site.
+
+- expressions-spec.md: link to udf-spec.md and spec.md anchors. The
+  previous `spec/#...` references resolved to /expressions-spec/spec/
+  on the site and were broken.
+- spec.md: link to puffin-spec.md.
+- udf-spec.md: link to spec.md anchors.
+
+Also replace the dead orc.apache.org TimestampColumnVector javadoc link
+with the javadoc.io page for hive-storage-api 2.8.1.",8b08b9ea73fe92c3863863ecf5d4502a54323ec3,18441,false,,3,7,7,format
+apache/iceberg,c131e75958ff7bef67e22d241b02e5f8338b3955,c131e75,Yuya Ebihara,ebyhry@gmail.com,2026-10-14T11:59:42+09:00,GitHub,noreply@github.com,2026-10-13T20:59:42-06:00,Core: Fix file cleanup logic to retain Puffin files shared by live deletion vectors (#18408),,2234c549de60ae6bb9cf6f319dff0f6f94df76e3,18408,false,,2,146,2,core
+apache/iceberg,cf6e7038041aaa496bc650890b4dda4bd6c61940,cf6e703,pvary,peter.vary.apache@gmail.com,2026-10-14T09:19:24+02:00,GitHub,noreply@github.com,2026-10-14T09:19:24+02:00,Docs: Track spec versions and changes since adoption in the specs (#18379),,c131e75958ff7bef67e22d241b02e5f8338b3955,18379,false,,1,6,71,site
+apache/iceberg,1e39a61f262730ee9ec23d991d9fe34dfe1737df,1e39a61,raashed,141854182+rshdhere@users.noreply.github.com,2026-10-14T20:32:05+05:30,GitHub,noreply@github.com,2026-10-14T16:02:05+01:00,Spark 4.2: Fix rewrite failure on tables created with a sort order (#18493) (#17814),,cf6e7038041aaa496bc650890b4dda4bd6c61940,17814,false,,3,61,1,spark

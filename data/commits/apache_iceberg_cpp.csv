@@ -9193,3 +9193,16 @@ apache/iceberg-cpp,a036fae8ec947b6ea8da1cae36a666add5eea461,a036fae,Gang Wu,ustc
 parent is null, so IS NULL and NOT NULL must not be folded for it. Only fold
 when the field and all of its ancestors are required, matching Java's
 UnboundPredicate#bindUnaryOperation.",12a16bd592bcd841654a23ed8225dcc2caf807d3,995,false,,3,81,7,src
+apache/iceberg-cpp,57ec6b8101952a47916ab9cd4328a17319b40195,57ec6b8,Sandeep Gottimukkala,gsandeep.1241@gmail.com,2026-10-14T00:18:33-07:00,GitHub,noreply@github.com,2026-10-14T15:18:33+08:00,feat(rest): add scan plan endpoint support to REST catalog client (#783),"When a table is loaded from a REST catalog with scan-planning-mode=server (table config takes precedence over catalog config), NewScan() now returns a RestTableScanBuilder whose Build() produces a RestTableScan. PlanFiles() and PlanFilesStream() on that scan delegate manifest resolution to the server via POST /plan, GET /plan/{id} (with exponential backoff), POST /tasks, and DELETE /plan/{id} (best-effort cancel), instead of reading manifests locally.
+
+- Add RestTable, RestTableScanBuilder, RestTableScan and RestScanContext
+- Promote DataTableScan::PlanFilesStream, TableScan::io and TableScanBuilder::Build to virtual
+- Convert RestCatalog::client_ and paths_ to shared_ptr so RestScanContext can share ownership with live scans
+- Add REST incremental append planning for scans with an exclusive start snapshot; scans without one (including an inclusive root snapshot) return NotSupported
+- Use storage credentials returned by planning responses in a scan-scoped FileIO",a036fae8ec947b6ea8da1cae36a666add5eea461,783,false,,29,3097,83,src
+apache/iceberg-cpp,ad221b772ccbdeebfe6f01748186d1ff6faef944,ad221b7,Nihal Jain,nihaljain.cs@gmail.com,2026-10-14T20:01:27+05:30,GitHub,noreply@github.com,2026-10-14T22:31:27+08:00,feat: support catalog labels on tables loaded from REST catalogs (#960),"Parse the optional `labels` field of the REST load-table response and
+expose it through Table::labels(), mirroring apache/iceberg#18045 and
+apache/iceberg#18046. Labels are catalog-provided rather than table
+state, so they live on the Table instance instead of TableMetadata.
+
+Part of #938.",57ec6b8101952a47916ab9cd4328a17319b40195,960,false,,16,552,38,src
