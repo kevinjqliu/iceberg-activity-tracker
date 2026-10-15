@@ -32912,3 +32912,137 @@ releases so cargo audit runs clean.",b154603a710d730d2f43f8af4db257cc137237ef,34
 apache/iceberg-rust,8bfe970f0028acc98ade0199ce34300e000fdba6,8bfe970,blackmwk,257669749+blackmwk@users.noreply.github.com,2026-10-14T13:47:17Z,GitHub,noreply@github.com,2026-10-14T13:47:17Z,ci: increase merge queue status check timeout (#3443),"* ci: increase merge queue status check timeout
 
 * ci: set merge queue status check timeout to 360 minutes",1270e329b517a88bdb8eb641b4a59f45bdc0e872,3443,false,,1,1,1,.asf.yaml
+apache/iceberg-rust,a853455db9ed693ceae74f5d2edc1aa346169542,a853455,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-14T21:36:31Z,GitHub,noreply@github.com,2026-10-14T21:36:31Z,chore(deps): Bump rustls to 0.23.46 to fix RUSTSEC advisories (#3455),"Fixes RUSTSEC-2026-0346, RUSTSEC-2026-0347, RUSTSEC-2026-0348 and
+RUSTSEC-2026-0349, which fail the security audit check.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",8bfe970f0028acc98ade0199ce34300e000fdba6,3455,false,Copilot App,1,2,2,Cargo.lock
+apache/iceberg-rust,a269dad56bd90d6b5f8cda026f25274642b78baf,a269dad,Anoop Johnson,anoop@apache.org,2026-10-14T22:12:51Z,GitHub,noreply@github.com,2026-10-14T22:12:51Z,fix(reader): rewrite NOT out of the read predicate before pruning (#3416),"* fix(reader): rewrite NOT out of the read predicate before pruning
+
+The reader fans a FileScanTask's predicate to the row-group metrics
+evaluator and the page-index evaluator, both conservative (inclusive)
+filters that cannot soundly negate a NOT node. The row-group evaluator's
+naive `!inner` flips a MIGHT_MATCH bound to CANT_MATCH. For NOT(x > 5) over
+a row group spanning [0, 10] that prunes a group which does contain matching
+rows (silent data loss). The page-index evaluator rejects NOT outright,
+aborting the read. A FileScanTask built or deserialized outside TableScan
+carries an un-normalized predicate, so a raw NOT reaches both.
+
+Rewrite NOT out of the predicate once, where it is first bound in the read
+pipeline, so every consumer sees a NOT-free predicate.
+
+* PR feedback",a853455db9ed693ceae74f5d2edc1aa346169542,3416,false,,3,198,3,crates
+apache/iceberg-rust,f7e036cfff13b0718f11095062e2de88a9fe9a75,f7e036c,Shawn Chang,schang@apache.org,2026-10-14T23:14:11Z,GitHub,noreply@github.com,2026-10-14T23:14:11Z,ci: Cancel superseded workflow runs (#3444),,a269dad56bd90d6b5f8cda026f25274642b78baf,3444,false,,5,17,1,.github
+apache/iceberg-rust,e23c5dbc33d67c723a28dda58aa19407519d8dcc,e23c5db,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-14T23:15:23Z,GitHub,noreply@github.com,2026-10-14T23:15:23Z,ci: run lightweight jobs on ubuntu-slim (#3457),Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>,f7e036cfff13b0718f11095062e2de88a9fe9a75,3457,false,Copilot App,3,3,3,.github
+apache/iceberg-rust,bdee10e629f3d2b68336b2dc9a5a7a6fd2ae7e3b,bdee10e,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-14T23:18:13Z,GitHub,noreply@github.com,2026-10-14T23:18:13Z,ci: pin ubuntu-latest runners to ubuntu-24.04 (#3456),"ubuntu-latest jobs across the apache org are queuing for 50-80 minutes,
+while ubuntu-24.04 jobs on the same image start within minutes.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",e23c5dbc33d67c723a28dda58aa19407519d8dcc,3456,false,Copilot App,9,24,24,.github
+apache/iceberg-rust,582b9e103513f21094f61cd1f09fdbf39dccf13e,582b9e1,Giladi,dkgs1998@gmail.com,2026-10-15T05:44:23Z,GitHub,noreply@github.com,2026-10-15T05:44:23Z,feat(delete-vector): make the delete_vector module public (#3461),"An engine that uses the crate for metadata but reads Parquet with a reader
+of its own cannot go through ArrowReader, and so far had to reimplement the
+deletion-vector-v1 decoding to apply deletion vectors. Expose the module,
+the way puffin already is, with the docs deny(missing_docs) then requires,
+an is_empty next to len, and the public API snapshot regenerated.
+
+Co-authored-by: Claude <noreply@anthropic.com>",bdee10e629f3d2b68336b2dc9a5a7a6fd2ae7e3b,3461,false,Claude,3,42,2,crates
+apache/iceberg-rust,e948f627352b520bc3a37c76502a7464f9312f86,e948f62,NoahKusaba,97474796+NoahKusaba@users.noreply.github.com,2026-10-15T08:06:17Z,GitHub,noreply@github.com,2026-10-15T08:06:17Z,fix(scan):  don't project a stale schema after a schema update with no write (#2904),"* init
+
+* cleanup
+
+* minimal tests
+
+* fix conflicts and cleanup
+
+* test(scan): cover each schema change after the last write
+
+Test the other schema changes that reach the current-schema branch of
+TableScanBuilder::build, each through a real read of the fixture's data
+files and with full assertions on what comes back:
+
+- a column dropped and added back under the same name reads as null,
+  where it previously returned the old column's values
+- a renamed column reads under its new name
+- a dropped column is no longer selectable from the current state, but
+  a scan pinned to the snapshot still reads it
+- a filter on an added column binds; is_null matches every row
+
+Merge the two current-state tests for an added column into one that
+reads the column, and assert the full error of the time-travel test.
+
+Document on TableScanBuilder::snapshot_id that pinning a snapshot also
+selects the schema it was written with, and rename PlanContext's
+snapshot_schema to scan_schema, since it now holds the current schema
+for a scan of the current state.
+
+* refactor(scan): keep PlanContext's snapshot_schema name, and document what it holds
+
+* ci: retrigger
+
+* test(scan): check snapshot and schema in unit tests, move data checks to integration tests
+
+Add TableTestFixture::new_with_column_added_after_last_write and slim the
+scan unit tests to assert the scan's snapshot and projected schema. The data
+checks for added, dropped, re-added and renamed columns move to
+read_schema_changed_after_last_write.rs, against tables provisioned by Spark.
+
+* test: remove integration tests for scans after a schema change
+
+End-to-end checks are tracked in apache/datafusion-iceberg#75 as sqllogictests.",582b9e103513f21094f61cd1f09fdbf39dccf13e,2904,false,,3,73,4,crates
+apache/iceberg-rust,a72aa958fd54728e1dd22f448c1107cf858e9213,a72aa95,Shawn Chang,schang@apache.org,2026-10-15T08:06:43Z,GitHub,noreply@github.com,2026-10-15T08:06:43Z,feat(transaction): Introduce stateful TransactionAction trait (#3265),"* feat(transaction): Introduce stateful TransactionAction trait
+
+Rework the TransactionAction trait per the stateful transaction RFC
+(milestone 1): each action declares an associated retry-persistent
+State type created via new_state(), commit() borrows the action
+immutably and its state mutably per attempt, and a consuming cleanup()
+plus CommitStatus define terminal-cleanup semantics (not yet invoked;
+wired in a later milestone).
+
+Transactions now store one entry per action, pairing immutable intent
+with exclusively-owned execution state behind an object-safe
+ErasedActionEntry adapter. Cloning a transaction creates a new
+execution of the action plan: actions are duplicated and paired with
+fresh state, so retry state is never shared between executions.
+
+All existing actions migrate with State = () and no-op cleanup.
+
+* chore: Regenerate public-api baseline for action Clone impls
+
+* better comments
+
+* address comments
+
+* address comments
+
+* Address comments, add stateless tx action for convenience
+
+* clean up
+
+* rebase
+
+* minor
+
+* minor
+
+* fix import
+
+* actually test states reset and carried
+
+* address comments
+
+* update comments
+
+* fix clippy
+
+* testing",e948f627352b520bc3a37c76502a7464f9312f86,3265,false,,13,447,134,crates
+apache/iceberg-rust,e6b2ed4fb9cd51ba772074ff874f0b8cb7b6bef8,e6b2ed4,JeonDaehong,90895144+JeonDaehong@users.noreply.github.com,2026-10-15T08:07:24Z,GitHub,noreply@github.com,2026-10-15T08:07:24Z,fix(spec): format float and double partition values like iceberg-java (#3358),"* fix(spec): format float and double partition values like iceberg-java
+
+* test(spec): move float to_human_string test to datum tests",a72aa958fd54728e1dd22f448c1107cf858e9213,3358,false,,3,117,1,crates
+apache/iceberg-rust,5c00d464915449344c774fd910eec31488a01980,5c00d46,NoahKusaba,97474796+NoahKusaba@users.noreply.github.com,2026-10-15T08:07:58Z,GitHub,noreply@github.com,2026-10-15T08:07:58Z,feat(catalog-loader): give CatalogLoader the BoxedCatalogBuilder settings (#3408),"#3286 added with_runtime to BoxedCatalogBuilder, but CatalogLoader, the
+one-line entry point, still had no way to set a runtime, so a catalog
+loaded through it always fell back to Runtime::current(). It had no way
+to set a storage or KMS client factory either, so it couldn't load a SQL
+catalog at all: SqlCatalog requires a storage factory.
+
+Add with_storage_factory, with_kms_client_factory and with_runtime to
+CatalogLoader, and apply them to the builder in load(). Raised in review
+of #3286.",e6b2ed4fb9cd51ba772074ff874f0b8cb7b6bef8,3408,false,,2,168,29,crates
+apache/iceberg-rust,ba849a6ed3030c237e46be3e1d39e67cebf035a7,ba849a6,Yuang Gao,91290127+YuangGao@users.noreply.github.com,2026-10-15T08:08:16Z,GitHub,noreply@github.com,2026-10-15T08:08:16Z,ci: fail on rustdoc warnings (#3389),,5c00d464915449344c774fd910eec31488a01980,3389,false,,2,7,1,.github; Makefile

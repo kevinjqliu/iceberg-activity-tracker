@@ -9206,3 +9206,90 @@ apache/iceberg#18046. Labels are catalog-provided rather than table
 state, so they live on the Table instance instead of TableMetadata.
 
 Part of #938.",57ec6b8101952a47916ab9cd4328a17319b40195,960,false,,16,552,38,src
+apache/iceberg-cpp,f87954d10c6d9ce61f22dd8fb3b31e525c4e3c1f,f87954d,Manu Zhang,OwenZhang1990@gmail.com,2026-10-15T10:05:18+08:00,GitHub,noreply@github.com,2026-10-15T10:05:18+08:00,chore: upgrade avro to 3a207fa (#1018),Co-authored-by: Codex <codex@openai.com>,ad221b772ccbdeebfe6f01748186d1ff6faef944,1018,false,Codex,1,1,1,cmake_modules
+apache/iceberg-cpp,26ae9eab89d809a0861dfcef61ed6dc10f2b30bb,26ae9ea,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-10-14T20:22:33-07:00,GitHub,noreply@github.com,2026-10-15T11:22:33+08:00,feat(scan): Support split and parallel scans - Part-1: validated FileScanTask byte ranges (#976),"Preserve start and length in core and REST JSON, and reject partial
+reads until the reader can honor ranges.
+
+A shared DataFile's size may change after MakeSplit, so ToJson could
+emit a range that FileScanTaskFromJson rejects. Revalidate the range
+before serializing, matching the REST serializer.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",f87954d10c6d9ce61f22dd8fb3b31e525c4e3c1f,976,false,Isaac,12,575,65,src
+apache/iceberg-cpp,1b6d6a3f85bf9d8f0ffcbe59a67e59310bac6580,1b6d6a3,Xinli Shang,xinlishang@gmail.com,2026-10-15T13:32:26+09:00,GitHub,noreply@github.com,2026-10-15T12:32:26+08:00,build: enable Parquet modular encryption and zstd in vendored Arrow (#989),"Part of #988.
+
+Adds the `ICEBERG_ENCRYPTION` CMake option (default on), which builds the vendored Arrow with Parquet modular encryption and zstd and links OpenSSL into the bundle library. This makes the crypto available for the following table encryption steps; there is no behavior change for tables.
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",26ae9eab89d809a0861dfcef61ed6dc10f2b30bb,989,false,Claude Opus 5.5,11,180,12,.github; CMakeLists.txt; cmake_modules; src
+apache/iceberg-cpp,ce4544b1af0b570773a10b89e0e81716ed1200fb,ce4544b,Xinli Shang,xinlishang@gmail.com,2026-10-15T14:32:39+09:00,GitHub,noreply@github.com,2026-10-15T13:32:39+08:00,feat: add snapshot encryption key-id (#990),"Spec v3 snapshots of encrypted tables carry `key-id`, the ID of the
+entry in `encryption-keys` that holds the encrypted key metadata of the
+snapshot's manifest list. Add it to Snapshot, read and write it in the
+JSON serde, and include it in snapshot equality.
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",1b6d6a3f85bf9d8f0ffcbe59a67e59310bac6580,990,false,Claude Opus 5.5,4,30,2,src
+apache/iceberg-cpp,7686cfeae7e735980405b20a2eb7f88b76f0ff6f,7686cfe,Matthias Vallentin,vallentin@berkeley.edu,2026-10-15T08:10:01+02:00,GitHub,noreply@github.com,2026-10-15T14:10:01+08:00,fix(manifest): write spec-compliant partition-spec and schema-id headers (#1017),"The manifest writers stored the full partition spec object, such as
+{""fields"":[],""spec-id"":0}, in the `partition-spec` Avro metadata. The
+spec requires only the partition fields array there. They also omitted
+the separate `schema-id` metadata, which is required for v2 and later.
+
+Add PartitionFieldsToJson to serialize only the partition fields and use
+it for the manifest header in all format versions. ToJson(PartitionSpec)
+keeps producing the full object for table metadata and REST requests.
+Write the ID of the schema used to write the manifest as `schema-id`.",ce4544b1af0b570773a10b89e0e81716ed1200fb,1017,false,,7,147,8,src
+apache/iceberg-cpp,f8eca4faae2c8fcbc6484fbfa476254b851cc2d7,f8eca4f,Gang Wu,ustcwg@gmail.com,2026-10-15T14:12:20+08:00,GitHub,noreply@github.com,2026-10-15T14:12:20+08:00,build: avoid duplicate libraries in the C++20 compatibility test (#1015),,7686cfeae7e735980405b20a2eb7f88b76f0ff6f,1015,false,,1,11,0,src
+apache/iceberg-cpp,5a9350342b04a102f69aa8f626ca624072f69098,5a93503,advancedxy,807537+advancedxy@users.noreply.github.com,2026-10-15T14:18:41+08:00,GitHub,noreply@github.com,2026-10-15T14:18:41+08:00,feat(parquet): add row number reader for selected row groups (#1006),,f8eca4faae2c8fcbc6484fbfa476254b851cc2d7,1006,false,,13,755,73,src
+apache/iceberg-cpp,d98d851873bd6bd9a456ae7f58fb430da2bceb6e,d98d851,Guotao Yu,guotao.yugt@gmail.com,2026-10-15T15:00:12+08:00,GitHub,noreply@github.com,2026-10-15T15:00:12+08:00,fix(deletes): validate roaring bitmap after deserialization (#1005),"fix(deletes): validate roaring bitmap structure after deserialization
+
+readSafe only bounds-checks the read and does not verify CRoaring's
+structural invariants. A forged deletion vector (e.g. bitset container
+with a wrong cardinality or wrapping run containers) could later cause
+out-of-bounds access during merge or serialize. Call
+roaring_bitmap_internal_validate right after readSafe and reject invalid
+bitmaps with InvalidArgument.",5a9350342b04a102f69aa8f626ca624072f69098,1005,false,,2,36,0,src
+apache/iceberg-cpp,768ac65919ce7d1bc8dc51371f7b87f045d882c2,768ac65,wzhuo,wngzhuo@gmail.com,2026-10-15T16:42:39+08:00,GitHub,noreply@github.com,2026-10-15T16:42:39+08:00,fix(bucket): reject oversized input in BucketUtils::HashBytes (#961),"* fix(bucket): reject oversized input in BucketUtils::HashBytes
+
+HashBytes passed a size_t length straight to the vendored
+MurmurHash3_x86_32, whose length parameter is a signed 32-bit int. For
+inputs of 2^31 bytes or more the length wrapped negative, making the
+hash loop read far out of bounds (and nblocks * 4 signed-overflow UB);
+for inputs above 2^32 bytes a silently wrong prefix was hashed, breaking
+the bucket contract against other implementations.
+
+Every literal hash path (kDecimal/kString/kUuid/kBinary/kFixed) funnels
+through this one function, so guard it there: reject lengths above
+INT32_MAX with ICEBERG_CHECK_OR_DIE before the narrowing cast. The bound
+matches the limit implied by iceberg-java's byte arrays, so no legal
+bucket input is rejected. The vendored murmurhash3_internal.cc is left
+untouched (tagged third-party code) and the now-checked narrowing is
+made explicit with static_cast<int>.
+
+Add BucketUtilsTest.HashBytesRejectsOversizedInput, which fabricates an
+oversized span over a 1-byte buffer (never dereferenced, so no 2 GiB
+allocation is needed in CI). Without the guard the test segfaults.
+
+* test(bucket): guard raw byte input so the oversized-length test is well-formed
+
+The regression test built a std::span over INT32_MAX + 1 elements of a
+one-byte object, which violates the std::span constructor precondition and
+is undefined behavior even though the data is never read.
+
+Move the length guard into an internal HashBytes(const uint8_t*, size_t)
+overload and keep BucketUtils::HashBytes(std::span) as a thin wrapper, so the
+test can pass a null pointer with the oversized length instead.
+
+Also document that HashBytes and BucketIndex throw IcebergError for inputs
+larger than INT32_MAX, which the public headers did not mention.
+
+---------
+
+Co-authored-by: Gang Wu <ustcwg@gmail.com>",d98d851873bd6bd9a456ae7f58fb430da2bceb6e,961,false,Gang Wu,4,92,1,src
+apache/iceberg-cpp,60e67fa2aecf41c3626e26fbc71be6afe5c8ef4a,60e67fa,Gang Wu,ustcwg@gmail.com,2026-10-15T17:47:05+08:00,GitHub,noreply@github.com,2026-10-15T17:47:05+08:00,refactor: guard oversized bucket hash input in BucketIndex (#1023),"BucketUtils::HashBytes still rejects inputs larger than INT32_MAX with an
+IcebergError, but BucketIndex now checks the byte length of string, binary, and
+fixed literals before hashing and returns InvalidArgument instead, so the
+Result-returning entry point no longer throws.
+
+This replaces the internal HashBytes(const uint8_t*, size_t) overload and the
+bucket_util_internal.h header, which existed only so a test could reach the
+guard without materializing an oversized value. That overload, the header, and
+the HashBytesRejectsOversizedInput test are all removed: the guard cannot be
+exercised from a test without either a 2 GiB allocation or an invalid
+std::span.",768ac65919ce7d1bc8dc51371f7b87f045d882c2,1023,false,,4,37,82,src
