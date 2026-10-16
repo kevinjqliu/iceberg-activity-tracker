@@ -33046,3 +33046,129 @@ Add with_storage_factory, with_kms_client_factory and with_runtime to
 CatalogLoader, and apply them to the builder in load(). Raised in review
 of #3286.",e6b2ed4fb9cd51ba772074ff874f0b8cb7b6bef8,3408,false,,2,168,29,crates
 apache/iceberg-rust,ba849a6ed3030c237e46be3e1d39e67cebf035a7,ba849a6,Yuang Gao,91290127+YuangGao@users.noreply.github.com,2026-10-15T08:08:16Z,GitHub,noreply@github.com,2026-10-15T08:08:16Z,ci: fail on rustdoc warnings (#3389),,5c00d464915449344c774fd910eec31488a01980,3389,false,,2,7,1,.github; Makefile
+apache/iceberg-rust,b3470c8463c281c6e00ea9eee402881bb6c6d1fd,b3470c8,blackmwk,257669749+blackmwk@users.noreply.github.com,2026-10-15T18:12:58Z,GitHub,noreply@github.com,2026-10-15T18:12:58Z,refactor(glue): derive catalog configuration from properties (#3102),"* refactor(glue): derive catalog configuration from properties
+
+Use the shared property derive for Glue catalog settings while preserving warehouse validation and forwarding AWS and storage properties.
+
+Tracks [apache/iceberg-rust#3096](https://github.com/apache/iceberg-rust/issues/3096).
+
+Generated-by: Codex
+
+* refactor(glue): simplify catalog builder and tests
+
+Derive Default for GlueCatalogBuilder, use the conventional tests module name, and remove the FileIO forwarding test requested in review.
+
+Generated-by: Codex",ba849a6ed3030c237e46be3e1d39e67cebf035a7,3102,false,,4,106,85,Cargo.lock; crates
+apache/iceberg-rust,e4bec84bcca5ba4f3e19583e95b1de7c1fab2559,e4bec84,Jegor van Opdorp,jegorvanopdorp@gmail.com,2026-10-15T18:28:41Z,GitHub,noreply@github.com,2026-10-15T18:28:41Z,feat(transaction): let a snapshot operation report removed files and rewrite manifests (#3253),"* Let a snapshot operation report the files it removed
+
+The snapshot summary could only count what the caller asked to remove, so an
+operation that skips a path it never had, or is handed the same path twice,
+inflated deleted-data-files and deleted-records. SnapshotProduceOperation now
+reports the entries it actually marked Deleted, each with the schema and
+partition spec of the manifest that recorded it, and the summary counts those.
+
+Two changes follow from it. The manifests are produced before the summary,
+since the counts are only known once the operation has run, which means the
+added data files are cloned rather than taken. And the full-table truncate that
+drops the previous totals is gated on a new operation hook instead of on the
+operation being Overwrite: a partial overwrite keeps the totals, and with
+truncate off update_totals needs a saturating subtraction so removing more than
+the previous total does not underflow.
+
+* Keep manifest names unique across a commit
+
+The manifest name is built inline in new_manifest_writer from the metadata
+location, the commit uuid and a counter, so anything else that needs to write a
+manifest for the same commit has to reinvent it, and a name invented elsewhere
+is neither unique within the commit nor findable by orphan cleanup after a
+failed one. Pull the name out into new_manifest_path, and make the counter an
+AtomicU64 so it can be bumped behind a shared reference.
+
+* Write a manifest under the schema and spec it was written with
+
+new_manifest_writer hardcoded the table's current schema and default partition
+spec, so an operation that rewrites an existing manifest could not keep the
+schema and spec that manifest's entries were recorded under, and building a
+writer by hand instead means losing the encryption manager the method already
+branches on: on an encrypted table the manifest would go out in plaintext while
+its key metadata said otherwise. The schema and partition spec become arguments,
+and the added-files path passes the table's current ones.
+
+* test(transaction): cover partial overwrite and per-file spec in snapshot summary
+
+Co-authored-by: Marco Kroll <216147982+mkroll-db@users.noreply.github.com>
+
+* Drop the full-table truncation from the snapshot summary
+
+Java and PyIceberg derive totals from the files an operation marks deleted, with no truncation path.
+
+* Omit a summary total that would go negative, as Java does
+
+* Name the removed-file fields and take the manifest spec by ref
+
+* Take the added files again instead of cloning them for the summary
+
+* Assert an operation reports exactly the files it marked deleted
+
+* Say in the removed_data_files doc what it must match
+
+* Summarize deleted files from the producer's list, as pyiceberg does
+
+Drops the removed_data_files hook and the manifest-first reorder, and truncation defaults back to every overwrite.
+
+* Check that deletion summaries match manifest entries
+
+* Format dropped-source integer partition values
+
+---------
+
+Co-authored-by: Marco Kroll <216147982+mkroll-db@users.noreply.github.com>",b3470c8463c281c6e00ea9eee402881bb6c6d1fd,3253,false,Marco Kroll,5,278,25,crates
+apache/iceberg-rust,3bb8167a2c83fe11229b1cf67de0e641c49c8ef6,3bb8167,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-15T18:47:28Z,GitHub,noreply@github.com,2026-10-15T18:47:28Z,ci: move required status checks into the Merge Queue ruleset (#3459),"Classic branch protection can only be bypassed by admins. Defining the
+required checks in the Merge Queue ruleset lets that ruleset's bypass
+actors skip them. The checks, their contexts and the non-strict policy
+are unchanged, and approvals and linear history stay in classic
+protection.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",e4bec84bcca5ba4f3e19583e95b1de7c1fab2559,3459,false,Copilot App,1,21,19,.asf.yaml
+apache/iceberg-rust,5dc649bec6aee9cc25f33e9b6bb2462378646e18,5dc649b,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-10-15T19:59:40Z,GitHub,noreply@github.com,2026-10-15T19:59:40Z,"ci: Limit open, non-draft PRs to 3 for users without write access (#3465)","* enforce open pull request limit and add to CONTRIBUTING.md
+
+* trim comment length
+
+* Update CONTRIBUTING.md
+
+Co-authored-by: Shawn Chang <yxchang@amazon.com>
+
+---------
+
+Co-authored-by: Shawn Chang <yxchang@amazon.com>",3bb8167a2c83fe11229b1cf67de0e641c49c8ef6,3465,false,Shawn Chang,2,8,0,.asf.yaml; CONTRIBUTING.md
+apache/iceberg-rust,f83bec42298a1cf51a42ea2aee26c041a15db5b4,f83bec4,Joseph Lenton,JosephLenton@users.noreply.github.com,2026-10-15T20:04:13Z,GitHub,noreply@github.com,2026-10-15T20:04:13Z,fix: arrow schema to schema supports uuids (#2930),"* chore: add a test capturing the change
+
+* fix: add uuid support to arrow_schema_to_schema
+
+* chore: add uuid to the large arrow_schema_to_schema_auto_assign_ids test
+
+* chore: update the public api
+
+* feat: add a type check on the uuid conversion
+
+* chore: add a test for schema_to_arrow_schema for uuid
+
+* feat: add UUID support for schema_to_arrow_schema
+
+* docs: add uuid extension to visit_field documentation
+
+* refactor: remove duplicate UUID extension import from test
+
+* chore: add tests for fixed size binary of wrong size
+
+* feat: enable parquet writing uuid with uuid extension
+
+* chore: fmt Cargo.toml",5dc649bec6aee9cc25f33e9b6bb2462378646e18,2930,false,,5,273,26,Cargo.lock; crates
+apache/iceberg-rust,061925453a91c2e505dece727c8873eb408b8f37,0619254,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-16T17:07:12Z,GitHub,noreply@github.com,2026-10-16T17:07:12Z,ci: let committers bypass the Merge Queue ruleset for urgent fixes (#3458),"Give apache/iceberg-public a pull_request-only bypass on the Merge Queue
+ruleset so an approved urgent fix can skip the queue and required
+checks. Direct pushes stay blocked, and the approval in classic
+protection still applies. The team holds committers who opted in via
+Boxer; the regular committers team is secret and cannot be a bypass
+actor. apache/root can always bypass.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",f83bec42298a1cf51a42ea2aee26c041a15db5b4,3458,false,Copilot App,2,20,0,.asf.yaml; CONTRIBUTING.md

@@ -9293,3 +9293,22 @@ guard without materializing an oversized value. That overload, the header, and
 the HashBytesRejectsOversizedInput test are all removed: the guard cannot be
 exercised from a test without either a 2 GiB allocation or an invalid
 std::span.",768ac65919ce7d1bc8dc51371f7b87f045d882c2,1023,false,,4,37,82,src
+apache/iceberg-cpp,7f247005e3edc5bce30415b6eea4c9c78fadea95,7f24700,Manu Zhang,OwenZhang1990@gmail.com,2026-10-16T12:43:49+08:00,GitHub,noreply@github.com,2026-10-16T12:43:49+08:00,fix(bucket): use endian-safe MurmurHash block loads (#1019),"fix(bucket): make MurmurHash3 endian-safe
+
+Read unaligned blocks in canonical little-endian order, accept size_t lengths, and mix integer halves directly. Keep path entropy on the raw helper and preserve upstream bucket input validation.
+
+Cover canonical byte hashes, integer encoding, byte literal buckets, and path prefixes with small regressions.",60e67fa2aecf41c3626e26fbc71be6afe5c8ef4a,1019,false,,7,147,454,src
+apache/iceberg-cpp,31659e73db59396bf5c8a4086f39e5b235a3bf68,31659e7,Gang Wu,ustcwg@gmail.com,2026-10-16T12:44:10+08:00,GitHub,noreply@github.com,2026-10-16T12:44:10+08:00,build: rename VendoredArrow to Arrow (#1021),,7f247005e3edc5bce30415b6eea4c9c78fadea95,1021,false,,1,7,9,cmake_modules
+apache/iceberg-cpp,310bb055d8f98e6fe31ea103632eb889b7ebc92b,310bb05,advancedxy,807537+advancedxy@users.noreply.github.com,2026-10-16T14:24:29+08:00,GitHub,noreply@github.com,2026-10-16T14:24:29+08:00,refactor(parquet): simplify row position handling in projections (#1020),,31659e73db59396bf5c8a4086f39e5b235a3bf68,1020,false,,3,57,25,src
+apache/iceberg-cpp,0bdf7ce9961d7ef8e1c2b8670ae412e86526c53b,0bdf7ce,Xinli Shang,xinlishang@gmail.com,2026-10-16T15:37:16+09:00,GitHub,noreply@github.com,2026-10-16T14:37:16+08:00,feat: add standard encryption key metadata (#991),"StandardKeyMetadata is the per-file key metadata of the standard Iceberg
+encryption scheme: the data encryption key, the AAD prefix (file ID) and,
+for AES GCM streams, the encrypted file length. It is stored in the
+key_metadata field of data, delete and manifest files, and (encrypted) in
+the table metadata encryption-keys for manifest lists.
+
+The serialized form is Java's: a schema version byte (1) followed by an
+Avro binary record. Tests check byte-for-byte compatibility with vectors
+written by Java (checked in under test/resources/encryption/vectors,
+excluded from the text-fixing pre-commit hooks).
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",310bb055d8f98e6fe31ea103632eb889b7ebc92b,991,false,Claude Opus 5.5,6,379,0,src
