@@ -9313,3 +9313,33 @@ excluded from the text-fixing pre-commit hooks).
 
 Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",310bb055d8f98e6fe31ea103632eb889b7ebc92b,991,false,Claude Opus 5.5,6,379,0,src
 apache/iceberg-cpp,cec3229e784bd3ac1f86771cee8c167f7c490385,cec3229,Raúl Cumplido,raulcd@apache.org,2026-10-17T06:47:17+01:00,GitHub,noreply@github.com,2026-10-17T13:47:17+08:00,build: apply patch on Arrow so it can be used with older versions of CMake (#1029),,0bdf7ce9961d7ef8e1c2b8670ae412e86526c53b,1029,false,,2,51,4,cmake_modules
+apache/iceberg-cpp,72fbb5aef6cc5950107af385fca76b5bef9978aa,72fbb5a,Jiajia Li,lijiajia@outlook.com,2026-10-18T00:46:04+08:00,GitHub,noreply@github.com,2026-10-18T00:46:04+08:00,feat(io): refresh vended storage credentials per prefix (#892),"Vended storage credentials can expire while an `ArrowS3FileIO` instance and its
+file handles are still in use. This change refreshes them on demand and keeps
+the refresh state scoped to each storage prefix.
+
+The implementation:
+
+- Keeps one `CredentialStore` for credential snapshots, per-prefix slots,
+  expiry state, refresh coordination, backoff, and generation checks.
+- Resolves each credential once into its normalized prefix, effective client
+  properties, client settings, and AWS credentials.
+- Refreshes credentials independently by prefix. A response may update the
+  prefixes that are still active; invalid, expired, missing, or incompatible
+  entries keep their previous state.
+- Preserves S3-compatible schemes during routing. For example, `s3://` and
+  `oss://` remain separate prefixes so credentials for one endpoint cannot be
+  sent to another.
+- Lets existing AWS SDK clients pick up refreshed credentials through
+  `AWSCredentialsProvider`, while keeping clients and handles safe when the
+  `FileIO` or a credential generation is replaced.
+- Uses the REST client connection and request timeout properties for all HTTP
+  methods. Transport failures during table creation or commit are reported as
+  `CommitStateUnknown` because the server may already have applied the write.
+
+The change removes the previous global expiry/layout bookkeeping and duplicate
+credential-property parsing, making the refresh path easier to maintain and
+extend while preserving the existing `StorageCredentialProvider` API.
+
+Tests cover prefix routing, refresh timing and concurrency, failed and invalid
+refreshes, reordered responses, expiry handling, REST client timeouts, and
+real S3-compatible round trips.",cec3229e784bd3ac1f86771cee8c167f7c490385,892,false,,15,1494,128,cmake_modules; mkdocs; src
