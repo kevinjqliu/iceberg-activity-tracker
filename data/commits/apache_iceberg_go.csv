@@ -31850,3 +31850,220 @@ Signed-off-by: badalprasadsingh <badal@datazip.io>
 Signed-off-by: badalprasadsingh <badal@datazip.io>",8eb69ef0d175b10d1f2434535a9f30eb76b2abdd,2046,false,,5,719,145,table
 apache/iceberg-go,4fdbf65ef234b8715dbd2459d2851b7c6f576257,4fdbf65,Mohamed Arbi,mohammedarbinsibi@gmail.com,2026-10-15T19:21:53+01:00,GitHub,noreply@github.com,2026-10-15T20:21:53+02:00,fix(table): preserve local file paths (#2175),,1df76d8c901f63b22be4d6e98fbc8414880ced9a,2175,false,,2,128,48,table
 apache/iceberg-go,9cbeca458a2e5b734f5f162fc81af267750015e5,9cbeca4,Roli Bhardwaj,90590085+technicolorbeat@users.noreply.github.com,2026-10-17T17:40:02-04:00,GitHub,noreply@github.com,2026-10-17T23:40:02+02:00,perf(table): keep deferred snapshots lazy in metadata builders (#2186),,4fdbf65ef234b8715dbd2459d2851b7c6f576257,2186,false,,7,650,74,catalog; table
+apache/iceberg-go,c18cb4fdb8461255ae34ee7738a1801959a5974f,c18cb4f,Minh Vu,vuhoangminh97@gmail.com,2026-10-19T14:00:33+02:00,GitHub,noreply@github.com,2026-10-19T14:00:33+02:00,perf(io): avoid rebuilding MemFS WalkDir path prefixes (#2205),,9cbeca458a2e5b734f5f162fc81af267750015e5,2205,false,,3,71,13,io
+apache/iceberg-go,5dce5dee3426a89df2bb9af4dcf9fc312afd6ae0,5dce5de,Alessandro Nori,alessandro.nori@datadoghq.com,2026-10-19T17:16:07+02:00,GitHub,noreply@github.com,2026-10-19T11:16:07-04:00,refactor(rest): Centralize identifier path encoding (#2104),"* Refactor REST identifier path handling
+
+* fix(rest): Encode plus in scan plan IDs
+
+* fix(rest): Preserve dot path segments
+
+* test(rest): Cover path encoding review cases
+
+* refactor(rest): Encapsulate identifier request path construction
+
+* chore(rest): Clarify identifier path contracts",c18cb4fdb8461255ae34ee7738a1801959a5974f,2104,false,,6,339,129,catalog
+apache/iceberg-go,d28a6b9c2b199a39984b02a24ef097e2917026de,d28a6b9,Colton Loftus,70598503+C-Loftus@users.noreply.github.com,2026-10-19T11:17:04-04:00,GitHub,noreply@github.com,2026-10-19T11:17:04-04:00,feat(table): Add Parquet logical type Info for `GEOMETRY`/`GEOGRAPHY` type and bump geoarrow-go version (#2125),"* Bump Geoarrow Version
+
+* Respond to feedback
+
+* fix todo issue number
+
+* add test without arrow schema info
+
+* Respond to feedback
+
+* Respond to last feedback / nits
+
+* add issue into comment",5dce5dee3426a89df2bb9af4dcf9fc312afd6ae0,2125,false,,8,552,29,go.mod; go.sum; table
+apache/iceberg-go,898ca649d72e0918b0e28f263fdfa3b79d587aaf,898ca64,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-19T17:20:54+02:00,GitHub,noreply@github.com,2026-10-19T11:20:54-04:00,refactor(table): add Table.ManifestProvider and move inspect onto public (#2151),"* refactor(table): add Table.ManifestProvider and repoint inspect onto public APIs
+
+Introduce a public ManifestProvider (via Table.ManifestProvider) that reads a
+snapshot's manifest list through the table's shared, bounded manifest-list cache
+and resolves the table FileIO once per provider. It exposes Manifests,
+DataManifests, and FS, keeping the internal snapshotManifestSet cache and
+sharedSnapshotManifestFSF unchanged behind it.
+
+Manifests and DataManifests return iter.Seq[iceberg.ManifestFile] over the
+cache-owned slice. That keeps the no-copy cache hit from #2112 while giving
+callers outside the package no way to mutate the shared cache, which a
+borrowed []ManifestFile in a public signature could not guarantee.
+
+Repoint the metadata-inspection code off the table package internals it reached
+into (the unexported manifestSet / manifestSetWithFSF methods, the fsF field, and
+the metadata / metadataLocation fields) and onto public accessors
+(Table.ManifestProvider, Table.FS, Table.Metadata, Table.MetadataLocation). The
+provider is created once per inspection so the all_* metadata tables still
+resolve the backend once and share the manifest cache. AllManifests now fills
+its record batches from a reused chunk buffer instead of slicing the manifest
+list, with the same batch boundaries; no behavior change.
+
+This leaves the inspection surface depending only on public table APIs, in
+preparation for moving it to a dedicated table/inspect package.
+
+* refactor(table): drop ManifestProvider.DataManifests and pin cache sharing
+
+DataManifests had no caller and no test, and it would become permanent
+public surface on release. Drop it until a caller needs it; the
+data-only view stays available inside the package.
+
+Add a test that reads the same snapshot through two providers from one
+Table and checks the manifest list is opened once, so building the
+provider without the table's shared cache now fails.
+
+Document that a provider keeps the result of its first FileIO
+resolution, error included, so it is meant for one operation and a new
+provider is needed to retry.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>
+
+---------
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",d28a6b9c2b199a39984b02a24ef097e2917026de,2151,false,,10,174,104,table
+apache/iceberg-go,a5c6bc9d26bbaaaea25af025e4012ebd4d958d87,a5c6bc9,Revanth,revanthcse1@gmail.com,2026-10-19T10:21:40-05:00,GitHub,noreply@github.com,2026-10-19T11:21:40-04:00,fix(io): skip subdirectory markers in blobfs WalkDir (#2187),,898ca649d72e0918b0e28f263fdfa3b79d587aaf,2187,false,,2,53,29,io
+apache/iceberg-go,c0dc53fd27620f5cd34ff997901e645f8089fee4,c0dc53f,Revanth,revanthcse1@gmail.com,2026-10-19T10:27:32-05:00,GitHub,noreply@github.com,2026-10-19T16:27:32+01:00,feat(rest): freshness-aware table loading with If-None-Match / 304 (#2188),"* feat(rest): freshness-aware table loading with If-None-Match / 304
+
+* fix(rest): copy cached labels per table and key cache hits on snapshot mode",a5c6bc9d26bbaaaea25af025e4012ebd4d958d87,2188,false,,4,646,2,catalog
+apache/iceberg-go,28ff8d85cc187292c23a2e6db904d12050995bcd,28ff8d8,Revanth,revanthcse1@gmail.com,2026-10-19T10:36:29-05:00,GitHub,noreply@github.com,2026-10-19T16:36:29+01:00,feat(table): set referenced_data_file on single-target v2 position deletes (#2189),,c0dc53fd27620f5cd34ff997901e645f8089fee4,2189,false,,2,114,2,table
+apache/iceberg-go,f3e41bca12fd3c7f92f87c07041a9558d9b42a68,f3e41bc,Revanth,revanthcse1@gmail.com,2026-10-19T10:45:51-05:00,GitHub,noreply@github.com,2026-10-19T16:45:51+01:00,feat(exprs): accept the literal wrapper form for predicate values (#2191),,28ff8d85cc187292c23a2e6db904d12050995bcd,2191,false,,2,84,1,expr_json.go; expr_json_test.go
+apache/iceberg-go,b1d1f7f8398eff3d936737e32874edf1bd0a878f,b1d1f7f,Badal Prasad Singh,badal@datazip.io,2026-10-19T22:10:16+05:30,GitHub,noreply@github.com,2026-10-19T17:40:16+01:00,perf(table): read only deletion vectors in merge-on-read deletes (#2196),"minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",f3e41bca12fd3c7f92f87c07041a9558d9b42a68,2196,false,,1,53,35,table
+apache/iceberg-go,89881cb3e75d5c14e925c386716dd699754efcf5,89881cb,Minh Vu,vuhoangminh97@gmail.com,2026-10-19T18:54:21+02:00,GitHub,noreply@github.com,2026-10-19T17:54:21+01:00,perf(table): avoid string keys for two-file equality deletes (#2197),"* perf(table): avoid string keys for two-file equality delete sets
+
+* test(table): cover equality delete pair cache reuse and allocations
+
+* test(table): benchmark single-file delete reuse
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(table): avoid allocations on cached equality delete lookup
+
+Use Load before allocating the single-flight entry on cache misses,
+and fix intrange lint failures in the cache benchmarks.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",b1d1f7f8398eff3d936737e32874edf1bd0a878f,2197,false,,2,186,3,table
+apache/iceberg-go,2b23a7a151b7860329346ae750637f49082af920,2b23a7a,Minh Vu,vuhoangminh97@gmail.com,2026-10-19T18:58:33+02:00,GitHub,noreply@github.com,2026-10-19T17:58:33+01:00,perf(table): bound scan task channel capacity (#2198),"* perf(table): bound scan task channel to worker count
+
+* test(table): cover bounded scan task dispatch and cancellation
+
+* style(table): gofmt scan task channel test",89881cb3e75d5c14e925c386716dd699754efcf5,2198,false,,2,30,1,table
+apache/iceberg-go,03c4bab5a4594eede844801fbf85e7ec36bc1af4,03c4bab,Minh Vu,vuhoangminh97@gmail.com,2026-10-19T19:32:54+02:00,GitHub,noreply@github.com,2026-10-19T18:32:54+01:00,perf(table): specialize binary partition lookups in partitions metadata (#2199),"* perf(table): specialize binary partition lookups in partitions metadata
+
+* fix(table): satisfy nlreturn lint in binary partition lookup",2b23a7a151b7860329346ae750637f49082af920,2199,false,,3,179,9,table
+apache/iceberg-go,c9b8a7e3fb1713a12de78db375ce297018875d11,c9b8a7e,Minh Vu,vuhoangminh97@gmail.com,2026-10-19T19:34:00+02:00,GitHub,noreply@github.com,2026-10-19T18:34:00+01:00,perf(table): reuse partition formatting plans in snapshot summaries (#2200),"* perf(table): reuse partition formatting plans in snapshot summaries
+
+* perf(table): guard snapshot partition plan cache against spec ID reuse
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): benchmark escaped partition path formatting
+
+* style(table): simplify escaped path benchmark cases
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",03c4bab5a4594eede844801fbf85e7ec36bc1af4,2200,false,,3,213,5,table
+apache/iceberg-go,8ce33af06edd4538aaa94d5a65fc1b562946a9a9,8ce33af,Minh Vu,vuhoangminh97@gmail.com,2026-10-19T20:07:42+02:00,GitHub,noreply@github.com,2026-10-19T19:07:42+01:00,perf(table): avoid rebuilding unchanged partition residual expressions (#2201),"* perf(table): reuse unchanged partition residual expression subtrees
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover unchanged NOT and OR residual allocation paths
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): benchmark mixed partition residual evaluations
+
+* test(table): verify residual reuse across alternating partitions
+
+* style(table): satisfy nlreturn in residual fast paths
+
+* style(table): separate residual benchmark return
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",c9b8a7e3fb1713a12de78db375ce297018875d11,2201,false,,3,234,3,table
+apache/iceberg-go,0bc8d2f727e73948779863d406ec9b8841b038cc,0bc8d2f,Minh Vu,vuhoangminh97@gmail.com,2026-10-19T20:08:19+02:00,GitHub,noreply@github.com,2026-10-19T19:08:19+01:00,perf(manifest): avoid reflection when cloning DataFile Avro fields (#2202),"* perf(manifest): avoid reflection when cloning DataFile Avro fields
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(manifest): cover shallow Avro clones and all format versions
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(manifest): benchmark batch Avro entry serialization
+
+* style(manifest): use reflect type field iterator
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",8ce33af06edd4538aaa94d5a65fc1b562946a9a9,2202,false,,4,140,60,data_file_codec.go; data_file_codec_bench_test.go; data_file_codec_test.go; manifest_projection_test.go
+apache/iceberg-go,a187c781065980d1a64d996007e9e96223ff69c0,a187c78,Minh Vu,vuhoangminh97@gmail.com,2026-10-19T20:11:28+02:00,GitHub,noreply@github.com,2026-10-19T19:11:28+01:00,perf(table): bound parquet scan split capacity (#2203),"* perf(table): bound parquet scan split capacity
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): benchmark skewed Parquet scan split sizing
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",0bc8d2f727e73948779863d406ec9b8841b038cc,2203,false,,2,219,1,table
+apache/iceberg-go,c21916fabe735ac9888b25e033359b1e8fd84a2d,c21916f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-19T14:13:28-04:00,GitHub,noreply@github.com,2026-10-19T14:13:28-04:00,build(deps): bump the codeql-action group with 2 updates (#2206),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.38.2 to 4.38.3
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2...24c54180a607b1449ed407dd24f251e4e9147c8d)
+
+Updates `github/codeql-action/analyze` from 4.38.2 to 4.38.3
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2...24c54180a607b1449ed407dd24f251e4e9147c8d)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.38.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.38.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a187c781065980d1a64d996007e9e96223ff69c0,2206,false,dependabot[bot],1,2,2,.github
+apache/iceberg-go,fb29f2073a6784f06782b8e5c60aad3d791e7a9a,fb29f20,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-19T14:13:56-04:00,GitHub,noreply@github.com,2026-10-19T14:13:56-04:00,build(deps): bump actions/download-artifact from 8.0.1 to 8.0.2 (#2207),"Bumps [actions/download-artifact](https://github.com/actions/download-artifact) from 8.0.1 to 8.0.2.
+- [Release notes](https://github.com/actions/download-artifact/releases)
+- [Commits](https://github.com/actions/download-artifact/compare/3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c...9000827ccba6bdab643e8b6fd33ac0654aef8333)
+
+---
+updated-dependencies:
+- dependency-name: actions/download-artifact
+  dependency-version: 8.0.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",c21916fabe735ac9888b25e033359b1e8fd84a2d,2207,false,dependabot[bot],1,1,1,.github
+apache/iceberg-go,325fbc459198376dffb7e6d04f20ffc565a8488f,325fbc4,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-19T14:14:35-04:00,GitHub,noreply@github.com,2026-10-19T14:14:35-04:00,build(deps): bump actions/upload-artifact from 7.0.1 to 7.0.2 (#2208),"Bumps [actions/upload-artifact](https://github.com/actions/upload-artifact) from 7.0.1 to 7.0.2.
+- [Release notes](https://github.com/actions/upload-artifact/releases)
+- [Commits](https://github.com/actions/upload-artifact/compare/043fb46d1a93c77aae656e7c1c64a875d1fc6a0a...cf430e030ddbb5b0abf93d22962f4752f3646cd9)
+
+---
+updated-dependencies:
+- dependency-name: actions/upload-artifact
+  dependency-version: 7.0.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",fb29f2073a6784f06782b8e5c60aad3d791e7a9a,2208,false,dependabot[bot],1,1,1,.github
