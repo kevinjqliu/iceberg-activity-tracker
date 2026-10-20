@@ -7200,3 +7200,53 @@ or non-ASCII character was encoded twice and the server received e.g.
 ""my%20namespace"" instead of ""my namespace"". Join the raw parts with the
 namespace separator instead, matching RESTUtil.namespaceToQueryParam in
 the Java client.",208fd5147aae781aaeb68b204b47e9b6fe08fcc8,4112,false,,2,39,1,pyiceberg; tests
+apache/iceberg-python,c528cf618c8e4ad570913ff6c907816b2e2cfcff,c528cf6,Kaiqi Jin,kaiqi.jin@databricks.com,2026-10-19T21:18:23Z,GitHub,noreply@github.com,2026-10-19T21:18:23Z,Support range-based reads for deletion vectors (#3478),"* Support range-based reads for deletion vectors
+
+* Test external single and packed deletion vector fixtures
+
+* Make delete file sets read-only and clarify DV validation
+
+* Keep DV range identity internal to scan aggregation
+
+Restore native scan task sets by routing deletion vectors to their referenced data files. Preserve REST range references and cover local and REST scans of packed DV fixtures.
+
+* Preserve validated DV field types and keep helper internal
+
+* Retrigger CI",eb30d8ae6ac4054f751b91cb04d4ae5026354cc2,3478,false,,10,699,26,pyiceberg; tests
+apache/iceberg-python,881665bf2cebf946f3264df569e05757339cc479,881665b,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-10-20T00:04:53Z,GitHub,noreply@github.com,2026-10-20T00:04:53Z,CI: Cancel stale merge queue runs + use ubuntu-slim (#4106),"* CI: Cancel stale merge queue runs and move license check to ubuntu-slim
+
+A PR re-added to the merge queue reuses the same queue branch, so its
+runs waited behind the previous attempt's still-queued runs in the same
+concurrency group. Cancel in-progress runs for merge_group as well.
+
+Run the license check on ubuntu-slim to reduce demand for ubuntu-latest
+runners. That image has no Java, so install it explicitly.
+
+* CI: Run lightweight required-path jobs on ubuntu-slim
+
+The required gate jobs, ASF allowlist check, integration coverage report,
+and cibw dev env smoke test only need shell and Python, so ubuntu-slim
+runners suffice and free ubuntu-latest capacity for PR and merge queue runs.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* CI: Cancel stale runs for zizmor and markdown link check
+
+Both workflows run on ubuntu-latest, so superseded queued runs compete
+with required CI for scarce runners.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c528cf618c8e4ad570913ff6c907816b2e2cfcff,4106,false,Copilot App; Kevin Liu,7,21,9,.github
+apache/iceberg-python,7d51e52bfd42dba2806979ee2554507e95fcfa0a,7d51e52,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-20T06:27:50Z,GitHub,noreply@github.com,2026-10-20T06:27:50Z,Build: Bump aiohttp from 3.14.3 to 3.14.4 (#4124),"---
+updated-dependencies:
+- dependency-name: aiohttp
+  dependency-version: 3.14.4
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",881665bf2cebf946f3264df569e05757339cc479,4124,false,dependabot[bot],1,303,227,uv.lock

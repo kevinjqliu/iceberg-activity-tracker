@@ -9411,3 +9411,9 @@ response is surfaced to the caller as an error.",20f2407105d1a918e7084daf0e224d3
 apache/iceberg-cpp,e1633ad5667f9933c0876bdcf2402ec9657814f3,e1633ad,Haoxiang Meng,52441206+fairytale0828@users.noreply.github.com,2026-10-19T15:22:54+08:00,GitHub,noreply@github.com,2026-10-19T15:22:54+08:00,fix: preserve list types for empty Parquet splits (#1040),"Use Arrow's record batch reader for empty splits so schema alignment preserves configured and stored list types. Add regression tests for empty-split schema consistency and end-of-stream behavior.
 
 Co-authored-by: kiwimeng <kiwimeng@tencent.com>",059a116435698db0397594abf35c104331f8a234,1040,false,kiwimeng,2,153,23,src
+apache/iceberg-cpp,90c93405ff09bde5395b5e69ddf8786abe81f955,90c9340,lishuxu,lishuxu@gmail.com,2026-10-20T08:44:53+08:00,GitHub,noreply@github.com,2026-10-20T08:44:53+08:00,fix(json): limit nesting depth of parsed JSON documents (#1025),"Type, name-mapping and expression parsers walk parsed JSON recursively,
+so a deeply nested document could exhaust the stack. Check the nesting
+depth of objects and arrays iteratively right after parsing in
+FromJsonString and FileMetadataFromJsonString, and reject documents
+nested deeper than 200 levels, matching the default limit of
+Jackson's StreamReadConstraints.",e1633ad5667f9933c0876bdcf2402ec9657814f3,1025,false,,5,68,13,src

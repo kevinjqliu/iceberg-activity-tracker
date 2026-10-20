@@ -33200,3 +33200,133 @@ Co-authored-by: Andrei Tserakhau <tserakhau@double.cloud>
 
 Co-authored-by: Marco Kroll <marco.h.kroll+iceberg@gmail.com>
 Co-authored-by: Andrei Tserakhau <tserakhau@double.cloud>",697abcee75b503fc106f445dae8bcfc401524dcc,3463,false,Andrei Tserakhau; Marco Kroll,2,62,2,CHANGELOG.md; crates
+apache/iceberg-rust,0a345f202d9233481884f0d7a3ae3a4b6181044b,0a345f2,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-19T23:53:31Z,GitHub,noreply@github.com,2026-10-19T23:53:31Z,ci: replace classic branch protection with a ruleset so the bypass works (#3481),"* ci: move branch protection into the Merge Queue ruleset
+
+Classic branch protection can only be bypassed by admins, and while it
+exists GitHub blocks direct merges for the ruleset's bypass actors even
+when every requirement is met. Move the approval, linear-history,
+deletion and force-push rules into the Merge Queue ruleset and disable
+classic protection, as apache/seatunnel does, so iceberg-public members
+can use the breakglass. Requirements are otherwise unchanged.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci: keep the approval rule out of the bypassable ruleset
+
+Put deletion, force-push, linear-history and approval rules in a separate
+Branch Protection ruleset that only apache/root can bypass, so the
+iceberg-public breakglass skips only the merge queue and required checks.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci: use infra's default branch protection ruleset template
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci: keep dismiss_stale_reviews explicit
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",1be091a2135a5908537a5b45786ae7207a723aab,3481,false,Copilot App,1,15,5,.asf.yaml
+apache/iceberg-rust,0669f080668f31d2a9c602b5b774ec40743b5ed4,0669f08,Russell Spitzer,russell.spitzer@GMAIL.COM,2026-10-20T03:23:29Z,GitHub,noreply@github.com,2026-10-20T03:23:29Z,feat(transaction): record the Iceberg-Rust writer version information in snapshot summaries (#3363),"* feat(transaction): record the Rust writer in snapshot summaries
+
+A commit from iceberg-rust was indistinguishable from any other client that
+omits writer identity. Stamp engine-name, engine-version, and iceberg-version
+on every snapshot so mixed-writer tables can attribute the commit.
+
+Generated-by: Cursor Grok 4.7
+
+* Remove the writer-identity comments.
+
+Generated-by: Cursor Grok 4.7
+
+* Keep a caller-supplied engine name and version.
+
+iceberg-version still identifies this library. engine-name and
+engine-version are filled only when the caller did not set them, so an
+embedding engine can record itself through snapshot properties.
+
+Generated-by: Cursor Grok 4.7
+
+* Keep the writer-identity tests on snapshot properties.
+
+A data file and an unrelated property do not affect those keys.
+Also list the new summary constants alphabetically.
+
+Generated-by: Cursor Grok 4.7
+
+* Write only iceberg-version into snapshot summaries.
+
+engine-name and engine-version name the embedding engine, which this
+library does not know. Callers can still set them. iceberg-version
+remains the library identity, matching Java and Go.
+
+Generated-by: Cursor Grok 4.7
+
+* Drop the caller engine-identity snapshot test.
+
+Those keys are ordinary snapshot properties now, so preserving a
+caller value is already covered by the existing property test.
+
+Generated-by: Cursor Grok 4.7
+
+* Stop asserting that engine identity keys are absent.
+
+The snapshot summary no longer writes those keys, so the test only
+checks iceberg-version.
+
+Generated-by: Cursor Grok 4.7
+
+* Update crates/iceberg/src/transaction/append.rs
+
+Co-authored-by: Matt Butrovich <mbutrovich@users.noreply.github.com>
+
+* Move the iceberg-version summary key next to the other keys.
+
+The transaction path still writes the value. The property name now
+lives with the rest of the summary keys the library defines.
+
+Generated-by: Cursor Grok 4.7
+
+* Set iceberg-version from the snapshot summary module.
+
+The key stays private next to the other summary keys, and the commit
+path calls set_iceberg_version after the totals are computed.
+
+Generated-by: Cursor Grok 4.7
+
+* Restore the blank line before the SnapshotProduceOperation docs.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Matt Butrovich <mbutrovich@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",0a345f202d9233481884f0d7a3ae3a4b6181044b,3363,false,Matt Butrovich; Copilot App; Kevin Liu,3,45,3,crates
+apache/iceberg-rust,78f1762aca16cc4745bc913d6e782416b5705299,78f1762,Nikhil Dabas,ndabas@gmail.com,2026-10-20T03:32:51Z,GitHub,noreply@github.com,2026-10-20T03:32:51Z,ci: add Windows ARM64 build (#3181),"Add Windows ARM64 build
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",0669f080668f31d2a9c602b5b774ec40743b5ed4,3181,false,Kevin Liu,2,2,0,.github
+apache/iceberg-rust,da5cc19a9f7c9e8ea14dc40d4a82974cd26def42,da5cc19,NoahKusaba,97474796+NoahKusaba@users.noreply.github.com,2026-10-20T03:46:45Z,GitHub,noreply@github.com,2026-10-20T03:46:45Z,feat(table): add Table::with_runtime that keeps the manifest cache (#3406),"* feat(table): add Table::with_runtime that keeps the manifest cache
+
+A table gets its runtime only when it is built, and rebuilding it through
+Table::builder() starts with an empty ObjectCache. An engine that caches a
+Table and wants its scans to run on the runtime executing the query has no
+way to switch runtimes without losing the cached manifests and manifest
+lists.
+
+* docs(table): tighten Table::with_runtime docs
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",78f1762aca16cc4745bc913d6e782416b5705299,3406,false,Copilot App; Kevin Liu,2,35,0,crates
+apache/iceberg-rust,a9bd6c6ed9736f73508a2a89b1b42a7976f2bbea,a9bd6c6,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-20T09:52:44-07:00,GitHub,noreply@github.com,2026-10-20T09:52:44-07:00,docs: clarify how committers bypass the merge queue (#3489),"Removing a queued PR is required before a direct merge. Document only the
+CLI, since the web UI shows the bypass checkbox only while a required
+check is pending or failing.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",da5cc19a9f7c9e8ea14dc40d4a82974cd26def42,3489,false,Copilot App,1,7,4,CONTRIBUTING.md
