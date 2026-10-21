@@ -9417,3 +9417,55 @@ depth of objects and arrays iteratively right after parsing in
 FromJsonString and FileMetadataFromJsonString, and reject documents
 nested deeper than 200 levels, matching the default limit of
 Jackson's StreamReadConstraints.",e1633ad5667f9933c0876bdcf2402ec9657814f3,1025,false,,5,68,13,src
+apache/iceberg-cpp,7f8009f88372a6adc950fb0ae6457e50273c2aa1,7f8009f,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-10-20T20:22:01-07:00,GitHub,noreply@github.com,2026-10-21T11:22:01+08:00,feat(scan): read Parquet files by task range (#1002),,90c93405ff09bde5395b5e69ddf8786abe81f955,1002,false,,10,713,70,src
+apache/iceberg-cpp,8e35d0560419be6b422dfa95c74289a172e21373,8e35d05,Manu Zhang,OwenZhang1990@gmail.com,2026-10-21T15:31:32+08:00,GitHub,noreply@github.com,2026-10-21T15:31:32+08:00,fix: qualify Iceberg names in public error macros (#1026),"ICEBERG_RETURN_UNEXPECTED, and through it ICEBERG_ASSIGN_OR_RAISE, named
+Error without its namespace. ICEBERG_PRECHECK and ICEBERG_CHECK did the
+same with InvalidArgument and ValidationFailed, and the ICEBERG_BUILDER_*
+macros with ErrorKind. Those names resolve only inside namespace iceberg,
+so code that includes the installed headers could not use the macros.
+
+Qualify them with ::iceberg::, as the logging macros already do, and use
+::iceberg:: in the exception macros as well.
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",7f8009f88372a6adc950fb0ae6457e50273c2aa1,1026,false,Claude Opus 5.5,5,173,34,src
+apache/iceberg-cpp,08d2f863b3c921674c8cca9b532c84143d05619b,08d2f86,YinZheng-Sun,57469177+YinZheng-Sun@users.noreply.github.com,2026-10-21T15:47:42+08:00,GitHub,noreply@github.com,2026-10-21T15:47:42+08:00,fix(row): apply array offsets in ArrowArray wrappers (#1039),"ArrowArrayStructLike, ArrowArrayArrayLike and ArrowArrayMapLike ignored the
+offset of the wrapped ArrowArray, so sliced inputs returned wrong rows:
+
+- Struct children are not shifted by the parent's offset in the Arrow C data
+  interface, so GetField must add the struct's own offset.
+- ArrowArrayViewListChildOffset and the raw map offsets buffer are indexed
+  without the array's offset, so list/map rows must add it before lookup.
+- Map key/value children are not shifted by the entries struct's offset.
+
+Add tests for sliced struct, list and map arrays.
+
+Co-authored-by: yinzhengsun <yinzhengsun@tencent.com>",8e35d0560419be6b422dfa95c74289a172e21373,1039,false,yinzhengsun,2,133,7,src
+apache/iceberg-cpp,4f195d0be65dde346802b3a6555bd46eaf344fa2,4f195d0,Xinli Shang,xinlishang@gmail.com,2026-10-21T01:38:27-07:00,GitHub,noreply@github.com,2026-10-21T16:38:27+08:00,feat(encryption): add AES GCM cipher and AES GCM Stream (AGS1) files (#1030),,08d2f863b3c921674c8cca9b532c84143d05619b,1030,false,,12,1162,19,ci; cmake_modules; src
+apache/iceberg-cpp,8698e9351f357d36b33e8e4f39350b11566132d1,8698e93,Manu Zhang,OwenZhang1990@gmail.com,2026-10-21T23:25:51+08:00,GitHub,noreply@github.com,2026-10-21T23:25:51+08:00,chore(deps): bump allowlist-check to v1.0.1 (#1047),"Use the commit referenced by the allowlist-check/v1.0.1 tag to avoid the ref-version-mismatch failure in PR #1037.
+
+Co-authored-by: Codex <codex@openai.com>",4f195d0be65dde346802b3a6555bd46eaf344fa2,1047,false,Codex,1,1,1,.github
+apache/iceberg-cpp,c6ccd05f310f9d3088024032885a03c1eb0d5ee5,c6ccd05,Minh Vu,vuhoangminh97@gmail.com,2026-10-21T17:46:57+02:00,GitHub,noreply@github.com,2026-10-21T23:46:57+08:00,perf(util): encode Base64 in three-byte blocks (#1045),,8698e9351f357d36b33e8e4f39350b11566132d1,1045,false,,2,54,18,src
+apache/iceberg-cpp,29900cae9a6a5c110016b6c3e9dca8d14d6beef4,29900ca,YangJie,yangjie01@baidu.com,2026-10-21T12:03:14-04:00,GitHub,noreply@github.com,2026-10-22T00:03:14+08:00,fix(metadata): drop removed schema ids from the builder's schema index (#1012),"RemoveSchemas filtered metadata_.schemas but left schemas_by_id_
+untouched, so within one builder session the removed ids stayed
+resolvable: SetCurrentSchema on a removed id passed its existence
+check and Build() emitted metadata whose current-schema-id dangles
+outside schemas, and a later AddSchema reuse of the id took the
+update path against a schema the metadata no longer contains. Erase
+the removed ids from the index alongside the vector filter.",c6ccd05f310f9d3088024032885a03c1eb0d5ee5,1012,false,,3,85,0,src
+apache/iceberg-cpp,5107eda08bdea434ede4efee66a8e5bc7732cc22,5107eda,YangJie,yangjie01@baidu.com,2026-10-21T12:11:00-04:00,GitHub,noreply@github.com,2026-10-22T00:11:00+08:00,fix(metadata): write and detect gzip-compressed table metadata (#1014),"Codec::FromFileName used find_last_of with the multi-character suffix
+'.metadata.json', which matches the last single character of the set
+(the final 'n') instead of the suffix. For gzip-compressed metadata
+written by Iceberg Java as '<name>.gz.metadata.json', the resulting
+file_name_without_suffix kept the wrong tail, the '.gz' check failed,
+and the file was misclassified as uncompressed kNone. Reading such a
+file then fails to decompress.
+
+Use rfind so the whole suffix matches. The legacy '.metadata.json.gz'
+compatibility branch is unchanged. Round-trip reading of Java-written
+gzip metadata files is covered by new unit tests.
+
+NewTableMetadataFilePath names the file '<version>-<uuid>.gz.metadata.json'
+when write.metadata.compression-codec is gzip, but Write always emitted plain
+JSON, so the file contradicted its own name and no reader could inflate it.
+Add a GZipCompressor next to the existing GZipDecompressor and compress in
+Write when the location's codec is gzip, completing the round trip.",29900cae9a6a5c110016b6c3e9dca8d14d6beef4,1014,false,,6,193,1,src

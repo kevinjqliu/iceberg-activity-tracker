@@ -33330,3 +33330,133 @@ CLI, since the web UI shows the bypass checkbox only while a required
 check is pending or failing.
 
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",da5cc19a9f7c9e8ea14dc40d4a82974cd26def42,3489,false,Copilot App,1,7,4,CONTRIBUTING.md
+apache/iceberg-rust,464225dc9d1e644fb62a5564072685f75e6c1824,464225d,Oleks V,comphead@users.noreply.github.com,2026-10-20T19:35:10Z,GitHub,noreply@github.com,2026-10-20T19:35:10Z,fix(reader): prune data columns for empty projections (#3473),"* fix(reader): prune data columns for empty projections
+
+An empty projection (e.g. `COUNT(*)`) was excluded from the metadata-only path, so every column of every data file was read. Treat it as metadata-only so the RowNumber virtual column supplies the row count with zero data columns read.
+
+* test(reader): cover empty projection with deletes and predicates
+
+Rename metadata_only_projection to no_data_columns_projected, since it
+now also covers the empty projection. Assert the output shape in the
+bytes-read test, and add empty-projection row-count tests for a
+positional delete and a predicate on a non-projected column.",a9bd6c6ed9736f73508a2a89b1b42a7976f2bbea,3473,false,,1,109,14,crates
+apache/iceberg-rust,3764d5927b7f523f28c40d103e4a4df7fd16581e,3764d59,Yuang Gao,91290127+YuangGao@users.noreply.github.com,2026-10-20T19:35:59Z,GitHub,noreply@github.com,2026-10-20T19:35:59Z,feat(rest): support freshness-aware table loading (#3377),"* feat(rest): support freshness-aware table loading
+
+* fix(rest): reject out-of-range table cache expiry
+
+* fix(rest): address review feedback on table cache
+
+* fix(rest): invalidate before sending changes and narrow credential check
+
+* test(rest): pin table cache invalidation order and credential keys",464225dc9d1e644fb62a5564072685f75e6c1824,3377,false,,7,484,26,Cargo.lock; Cargo.toml; crates
+apache/iceberg-rust,e4b9c3ef20335bbc41b079cfd795aafc5fc9be60,e4b9c3e,Xander,zander181@googlemail.com,2026-10-20T21:00:52Z,GitHub,noreply@github.com,2026-10-20T21:00:52Z,"fix(spec): reuse the highest matching partition field id, not an arbitrary one (#3413)","* fix(spec): reuse the highest matching partition field id, not an arbitrary one
+
+`reuse_partition_field_ids` collects (source_id, transform) -> field_id
+into a HashMap with no merge function, so when several specs give one
+pair different field ids the last one visited wins. `partition_specs` is
+itself a HashMap, so the winner changes from run to run and the same
+input metadata yields different output.
+
+Keep the highest id of each pair, as Iceberg Java does:
+
+    Collectors.toMap(
+        field -> Pair.of(field.sourceId(), field.transform().toString()),
+        PartitionField::fieldId,
+        Math::max)
+
+Divergent ids for one pair cannot be produced by this crate, since the
+reuse rule keeps them converged, but they can be read from tables
+written before the rule existed or by writers that do not apply it.
+
+* comments
+
+* Deterministic test
+
+* clippy",3764d5927b7f523f28c40d103e4a4df7fd16581e,3413,false,,1,145,14,crates
+apache/iceberg-rust,219571a4185df2bc6e144dbbcb72cf016714b61b,219571a,Dhruv Arya,dhruv.arya@databricks.com,2026-10-20T21:07:52Z,GitHub,noreply@github.com,2026-10-20T21:07:52Z,fix: update rustls-webpki and webpki-roots for emSign advisories (#3496),"* fix: update rustls-webpki and webpki-roots for emSign advisories
+
+Bump rustls-webpki to 0.103.16 and webpki-roots / webpki-root-certs to
+1.0.10 to address RUSTSEC-2026-0382, RUSTSEC-2026-0381 and
+RUSTSEC-2026-0383. Ignore RUSTSEC-2026-0381 for the webpki-roots 0.26.11
+shim pulled in by sqlx-core 0.8.6, which re-exports the fixed 1.0.10.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* fix: drop unused sqlx TLS dev feature instead of ignoring RUSTSEC-2026-0381
+
+The SQL catalog tests only use SQLite, so the tls-rustls feature on the
+sqlx dev-dependency is unused. Removing it drops webpki-roots from the
+lockfile, so the audit ignore is no longer needed.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Dhruv Arya <aryadhruv@gmail.com>
+Co-authored-by: Isaac <no-reply@databricks.com>",e4b9c3ef20335bbc41b079cfd795aafc5fc9be60,3496,false,Isaac; Dhruv Arya,2,15,8,.cargo; Cargo.lock
+apache/iceberg-rust,b9d285567526b384585b1613c76b46ab5ef063dd,b9d2855,Dhruv Arya,dhruv.arya@databricks.com,2026-10-21T07:58:40Z,GitHub,noreply@github.com,2026-10-21T07:58:40Z,feat(scan): support timestamp-based time travel (#3260),"* feat(scan): support timestamp-based time travel
+
+* test(scan): verify timestamp scans read historical rows
+
+* docs: shorten timestamp time travel docstrings
+
+* fix: refine timestamp selection API and edge-case coverage
+
+* docs: add timestamp time travel changelog entry
+
+* test: consolidate timestamp time travel coverage
+
+* refactor: use a single snapshot selector with last-call-wins semantics
+
+* docs: clarify timestamp history selection and PyIceberg differences
+
+* test: share the Parquet fixture row count
+
+* docs: note Java timestamp ordering compatibility
+
+* docs: clarify minimum timestamp difference from Java
+
+* docs: describe snapshot selection enum
+
+* test: adapt timestamp time travel tests to relocated scan fixture
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* fix: name the timestamp when an as-of-time snapshot is missing
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* refactor: spell out the as-of-time tie-break and i64::MIN edge
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Dhruv Arya <aryadhruv@gmail.com>
+Co-authored-by: Isaac <no-reply@databricks.com>",219571a4185df2bc6e144dbbcb72cf016714b61b,3260,false,Isaac; Dhruv Arya,5,576,18,CHANGELOG.md; crates
+apache/iceberg-rust,8fbaf47b4a3d3d599b1cb01cb5aa86b403c4b688,8fbaf47,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-21T09:39:28Z,GitHub,noreply@github.com,2026-10-21T09:39:28Z,chore: deny unused licenses and license exceptions in cargo-deny (#3497),"* Deny unused allowed licenses and license exceptions
+
+Co-authored-by: Daniel Carl Jones <djonesoa@amazon.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Format deny.toml with taplo
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Daniel Carl Jones <djonesoa@amazon.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",b9d285567526b384585b1613c76b46ab5ef063dd,3497,false,Daniel Carl Jones; Copilot App,1,2,0,deny.toml
+apache/iceberg-rust,000e791d5229d9d136cda2b41fa0d7563fa58e1e,000e791,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-21T09:45:25Z,GitHub,noreply@github.com,2026-10-21T09:45:25Z,build: disable unused zstd legacy feature (#3495),"* build: drop unused brotli and zstd legacy features
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* build: keep parquet default features
+
+Brotli is still a supported Parquet codec for reads and writes.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",8fbaf47b4a3d3d599b1cb01cb5aa86b403c4b688,3495,false,Copilot App,1,1,1,Cargo.toml

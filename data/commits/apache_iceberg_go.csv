@@ -32405,3 +32405,99 @@ Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
 ---------
 
 Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",a5a06651b76d8dfe378b8f9260d84c3d3358cd50,2236,false,,2,257,4,table
+apache/iceberg-go,0490c3f1aca665130413b311e98a6283ced81761,0490c3f,Minh Vu,vuhoangminh97@gmail.com,2026-10-20T20:21:57+02:00,GitHub,noreply@github.com,2026-10-20T19:21:57+01:00,perf(table): cache dictionary paths for position deletes (#2231),"* perf(table): cache dictionary file paths during position delete grouping
+
+* perf(table): keep uncached delete path lean
+
+* style(table): fix lint findings
+
+* fix(table): reject null dictionary file paths in position deletes
+
+* test(table): cover null dictionary indices in position deletes
+
+* test(table): expect column validation for null dictionary indices",1b50ce30fa71b28f1bfcf7433d0af1b616cd6d18,2231,false,,2,291,3,table
+apache/iceberg-go,ec3a60fbc6e407bddf0641e353339a0ceb5ab474,ec3a60f,Richie Bachala,richie.bachala@gmail.com,2026-10-20T12:50:20-07:00,GitHub,noreply@github.com,2026-10-20T20:50:20+01:00,test(catalog): assert unsupported namespace properties instead of skipping (#2237),"Catalogs that set SupportsNamespaceProperties to false now run
+NamespacePropertiesNotSupported in place of the property-write tests.
+It asserts that CreateNamespace with properties and UpdateNamespaceProperties
+return iceberg.ErrNotImplemented and that the rejected calls change nothing,
+mirroring RenameTableNotSupported.
+
+The Hadoop catalog now wraps both errors in iceberg.ErrNotImplemented so
+callers can detect the unsupported case with errors.Is.
+
+Signed-off-by: Richie Bachala <richie.bachala@gmail.com>",0490c3f1aca665130413b311e98a6283ced81761,2237,false,,4,53,38,catalog
+apache/iceberg-go,557a041f18c566c68128d17a9b36c7b8617c00a7,557a041,Minh Vu,vuhoangminh97@gmail.com,2026-10-20T22:16:35+02:00,GitHub,noreply@github.com,2026-10-20T21:16:35+01:00,perf(table): use range masks for contiguous positional deletes (#2227),"* perf(table): use range masks for contiguous positional deletes
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(table): format range-mask test fields
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(table): iterate surviving bits for dense positional deletes
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover dense positional deletes and bitmap boundaries
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(table): fix lint findings
+
+* style(table): gofmt positional delete range test
+
+* test(table): format positional delete range test
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",ec3a60fbc6e407bddf0641e353339a0ceb5ab474,2227,false,,2,251,0,table
+apache/iceberg-go,a879ce3755119aa64233a5fb1816c12045cbd78c,a879ce3,Minh Vu,vuhoangminh97@gmail.com,2026-10-20T22:44:02+02:00,GitHub,noreply@github.com,2026-10-20T22:44:02+02:00,perf(table): avoid cloning parquet split offsets during scans (#2118),,557a041f18c566c68128d17a9b36c7b8617c00a7,2118,false,,10,420,14,data_file_refs.go; data_file_refs_test.go; internal; table
+apache/iceberg-go,893feabbe0b005f549adf06fcfabde79c44e453d,893feab,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-20T13:44:24-07:00,GitHub,noreply@github.com,2026-10-20T13:44:24-07:00,ci: standardize RustFS setup across Iceberg repos (#2056),Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>,a879ce3755119aa64233a5fb1816c12045cbd78c,2056,false,Copilot App,1,2,3,internal
+apache/iceberg-go,407a4cdc8fd73352364d2ebf0af0f597f24ff9d5,407a4cd,Revanth,revanthcse1@gmail.com,2026-10-20T16:13:35-05:00,GitHub,noreply@github.com,2026-10-20T22:13:35+01:00,fix(table): remove a removed data file's deletion vector on every replace path (#2239),,893feabbe0b005f549adf06fcfabde79c44e453d,2239,false,,3,147,4,table
+apache/iceberg-go,d9d1eded06a6426ed7f84c773d858590cdb37889,d9d1ede,Colton Loftus,70598503+C-Loftus@users.noreply.github.com,2026-10-21T13:26:07-04:00,GitHub,noreply@github.com,2026-10-21T18:26:07+01:00,feat(table): Explicitly prohibit `GEOMETRY`/`GEOGRAPHY` -> `BINARY` type promotion (#2221),"* Explicitly align on geospatial type binary promotion behavior
+
+* Respond to feedback",407a4cdc8fd73352364d2ebf0af0f597f24ff9d5,2221,false,,3,28,5,table; types.go; types_test.go
+apache/iceberg-go,9dd8d308f6fa2119eccb4b7393b7dfc153a19b45,9dd8d30,Revanth,revanthcse1@gmail.com,2026-10-21T12:26:55-05:00,GitHub,noreply@github.com,2026-10-21T13:26:55-04:00,"feat(table,rest): enforce the catalog's scan-planning-mode directive (#2162)","* fix(table): add ScanPlanningDirective() accessor on table
+
+Previously, the table returned by a LoadTable() on a REST catalog did
+not have any way of exposing what scan planning mode the catalog is
+trying to enforce on this table. In cases where the catalog is enforcing
+server-side scan planning, the caller would have to rely on errors
+and/or missing files through the Scan() interface, to realize that
+server-side scan planning is necessary.
+
+This change exposes a ScanPlanningDirective() function on a table.Table
+that exposes this value as returned from LoadTableResponse. If the catalog
+is not imposing any particular scan planning mode,
+ScanPlanningDirectiveUnknown is returned.
+
+* fix(table): carry scan-planning directive state explicitly
+
+Address review feedback on the ScanPlanningDirective accessor:
+
+- WithScanPlanningDirective now takes (value, ok) so absence is explicit
+  and a comma-ok map read can be passed straight through.
+- Add WithScanPlanningDirectiveFrom to copy a table's directive verbatim;
+  RefreshTableCredentials uses it instead of reconstructing the raw value
+  from SavedConfig, which could report the wrong directive for externally
+  built tables.
+- Drop the positional loadConfig parameter from tableFromResponse; load
+  paths pass the directive as a caller option instead.
+- Rename ScanPlanningDirectiveUnknown to ScanPlanningDirectiveNone and
+  document that it only means ""no directive"" with a nil error.
+- Use a switch over the valid directives.
+- Add coverage for Commit, StagedTable, Refresh, CreateTable,
+  RegisterTable, and LoadTable followed by a credential refresh.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* feat(table,rest): enforce the catalog's scan-planning-mode directive
+
+* fix(table,rest): fail closed on UpdateTable and incremental scans under a scan-planning directive
+
+* fix(table,rest): tolerate a nil directive source and pin UpdateTable's directive
+
+---------
+
+Co-authored-by: Bilal Akhtar <bilal.akhtar@clickhouse.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",d9d1eded06a6426ed7f84c773d858590cdb37889,2162,false,Claude Opus 5.5; Bilal Akhtar,13,1267,56,README.md; catalog; table
