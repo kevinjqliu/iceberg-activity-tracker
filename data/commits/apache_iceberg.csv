@@ -8350,3 +8350,28 @@ updated-dependencies:
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",31b643b350562f6dda7eae7e22bd91a6b39c018f,18184,false,dependabot[bot],1,1,1,.github
 apache/iceberg,e70a2efcd06c009910a354c71ee892a7742cc60e,e70a2ef,Sergei Nikolaev,kinolaev@gmail.com,2026-10-21T14:51:32+02:00,GitHub,noreply@github.com,2026-10-21T14:51:32+02:00,Flink: Backport: Refresh unresolved input schemas in dynamic sink cache (#18594),,7fd1364ced4f7c0ed93cbfa49f02220807f93cee,18594,false,,6,318,70,flink
+apache/iceberg,16bb7a99033124b3eb669ee5b0ea28dfc980ead9,16bb7a9,Yusuf YILDIZ,yusufyildiz86@gmail.com,2026-10-21T17:49:55-04:00,GitHub,noreply@github.com,2026-10-21T14:49:55-07:00,Parquet: Fix UnsupportedOperationException for boolean filters (#18580),"* Parquet: Fix UnsupportedOperationException for boolean filters
+
+ParquetFilters rejected Boolean literals in EQ/NOT_EQ predicates and
+had no IS_NULL/NOT_NULL handling for boolean columns, so reads with
+such filters failed before returning any rows.
+
+Closes #17092
+
+Co-authored-by: Eunbin Son <thswlsqls@naver.com>
+
+* Parquet: Define the schema locally in boolean filter tests
+
+Follows the pattern of the other tests in TestParquet.
+
+---------
+
+Co-authored-by: Eunbin Son <thswlsqls@naver.com>",e70a2efcd06c009910a354c71ee892a7742cc60e,18580,false,Eunbin Son,2,62,4,parquet
+apache/iceberg,7a74178db9487d934313f5e8430d14f7aa3769d9,7a74178,Manu Zhang,OwenZhang1990@gmail.com,2026-10-22T06:50:20+08:00,GitHub,noreply@github.com,2026-10-21T15:50:20-07:00,Parquet: Validate geospatial projection parameters (#17578),,16bb7a99033124b3eb669ee5b0ea28dfc980ead9,17578,false,,4,305,0,parquet
+apache/iceberg,cdeb84d341631b0c89a4defc61f38eccf5768cea,cdeb84d,Xiduo You,ulyssesyou18@gmail.com,2026-10-22T06:50:36+08:00,GitHub,noreply@github.com,2026-10-21T15:50:36-07:00,Spark 4.2: Support iterative runtime filtering with PartitionPredicate (#18600),,7a74178db9487d934313f5e8430d14f7aa3769d9,18600,false,,3,291,3,spark
+apache/iceberg,60897e0b828580cc20e591424179d9b5c574e8d6,60897e0,Daksh Dave,dakshdave51093@gmail.com,2026-10-22T00:02:30-07:00,GitHub,noreply@github.com,2026-10-22T09:02:30+02:00,Arrow: Fix vectorized reads of dictionary-encoded TIMESTAMP_MILLIS columns (#18592),Co-authored-by: AbdelrahmanElhawary <abdulrahman.elhawary@incorta.com>,cdeb84d341631b0c89a4defc61f38eccf5768cea,18592,false,AbdelrahmanElhawary,2,99,1,arrow
+apache/iceberg,7461b5047638fe07285a175a3e113e73fc5e19de,7461b50,Anoop Johnson,anoop@apache.org,2026-10-22T08:36:03-07:00,GitHub,noreply@github.com,2026-10-22T08:36:03-07:00,Core: Add V4 file planner (#17541),"Plan FileScanTasks from a V4 root manifest, routing DATA entries to tasks and
+expanding DATA_MANIFEST entries into their leaf manifests through
+V4ManifestReader. Attach each data file's colocated deletion vector as a
+DeleteFile. Add RootManifestFile so the root reads through the same reader as
+the leaves, and TrackedFileAdapters.asDVDeleteFile(DataFile).",60897e0b828580cc20e591424179d9b5c574e8d6,17541,false,,6,1149,1,core

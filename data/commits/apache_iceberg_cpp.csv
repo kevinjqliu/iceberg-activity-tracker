@@ -9469,3 +9469,29 @@ when write.metadata.compression-codec is gzip, but Write always emitted plain
 JSON, so the file contradicted its own name and no reader could inflate it.
 Add a GZipCompressor next to the existing GZipDecompressor and compress in
 Write when the location's codec is gzip, completing the round trip.",29900cae9a6a5c110016b6c3e9dca8d14d6beef4,1014,false,,6,193,1,src
+apache/iceberg-cpp,1b1232bdd0379ee10039dae3170df41ca93181fe,1b1232b,Guotao Yu,guotao.yugt@gmail.com,2026-10-22T11:01:13+08:00,GitHub,noreply@github.com,2026-10-22T11:01:13+08:00,fix(avro): key projection cache on Avro node to avoid OOB read (#1022),"The avro-to-projection cache was keyed on projections.data() only. All
+empty-struct projections share the same (null) data(), so a second empty
+struct with more Avro fields reused a cached vector sized for the first
+and read out of bounds. Include the Avro node in the key and reject
+out-of-range projected field indexes.",5107eda08bdea434ede4efee66a8e5bc7732cc22,1022,false,,4,128,9,src
+apache/iceberg-cpp,49f8a8778571789a076b1501950fbd2115c34bb5,49f8a87,Guotao Yu,guotao.yugt@gmail.com,2026-10-22T11:04:07+08:00,GitHub,noreply@github.com,2026-10-22T11:04:07+08:00,fix(manifest): validate enum fields when parsing manifests (#1034),"Manifest and manifest list readers cast raw integers from the file
+straight into ManifestStatus, DataFile::Content and ManifestContent.
+Out-of-range values then reached switches ending in unreachable(),
+which is undefined behavior. Validate these fields through the
+*FromInt helpers at parse time, and return an error instead of
+unreachable() for an unknown status in ManifestWriter::WriteEntry.
+
+ParseDataFile's hand-rolled loop for DataFile::kFileFormatFieldId
+skipped the field when null instead of checking `required` and
+returning MakeNullError like every other field in the switch,
+addressing review feedback on PR #1034.",1b1232bdd0379ee10039dae3170df41ca93181fe,1034,false,,5,170,8,src
+apache/iceberg-cpp,041459e4d092c82c2fec9a8c3601fbddc12a561b,041459e,Manu Zhang,OwenZhang1990@gmail.com,2026-10-22T12:01:07+08:00,GitHub,noreply@github.com,2026-10-22T12:01:07+08:00,ci: use ASF-approved sccache action v0.0.11 (#1051),Co-authored-by: Codex <codex@openai.com>,49f8a8778571789a076b1501950fbd2115c34bb5,1051,false,Codex,1,1,1,.github
+apache/iceberg-cpp,48d0a5f17c959f7f0290527992728280013bc241,48d0a5f,Haoxiang Meng,52441206+fairytale0828@users.noreply.github.com,2026-10-22T14:56:40+08:00,GitHub,noreply@github.com,2026-10-22T14:56:40+08:00,feat(parquet): apply name mapping to files without field IDs (#1044),Co-authored-by: kiwimeng <kiwimeng@tencent.com>,041459e4d092c82c2fec9a8c3601fbddc12a561b,1044,false,kiwimeng,5,361,8,src
+apache/iceberg-cpp,62c5c2f81b1d31622e343890b4cd0ba7d2a9eca9,62c5c2f,Manu Zhang,OwenZhang1990@gmail.com,2026-10-22T20:46:12+08:00,GitHub,noreply@github.com,2026-10-22T20:46:12+08:00,fix(parquet): validate geospatial projection parameters (#1050),"Reject incompatible geometry/geography CRS and geography edge algorithms during projection. Resolve omitted Parquet CRS to OGC:CRS84 and include the field path in mismatch errors.
+
+Extract common CRS normalization, parameter comparison, and mismatch reporting into a helper used by geometry and geography projection.
+
+Co-authored-by: Codex <codex@openai.com>",48d0a5f17c959f7f0290527992728280013bc241,1050,false,Codex,2,138,10,src
+apache/iceberg-cpp,7ed8202351a0f213fba42e5de6d1777b67c4f1e0,7ed8202,Manu Zhang,OwenZhang1990@gmail.com,2026-10-23T00:04:59+08:00,GitHub,noreply@github.com,2026-10-23T00:04:59+08:00,fix(ci): scope PR tests to relevant workflow changes (#1048),"Skip unrelated GitHub workflow and configuration updates in the general, AWS, SQL catalog, and sanitizer test suites. Keep each suite's own workflow and shared actions as inputs, together with sanitizer suppression files.
+
+Co-authored-by: Codex <codex@openai.com>",62c5c2f81b1d31622e343890b4cd0ba7d2a9eca9,1048,false,Codex,4,46,24,.github

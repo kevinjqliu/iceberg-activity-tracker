@@ -33460,3 +33460,561 @@ Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 ---------
 
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",8fbaf47b4a3d3d599b1cb01cb5aa86b403c4b688,3495,false,Copilot App,1,1,1,Cargo.toml
+apache/iceberg-rust,5c27157675a7babb611638786195dfe24ad41dab,5c27157,Anoop Johnson,anoop@apache.org,2026-10-22T09:07:11Z,GitHub,noreply@github.com,2026-10-22T09:07:11Z,fix(expr): widen promoted partition values and bounds to prevent false pruning (#3483),"* fix(expr): widen promoted partition values before comparison
+
+A partition column promoted int->long (or float->double) keeps its
+originally-written values in manifests produced before the promotion.
+The entry partition tuple is decoded under the manifest's own narrower
+type, while the scan predicate is bound to the current wider type.
+`Datum::partial_cmp`/`PartialEq` require matching types, so the
+`ExpressionEvaluator` compared e.g. an int partition value against a
+long predicate literal, got no ordering, and silently pruned the data
+file, dropping matching rows from filtered scans.
+
+The manifest-list `ManifestEvaluator` is unaffected: it decodes
+`FieldSummary` bounds with `Datum::try_from_bytes`, which already widens
+a 4-byte int bound to long. Mirror that on the entry path by widening
+the partition value to the reference's type before comparing. Decimals
+already compare across precisions, so only int->long and float->double
+need widening.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* fix(expr): widen promoted column bounds in metrics pruning
+
+Companion to the partition-tuple widening: InclusiveMetricsEvaluator
+compares a data file's column bounds against the scan predicate, but
+those bounds are decoded under the manifest's embedded (narrower) schema
+while the predicate is bound to the current (wider) type. For an int
+column promoted to long (or float to double), the inequality and IN
+checks compared mismatched types, got no ordering, and discarded files
+that could match, dropping rows; the eq check failed open and merely
+skipped valid pruning.
+
+Widen each stored bound to the reference's type before comparing, via
+the same `Datum::promote_to` helper, in the inequality, eq, and IN paths.
+
+* fix(scan): widen promoted partition tuples at manifest read
+
+Replaces the comparison-time partition promotion with a reader-side
+projection, per review.
+
+The earlier comparison-time promotion only reached the pruning
+evaluators, so a promoted partition column still mismatched in the delete
+index: a data file's int partition never matched an eq delete or DV keyed
+by long, dropping or mis-applying deletes. Projecting the partition tuple
+fixes pruning and delete matching in one place.
+
+* fix(scan): tighten promotion gate, borrow unpromoted bounds, guard tuple length
+
+Addresses review feedback:
+- Gate `partition_types_differ` on the type pairs `promoted_partition` actually
+  widens (int->long/unknown, float->double/unknown) instead of any primitive
+  difference, so a decimal-precision widening or a dropped non-numeric source no
+  longer deep-clones every manifest entry on every scan.
+- `InclusiveMetricsEvaluator::promote_bound` returns `Cow` and `Datum::promote_to`
+  returns `Option`, so a bound that does not widen (e.g. a string or binary) is
+  borrowed instead of cloned per data file during planning.
+- `DataFile::promoted_partition` returns `DataInvalid` when the stored tuple and
+  the spec partition type have different lengths, instead of silently dropping
+  trailing values (and the partition-scoped deletes they would match).
+- Drop the two delete-index unit tests that only re-exercised `promoted_partition`
+  plus `Struct` equality, already covered by the data_file and scan-level tests.
+
+* test(scan): add end-to-end promotion scan regressions for deletes
+
+Adds plan_files scan regressions over a promoted partition column, routing an
+old-schema manifest through the reader-side widening:
+- A v3 deletion vector written after the promotion against the older data file.
+  Without the widening the DV partition check errors (long(7) vs int(7)); the
+  test guards that the data file's partition widens so the DV attaches.
+- An equality delete written before the promotion against the older data file,
+  so both sides widen to long. Confirms the pre-existing match is preserved.
+
+Parameterizes the equality-delete fixture on whether the delete predates the
+promotion, and adds a v3 deletion-vector fixture.
+
+* fix(scan): copy dropped partition sources through unchanged
+
+A dropped partition source resolves to the Unknown primitive type.
+Widening its stored value to the promotion ceiling keyed on the backing
+literal, so a date (stored as an int) was silently promoted to long.
+The promotion gate skips a manifest whose only type difference is a
+dropped source, so a data manifest that widened a dropped date diverged
+from the delete manifest that left it alone, detaching the delete.
+
+Copy dropped-source values through unchanged and restrict the gate to
+genuine int to long and float to double promotions on live columns.
+
+* fix(scan): normalize dropped numeric partition sources by written type
+
+* Feedback
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",000e791d5229d9d136cda2b41fa0d7563fa58e1e,3483,false,Isaac,7,1062,6,crates
+apache/iceberg-rust,86e837f90d16074d67218db05ffc2629443dafd5,86e837f,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-22T09:30:29Z,GitHub,noreply@github.com,2026-10-22T09:30:29Z,chore: clean up audit ignores and cite LEGAL-732 in deny.toml (#3486),"* chore: remove stale quick-xml advisory ignores
+
+Cargo.lock now resolves quick-xml to 0.41.0, which contains the fix for
+RUSTSEC-2026-0194 and RUSTSEC-2026-0195. `cargo audit` passes without
+the ignores, so they no longer suppress anything.
+
+The rsa (RUSTSEC-2023-0071) and paste (RUSTSEC-2024-0436) ignores stay:
+both crates are still in Cargo.lock and `cargo audit` fails without them.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* chore: cite ASF LEGAL-732 for CDLA-Permissive-2.0 in deny.toml
+
+CDLA-Permissive-2.0 was allowed without a justification. ASF LEGAL-732
+treats it as Category A, the same reference Apache OpenDAL cites in its
+deny.toml. Document it so reviewers can see why it is on the allowlist.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",5c27157675a7babb611638786195dfe24ad41dab,3486,false,Copilot App,2,1,12,.cargo; deny.toml
+apache/iceberg-rust,1c05452b53f65d4d37f6399c550ca0d2413ded0c,1c05452,Dhruv Arya,dhruv.arya@databricks.com,2026-10-22T13:49:50Z,GitHub,noreply@github.com,2026-10-22T13:49:50Z,fix(spec): accept partition specs produced by spec evolution (#3431),"* fix(spec): accept partition specs produced by spec evolution
+
+Partition spec evolution produces specs that the spec builders rejected:
+
+- A source column can have more than one partition field. Adding hour(ts) to a
+  spec that has day(ts) is allowed, and format version 1 tables keep each
+  removed field as a `void` placeholder. Binding an unbound spec
+  (`UnboundPartitionSpec::bind`, `PartitionSpecBuilder::new_from_unbound`, and
+  so `TableMetadataBuilder::add_partition_spec`) and loading the legacy v1
+  `partition-spec` field ran the authoring-time redundancy check and rejected
+  these specs. Both now skip it, as Java does.
+  `PartitionSpecBuilder::add_unbound_field` and
+  `UnboundPartitionSpecBuilder::add_partition_field` still reject redundant
+  fields.
+- Removing identity(category) from a format version 1 spec leaves a void field
+  named `category`. Both the spec builder and the table metadata builder
+  allowed only identity fields to share the name of their source column. Void
+  fields may now do the same, matching Java's `alwaysNull`.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* fix(spec): address review feedback on evolved spec binding
+
+Share the identity-or-void name rule through `Transform::may_share_name_with_source`
+and name void in its error. Check names before redundancy in `add_unbound_field`,
+document the authoring-vs-bind split, and pin it with tests, including a v2
+day+hour default spec that survives later commits.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Dhruv Arya <aryadhruv@gmail.com>
+Co-authored-by: Isaac <no-reply@databricks.com>
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",86e837f90d16074d67218db05ffc2629443dafd5,3431,false,Isaac; Dhruv Arya; Kevin Liu,4,300,19,crates
+apache/iceberg-rust,ca21f1587c6caaeb88dd3a9e1cc245747e1aba08,ca21f15,Michael Taranov,mixermt@gmail.com,2026-10-22T15:07:39Z,GitHub,noreply@github.com,2026-10-22T15:07:39Z,feat(storage): Add HDFS support via opendal services-hdfs-native (#3111),"* feat(storage): Add HDFS support via opendal services-hdfs-native
+
+Adds an opendal-hdfs-native cargo feature plus OpenDalStorageFactory::Hdfs
+and OpenDalStorage::Hdfs variants in iceberg-storage-opendal, using
+OpenDAL's services-hdfs-native (pure-Rust HDFS RPC, no JNI/libhdfs).
+
+The NameNode for a path resolves as: the hdfs.name-node property when set
+(comma-separated endpoints enable HA failover), otherwise the path
+authority. hadoop.-prefixed properties are forwarded to the HDFS client
+configuration, overriding values loaded from $HADOOP_CONF_DIR. Operators
+are cached per effective NameNode since each holds live RPC connections.
+
+Revives and updates PR #2441 (by @jordepic) against the current storage
+layer and opendal 0.58, where name_node became mandatory and the comma
+list is the HA mechanism.
+
+Closes #2440
+
+Co-authored-by: Jordan Epstein <jordepic@users.noreply.github.com>
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+
+* refactor: address review — Properties derive for HdfsConfig, drop HDFS CI special-casing
+
+- HdfsConfig is now pub(crate) and parsed via #[derive(Properties)]
+  (key/prefix attributes) instead of hand-written TryFrom + TypedBuilder.
+- HDFS integration tests are no longer #[ignore]d and the dedicated CI
+  step is gone; they run under the default nextest invocation since
+  make docker-up already starts the fixture and the Tests job is
+  Linux-only.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+
+* fix: reject non-hierarchical hdfs URLs; key delete_stream batches by effective NameNode
+
+- Url::parse accepts non-hierarchical forms like `hdfs:x`; the byte-7
+  slice then panicked. Require the literal `hdfs://` prefix instead.
+- batch_key_for_path grouped by URL host only, so NameNodes differing
+  by port shared one deleter; key by the effective NameNode (configured
+  hdfs.name-node, else authority incl. port), matching the operator cache.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+
+* refactor(storage): rename hdfs module to hdfs_native, drop unused HdfsConfig
+
+Per review: the opendal module, its functions and the storage/factory
+variants are now hdfs_native-prefixed (leaving room for a libhdfs-backed
+variant, see #1130), and the never-consumed HdfsConfig struct is removed
+from the core crate — config/hdfs.rs keeps only the property constants
+that iceberg-storage-opendal uses.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* ci: retrigger after setup-python manifest timeout on macos runner
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* fix(storage): address review — cache newtype, build outside lock, single NameNode rule, env-gated HDFS tests
+
+- HdfsNativeOperatorCache newtype keeps the cache representation out of
+  the public API.
+- Operators are built outside the cache lock (the build reads Hadoop XML
+  synchronously); a racing first caller's duplicate is dropped unopened.
+- hdfs_native_effective_name_node is the single source of the
+  configured-else-authority rule for both create_operator and the
+  delete_stream batch key; unresolvable paths key on themselves.
+- hdfs.name-node is trimmed and an empty value is treated as unset, so it
+  no longer shadows the path-authority fallback.
+- HDFS integration tests self-skip unless ICEBERG_TEST_HDFS_ENDPOINT is
+  set (as the HF tests do) and the compose services sit behind the hdfs
+  profile; the Linux CI job opts in via env.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* chore(deps): bump rustls to 0.23.45 (RUSTSEC-2026-0285)
+
+Inherited from main (tracked in #3222); same bump as #3165.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* test(storage): pin IPv6 authority handling in HDFS path parsing
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* fix(storage): resolve the HDFS NameNode in relativize_path too
+
+An authority-less path now errors in relativize_path exactly as in create_operator unless hdfs.name-node is set, so the two cannot disagree.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* docs(storage): state the cost of the synchronous HDFS operator build
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* docs(storage): describe the HDFS operator cache lifecycle
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* fix(storage): normalize each entry of the hdfs.name-node list
+
+A space after a comma was passed through to opendal unchanged, which silently broke failover to that NameNode.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* feat(storage): accept PyIceberg's hdfs.host/hdfs.port for authority-less HDFS paths
+
+They map to Hadoop's fs.defaultFS and apply only when the path has no authority, as in PyIceberg; hdfs.name-node stays the explicit override.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* fix(storage): require a port in every hdfs.name-node entry
+
+An entry without a port can only fail at the first I/O as 'invalid socket address'; reject it at build time with the property and entry named. Bare host:port stays accepted, as in Hadoop and opendal.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* docs(storage): state the runtime binding of cached HDFS operators
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* test(storage): cover two-NameNode delete_stream batches and first-insert-wins caching
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* test(utils): name the HDFS port constant like its siblings
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* fix(storage): rebuild cached HDFS operators once their runtime is gone
+
+Each cache entry parks a sentinel task on the runtime that built the operator and keeps a Weak to a token the task owns. When that runtime shuts down the token dies, the entry reads as stale and the operator is rebuilt on the current runtime instead of hdfs-native panicking on the dead one. Sentinels are aborted when entries drop.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* fix(storage): resolve HDFS NameNodes like Hadoop does
+
+An authority with a port is used as is; hdfs.name-node serves logical nameservice authorities and authority-less paths, which otherwise fall back to fs.defaultFS. Portless strings from any source are logical names that only hdfs.name-node resolves, reported at resolution instead of at the first I/O.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* refactor(storage): keep the HDFS operator cache out of the public API
+
+OpenDalStorage::HdfsNative now wraps one opaque HdfsNativeStorage with crate-private fields, built only by the factories. The serialized form keeps its nesting; the io-timeout propagation test now covers the HDFS factory too.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* perf(storage): build HDFS operators on a blocking thread
+
+The build reads the Hadoop XML config synchronously; create_operator is now async and offloads it with spawn_blocking, outside the cache lock as before. The builder itself stays sync and runtime-free.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* ci: run the HDFS integration tests in their own job
+
+The default suite no longer pulls the Hadoop image or waits on the HDFS health checks; a dedicated required job starts only the two HDFS containers and runs the HDFS test binary.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* fix(storage): stop dropping HDFS properties silently
+
+PyIceberg's hdfs.user and hdfs.kerberos_ticket log a warning instead of vanishing (opendal's config has no user field), hdfs.port is validated whether or not a host is set and warns when it has no host to apply to, and a bare hadoop. key is rejected.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* test(storage): derive the second NameNode spelling from the endpoint host
+
+Resolving the host to its IPv4 address gives any hostname endpoint a second batch key; an IP-literal endpoint skips the test explicitly instead of passing as a no-op.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* chore: record tracing as a dependency of iceberg-storage-opendal in Cargo.lock
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* fix(storage): report a missing tokio runtime instead of panicking in HDFS create_operator
+
+The runtime handle is resolved up front and passed into the cache, so the sentinel is no longer optional and the unreachable no-runtime branch is gone.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* fix(storage): normalize every HDFS NameNode spelling to hdfs://host:port
+
+One parser classifies configured entries, path authorities and fs.defaultFS: other schemes, logical names, port 0, userinfo, paths and unbracketed IPv6 are rejected, and bare and prefixed spellings share one cache key.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* feat(storage): declare HDFS nameservices with hdfs.name-node.<nameservice>
+
+The key expands to Hadoop's dfs.ha.namenodes and dfs.namenode.rpc-address keys in the forwarded options and the resolver reads them back, so nameservices declared through hadoop.* work the same way. Plain hdfs.name-node stays the documented single-cluster default; an undeclared name without it is a pointed error.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* fix(storage): require a declaration for every logical HDFS nameservice
+
+Plain hdfs.name-node serves authority-less paths only; an undeclared logical authority is an error naming the key to set instead of a guess that could reach the wrong cluster.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* fix(storage): reject userinfo and port 0 in HDFS path authorities
+
+Userinfo was silently dropped and port 0 was misread as a logical nameservice; both are DataInvalid now, and the userinfo message names the host only so a password never reaches a log.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* fix(storage): validate the NameNode composed from hdfs.host and hdfs.port
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* test(storage): use an authority-less path in the cross-runtime HDFS test
+
+A logical authority now requires a declaration, so the test must take the plain-key route.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* test(storage): tighten the HDFS tests after review
+
+Drop three redundant unit tests, assert the warnings and the password redaction directly, make the serde round trip populate the cache first, check which error each negative case produces, cover the plain key and hdfs.host serving authority-less paths against the fixture, and name the declared-nameservice test for what it does.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+
+* fix(storage): mask userinfo in HDFS errors that echo a path or NameNode
+
+A path that failed to parse, or had another scheme, was echoed whole, so
+`hdfs://user:pw@nn:bad/x` put the password in the error. The NameNode
+config errors (`hdfs.name-node`, `hdfs.name-node.<nameservice>`,
+`hdfs.host`/`hdfs.port`, `fs.defaultFS`) echoed their values the same way.
+
+Every `Invalid hdfs path` error now goes through one helper, and the config
+errors use the same masking: everything between the scheme and the last
+`@` becomes `***`, so a password holding a raw `/`, `?`, `#` or `://` is
+covered too.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* fix(storage): recover a poisoned HDFS operator cache lock
+
+A panic elsewhere while the cache lock was held turned every later HDFS
+call into a permanent `Unexpected` error. Writes only ever replace whole
+entries, so the map stays consistent: both lock sites now recover the
+guard with `PoisonError::into_inner`, and `get`/`insert` are infallible.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* test(storage): flush the fake NameNode before sampling dials
+
+The runtime test sampled its dial counter before the listener thread had
+necessarily counted every dial from the first runtime. It now drops that
+runtime and waits for the listener to close a marker connection; accepts
+are served in order, so every earlier dial is counted first. A failed
+accept no longer stops the listener.
+
+The runtime-shutdown unit test also asserts that the rebuilt operator is
+a new instance, not the stale one with a fresh sentinel.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* docs(storage): state where portless HDFS authorities differ from Hadoop
+
+Hadoop resolves a portless authority from hdfs-site.xml, else dials port
+8020. Here it must be declared with `hdfs.name-node.<nameservice>`,
+because opendal builds the client as `hdfs://nameservice` and never hands
+hdfs-native the authority. The `HDFS_NAME_NODE` and resolver docs no
+longer claim Hadoop parity, the error says to add a port or declare the
+nameservice, and the README notes the limitation in its own note.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* refactor(storage): rename the HDFS config module to hdfs_native
+
+Matches its siblings, which are named after their storage feature
+(azdls, gcs, hf, oss, s3). The module is private and re-exported, so the
+public iceberg::io::HDFS_* paths are unchanged.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* test(storage): move the HDFS tests out of lib.rs into hdfs_native
+
+The serde round-trip and relativize_path tests now live next to the code
+they cover, with the module's test_hdfs_native_ prefix.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* refactor(storage): read HDFS properties through #[derive(Properties)]
+
+hdfs.name-node, the hdfs.name-node.<nameservice> and hadoop. prefixes,
+hdfs.host and hdfs.port are declared in one struct parsed by the
+Properties macro instead of being looked up by hand. Host and port stay
+trimmed strings so a blank value still counts as unset, as in PyIceberg.
+Validation, warnings and error messages are unchanged.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* ci: run the HDFS tests in the default suite like the other fixtures
+
+The HDFS fixture joins the shared bridge network with published ports
+instead of using host networking behind a compose profile, so make
+docker-up starts it on every platform: the DataNode advertises 127.0.0.1
+and the tests set dfs.client.use.datanode.hostname. The tests no longer
+skip without ICEBERG_TEST_HDFS_ENDPOINT, and the dedicated Tests (hdfs)
+job is gone.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* fix(storage): build HDFS clients in a crate-owned runtime
+
+An hdfs-native client spawns its NameNode connections on the runtime
+current when it is built and panics once that runtime is dropped. The
+cache used to detect that with a sentinel task per entry, which needed
+Handle::try_current, and the build ran under spawn_blocking, which made
+create_operator async for every backend. Clients are now built inside a
+crate-owned runtime started on first use, so a cached operator works
+from any caller's runtime: the sentinel, Handle::try_current and
+spawn_blocking are gone, and create_operator is sync again as on main.
+The Hadoop XML read (~0.1 ms) runs inline.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* refactor(storage): type HDFS path authorities and validate declarations at parse
+
+hdfs_native_parse_path returns an HdfsNativeAuthority (NameNode,
+Nameservice, Default), so the resolver matches on it instead of
+re-parsing the authority to learn whether it has a port. Every HA
+nameservice declaration, from hdfs.name-node.<nameservice> or passed
+through as hadoop.dfs.ha.namenodes.*, and the fs.defaultFS that serves
+authority-less paths are now validated when the config is parsed, so a
+broken one fails the first call rather than only the paths that use it.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* refactor(storage): drop index slicing and combinator chains in the HDFS backend
+
+The nameservice lookup is a for loop with let-else, and the userinfo
+masking and the relative-path extraction use split_once/rsplit_once
+instead of slicing at computed indices. A test pins that doubled slashes
+after the authority are still trimmed.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* fix(storage): attach the hdfs.port parse error as the source
+
+The parse error was interpolated into the message; it is now attached
+as the error's source, which iceberg prints after the message.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* fix(storage): share one HDFS client across host name spellings
+
+host_str keeps the host's case for hdfs:// URLs, so hdfs://NN1:8020 and
+hdfs://nn1:8020 cached two clients for one NameNode. Endpoint hosts are
+now lowercased by one helper used by the config normalizer and the path
+parser, as Hadoop's FileSystem cache key does; nameservice names stay
+case-sensitive like the Hadoop keys that declare them. The cache's doc
+states that it is unbounded by design.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* docs(storage): note the upstream gap behind the HDFS client runtime
+
+opendal's hdfs-native service does not expose hdfs-native's
+ClientBuilder::with_io_runtime (Kimahriman/hdfs-native#255); a TODO at
+the crate-owned runtime records that a runtime could be passed in once
+it does.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* test(storage): make the HDFS HA test fail over for real
+
+The declared-nameservice test listed the single-node fixture twice,
+which drove opendal's list path but never needed a failover. Its first
+NameNode is now a local port nothing listens on, so every call has to
+fail over through opendal's synthetic nameservice; an opendal change
+that kept only the first entry of the list would fail it.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* chore: retrigger CI
+
+Docker Hub rate-limited the previous run's image pulls, so the default test job never started its fixtures.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* chore: retrigger CI
+
+The previous run hit Docker Hub's unauthenticated pull rate limit again before any test ran.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* docs(storage): document how to enable and configure the HDFS backend
+
+The iceberg-storage-opendal README gains an HDFS section: enabling the
+opendal-hdfs-native feature, the factory, the hdfs.* and hadoop.*
+properties, the Hadoop config, user and Kerberos it reads, and the
+portless-authority limitation. The experimental-backends note now points
+to it.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* docs(storage): drop the HDFS README section and link follow-up issues
+
+Configuration docs for every backend are tracked in #3510; the README
+keeps the one-line note on the portless-authority limitation. The TODO on
+the crate-owned HDFS runtime now points at #3509.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+---------
+
+Co-authored-by: Jordan Epstein <jordepic@users.noreply.github.com>
+Co-authored-by: Claude Opus 5 <noreply@anthropic.com>",1c05452b53f65d4d37f6399c550ca0d2413ded0c,3111,false,Jordan Epstein; Claude Opus 5; Claude Fable 5.1; Claude Opus 5.5,16,2428,12,Cargo.lock; crates; dev
