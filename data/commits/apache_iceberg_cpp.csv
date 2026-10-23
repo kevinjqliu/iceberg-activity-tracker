@@ -9495,3 +9495,13 @@ Co-authored-by: Codex <codex@openai.com>",48d0a5f17c959f7f0290527992728280013bc2
 apache/iceberg-cpp,7ed8202351a0f213fba42e5de6d1777b67c4f1e0,7ed8202,Manu Zhang,OwenZhang1990@gmail.com,2026-10-23T00:04:59+08:00,GitHub,noreply@github.com,2026-10-23T00:04:59+08:00,fix(ci): scope PR tests to relevant workflow changes (#1048),"Skip unrelated GitHub workflow and configuration updates in the general, AWS, SQL catalog, and sanitizer test suites. Keep each suite's own workflow and shared actions as inputs, together with sanitizer suppression files.
 
 Co-authored-by: Codex <codex@openai.com>",62c5c2f81b1d31622e343890b4cd0ba7d2a9eca9,1048,false,Codex,4,46,24,.github
+apache/iceberg-cpp,0aaed8d5236cf197590f86a1c854fb625e71c7fa,0aaed8d,Junwang Zhao,zhjwpku@gmail.com,2026-10-23T15:43:42+08:00,GitHub,noreply@github.com,2026-10-23T15:43:42+08:00,refactor: keep snapshot update operation hooks protected (#1049),"Align operation override visibility across merge append, delete, overwrite, replace partitions, rewrite files, and row delta updates. Validate operation classification through committed snapshot summaries in the existing tests.",7ed8202351a0f213fba42e5de6d1777b67c4f1e0,1049,false,,8,27,14,src
+apache/iceberg-cpp,504542718687f097c9b3e0bd65b804c85bbd6e92,5045427,Gang Wu,ustcwg@gmail.com,2026-10-23T15:44:04+08:00,GitHub,noreply@github.com,2026-10-23T15:44:04+08:00,refactor(auth): refresh OAuth2 tokens on a caller-provided executor (#1033),"Replace TokenRefreshScheduler with an internal ScheduledExecutor using
+one process-wide timer. Pass a borrowed auth executor through
+RestCatalog and AuthManager.
+
+Use RetryRunner for HTTP retries within each refresh task, matching
+Java's retry settings. Stop refreshing when submission fails.
+
+Cancel pending refreshes and wait for active refreshes when closing
+the session.",0aaed8d5236cf197590f86a1c854fb625e71c7fa,1033,false,,25,962,511,src

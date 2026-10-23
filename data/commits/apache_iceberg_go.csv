@@ -32746,3 +32746,256 @@ Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
 ---------
 
 Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",853ec015cf44552d02d3d09ed9da6c5296f41f7c,2263,false,,2,347,24,transforms.go; transforms_calendar_fastpath_test.go
+apache/iceberg-go,7768540070d5702bde7b80f2d7fd57de591f3a3e,7768540,Ilia Demianenko,belk94@gmail.com,2026-10-22T14:25:47-06:00,GitHub,noreply@github.com,2026-10-22T21:25:47+01:00,fix(catalog/rest)!: make OAuth token refresh context-aware and singleflight (#2265),"AuthHeaderWithContext checked ctx once and then called Token()
+synchronously, so a caller blocked on a stalled token endpoint until the
+refresh client's Timeout regardless of its own deadline. Concurrent
+callers each ran their own refresh in turn behind the token source's
+mutex.
+
+Share one in-flight Token call per manager with a singleflight.Group and
+let the caller wait for it only until ctx is done. The refresh keeps
+running, bounded by the refresh client's Timeout, and its result serves
+later callers. AuthHeader goes through the same group.
+
+BREAKING CHANGE: Oauth2AuthManager is no longer comparable. The type has
+only unexported fields and pointer-receiver methods, so no caller can
+hold two meaningful values to compare.
+
+Signed-off-by: Ilia Demianenko <ilia.demianenko@clickhouse.com>",904078c3f6810c9ff5f845a4cccd12137c17ebe0,2265,false,,2,99,11,catalog
+apache/iceberg-go,1d953ba4d09256c0f715186692f08c49a5d6de29,1d953ba,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T18:16:08+02:00,GitHub,noreply@github.com,2026-10-23T12:16:08-04:00,perf(table): cache manifest content across scans (#2147),"* perf(table): cache manifest content across scans
+
+* fix(table): bound manifest cache population buffers
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): verify manifest length for in-flight cache readers
+
+* style(table): gofmt manifest cache regression test
+
+* fix(table): retain manifest cache and handle load failures safely
+
+* style(table): satisfy manifest cache lint checks
+
+* style(table): complete manifest cache formatting fixes
+
+* test(table): cover cache refresh, single-flight failures and canceled producers
+
+* style(table): format refreshed manifest cache tests and commit path
+
+* fix(table): preserve manifest cache load errors
+
+Keep both population and fallback failures discoverable through errors.Is and errors.As. Exercise warm cache reuse across transaction scans and commit, and clarify the shared budget and failure behavior.
+
+Signed-off-by: Codex <codex@openai.com>
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): honor canceled manifest-cache waiters when loads finish
+
+* test(table): pin Java manifest cache expiration semantics
+
+* fix(table): fall back for every failed shared manifest load
+
+* fix(table): preserve shared load errors and cover panic waiters
+
+* fix(table): read manifest cache settings from catalog FileIO props
+
+* style(table): gofmt Scan literal in manifest cache PR
+
+---------
+
+Signed-off-by: Codex <codex@openai.com>
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",7768540070d5702bde7b80f2d7fd57de591f3a3e,2147,false,,13,1699,46,catalog; table; website
+apache/iceberg-go,feca2990410b1a02e801ff3a2bfd6b7b198b7216,feca299,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T18:16:26+02:00,GitHub,noreply@github.com,2026-10-23T12:16:26-04:00,perf(table): speed up deferred snapshot JSON string scans (#2241),"* perf(table): speed up deferred snapshot JSON string scans
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(table): avoid rescanning prefix after escaped JSON quote
+
+* test(table): cover long escaped and quoted snapshot strings
+
+* style(table): separate terminal return from scan loop
+
+* test(table): use named subtests for snapshot JSON scanner
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",1d953ba4d09256c0f715186692f08c49a5d6de29,2241,false,,2,154,4,table
+apache/iceberg-go,c1bd75d3036295e97913904e7dc76ac14a1bc3a5,c1bd75d,Matt Topol,zotthewizard@gmail.com,2026-10-23T17:18:34+01:00,GitHub,noreply@github.com,2026-10-23T12:18:34-04:00,test(table): deflake TestPositionDeletePartitionedNoGoroutineLeak (#2289),"The test compared runtime.NumGoroutine before and after 50 writes while running in parallel with other table tests, whose goroutines counted as leaks. It failed on main (runs 39276480459, 39674109108) and on unrelated PRs with deltas of 6. Run it serially and fail only on growth that scales with the iteration count; the leak it guards against adds one goroutine per iteration.",feca2990410b1a02e801ff3a2bfd6b7b198b7216,2289,false,,1,7,5,table
+apache/iceberg-go,3ee0c8e8ffe609ddc78e963060f4d5e5f7d17c99,3ee0c8e,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T18:19:19+02:00,GitHub,noreply@github.com,2026-10-23T17:19:19+01:00,refactor(transforms)!: remove deprecated ToHumanStr before v1 (#2266),"* refactor(transforms)!: remove deprecated ToHumanStr before v1
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(transforms): use partition result types in v1 formatter cases
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* ci: retrigger flaky macOS race test
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs(releases): note pre-v1 breaking API migration
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",c1bd75d3036295e97913904e7dc76ac14a1bc3a5,2266,false,,3,76,112,transforms.go; transforms_test.go; website
+apache/iceberg-go,74a3ac68364bda275c613518e1ee4989e7f7566e,74a3ac6,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T18:22:29+02:00,GitHub,noreply@github.com,2026-10-23T17:22:29+01:00,perf(name_mapping): reduce allocations for wide mapping updates (#2267),"* perf(name_mapping): update wide mappings in one pass
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(name_mapping): preserve nil result for removed aliases
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(name_mapping): satisfy lint
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* ci: retrigger flaky macOS race test
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",3ee0c8e8ffe609ddc78e963060f4d5e5f7d17c99,2267,false,,3,164,54,name_mapping.go; name_mapping_bench_test.go; name_mapping_one_pass_test.go
+apache/iceberg-go,6d2913326d163ec7df6592fb162469d0d72b3082,6d29133,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T18:28:07+02:00,GitHub,noreply@github.com,2026-10-23T17:28:07+01:00,perf(maintenance): avoid orphan reference index for exact matches (#2268),"* perf(maintenance): build orphan reference index only on path misses
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(maintenance): cover native path aliases and legacy parity
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(maintenance): satisfy lint
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",74a3ac68364bda275c613518e1ee4989e7f7566e,2268,false,,3,328,23,table
+apache/iceberg-go,f49e311e21a5fdb0069477f1bc7fb1e5e3a203f2,f49e311,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T18:28:51+02:00,GitHub,noreply@github.com,2026-10-23T17:28:51+01:00,perf(table): append local Parquet splits without per-file buffers (#2269),"* perf(table): append local Parquet splits without per-file buffers
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover mixed local scan splits
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(table): gofmt split benchmark constants
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",6d2913326d163ec7df6592fb162469d0d72b3082,2269,false,,3,164,5,table
+apache/iceberg-go,bd57a5a6ce9416b65decbb023dfab3596712a761,bd57a5a,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T18:32:56+02:00,GitHub,noreply@github.com,2026-10-23T17:32:56+01:00,perf(schema): reuse prefixes when indexing nested field names (#2270),"* perf(schema): reuse path prefixes for nested name indexes
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(schema): cover nested name indexing and shorthand aliases
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(schema): benchmark wide nested name indexing
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(schema): format nested name index cases
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",f49e311e21a5fdb0069477f1bc7fb1e5e3a203f2,2270,false,,3,298,31,schema.go; schema_name_index_bench_test.go; schema_name_index_internal_test.go
+apache/iceberg-go,1fdbecb79954d3f53b73ce62662b59bc67d8bae1,1fdbecb,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T18:33:01+02:00,GitHub,noreply@github.com,2026-10-23T17:33:01+01:00,perf(rest): decode derived deletion vectors once (#2271),"perf(rest): decode shared and derived deletion vectors once
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",bd57a5a6ce9416b65decbb023dfab3596712a761,2271,false,,3,107,2,catalog
+apache/iceberg-go,7fab843eb41390f66433c63f8410d05fc486b96b,7fab843,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T18:35:24+02:00,GitHub,noreply@github.com,2026-10-23T17:35:24+01:00,perf(table): precompute positional-delete path metrics (#2272),"* perf(table): precompute positional-delete path metrics
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): use integer range in path benchmark
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* ci: retrigger flaky macOS race test
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): ensure cached positional-delete bounds own their bytes
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",1fdbecb79954d3f53b73ce62662b59bc67d8bae1,2272,false,,2,131,38,table
+apache/iceberg-go,7e71d94239c79913c856c3830b8bcaf14851c029,7e71d94,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T18:36:55+02:00,GitHub,noreply@github.com,2026-10-23T17:36:55+01:00,fix(view): copy inputs when creating v1 versions (#2274),"* fix(view): copy v1 view version constructor inputs
+
+Copy the supplied representations and default namespace so caller mutations
+cannot change an already validated view version.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(view): match representation slice type in copy assertion
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",7fab843eb41390f66433c63f8410d05fc486b96b,2274,false,,2,43,2,view
+apache/iceberg-go,d5ea6de914d83e72091e75e9f9058051cba5447f,d5ea6de,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T18:50:04+02:00,GitHub,noreply@github.com,2026-10-23T17:50:04+01:00,perf(variant): scan ASCII bytes before normalizing path members (#2275),"* perf(variant): scan ASCII bytes before normalizing path members
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(variant): use integer range for ASCII path scan
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(variant): separate loop exit for nlreturn
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",7e71d94239c79913c856c3830b8bcaf14851c029,2275,false,,3,17,3,variant_path.go; variant_path_normalize_bench_test.go; variant_path_test.go
+apache/iceberg-go,5623f812f654253d7f544421d01681e58c1d9de7,5623f81,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T18:56:28+02:00,GitHub,noreply@github.com,2026-10-23T17:56:28+01:00,perf(table): make bulk schema field moves linear (#2277),"* perf(table): index bulk schema field moves
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(table): satisfy lint in bulk schema moves
+
+* style(table): satisfy lint in bulk schema moves
+
+* style(table): satisfy lint in bulk schema moves
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",d5ea6de914d83e72091e75e9f9058051cba5447f,2277,false,,3,321,0,table
+apache/iceberg-go,32add8eb24fb84a0263d00c870da441f482c049f,32add8e,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T19:00:18+02:00,GitHub,noreply@github.com,2026-10-23T18:00:18+01:00,perf(fileuri): skip URL parsing for plain local paths (#2278),"* perf(fileuri): bypass general URL parser for plain local paths
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(fileuri): satisfy Go lint in fast-path tests
+
+* style(fileuri): satisfy Go lint in fast-path tests
+
+* style(fileuri): satisfy Go lint in fast-path tests
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",5623f812f654253d7f544421d01681e58c1d9de7,2278,false,,3,165,0,internal
+apache/iceberg-go,609bb66da468cfd2664ba9e15f3ba8b7eafdbe21,609bb66,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T19:02:08+02:00,GitHub,noreply@github.com,2026-10-23T18:02:08+01:00,refactor(registry): return sorted registered names (#2279),"* refactor(registry): return sorted registered names
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(catalog): allow concurrent registry name and factory reads
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",32add8eb24fb84a0263d00c870da441f482c049f,2279,false,,4,41,42,catalog; io
+apache/iceberg-go,bee737f17cdfb8ab1a4a2cfc18a7833903305028,bee737f,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T19:04:51+02:00,GitHub,noreply@github.com,2026-10-23T18:04:51+01:00,perf(compaction): skip partition work for non-candidate files (#2276),"* perf(compaction): skip partition work for non-candidate files
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(compaction): cover skipped partitions and benchmark large plans
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(compaction): cover skipped files in candidate partitions
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",609bb66da468cfd2664ba9e15f3ba8b7eafdbe21,2276,false,,2,145,16,table
