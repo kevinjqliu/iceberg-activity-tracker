@@ -32999,3 +32999,87 @@ Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
 ---------
 
 Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",609bb66da468cfd2664ba9e15f3ba8b7eafdbe21,2276,false,,2,145,16,table
+apache/iceberg-go,84c6fd693fe25bc9f6e3c9d99ef733930a6bc30f,84c6fd6,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T20:26:03+02:00,GitHub,noreply@github.com,2026-10-23T19:26:03+01:00,refactor(table): unify cycle-safe snapshot ancestry walks (#2285),"* refactor(table): unify cycle-safe snapshot ancestry walks
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): guard self-referencing snapshot ancestry
+
+* style(table): satisfy nlreturn in ancestry test
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",bee737f17cdfb8ab1a4a2cfc18a7833903305028,2285,false,,2,115,72,table
+apache/iceberg-go,c3eda1d41d59b617e2e528ad0e8136bf177665b3,c3eda1d,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T21:44:56+02:00,GitHub,noreply@github.com,2026-10-23T20:44:56+01:00,refactor(puffin)!: rename Writer.AddProperties to SetProperties before v1 (#2273),"refactor(puffin)!: rename Writer.AddProperties before v1
+
+Align the Puffin writer property API with its GoDoc and other metadata setters.
+Preserve merge semantics and cover repeated property updates.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",84c6fd693fe25bc9f6e3c9d99ef733930a6bc30f,2273,false,Matt Topol,3,31,11,puffin; website
+apache/iceberg-go,005d503a1b8ac941531462249f0cb6a9eda19689,005d503,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T22:12:46+02:00,GitHub,noreply@github.com,2026-10-23T21:12:46+01:00,refactor(rest): share catalog object pagination requests (#2284),"* refactor(rest): share catalog object pagination requests
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(rest): preserve 404 namespace error across listing kinds
+
+* style(rest): gofmt identifier listing test
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",c3eda1d41d59b617e2e528ad0e8136bf177665b3,2284,false,Matt Topol,3,273,126,catalog
+apache/iceberg-go,7ed6b981e64b63bb15a6983b4bcae4d38ccbbdf0,7ed6b98,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T22:31:53+02:00,GitHub,noreply@github.com,2026-10-23T21:31:53+01:00,refactor(table): separate transaction deletion implementation (#2286),"* refactor(table): separate transaction deletion implementation
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): serialize global goroutine leak assertion
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",005d503a1b8ac941531462249f0cb6a9eda19689,2286,false,Matt Topol,2,1052,1017,table
+apache/iceberg-go,9b5a2724aafcf40ca02b54698f2dc7ac6a166233,9b5a272,Minh Vu,vuhoangminh97@gmail.com,2026-10-23T23:10:08+02:00,GitHub,noreply@github.com,2026-10-23T22:10:08+01:00,refactor(substrait)!: drop unused case-sensitivity parameter before v1 (#2280),"* refactor(substrait)!: drop unused case-sensitivity parameter
+
+Case sensitivity is already applied while binding the expression.
+ConvertExpr only consumes bound expressions and ignores its third argument.
+Remove the redundant argument before v1 and update its callers.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): update remaining substrait call
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs(releases): note pre-v1 breaking API migration
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",7ed6b981e64b63bb15a6983b4bcae4d38ccbbdf0,2280,false,Matt Topol,5,15,13,table; website
+apache/iceberg-go,da28e4be2ee5ef9395af4a9dd9c270381e46bd59,da28e4b,Minh Vu,vuhoangminh97@gmail.com,2026-10-24T00:06:44+02:00,GitHub,noreply@github.com,2026-10-23T23:06:44+01:00,refactor(catalog)!: remove TableNameFromIdent before v1 (#2281),"* refactor(catalog)!: remove TableNameFromIdent before v1
+
+Use ObjectNameFromIdent for table and view identifiers and retire the redundant public alias.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs(releases): note pre-v1 breaking API migration
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",9b5a2724aafcf40ca02b54698f2dc7ac6a166233,2281,false,Matt Topol,7,22,27,catalog; website
+apache/iceberg-go,1fdb33f9c1b50a64a7a4561889fc77b14f8d2de8,1fdb33f,Minh Vu,vuhoangminh97@gmail.com,2026-10-24T00:42:07+02:00,GitHub,noreply@github.com,2026-10-23T23:42:07+01:00,refactor(maintenance)!: remove duplicate orphan paths from cleanup result (#2282),"Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",da28e4be2ee5ef9395af4a9dd9c270381e46bd59,2282,false,Matt Topol,6,20,29,cmd; table; website
+apache/iceberg-go,b7792e9e8799664f2ca8cd7f4ea94c97515c9833,b7792e9,Minh Vu,vuhoangminh97@gmail.com,2026-10-24T01:02:20+02:00,GitHub,noreply@github.com,2026-10-24T00:02:20+01:00,refactor(view)!: rename Representation.Sql to SQL before v1 (#2283),"* refactor(view)!: rename Representation.Sql to SQL before v1
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs(releases): note pre-v1 breaking API migration
+
+* test(view): use Representation.SQL in input-copy test
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",1fdb33f9c1b50a64a7a4561889fc77b14f8d2de8,2283,false,Matt Topol,7,41,26,catalog; view; website

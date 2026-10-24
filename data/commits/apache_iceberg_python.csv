@@ -7271,3 +7271,219 @@ Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",7d51e52bfd42dba2806979ee2554507e95fcfa0a,4113,false,Copilot App; Kevin Liu,3,58,22,.asf.yaml; AGENTS.md; mkdocs
 apache/iceberg-python,e3fbd9440ad0bb25c45848797ff9ec5ad7758624,e3fbd94,Yuang Gao,91290127+YuangGao@users.noreply.github.com,2026-10-22T18:55:40Z,GitHub,noreply@github.com,2026-10-22T18:55:40Z,fix: map write.parquet.page-row-limit to pyarrow's max_rows_per_page (#4127),,d37149c8b5d1b737da0eb9fdcb585bc3ef3bac69,4127,false,,2,10,4,pyiceberg; tests
+apache/iceberg-python,87a89fa0665e6928d65f8b710bf7f794073f7676,87a89fa,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-10-23T21:30:15-07:00,GitHub,noreply@github.com,2026-10-23T21:30:15-07:00,Infra: Raise merge queue check timeout to 180 minutes (#4147),This will hopefully give enough time for the merge queue.,e3fbd9440ad0bb25c45848797ff9ec5ad7758624,4147,false,,1,1,1,.asf.yaml
+apache/iceberg-python,09df9d0f224c10922d70193d43243a7bef321368,09df9d0,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-24T04:30:40Z,GitHub,noreply@github.com,2026-10-24T04:30:40Z,Infra: Standardize RustFS setup across Iceberg repos (#4017),"* Dev: Use RustFS readiness healthcheck and drop default settings
+
+Use /health/ready so bucket creation waits for storage/IAM readiness,
+enable stdout logging so `docker logs` shows output, and remove settings
+that are already defaults in rustfs/rustfs:1.0.0.
+
+Generated-by: GitHub Copilot
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Infra: Bump RustFS to 1.0.3 and disable the console
+
+Align with the RustFS setup used across Iceberg repos: bump the image to
+1.0.3, set RUSTFS_CONSOLE_ENABLE=false, and stop publishing port 9001.
+
+Generated-by: GitHub Copilot
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",d0ba1d3f3dfacf72374754ca2c07f800d0cb4ce4,4017,false,Copilot App,2,8,14,dev
+apache/iceberg-python,d0ba1d3f3dfacf72374754ca2c07f800d0cb4ce4,d0ba1d3,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-23T21:46:21-07:00,GitHub,noreply@github.com,2026-10-23T21:46:21-07:00,CI: Reduce workflow overhead (#3962),Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>,87a89fa0665e6928d65f8b710bf7f794073f7676,3962,false,Copilot App,11,22,10,.asf.yaml; .github; Makefile
+apache/iceberg-python,f403a326b9ac1909f8b34175accbf453bfd62271,f403a32,Xander,zander181@googlemail.com,2026-10-24T04:50:05Z,GitHub,noreply@github.com,2026-10-24T04:50:05Z,feat(encryption) [5/N] KMS (#3968),"* KMS
+
+* in-memory kms
+
+* comments
+
+* comments
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",09df9d0f224c10922d70193d43243a7bef321368,3968,false,Kevin Liu,3,292,0,pyiceberg; tests
+apache/iceberg-python,5d5ce48f87de5ae4a769f2b77b006151c7c1b240,5d5ce48,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-10-24T04:53:36Z,GitHub,noreply@github.com,2026-10-24T04:53:36Z,Infra: Replace archived pydocstyle hook with ruff D rules (#4014),"pycqa/pydocstyle is archived, which zizmor 1.30.0 flags as archived-uses in
+.pre-commit-config.yaml. Enable ruff's pydocstyle rules with the same ignore
+list and fix the docstrings it reports.
+
+Co-authored-by: Fokko Driesprong <fokko@apache.org>
+Co-authored-by: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",f403a326b9ac1909f8b34175accbf453bfd62271,4014,false,Fokko Driesprong; Claude Opus 5.5 (1M context); Kevin Liu,9,48,48,.pre-commit-config.yaml; pyiceberg; pyproject.toml
+apache/iceberg-python,44ab85aacbbfc9cb7aba8643f691531bdbeaf84f,44ab85a,Shahzeb Ali,126076773+Shahzeb-DataEngineer@users.noreply.github.com,2026-10-24T04:57:38Z,GitHub,noreply@github.com,2026-10-24T04:57:38Z,Build: drop the upper bound on requires-python (#4135),"build: drop the upper bound on requires-python
+
+The <4.0.0 cap makes Poetry silently resolve old releases (e.g. 0.10.0)
+for projects declaring an open-ended requires-python range, with no
+error or warning. The cap offers no real protection (see #1348), so
+drop it and keep requires-python as >=3.10.
+
+Signed-off-by: Shahzeb Ali <126076773+Shahzeb-DataEngineer@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",5d5ce48f87de5ae4a769f2b77b006151c7c1b240,4135,false,Kevin Liu,2,2,2,pyproject.toml; uv.lock
+apache/iceberg-python,aa0a9115a67c7f0ddafa93f6373240067adf00e9,aa0a911,Xander,zander181@googlemail.com,2026-10-24T05:43:40Z,GitHub,noreply@github.com,2026-10-24T05:43:40Z,feat(encryption) [6/N] streaming block encryption (#3969),"* feat(encryption) [6/N] streaming encryption
+
+* doc strings
+
+* test fictures
+
+* make everything private
+
+* read me fix
+
+* truncation
+
+* comments
+
+* replace java fixtures with unit tests
+
+Drop the checked-in AGS1 binaries and Java generator so no binaries ship in the sdist; cross-client fixtures will come from iceberg-verification (#4010).
+
+* take kevin's changes
+
+* ci
+
+* push test fixtures
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",44ab85aacbbfc9cb7aba8643f691531bdbeaf84f,3969,false,Kevin Liu,2,323,0,pyiceberg; tests
+apache/iceberg-python,747ebee2d065c5a293786cbede12ccc149544799,747ebee,hedger9487,59910195+hedger9487@users.noreply.github.com,2026-10-24T05:59:01Z,GitHub,noreply@github.com,2026-10-24T05:59:01Z,feat: Support passing kwargs to polars.scan_iceberg in Table.to_polars (#3868),"feat: Support passing kwargs to polars.scan_iceberg in Table.to_polars (#3128)
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",aa0a9115a67c7f0ddafa93f6373240067adf00e9,3868,false,Kevin Liu,2,33,3,pyiceberg; tests
+apache/iceberg-python,4fb9e68c7931538db019d2d92a77aa7a32e3c716,4fb9e68,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-24T05:59:47Z,GitHub,noreply@github.com,2026-10-24T05:59:47Z,Build: Bump werkzeug from 3.1.8 to 3.1.9 (#4107),"Bumps [werkzeug](https://github.com/pallets/werkzeug) from 3.1.8 to 3.1.9.
+- [Release notes](https://github.com/pallets/werkzeug/releases)
+- [Changelog](https://github.com/pallets/werkzeug/blob/main/CHANGES.rst)
+- [Commits](https://github.com/pallets/werkzeug/compare/3.1.8...3.1.9)
+
+---
+updated-dependencies:
+- dependency-name: werkzeug
+  dependency-version: 3.1.9
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",747ebee2d065c5a293786cbede12ccc149544799,4107,false,dependabot[bot]; Kevin Liu,1,3,3,uv.lock
+apache/iceberg-python,131b18712f11d695ad4cd47b682f37750dcf3ba6,131b187,Anas Khan,83116240+anxkhn@users.noreply.github.com,2026-10-24T06:40:59Z,GitHub,noreply@github.com,2026-10-24T06:40:59Z,fix: build StaticTable version-hint metadata locations with forward slashes (#3604),"* fix: build StaticTable version-hint metadata locations with forward slashes
+
+StaticTable._metadata_location_from_version_hint built the version-hint and
+resolved metadata locations with os.path.join. Iceberg locations are URIs and
+must always be forward-slash separated, but os.path.join uses the OS separator,
+so on Windows it produced backslash-separated keys such as
+s3://.../taxis\metadata\version-hint.text. That is an invalid object-store key,
+which breaks the documented ""pass the table root path"" usage of
+StaticTable.from_metadata on Windows.
+
+Join the components with explicit forward slashes, matching how locations are
+built elsewhere in pyiceberg (for example pyiceberg/table/locations.py). Behavior
+is unchanged on POSIX. The now-unused os import is removed.
+
+Add an OS-independent regression test that swaps os.path.join for the Windows
+join so the metadata location is asserted to stay a valid forward-slash URI on
+any platform (the existing test only exercised local temp paths, which use the
+POSIX separator on Linux CI and never caught this).
+
+Related: #2477
+
+* Test version-hint resolution with real files instead of fakes
+
+Replace the fake FileIO test with one that writes metadata and
+version-hint files under a file:// URI and asserts the resolved
+metadata location. Windows CI catches a regression to os.path.join.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",4fb9e68c7931538db019d2d92a77aa7a32e3c716,3604,false,Copilot App; Kevin Liu,2,28,5,pyiceberg; tests
+apache/iceberg-python,46669fad031d5b4e7a71c1df13940d17bbc9e71d,46669fa,Rodrigo Stachlewski Palma,86628053+Rodrigo-Palma@users.noreply.github.com,2026-10-24T06:45:20Z,GitHub,noreply@github.com,2026-10-24T06:45:20Z,fix(conversions): reject a Decimal whose scale is negative (#3997),"* fix(conversions): reject a Decimal whose scale is negative
+
+to_bytes compared abs(exponent) against the type scale, so a Decimal carrying
+a negative scale passed as if it had the matching positive one. The exponent is
+then dropped by decimal_to_unscaled, and the value is written four orders of
+magnitude off without an error: Decimal('1E+2') stored in a decimal(10, 2)
+reads back as 0.01.
+
+Decimal('100').normalize() produces exactly that form, and to_bytes writes the
+lower and upper bounds of a data file, so a wrong bound prunes files that do
+hold matching rows.
+
+Compare the signed scale instead.
+
+* fix(expressions): reject decimal literals with a negative scale
+
+DecimalLiteral.to and StringLiteral.to compared abs(exponent) against the
+type's scale, so a filter value like Decimal(""1E+2"") bound to decimal(10, 2)
+as if it were 100.00 while keeping unscaled value 1. Bucket and truncate
+projections then pruned the files holding matching rows and the scan silently
+returned fewer rows. Compare the signed scale so binding raises instead.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",131b18712f11d695ad4cd47b682f37750dcf3ba6,3997,false,Copilot App; Kevin Liu,4,20,5,pyiceberg; tests
+apache/iceberg-python,e6940798b32f14fc7388eb36066e43457d678f6d,e694079,ump45nose,52391318+ump45nose@users.noreply.github.com,2026-10-24T07:01:41Z,GitHub,noreply@github.com,2026-10-24T07:01:41Z,Support reading Avro timestamp-nanos logical type (#4136),"* Support reading Avro timestamp-nanos logical type
+
+* Use a loop instead of parametrize in timestamp-nanos conversion test
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: ump45nose <ump45nose@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",46669fad031d5b4e7a71c1df13940d17bbc9e71d,4136,false,Copilot App; ump45nose; Kevin Liu,3,61,2,pyiceberg; tests
+apache/iceberg-python,58df2cca5c82c0e6cdb2668da7f5834b88d3bee9,58df2cc,breken,support@brekfuz.com,2026-10-24T07:05:52Z,GitHub,noreply@github.com,2026-10-24T07:05:52Z,fix(expressions): reject fractional decimal literals on integer columns (#4029),"* fix(expressions): reject fractional decimal literals on integer columns
+
+DecimalLiteral.to(IntegerType/LongType) rounded the value with
+to_integral_value(), so an unquoted filter such as ""x > 2.6"" on an int
+column was bound as x > 3 and silently dropped x = 3; ""x < 2.5"" became
+x < 2 and ""x = 2.5"" matched x = 2. Raise a ValueError for a value with a
+fractional part instead, the same way a Decimal with a mismatched scale is
+rejected. Integral values such as 2.00 still convert.
+
+Generated-by: Claude Opus 5.5
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* Check for a fractional part before the integer range check
+
+The range check rounded the decimal first, so a fractional value near the
+int/long bounds became an above/below-max sentinel instead of raising,
+depending on half-even rounding. Reject any fractional value up front.
+Also replace parametrize with loops in the new literal tests.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: breken-ai <312387581+breken-ai@users.noreply.github.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",e6940798b32f14fc7388eb36066e43457d678f6d,4029,false,Claude Opus 5.5; Copilot App; breken-ai; Kevin Liu,3,52,4,pyiceberg; tests
+apache/iceberg-python,2ecd87b222f5c7fe020c93816f8c3830412b7034,2ecd87b,Ankit Raj,ankitraj.srivastava15@gmail.com,2026-10-24T07:21:29Z,GitHub,noreply@github.com,2026-10-24T07:21:29Z,Glue: Prune removed table properties from Glue Parameters (#4133),"* Glue: Prune removed table properties from Glue Parameters
+
+Closes #3977
+
+* Use keyword arguments for _construct_parameters
+
+* Prevent table properties from overwriting reserved Glue parameters
+
+A table property named table_type, metadata_location, or
+previous_metadata_location overwrote the catalog-managed Glue parameter
+of the same name, which could point Glue at a bogus metadata file and
+break load_table. Skip reserved keys when copying table properties,
+matching the Hive catalog.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",58df2cca5c82c0e6cdb2668da7f5834b88d3bee9,4133,false,Copilot App; Kevin Liu,2,79,2,pyiceberg; tests
