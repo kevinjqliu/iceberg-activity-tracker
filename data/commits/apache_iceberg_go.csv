@@ -33083,3 +33083,72 @@ Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
 
 Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
 Co-authored-by: Matt Topol <zotthewizard@gmail.com>",1fdb33f9c1b50a64a7a4561889fc77b14f8d2de8,2283,false,Matt Topol,7,41,26,catalog; view; website
+apache/iceberg-go,e0c37e68929117b4ead9815be5d24bd7f2a6f37c,e0c37e6,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T10:09:31+01:00,GitHub,noreply@github.com,2026-10-25T10:09:31+01:00,refactor(catalog)!: require Close and centralize catalog cleanup (#2292),"* refactor(catalog)!: require Close in the public catalog interface
+
+Make resource ownership explicit, centralize conformance cleanup, and
+release catalogs in successful CLI flows.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* refactor(catalog)!: use required Close across built-in catalogs
+
+Drop redundant Closer assertions and let the conformance suite own teardown.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(catalog): update test doubles for required Close
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(catalog): keep package overview in the package file
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(catalog): format required close changes
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs(releases): describe breaking API migration
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(cli): close catalogs before exiting
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(cli): remove unused compact import
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(catalog): retain conformance cleanup contract and clarify Close docs
+
+* fix(catalog): retain conformance cleanup contract and clarify Close docs
+
+* test(catalog): remove obsolete suite-owned cleanup assertion
+
+* test(catalog): restore factory-owned conformance cleanup
+
+* test(catalog): restore factory-owned conformance cleanup
+
+* test(catalog): restore factory-owned conformance cleanup
+
+* test(catalog): restore factory-owned conformance cleanup
+
+* test(catalog): restore factory-owned conformance cleanup
+
+* test(cli): ensure command errors close catalogs before exiting
+
+* style(catalogtest): remove extra blank line flagged by gofmt
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",b7792e9e8799664f2ca8cd7f4ea94c97515c9833,2292,false,,25,281,123,catalog; cmd; website
+apache/iceberg-go,f7cf0a3fecc9ffa1711f75502666c87101f9c959,f7cf0a3,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T10:09:48+01:00,GitHub,noreply@github.com,2026-10-25T10:09:48+01:00,refactor(table): separate files metadata inspection concerns (#2293),,e0c37e68929117b4ead9815be5d24bd7f2a6f37c,2293,false,,5,889,747,table
+apache/iceberg-go,dfae28fc73e2f6c905ddd72c720d6421cd128f62,dfae28f,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T10:10:03+01:00,GitHub,noreply@github.com,2026-10-25T10:10:03+01:00,refactor(catalog/sql): share table and view listing logic (#2297),,f7cf0a3fecc9ffa1711f75502666c87101f9c959,2297,false,,3,247,124,catalog
+apache/iceberg-go,ded986b4233a6c548655973d851b9765bdf5cdfe,ded986b,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T10:10:22+01:00,GitHub,noreply@github.com,2026-10-25T10:10:22+01:00,refactor(table): deduplicate schema default validation (#2298),,dfae28fc73e2f6c905ddd72c720d6421cd128f62,2298,false,,2,281,106,table
+apache/iceberg-go,70e01f47a38c63b97e7ad2fbfa98def0097e3e50,70e01f4,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T10:10:39+01:00,GitHub,noreply@github.com,2026-10-25T10:10:39+01:00,refactor(puffin): isolate LZ4 compressed footer handling (#2299),,ded986b4233a6c548655973d851b9765bdf5cdfe,2299,false,,3,296,232,puffin
+apache/iceberg-go,569a427a472be4fb555375240cd56b44c0e5cd08,569a427,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T10:10:53+01:00,GitHub,noreply@github.com,2026-10-25T10:10:53+01:00,"refactor(partitions,sorting)!: make first-source access explicit (#2304)",,70e01f47a38c63b97e7ad2fbfa98def0097e3e50,2304,false,,19,118,81,catalog; cmd; data_file_codec.go; partitions.go; partitions_test.go; table; website
+apache/iceberg-go,c21d4b4e473b12e1e5d4fb766a88384cd2bd9ed7,c21d4b4,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T10:11:09+01:00,GitHub,noreply@github.com,2026-10-25T10:11:09+01:00,refactor(table)!: clarify path and DataFile replacement APIs (#2306),,569a427a472be4fb555375240cd56b44c0e5cd08,2306,false,,13,86,79,table; website
+apache/iceberg-go,2e2ab68860c63aabd1226e19d95c45aa69a9d8ee,2e2ab68,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T10:11:26+01:00,GitHub,noreply@github.com,2026-10-25T10:11:26+01:00,refactor(schema)!: use JSON initialism in schema constructor (#2307),,c21d4b4e473b12e1e5d4fb766a88384cd2bd9ed7,2307,false,,4,10,10,cmd; schema.go; schema_test.go
+apache/iceberg-go,3bdc1af7b39d85346c42dda52b42e7d9e328d9c2,3bdc1af,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T10:11:41+01:00,GitHub,noreply@github.com,2026-10-25T10:11:41+01:00,refactor(aws)!: standardize exported AWS initialisms (#2310),,2e2ab68860c63aabd1226e19d95c45aa69a9d8ee,2310,false,,18,65,65,catalog; cmd; config; io; utils; website
+apache/iceberg-go,858379a657387a2a327b8a025398779a741ae10a,858379a,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T12:53:09+01:00,GitHub,noreply@github.com,2026-10-25T12:53:09+01:00,refactor(puffin)!: unify statistics blob types (#2295),,3bdc1af7b39d85346c42dda52b42e7d9e328d9c2,2295,false,,8,153,53,puffin; table; website

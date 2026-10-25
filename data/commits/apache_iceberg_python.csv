@@ -7487,3 +7487,279 @@ Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 
 Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",58df2cca5c82c0e6cdb2668da7f5834b88d3bee9,4133,false,Copilot App; Kevin Liu,2,79,2,pyiceberg; tests
+apache/iceberg-python,35bb9bb62a00dcf8560d970403fef1a8047809e8,35bb9bb,Xander,zander181@googlemail.com,2026-10-24T17:31:06Z,GitHub,noreply@github.com,2026-10-24T17:31:06Z,feat(encryption): [7/N] Add encryption key updates (#4148),feat(encryption): Add encryption key updates,2ecd87b222f5c7fe020c93816f8c3830412b7034,4148,false,,2,119,4,pyiceberg; tests
+apache/iceberg-python,c688f1ea4a4fe4af47e06929a39df72c3cf36588,c688f1e,Damanpreet Singh,damanpreet8360@gmail.com,2026-10-24T18:14:28Z,GitHub,noreply@github.com,2026-10-24T18:14:28Z,docs: Document missing write table properties in configuration (#3879),"* docs: Document missing write table properties in configuration
+
+The write-options table omitted several properties that PyIceberg reads
+when writing, including write.target-file-size-bytes, write.format.default,
+write.avro.compression-codec, the Parquet row-group/bloom-filter sizes,
+the column metrics-mode properties and write.summary.partition-limit. Add
+rows for them and fix a typo (""coddec"" -> ""codec"") in the existing
+compression-codec entry.
+
+* docs: Remove unimplemented Parquet write properties
+
+PyIceberg ignores write.parquet.row-group-size-bytes and the bloom-filter
+properties, emitting a ""not implemented"" warning when they are set.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* docs: Clarify write table property descriptions
+
+Clarify how write.target-file-size-bytes is measured, what each metrics
+mode collects, which files the Avro codec applies to, and that the default
+write.summary.partition-limit of 0 disables partition summaries.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* docs: Correct metrics mode description
+
+The none mode still records column sizes, and nested fields are capped at
+counts regardless of the configured mode.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",35bb9bb62a00dcf8560d970403fef1a8047809e8,3879,false,Copilot App; Kevin Liu,1,7,1,mkdocs
+apache/iceberg-python,bd98ff1de88febaca645d54004a83de37a2d5ce9,bd98ff1,Dhruv,41189498+DG47@users.noreply.github.com,2026-10-24T18:17:38Z,GitHub,noreply@github.com,2026-10-24T18:17:38Z,PyArrow: Support view types when writing to a partitioned table (#4121),"* PyArrow: Support view types when writing to a partitioned table
+
+Appending an Arrow table with string_view or binary_view columns, which
+pa.table() produces from a Polars DataFrame, worked for unpartitioned
+tables but failed for partitioned ones: PyArrow has no group by, filter
+or take kernels for view types, and pyiceberg-core's bucket and truncate
+transforms reject them. Cast view types, including nested ones, to their
+large counterparts before splitting the table into partitions.
+
+* Use PyArrowSchemaVisitor to replace view types
+
+* Test appending Polars categorical columns to a partitioned table
+
+Polars exports Categorical as dictionary<string_view> and List(Categorical)
+as large_list<dictionary<string_view>>, which exercise the _keep_dictionary
+paths in _ConvertViewTypes.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c688f1ea4a4fe4af47e06929a39df72c3cf36588,4121,false,Copilot App; Kevin Liu,2,128,1,pyiceberg; tests
+apache/iceberg-python,c1c49a228c27c777f9e63f7a46d801d85fcfd285,c1c49a2,Anupam Srivastava,56410840+ooreally@users.noreply.github.com,2026-10-24T21:25:56Z,GitHub,noreply@github.com,2026-10-24T21:25:56Z,Fix filtering on identity partition columns outside the scan projection (#4082),"* Fix filtering on identity partitions outside the scan projection
+
+Resolve manifest partition values for filter fields as well as output fields so scans with narrow projections keep matching rows. Cover name-mapped and field-ID Parquet files and falsy partition values.
+
+* Rename missing projection field IDs for clarity
+
+* Clarify projection docstring and cover count() with filter-only partition column
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",bd98ff1de88febaca645d54004a83de37a2d5ce9,4082,false,Copilot App; Kevin Liu,2,60,22,pyiceberg; tests
+apache/iceberg-python,945c8db4c82b4fb1c2decc29109bf9630515b0d2,945c8db,Bishop Kammeraad,113325736+porkedchop@users.noreply.github.com,2026-10-24T21:42:14Z,GitHub,noreply@github.com,2026-10-24T21:42:14Z,fix(table): reuse partition field IDs on v3 tables (#4110),"* fix(table): reuse partition field IDs on v3 tables
+
+UpdateSpec only looked up historical partition fields when the format
+version was exactly 2, so v3 tables got a fresh field ID when a removed
+partition field was added back. Java does this for format version >= 2.
+
+* test: cover removing and re-adding a partition field in one update
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c1c49a228c27c777f9e63f7a46d801d85fcfd285,4110,false,Copilot App; Kevin Liu,2,25,1,pyiceberg; tests
+apache/iceberg-python,41006bf4c5740d84545c096a71cdb3edef0419ef,41006bf,Sung Yun,107272191+sungwy@users.noreply.github.com,2026-10-24T22:37:53Z,GitHub,noreply@github.com,2026-10-24T22:37:53Z,Bug Fix: handle column projection edge case with null identity partition (#4083),"* fix column projection edge case with null identity partition
+
+* Cover filter-only null identity partitions and simplify test
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",945c8db4c82b4fb1c2decc29109bf9630515b0d2,4083,false,Copilot App; Kevin Liu,2,41,5,pyiceberg; tests
+apache/iceberg-python,59b7c1c6ef93c839bceff3e8a1739341b6586e47,59b7c1c,Bishop Kammeraad,113325736+porkedchop@users.noreply.github.com,2026-10-24T22:43:10Z,GitHub,noreply@github.com,2026-10-24T22:43:10Z,Validate snapshot sequence numbers on v3 tables (#4125),"* fix(table): validate snapshot sequence numbers on v3 tables
+
+The check that rejects a snapshot whose sequence number is not greater
+than the table's last sequence number only ran for format version 2.
+Java applies it to every format version after 1.
+
+* test: derive expected sequence number from the fixture
+
+The stale sequence-number test built the snapshot from the fixture's
+last_sequence_number but hardcoded 34 in the expected error message.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",41006bf4c5740d84545c096a71cdb3edef0419ef,4125,false,Copilot App; Kevin Liu,2,25,1,pyiceberg; tests
+apache/iceberg-python,12d4a9a3ced73da290626bde6019ac2835d5c636,12d4a9a,Kaanchan Krishna,krishnakaanchan@gmail.com,2026-10-24T23:00:19Z,GitHub,noreply@github.com,2026-10-24T23:00:19Z,FsspecFileIO: Resolve the ADLS account per location instead of caching it in properties (#3886),"* FsspecFileIO: Resolve the ADLS account per location instead of caching it in properties
+
+_adls wrote the account name it inferred back into the properties dict it was
+given, and the caller passes the FileIO's own properties. The first location
+therefore pinned the account for every later one, so a second storage account
+was served a filesystem built for the first. Resolve the account and the SAS
+token into locals and leave the caller's dict alone. Precedence is unchanged:
+an explicit adls.account-name still wins, then a per account SAS token key,
+then the hostname.
+
+* Remove unnecessary comment
+
+* Cover SAS token write-back in ADLS no-mutation test
+
+Add a per-account SAS key so the test also guards against adls.sas-token
+being written back into the FileIO properties.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",59b7c1c6ef93c839bceff3e8a1739341b6586e47,3886,false,Copilot App; Kevin Liu,2,43,9,pyiceberg; tests
+apache/iceberg-python,e6eb6a93b94c547a5f2b68f5eb68f64a44cc48af,e6eb6a9,Soumyadyuti Dey,132326747+Soumo-git-hub@users.noreply.github.com,2026-10-25T03:27:03Z,GitHub,noreply@github.com,2026-10-25T03:27:03Z,REST: Preserve view metadata location (#4088),"* REST: preserve view metadata location
+
+* View: clarify metadata location semantics
+
+* View: include metadata location in equality
+
+Match Table.__eq__ and the REST spec, which uses metadata location to detect
+view changes.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",12d4a9a3ced73da290626bde6019ac2835d5c636,4088,false,Copilot App; Kevin Liu,4,18,2,pyiceberg; tests
+apache/iceberg-python,5becad1aefcc7de7767d2aa30cef07b48c61aff3,5becad1,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-25T04:00:43Z,GitHub,noreply@github.com,2026-10-25T04:00:43Z,REST: Require metadata-location in view responses (#4152),"Require metadata-location in REST view responses
+
+The REST spec marks metadata-location as required in LoadViewResult, and
+Java's LoadViewResponseParser rejects responses without it. Make
+ViewResponse.metadata_location required to match.
+
+Behavior change: create_view, load_view, and register_view now raise a
+pydantic ValidationError for non-compliant servers that omit
+metadata-location, instead of silently accepting the response.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",e6eb6a93b94c547a5f2b68f5eb68f64a44cc48af,4152,false,Copilot App,2,15,1,pyiceberg; tests
+apache/iceberg-python,a1a43c52cdd4a521378fe7f877658d32b45c2d14,a1a43c5,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-25T04:04:50Z,GitHub,noreply@github.com,2026-10-25T04:04:50Z,Prefer for loops over parametrized tests in AGENTS.md (#4150),"* Prefer for loops over parametrized tests in AGENTS.md
+
+Each parametrized case adds per-item pytest overhead (~0.3ms measured), which slows the suite as cases accumulate.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Simplify parametrize guidance in AGENTS.md
+
+Scope the loop preference to many simple cases and note when
+parametrize or separate tests fit better.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",5becad1aefcc7de7767d2aa30cef07b48c61aff3,4150,false,Copilot App,1,1,0,AGENTS.md
+apache/iceberg-python,c8502b3925519ca7907de91eddb44d120994d512,c8502b3,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-25T04:08:02Z,GitHub,noreply@github.com,2026-10-25T04:08:02Z,REST: Don't URL-encode view names in create_view and register_view bodies (#4151),"* REST: Send raw view name in create_view and register_view bodies
+
+create_view and register_view took the view name from
+_split_identifier_for_path, which URL-quotes it for use as a path
+segment, and put it in the JSON request body. A view named ""my view""
+was created as ""my%20view"". Use the raw name, as create_table and
+register_table already do.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Test REST identifiers that need URL encoding against the REST fixture
+
+Round-trip namespace, table, and view names containing spaces, reserved
+URL characters, and non-ASCII text through path, query, and body
+parameters. This catches encoding mistakes like the double-encoded
+list_namespaces parent and the encoded view name in create_view.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Cover commit_table in REST identifier integration test
+
+commit_table is the only caller of the TableIdentifier branch of
+_split_identifier_for_path, so table updates had no coverage for names
+that need URL encoding.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Clarify why % is omitted from REST identifier integration test
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Keep _split_identifier_for_path for the register_view path
+
+Matches create_view and register_table: path from _split_identifier_for_path, raw name for the body.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Cover register_view in REST identifier integration test
+
+Register the created view under a second name that needs URL encoding,
+now that View exposes its metadata location (#4088).
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",a1a43c52cdd4a521378fe7f877658d32b45c2d14,4151,false,Copilot App,3,92,7,pyiceberg; tests
+apache/iceberg-python,e2c1e787c65e55c736b742da2ef8d6ca405641ed,e2c1e78,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-25T04:23:40Z,GitHub,noreply@github.com,2026-10-25T04:23:40Z,CLI: Show metadata location in `describe view` (#4153),"CLI: show metadata location in describe view
+
+Match describe table text output by including the view's metadata location,
+and document the view CLI commands.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c8502b3925519ca7907de91eddb44d120994d512,4153,false,Copilot App,3,45,4,mkdocs; pyiceberg; tests
+apache/iceberg-python,ea139cc8277c2aa5764b186f3f8fc50e6a98d830,ea139cc,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-10-25T05:25:27Z,GitHub,noreply@github.com,2026-10-25T05:25:27Z,Add rename_view to REST Catalog (#4081),"* just need to add abstract methods
+
+* add abstract methods to additional classes
+
+* Add namespace check on rename_view
+
+* Added test for namespace exists
+
+* rebase
+
+* PR comments
+
+* Address review comments on rename_view
+
+- Add @override to RestCatalog/SqlCatalog rename_view and restore it on
+  BigQueryMetastoreCatalog.load_namespace_properties
+- Split identifiers once in RestCatalog.rename_view
+- Fix ""fully classified"" typo in the Catalog.rename_view docstring
+- Add a cross-namespace rename integration test
+- Drop a stale skip on test_rest_custom_namespace_separator reintroduced by rebase
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* Align rename_view ordering with sibling methods
+
+Put @retry before @override as in rename_table and drop_view, group
+SqlCatalog.rename_view with the other view stubs, and move the
+rename_view unit tests next to the other view tests.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Document rename_view and extend its test coverage
+
+Add a ""Rename a view"" docs section, list the errors rename_view raises
+in its docstring, assert view-endpoints-supported enables V1_RENAME_VIEW,
+and cover rename_view in the special-character identifiers integration test.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",e2c1e787c65e55c736b742da2ef8d6ca405641ed,4081,false,Claude Opus 5.5; Copilot App; Kevin Liu,11,241,1,mkdocs; pyiceberg; tests
