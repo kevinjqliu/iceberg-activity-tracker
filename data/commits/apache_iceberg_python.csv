@@ -7763,3 +7763,28 @@ Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>
 Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",e2c1e787c65e55c736b742da2ef8d6ca405641ed,4081,false,Claude Opus 5.5; Copilot App; Kevin Liu,11,241,1,mkdocs; pyiceberg; tests
+apache/iceberg-python,19abbcf1b01d60d9bd6b70a265b07e45811514b3,19abbcf,Xander,zander181@googlemail.com,2026-10-25T17:57:08Z,GitHub,noreply@github.com,2026-10-25T17:57:08Z,feat(encryption): [8/N] encryption manager (#4149),"* feat(encryption): [8/N] encryption manager
+
+* remove comment
+
+* raise rather than None
+
+* kek guard
+
+* lazy import",ea139cc8277c2aa5764b186f3f8fc50e6a98d830,4149,false,,4,551,0,pyiceberg; tests
+apache/iceberg-python,e55718f89ff0626ad1172fff344d9af8e8ed03ce,e55718f,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-25T17:59:35Z,GitHub,noreply@github.com,2026-10-25T17:59:35Z,Bump integration infra to Iceberg 1.12.0 and Spark 4.1.3 (#4155),"Also bump hadoop-aws, AWS SDK, Hive metastore client, aws-cli, and
+pyspark. Hive 4.2 moved IMetaStoreClient into the new
+hive-standalone-metastore-client artifact, so download it as well.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",19abbcf1b01d60d9bd6b70a265b07e45811514b3,4155,false,Copilot App,5,51,49,dev; pyproject.toml; uv.lock
+apache/iceberg-python,dabfec54b6e5352b559fcc2720d9f4b62160c1f8,dabfec5,Fokko Driesprong,fokko@apache.org,2026-10-25T19:07:44Z,GitHub,noreply@github.com,2026-10-25T19:07:44Z,Remove unreachable timestamp-micros from `LOGICAL_FIELD_TYPE_MAPPING` (#4139),"timestamp-micros is handled by an explicit branch in _convert_logical_type
+that also honors adjust-to-utc, so the mapping entry was never used.",e55718f89ff0626ad1172fff344d9af8e8ed03ce,4139,false,,1,0,1,pyiceberg
+apache/iceberg-python,d998670912a050eef9957218a2e9432438e341e9,d998670,Yuya Ebihara,ebyhry@gmail.com,2026-10-26T02:12:07Z,GitHub,noreply@github.com,2026-10-26T02:12:07Z,Infra: Use ubuntu-24.04 instead of ubuntu-latest (#4157),Build: Use ubuntu-24.04 instead of ubuntu-latest,dabfec54b6e5352b559fcc2720d9f4b62160c1f8,4157,false,,7,14,14,.github
+apache/iceberg-python,042165ace7e96b7d0da61810d1540c01ffff5157,042165a,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-10-26T02:35:12Z,GitHub,noreply@github.com,2026-10-26T02:35:12Z,Send the DeleteObjects body to the S3 REST signer (#4039),"s3fs deletes files with DeleteObjects, which lists the object keys in the
+request body. S3V4RestSigner never forwarded the body, so a signing
+service could not authorize the keys before signing.
+
+Also add an S3 test that writes, reads, and deletes through the REST
+signer, which previously had only mocked unit tests.
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",d998670912a050eef9957218a2e9432438e341e9,4039,false,Claude Opus 5.5,2,45,1,pyiceberg; tests

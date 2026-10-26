@@ -33152,3 +33152,393 @@ apache/iceberg-go,c21d4b4e473b12e1e5d4fb766a88384cd2bd9ed7,c21d4b4,Minh Vu,vuhoa
 apache/iceberg-go,2e2ab68860c63aabd1226e19d95c45aa69a9d8ee,2e2ab68,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T10:11:26+01:00,GitHub,noreply@github.com,2026-10-25T10:11:26+01:00,refactor(schema)!: use JSON initialism in schema constructor (#2307),,c21d4b4e473b12e1e5d4fb766a88384cd2bd9ed7,2307,false,,4,10,10,cmd; schema.go; schema_test.go
 apache/iceberg-go,3bdc1af7b39d85346c42dda52b42e7d9e328d9c2,3bdc1af,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T10:11:41+01:00,GitHub,noreply@github.com,2026-10-25T10:11:41+01:00,refactor(aws)!: standardize exported AWS initialisms (#2310),,2e2ab68860c63aabd1226e19d95c45aa69a9d8ee,2310,false,,18,65,65,catalog; cmd; config; io; utils; website
 apache/iceberg-go,858379a657387a2a327b8a025398779a741ae10a,858379a,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T12:53:09+01:00,GitHub,noreply@github.com,2026-10-25T12:53:09+01:00,refactor(puffin)!: unify statistics blob types (#2295),,3bdc1af7b39d85346c42dda52b42e7d9e328d9c2,2295,false,,8,153,53,puffin; table; website
+apache/iceberg-go,6693e2f3b4896a2edef68abbbdec356d184875c4,6693e2f,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T19:05:56+01:00,GitHub,noreply@github.com,2026-10-25T19:05:56+01:00,refactor(catalog)!: rename PurgeableTable to PurgeableCatalog (#2305),,858379a657387a2a327b8a025398779a741ae10a,2305,false,,14,32,31,catalog; cmd; website
+apache/iceberg-go,c64f9a79dc25fd4fdf76f4293ef22d3d1632d520,c64f9a7,Minh Vu,vuhoangminh97@gmail.com,2026-10-25T21:03:22+01:00,GitHub,noreply@github.com,2026-10-25T21:03:22+01:00,refactor(table)!: return branch transaction initialization errors directly (#2313),,6693e2f3b4896a2edef68abbbdec356d184875c4,2313,false,,9,77,80,table; website
+apache/iceberg-go,48deb03f794386c647a5e9b4a3b14a36b269d262,48deb03,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-26T16:22:15+01:00,GitHub,noreply@github.com,2026-10-26T15:22:15Z,refactor(io)!: add context to IO.Open and IO.Remove (#2067),"* refactor(io)!: add context to IO.Open and IO.Remove
+
+`io.IO.Open` and `Remove` now take `context.Context`, matching `BulkRemovableIO.DeleteFiles`.
+`blobfs.FileIO.Remove` forwards the caller context so deletes honor cancellation/deadlines.
+`maintenance.WithCleanupDeleteFunc` now takes `func(context.Context, string) error`.
+
+Breaking change: all `IO` implementations/callers must pass a context, and custom delete callbacks must update their signature.
+
+Part of the v1.0 API cleanup in #2062.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>
+
+* fix(io): keep failure cleanup immune to caller cancellation
+
+Moving blobfs Remove onto the caller context made cleanup after a failed
+operation fail with it: when the failure was itself a cancellation or a
+timeout, the removal was canceled too and files that used to be cleaned
+up were left behind on object stores. Before this change Remove ran on
+the context captured when the FileIO was built, so a canceled caller
+never reached it.
+
+Run those cleanup paths on context.WithoutCancel(ctx), which keeps the
+context's values (tracing and similar) but not its cancellation:
+
+- doCommit's deferred removal of orphaned manifest lists
+- the hadoop catalog's temp metadata file and version claim removals
+- sql removeUncommittedMetadata, which already loaded the filesystem
+  without cancellation but removed with the caller context
+- the removal of a partially written delete manifest in
+  writeDeletedEntries
+- the Glue S3 Tables commit rollback
+
+Paths where removal is the requested work (orphan cleanup, PurgeFiles,
+expire snapshots' post-commit deletes, drop namespace and drop view)
+keep the caller context so they stay cancellable.
+
+Tests use an IO that rejects Remove on a canceled context, as blobfs
+does, to check that doCommit and removeUncommittedMetadata still clean
+up after a cancellation.
+
+Also reword the IO.Open doc to say implementations may use ctx to bound
+the open, since no backend does yet, and drop the comments claiming
+every backend ignores ctx, which would go stale once one honors it.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>
+
+* refactor(table): thread ctx through the manifest content cache IO
+
+The manifest content cache that landed on main wraps the scan FileIO
+with the old context-free Open and Remove, so the merge no longer
+built. Give manifestContentCacheIO the context-taking signatures.
+
+Opens of other paths and Remove forward the caller's context. The
+cached manifest path keeps using the scan context captured in wrap,
+because the manifest readers that call Open have no caller context to
+pass and would otherwise drop the scan's cancellation. The cache's
+own opens, including the population read and the fallback opens, use
+that same context.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>
+
+---------
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",c64f9a79dc25fd4fdf76f4293ef22d3d1632d520,2067,false,,85,459,267,catalog; cmd; internal; io; manifest_projection.go; table; view
+apache/iceberg-go,410b789ed781852bbb4376e4f5cb57e76da12c56,410b789,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T16:35:27+01:00,GitHub,noreply@github.com,2026-10-26T15:35:27Z,perf(internal): stop propagating unchanged packing minimums (#2240),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,48deb03f794386c647a5e9b4a3b14a36b269d262,2240,false,,2,120,1,internal
+apache/iceberg-go,3fb910983b9674efc6092418af90a1c2b821dd42,3fb9109,Matt Faltyn,76570855+mattfaltyn@users.noreply.github.com,2026-10-26T08:38:46-07:00,GitHub,noreply@github.com,2026-10-26T15:38:46Z,fix(compaction): rewrite complete source files (#2288),"* fix(compaction): rewrite complete source files
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>
+
+* test(compaction): format validation callbacks
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>
+
+* fix(compaction): validate split metadata and clear residuals
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>
+
+---------
+
+Signed-off-by: Matt Faltyn <faltyn.matthew@gmail.com>",410b789ed781852bbb4376e4f5cb57e76da12c56,2288,false,,5,410,3,table; website
+apache/iceberg-go,cc999d18279e817024ad24656e011ae880c9e551,cc999d1,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T16:51:09+01:00,GitHub,noreply@github.com,2026-10-26T15:51:09Z,refactor(config)!: use one error-returning config loader (#2294),"* refactor(config)!: use one error-returning config loader
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* chore: sync release notes with main to resolve conflicts
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",3fb910983b9674efc6092418af90a1c2b821dd42,2294,false,,3,78,18,cmd; config
+apache/iceberg-go,f593b08b6f10bcaf99f9009975269510d93d8929,f593b08,Nirajan Sah,110184689+nirajan1111@users.noreply.github.com,2026-10-26T22:02:08+05:45,GitHub,noreply@github.com,2026-10-26T16:17:08Z,"fix(table): compute geo metrics for geo fields nested in structs, lists and maps (#2303)","Parquet writes no statistics for GEOMETRY/GEOGRAPHY columns, so the
+writer computes them from the Arrow data, but collectGeoColumns only
+looked at top-level columns. Nested geo fields got a value count but
+no null count or bounds.
+
+Walk structs, lists and maps down to each geo field. Count nulls the
+way Parquet does for nested fields: a null value, a null parent, and
+an empty list or map each count once. Values under a null parent are
+not decoded.
+
+Fixes #2158
+
+Signed-off-by: nirajan1111 <nirajansah1111@gmail.com>",cc999d18279e817024ad24656e011ae880c9e551,2303,false,,4,232,54,table; website
+apache/iceberg-go,36bdf349369e064c1c5b60259b5fc030bb3a121d,36bdf34,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T17:45:27+01:00,GitHub,noreply@github.com,2026-10-26T16:45:27Z,feat(catalog): expose optional table registration capability (#2320),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,f593b08b6f10bcaf99f9009975269510d93d8929,2320,false,,4,26,2,catalog
+apache/iceberg-go,ca7b363e0e234f6538f63abfb95637490719a909,ca7b363,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T17:48:26+01:00,GitHub,noreply@github.com,2026-10-26T16:48:26Z,refactor(transforms)!: rename typed human formatting to ToHumanString (#2321),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,36bdf349369e064c1c5b60259b5fc030bb3a121d,2321,false,,8,26,26,partitions.go; table; transforms.go; transforms_test.go; website
+apache/iceberg-go,bdb12fceb22661716c61d29c0ccfea4c40fc5405,bdb12fc,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-26T12:53:46-04:00,GitHub,noreply@github.com,2026-10-26T12:53:46-04:00,build(deps): bump the codeql-action group with 2 updates (#2328),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.38.3 to 4.39.0
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/24c54180a607b1449ed407dd24f251e4e9147c8d...6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee)
+
+Updates `github/codeql-action/analyze` from 4.38.3 to 4.39.0
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/24c54180a607b1449ed407dd24f251e4e9147c8d...6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.39.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.39.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",ca7b363e0e234f6538f63abfb95637490719a909,2328,false,dependabot[bot],1,2,2,.github
+apache/iceberg-go,472fe4bc7ae9017552551a7c924c42fdc334f2e3,472fe4b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-26T12:54:02-04:00,GitHub,noreply@github.com,2026-10-26T12:54:02-04:00,build(deps): bump zizmorcore/zizmor-action from 0.6.4 to 0.7.1 (#2330),"Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.6.4 to 0.7.1.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/cc914d7f3750a2d13d75c7f184a1060aa0e9d482...85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.7.1
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",bdb12fceb22661716c61d29c0ccfea4c40fc5405,2330,false,dependabot[bot],1,1,1,.github
+apache/iceberg-go,e6db4b68512f8478dd3418cff8af1cc426767bf9,e6db4b6,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-26T12:54:16-04:00,GitHub,noreply@github.com,2026-10-26T12:54:16-04:00,build(deps): bump apache/infrastructure-actions/allowlist-check from 1.0.1 to 1.0.4 (#2329),"build(deps): bump apache/infrastructure-actions/allowlist-check
+
+Bumps [apache/infrastructure-actions/allowlist-check](https://github.com/apache/infrastructure-actions) from 1.0.1 to 1.0.4.
+- [Commits](https://github.com/apache/infrastructure-actions/compare/df54e48ff76152790f317934c691cfa7fd7a1a46...47b297bbe90f580139129bee531bd84bd95b7f5d)
+
+---
+updated-dependencies:
+- dependency-name: apache/infrastructure-actions/allowlist-check
+  dependency-version: 1.0.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",472fe4bc7ae9017552551a7c924c42fdc334f2e3,2329,false,dependabot[bot],1,1,1,.github
+apache/iceberg-go,045c4053772fab695fe73f84bb6253dd7c64e010,045c405,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T18:03:32+01:00,GitHub,noreply@github.com,2026-10-26T17:03:32Z,perf(io): avoid copying MemFS contents on open (#2233),"* perf(io): avoid copying MemFS contents on open
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* Merge branch 'main' into perf/memfs-zero-copy-open-20261020
+
+Pass a context to MemFS.Open/Remove in the new tests after #2067 added ctx to IO.Open and IO.Remove.
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",e6db4b68512f8478dd3418cff8af1cc426767bf9,2233,false,Matt Topol,3,251,4,io
+apache/iceberg-go,d6624129f01fac7aed407d7169e9db70ae1e6c04,d662412,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T18:08:58+01:00,GitHub,noreply@github.com,2026-10-26T17:08:58Z,refactor(hadoop)!: split catalog operations and preserve initialization context (#2290),"* refactor(hadoop)!: split catalog operations and preserve initialization context
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* chore: sync release notes with main to resolve conflicts
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",045c4053772fab695fe73f84bb6253dd7c64e010,2290,false,Matt Topol,10,960,665,catalog; cmd; website
+apache/iceberg-go,bba86e9838efacfb9fce566d238ca215ae2d9301,bba86e9,Harrison Crosse,harrison@crosse.dev,2026-10-26T13:16:20-04:00,GitHub,noreply@github.com,2026-10-26T17:16:20Z,fix(table): pin guarded refs in RollbackToSnapshot and ExpireSnapshots (#2301),"* fix(table): pin guarded refs in RollbackToSnapshot and ExpireSnapshots
+
+Since #2248 the SQL, Glue, Hive and Hadoop catalogs report a failed
+commit requirement as ErrCommitFailed, so with commit.retry.num-retries
+above zero doCommit retries it and rewrites the commit branch's
+AssertRefSnapshotID to the refreshed head. RollbackToSnapshot and
+ExpireSnapshots rely on that assertion to detect a concurrent change, so
+a stale rollback could discard a peer's append and a stale expiry could
+remove snapshots the moved branch still retains. REST was already
+affected through 409 responses.
+
+Pin the refs these operations guard, including branches the transaction
+staged, using the same mechanism as Transaction.AssertRefSnapshotID.
+Pins and the staged updates are now published under one lock, so a
+failed apply leaves no pin. A pinned assertion that no longer holds
+after refresh fails the commit without spending the rest of the retry
+budget.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(table): skip guards for a no-op ExpireSnapshots
+
+An ExpireSnapshots call that finds nothing to expire stages no update,
+but it still pinned every ref. In a transaction that also appends, the
+pin on the commit branch stopped the append from rebasing onto a peer's
+commit, so the retry failed instead of succeeding.
+
+Return without adding requirements or pins when there is nothing to
+expire, while still rejecting a transaction that has already been
+committed.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* test: trim pinned-ref test helpers and clarify retry docs
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* docs: list every built-in catalog in the retry support note
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* docs: limit the catalog support note to conflicting requirement failures
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+---------
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",d6624129f01fac7aed407d7169e9db70ae1e6c04,2301,false,Matt Topol,5,335,46,catalog; table; website
+apache/iceberg-go,cc260be95386c91ab55b7cfc322265034d168bea,cc260be,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T18:16:31+01:00,GitHub,noreply@github.com,2026-10-26T17:16:31Z,refactor(io)!: consolidate fs adapters behind options (#2300),"* refactor(io)!: consolidate fs adapters behind options
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs(release): note v1 API compatibility change
+
+* chore: sync release notes with main to resolve conflicts
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",bba86e9838efacfb9fce566d238ca215ae2d9301,2300,false,Matt Topol,3,77,15,io; website
+apache/iceberg-go,f63ae12bbe207cca2a33415ef972ede0b93f67bb,f63ae12,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-26T17:55:50Z,GitHub,noreply@github.com,2026-10-26T17:55:50Z,build(deps): bump the gomod_updates group with 6 updates (#2327),"* build(deps): bump the gomod_updates group with 6 updates
+
+---
+updated-dependencies:
+- dependency-name: github.com/Azure/azure-sdk-for-go/sdk/azidentity
+  dependency-version: 1.15.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/glue
+  dependency-version: 1.171.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/klauspost/compress
+  dependency-version: 1.20.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: gocloud.dev
+  dependency-version: 0.47.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: golang.org/x/mod
+  dependency-version: 0.42.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: google.golang.org/api
+  dependency-version: 0.304.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+* test(io): match gocloud v0.47 driver.Bucket.Delete signature
+
+gocloud.dev v0.47.0 adds a *driver.DeleteOptions parameter to driver.Bucket.Delete, so the trackingDeleteBucket test double no longer satisfied the interface and every job that compiles io/gocloud/blobfs tests failed.
+
+---------
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",cc260be95386c91ab55b7cfc322265034d168bea,2327,false,dependabot[bot]; Matt Topol,3,83,83,go.mod; go.sum; io
+apache/iceberg-go,c0be1fa342abee505200c6cf110f5bc4398f9e05,c0be1fa,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T19:04:01+01:00,GitHub,noreply@github.com,2026-10-26T18:04:01Z,fix(table)!: use canonical snapshot timestamp reserved key (#2323),"* fix(table): match Java's reserved snapshot timestamp property
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs(release): note v1 API compatibility change
+
+* chore: sync release notes with main to resolve conflicts
+
+* test(table): assert reserved timestamp behavior without coupling to list shape
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",f63ae12bbe207cca2a33415ef972ede0b93f67bb,2323,false,Matt Topol,2,19,1,table
+apache/iceberg-go,f52f493cc44ffc96152885306c5288eb4b39c7c2,f52f493,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T19:27:21+01:00,GitHub,noreply@github.com,2026-10-26T18:27:21Z,refactor(table)!: name snapshot ref type field before v1 (#2319),"* refactor(table)!: name snapshot ref type field before v1
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* chore: sync release notes with main to resolve conflicts
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",c0be1fa342abee505200c6cf110f5bc4398f9e05,2319,false,Matt Topol,20,86,74,cmd; table
+apache/iceberg-go,34e7809bbfd10742cc2bcce6e503be2b88231c12,34e7809,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T19:27:48+01:00,GitHub,noreply@github.com,2026-10-26T14:27:48-04:00,"refactor(view,udf)!: make NewMetadataBuilder infallible (#2316)","* refactor(view,udf)!: make new metadata builders infallible
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs(release): note v1 API compatibility change
+
+* chore: sync release notes with main to resolve conflicts
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",f52f493cc44ffc96152885306c5288eb4b39c7c2,2316,false,Matt Topol,6,46,85,udf; view
+apache/iceberg-go,25ca50563000e6e7732ce51342278ee0bfe37cb2,25ca505,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T19:28:04+01:00,GitHub,noreply@github.com,2026-10-26T14:28:04-04:00,refactor(table)!: make SnapshotAsOf inclusive before v1 (#2322),"* refactor(table)!: make SnapshotAsOf inclusive before v1
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* chore: sync release notes with main to resolve conflicts
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",34e7809bbfd10742cc2bcce6e503be2b88231c12,2322,false,Matt Topol,3,17,39,cmd; table
+apache/iceberg-go,41593a308076eb33620da234aa9bb9d36a2c468a,41593a3,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T19:28:24+01:00,GitHub,noreply@github.com,2026-10-26T14:28:24-04:00,refactor(table)!: name path-based data file additions explicitly (#2308),"* refactor(table)!: name path-based data file additions explicitly
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs(release): note v1 API compatibility change
+
+* chore: sync release notes with main to resolve conflicts
+
+* docs(release): move compatibility note to a follow-up PR
+
+The note for this change lands in a follow-up release-notes PR so the pre-v1 renames can merge in parallel.
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",25ca50563000e6e7732ce51342278ee0bfe37cb2,2308,false,Matt Topol,38,187,183,catalog; table; website
+apache/iceberg-go,0544baaa5117e3e7a06d0ba07f1156533e4e76cd,0544baa,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T19:28:30+01:00,GitHub,noreply@github.com,2026-10-26T14:28:30-04:00,refactor(table)!: rename Metadata.Version to FormatVersion (#2317),"* refactor(table)!: rename Metadata.Version to FormatVersion
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* chore: sync release notes with main to resolve conflicts
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",41593a308076eb33620da234aa9bb9d36a2c468a,2317,false,Matt Topol,29,75,71,catalog; cmd; table
+apache/iceberg-go,fc6f3d9b965b1a4dd1fa74c491aebf367c6061a4,fc6f3d9,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T19:30:18+01:00,GitHub,noreply@github.com,2026-10-26T18:30:18Z,refactor(manifest)!: name manifest builder constructor explicitly (#2314),"* refactor(manifest)!: name manifest builder constructor explicitly
+
+Rename NewManifestFile to NewManifestBuilder to match the returned type and other public builder constructors.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs(release): note v1 API compatibility change
+
+* chore: sync release notes with main to resolve conflicts
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",0544baaa5117e3e7a06d0ba07f1156533e4e76cd,2314,false,Matt Topol,26,135,134,manifest.go; manifest_list_version_test.go; manifest_test.go; table
+apache/iceberg-go,28cb44a91c728a1b9a2c7b5365d333c76292a6a8,28cb44a,Minh Vu,vuhoangminh97@gmail.com,2026-10-26T19:55:12+01:00,GitHub,noreply@github.com,2026-10-26T18:55:12Z,refactor(manifest)!: use explicit sequence number API names (#2315),"* refactor(manifest)!: use explicit sequence number API names
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* chore: sync release notes with main to resolve conflicts
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",fc6f3d9b965b1a4dd1fa74c491aebf367c6061a4,2315,false,Matt Topol,43,193,190,catalog; manifest.go; manifest_list_version_test.go; manifest_projection_test.go; manifest_test.go; table

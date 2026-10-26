@@ -34089,3 +34089,146 @@ with floatValue() and does no precision check; do the same.
 * test(spec): pin non-finite and negative zero double to float
 
 Check NaN, both infinities, and the sign of zero when narrowing Avro doubles.",7c39c3748d2351cdb8b2b5432937c96766fc07bf,3476,false,,2,70,11,crates
+apache/iceberg-rust,26356f549b24b792e245d6e91240ebaa9f073c88,26356f5,blackmwk,257669749+blackmwk@users.noreply.github.com,2026-10-26T11:53:54Z,GitHub,noreply@github.com,2026-10-26T11:53:54Z,ci: update PyPI publish action to ASF-approved v1.14.3 (#3531),,217e66dbdf2e206b843e6e68acd85fb4feeeea7b,3531,false,,2,2,2,.github
+apache/iceberg-rust,32acec67ab7460e408e313c0b9c2abf9482d2b86,32acec6,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-26T17:24:08Z,GitHub,noreply@github.com,2026-10-26T17:24:08Z,ci(python): bundle third-party licenses in pyiceberg-core wheels (#3493),"* ci(python): bundle third-party licenses in pyiceberg-core wheels
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* build(python): add third-party notices to pyiceberg-core NOTICE
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* build(python): add zstd-sys license clarification
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* build(python): add brotli-decompressor MIT license to LICENSE
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* build(python): add libm license clarification
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* build(python): add alloc-stdlib license clarification
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* build(python): limit third-party licenses to the wheel targets
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* docs(python): document the LICENSE and NOTICE flow
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* docs(release): add a pyiceberg-core LICENSE and NOTICE check
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",26356f549b24b792e245d6e91240ebaa9f073c88,3493,false,Copilot App,12,301,0,.github; .licenserc.yaml; bindings; website
+apache/iceberg-rust,cf71520c95561ec347d0ee6d8a8823581a3752b4,cf71520,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-26T17:39:32Z,GitHub,noreply@github.com,2026-10-26T17:39:32Z,ci: standardize RustFS setup across Iceberg repos (#3279),"* ci: enable RustFS stdout logging in docker compose
+
+Set RUSTFS_OBS_LOG_STDOUT_ENABLED=true on the object-store service so that
+docker logs shows RustFS output, aligning with the canonical RustFS 1.0.0
+setup used across Apache Iceberg repos.
+
+Generated-by: GitHub Copilot
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci: bump RustFS to 1.0.3 and disable the web console
+
+Bump rustfs/rustfs to 1.0.3 for both object-store and create-buckets,
+set RUSTFS_CONSOLE_ENABLE=false, and stop publishing port 9001, aligning
+with the RustFS setup used across Apache Iceberg repos.
+
+Generated-by: GitHub Copilot
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",32acec67ab7460e408e313c0b9c2abf9482d2b86,3279,false,Copilot App,1,4,3,dev
+apache/iceberg-rust,cfa8b9c4c2828f480dbbd167486e91009915418a,cfa8b9c,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-26T18:07:29Z,GitHub,noreply@github.com,2026-10-26T18:07:29Z,ci: share Rust caches across runner images (#3520),"rust-cache hashes every installed toolchain into its key. Runner images
+roll out with different preinstalled stable versions (1.99.0 vs 1.99.1),
+which splits each job's cache into two keys that miss each other and
+duplicate ~2.8GB of cache storage. Jobs using rust-toolchain.toml never
+use stable, so setup-builder removes it.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",cf71520c95561ec347d0ee6d8a8823581a3752b4,3520,false,Copilot App,1,2,0,.github
+apache/iceberg-rust,e4f928acf70ff362c83f0fc4961bf7fc651ea00b,e4f928a,Danny C Jones,daniel.carl@live.com,2026-10-26T18:26:11Z,GitHub,noreply@github.com,2026-10-26T18:26:11Z,chore(deps): Address or ignore zstd advisories (#3538),"* chore(deps): bump zstd-sys to 2.1.2 to fix RUSTSEC-2026-0410
+
+Co-authored-by: Danny C Jones <djonesoa@amazon.com>
+
+* ci: ignore unreachable zstd RUSTSEC advisories pending zstd 0.14 upstream
+
+Co-authored-by: Danny C Jones <djonesoa@amazon.com>
+
+* Address comments from Copilot
+
+Co-authored-by: Danny C Jones <djonesoa@amazon.com>
+
+* ci: clarify zstd advisory ignore rationale and removal condition
+
+Map each ignored advisory to why it is unreachable, add a command to
+re-check enabled zstd features, and include the workspace zstd bump in
+the removal condition.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",cfa8b9c4c2828f480dbbd167486e91009915418a,3538,false,Danny C Jones; Copilot App; Kevin Liu,2,19,2,.cargo; Cargo.lock
+apache/iceberg-rust,7b0222f1e87e29273bd7bd98306e5c99fe0dfea8,7b0222f,Paul Roman,854559+romusz@users.noreply.github.com,2026-10-26T18:31:03Z,GitHub,noreply@github.com,2026-10-26T18:31:03Z,feat(rest): support configurable page sizes (#3295),"* feat(rest): support configurable page sizes
+
+- Configure namespace and table page sizes through builders or properties.
+- Honor configuration precedence and validate only the effective page size.
+- Opt into pagination while preserving complete listing results.
+
+* test(rest): cover empty pages and invalid client page sizes
+
+- Verify listings continue through empty pages with continuation tokens.
+- Verify invalid client page sizes do not fall back to server defaults.
+
+* test(rest): verify page-size interoperability with the REST fixture
+
+- Exercise namespace and table listings with a configured page size.
+- Verify complete, duplicate-free results against the live catalog fixture.
+
+* refactor(rest): simplify catalog config
+
+Co-authored-by: Marco Kroll <marco.kroll@databricks.com>
+
+* refactor(rest): rename a test
+
+* fix(rest): bound page sizes for Java interoperability
+
+- Reject effective page sizes above i32::MAX after configuration merging.
+- Include the offending value in page-size validation errors.
+- Update documentation and existing boundary and precedence tests.
+
+* refactor(rest): simplify page-size error construction
+
+- Reuse the invalid page-size error constructor for parsing and range checks.
+- Preserve parse-error sources and explicit upper-bound validation.
+
+* refactor(rest): take NonZeroU32 in with_page_size
+
+Make a zero page size unrepresentable in the builder setters.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* docs(rest): document page-size precedence and validation once
+
+Keep the contract on RestSessionCatalogBuilder::with_page_size and link to it.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Marco Kroll <marco.kroll@databricks.com>
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",e4f928acf70ff362c83f0fc4961bf7fc651ea00b,3295,false,Marco Kroll; Copilot App; Kevin Liu,4,449,6,crates
