@@ -34232,3 +34232,76 @@ Co-authored-by: Marco Kroll <marco.kroll@databricks.com>
 Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>
 Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",e4f928acf70ff362c83f0fc4961bf7fc651ea00b,3295,false,Marco Kroll; Copilot App; Kevin Liu,4,449,6,crates
+apache/iceberg-rust,081a36dd311f4098a9a19847abedfa05f7af2e8f,081a36d,Danny C Jones,daniel.carl@live.com,2026-10-26T23:50:52Z,GitHub,noreply@github.com,2026-10-26T23:50:52Z,refactor(spec)!: accept impl Into<Type> in NestedField constructors (#3527),,7b0222f1e87e29273bd7bd98306e5c99fe0dfea8,3527,false,,7,110,158,crates
+apache/iceberg-rust,36aa0e435a13ed98e22af1851f81d16a3651c4d9,36aa0e4,Andy Grove,agrove@apache.org,2026-10-27T04:30:22Z,GitHub,noreply@github.com,2026-10-27T04:30:22Z,fix(writer): skip NaN min/max when aggregating Parquet column bounds (#3539),"* fix(writer): skip NaN min/max when aggregating Parquet column bounds
+
+Parquet 60 writes NaN min and max statistics for a column chunk whose values are all NaN, where earlier versions wrote none. MinMaxColAggregator copied them into the data file's lower and upper bounds, but the Iceberg spec does not allow NaN as a bound and iceberg-java records none. NaN is also unordered, so a stored NaN bound could not be replaced by a later chunk's value.
+
+* docs(writer): clarify why NaN bounds are skipped
+
+* fix(writer): correct NaN bound comment and cover negative NaN lower bound
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",081a36dd311f4098a9a19847abedfa05f7af2e8f,3539,false,Copilot App; Kevin Liu,1,41,2,crates
+apache/iceberg-rust,340b6fa0d1e44fbcfdac68174298519e35819e47,340b6fa,NingLin Liu,x07514475479@gmail.com,2026-10-27T05:09:03Z,GitHub,noreply@github.com,2026-10-27T05:09:03Z,chore(dev): fold the crate LICENSE/NOTICE check into licenses.py (#3528),"* chore(dev): fold the crate LICENSE/NOTICE check into licenses.py
+
+* chore(dev): address review on crates check
+
+- drop --no-verify (implied by --list) and inline the --allow-dirty comment
+- check cargo the same way as cargo-deny and keep the two helpers together
+- don't capture cargo metadata stderr so warnings stay visible
+- compare against the root file without raising when either side is missing
+- reword the crates sub-command help
+
+---------
+
+Co-authored-by: NingLin Liu <224592858+ninglinLiu@users.noreply.github.com>",36aa0e435a13ed98e22af1851f81d16a3651c4d9,3528,false,NingLin Liu,3,145,189,Makefile; dev
+apache/iceberg-rust,b5cc6a1c179eafd3bc3159f1f537b8928f293c15,b5cc6a1,Xander,zander181@googlemail.com,2026-10-27T14:17:57Z,GitHub,noreply@github.com,2026-10-27T14:17:57Z,fix(spec): Skip the partition name check once the source column is dropped (#3420),"* fix(spec): skip the partition name check once the source column is dropped
+
+`validate_schema_field_names` rejected any new schema field whose name
+matched a partition field name in any spec, unless some schema already
+had that name. Iceberg keeps specs forever, so a name used by a spec
+whose source column has since been dropped stayed reserved even though
+the spec is only retained to interpret old metadata.
+
+Iceberg Java runs the same check, in `checkAndAddPartitionName`, as
+`setCurrentSchema` rebuilds every spec. It skips a field whose source
+column is absent from the new schema, and otherwise allows the name only
+for the source column itself:
+
+    boolean sourceFieldExists = schema.findField(sourceColumnId) != null;
+    if (sourceFieldExists) {
+      Preconditions.checkArgument(
+          schemaField == null || schemaField.fieldId() == sourceColumnId, ...);
+    }
+
+Adopt that rule. It keeps every spec in scope, so nothing that was
+rejected before is accepted now unless its source column is gone, and it
+drops the `name_exists_in_any_schema` escape hatch, which was a
+Rust-only approximation of the identity-partition case.
+
+The check now reads partition fields rather than schema names, so its
+result no longer depends on whether the schema or the spec is added
+first.
+
+`partition_name_exists` loses its only caller and is removed.
+
+Note a related divergence this does not address: `build()` rebinds the
+default spec with `bind()`, which requires the source column to exist,
+so dropping the source column of the *current* spec still fails. Java
+uses `buildUnchecked()` there and tolerates it.
+
+* maybe this?
+
+* update error message",340b6fa0d1e44fbcfdac68174298519e35819e47,3420,false,,2,262,114,crates
+apache/iceberg-rust,18d8ed2c2c051de13ced656a91246a318f95ff00,18d8ed2,NingLin Liu,x07514475479@gmail.com,2026-10-27T15:25:42Z,GitHub,noreply@github.com,2026-10-27T15:25:42Z,chore(release): check crate LICENSE/NOTICE files in verify_rc.sh (#3553),,b5cc6a1c179eafd3bc3159f1f537b8928f293c15,3553,false,,2,32,2,dev
+apache/iceberg-rust,b802a7cab1a370e552ddc3f00ed946706e0ce817,b802a7c,Danny C Jones,daniel.carl@live.com,2026-10-27T17:53:49Z,GitHub,noreply@github.com,2026-10-27T17:53:49Z,fix(catalog/s3tables): attach S3 Tables SDK error as source in resulting Iceberg error (#3523),"fix(catalog/s3tables): keep the SdkError as the source of SDK failures
+
+from_aws_sdk_error and the commit path kept only a Debug render of the
+SdkError, so callers could not downcast to the typed error to inspect
+the service error code or status. Attach the SdkError itself as the
+error source.",18d8ed2c2c051de13ced656a91246a318f95ff00,3523,false,,3,31,17,Cargo.lock; crates
