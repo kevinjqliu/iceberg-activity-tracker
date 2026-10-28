@@ -7793,3 +7793,92 @@ apache/iceberg-python,9345369e8e7411e9351313bda2501df33b99c311,9345369,ChanKyeon
 * Skip the Kerberos transport test on Windows
 
 * Resolve the Kerberos service host default in _HiveClient",042165ace7e96b7d0da61810d1540c01ffff5157,3864,false,,3,47,4,mkdocs; pyiceberg; tests
+apache/iceberg-python,0a2e7caa65502be3d5090bc053292439c2253cf6,0a2e7ca,Shahzeb Ali,126076773+Shahzeb-DataEngineer@users.noreply.github.com,2026-10-27T23:04:53Z,GitHub,noreply@github.com,2026-10-27T23:04:53Z,fix: raise when binding starts-with with an out-of-range literal (#4144),"LiteralPredicate.bind folded AboveMax/BelowMin literals to AlwaysTrue or
+AlwaysFalse for the comparison operations, but starts-with and
+not-starts-with fell through and built a bound predicate wrapping the
+sentinel itself, which then crashed evaluators. Raise a ValueError at
+bind time instead, mirroring the Java implementation, which throws for
+operations that have no defined fold.
+
+Signed-off-by: Shahzeb Ali <126076773+Shahzeb-DataEngineer@users.noreply.github.com>",9345369e8e7411e9351313bda2501df33b99c311,4144,false,,2,18,0,pyiceberg; tests
+apache/iceberg-python,1e6e94a44f84dd3035dcff19546306f89ca2f74f,1e6e94a,Shahzeb Ali,126076773+Shahzeb-DataEngineer@users.noreply.github.com,2026-10-27T23:07:21Z,GitHub,noreply@github.com,2026-10-27T23:07:21Z,fix: accept up to 9 fractional digits for micros timestamps (#4142),"Widen ISO_TIMESTAMP and ISO_TIMESTAMPTZ to accept 1-9 fractional digits
+and zone offsets with optional seconds, and parse micros timestamps
+through the nanosecond path, truncating to microseconds, mirroring the
+Java implementation. Previously, valid ISO-8601 strings with nanosecond
+precision were rejected with a ValueError when binding string literals
+to timestamp/timestamptz columns or parsing JSON single values.
+
+Signed-off-by: Shahzeb Ali <126076773+Shahzeb-DataEngineer@users.noreply.github.com>",0a2e7caa65502be3d5090bc053292439c2253cf6,4142,false,,3,75,5,pyiceberg; tests
+apache/iceberg-python,27a5162749bb670d00b23b8360869410b6e5b3a1,27a5162,David Banquet,42814054+David-Banquet@users.noreply.github.com,2026-10-27T23:08:26Z,GitHub,noreply@github.com,2026-10-27T23:08:26Z,Support assume-role for Glue and DynamoDB catalogs (#4132),"* Support assume-role for Glue and DynamoDB catalogs
+
+Extend the existing S3 FileIO assume-role mechanism (client.role-arn /
+client.role-session-name) to the boto3 sessions built by GlueCatalog and
+DynamoDbCatalog. When a role ARN is configured, an STS AssumeRole is
+performed from the base session and the resulting temporary credentials
+are used for the Glue/DynamoDB client.
+
+Role configuration follows the same precedence already used for the other
+client.* properties: a service-prefixed override (glue.role-arn /
+dynamodb.role-arn, glue.role-session-name / dynamodb.role-session-name)
+falls back to the unified client.role-arn / client.role-session-name.
+Default behavior (no role ARN configured) is unchanged.
+
+Closes #2747
+
+Signed-off-by: lemon0333 <147061193+lemon0333@users.noreply.github.com>
+
+* Refresh assumed-role credentials for the Glue and DynamoDB catalogs
+
+The catalog session was built from the static credentials of a single
+AssumeRole call, so a long-lived catalog failed with ExpiredToken once the
+role session ended (one hour by default). Use botocore's
+AssumeRoleCredentialFetcher with DeferredRefreshableCredentials: the role is
+assumed on first use and again before the credentials expire.
+
+Co-authored-by: lemon0333 <147061193+lemon0333@users.noreply.github.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* Read the Java assume-role keys before client.role-*
+
+Java uses client.assume-role.arn and client.assume-role.session-name. The
+Glue and DynamoDB catalogs and the S3 FileIO now read them first, so the
+same properties work for both when a catalog passes them. The existing
+client.role-arn / client.role-session-name keys stay as a fallback, and the
+service-prefixed overrides keep their precedence.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+---------
+
+Signed-off-by: lemon0333 <147061193+lemon0333@users.noreply.github.com>
+Co-authored-by: lemon0333 <147061193+lemon0333@users.noreply.github.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",1e6e94a44f84dd3035dcff19546306f89ca2f74f,4132,false,lemon0333; Claude Opus 5.5,9,349,11,mkdocs; pyiceberg; tests
+apache/iceberg-python,4ba3ba4843ab7fdf96f9961d7695440be3e8dcf4,4ba3ba4,Aayush Kumar bhat,100667276+aayusbhat26@users.noreply.github.com,2026-10-28T08:29:04Z,GitHub,noreply@github.com,2026-10-28T08:29:04Z,fix(cli): emit one JSON object per ref in list-refs (#4169),"The nested comprehension emitted one object per retention property, so a single snapshot ref produced several JSON objects. Build one object per ref and merge its properties into it.",27a5162749bb670d00b23b8360869410b6e5b3a1,4169,false,,2,33,7,pyiceberg; tests
+apache/iceberg-python,267118b21d04c5bb26063b2417b3fe28726a253e,267118b,Orest Tokovenko,hi@oresttokovenko.com,2026-10-28T18:10:48Z,GitHub,noreply@github.com,2026-10-28T18:10:48Z,infra: bump minimum supported Python version to Python 3.11 (#4170),"* Require Python 3.11
+
+Python 3.10 reached end of life on 2026-10-01 and the devguide lists it as
+unsupported. Current pyarrow and pandas also publish no 3.10 wheels, so a
+3.10 install resolved to pyarrow 25.0.1 and pandas 2.3.3 while 3.11 and up
+resolved to newer versions.
+
+Drops the 3.10 classifier and matrix entry, and moves the two once-only CI
+steps (lock check, linters) to 3.11. The lock loses its pandas 2.3.3 fork,
+and pyproject loses the google.api_core warning filter that only existed
+because that library warns on Python versions it does not support.
+
+ruff reads requires-python, so it applies the 3.11 rewrites in the same pass:
+datetime.UTC in place of timezone.utc, and typing.Self in place of
+typing_extensions.Self where the typing module has it.
+
+* Drop Python 3.10 from release builds and restore google.api_core warning filter
+
+The cibuildwheel requires-python override and setup-python list still
+included 3.10, so releases would build cp310 wheels. google.api_core also
+warns on 3.11, so its FutureWarning filter is still needed.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",4ba3ba4843ab7fdf96f9961d7695440be3e8dcf4,4170,false,Copilot App; Kevin Liu,18,99,950,.github; pyiceberg; pyproject.toml; tests; uv.lock

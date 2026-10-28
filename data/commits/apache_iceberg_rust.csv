@@ -34305,3 +34305,271 @@ from_aws_sdk_error and the commit path kept only a Debug render of the
 SdkError, so callers could not downcast to the typed error to inspect
 the service error code or status. Attach the SdkError itself as the
 error source.",18d8ed2c2c051de13ced656a91246a318f95ff00,3523,false,,3,31,17,Cargo.lock; crates
+apache/iceberg-rust,8119f796c461283f559d7b7354963ee3e44dac04,8119f79,Danny C Jones,daniel.carl@live.com,2026-10-27T20:12:03Z,GitHub,noreply@github.com,2026-10-27T20:12:03Z,chore(licensing): update zstd-sys clarification for 2.1.2 (#3542),"* chore(licensing): drop the redundant zstd-sys clarification
+
+Co-authored-by: Danny C Jones <djonesoa@amazon.com>
+
+* chore(licensing): update zstd-sys clarification for 2.1.2
+
+zstd-sys 2.1.2 removed LICENSE.Mit and changed LICENSE.BSD-3-Clause, so the
+old clarification stopped matching and cargo-about dropped the Meta notices
+for the bindings and the vendored zstd C code. Pin the 2.1.2 files instead
+of removing the clarification.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",b802a7cab1a370e552ddc3f00ed946706e0ce817,3542,false,Danny C Jones; Copilot App; Kevin Liu,1,6,9,bindings
+apache/iceberg-rust,7ae9f4a44a4f8afae1ba6e7caa1456e4cde790e6,7ae9f4a,Shawn Chang,schang@apache.org,2026-10-27T21:36:38Z,GitHub,noreply@github.com,2026-10-27T21:36:38Z,"feat(transaction): Add simple snapshot producer, and wire fast append (#3474)","* Add simple snapshot producer, and wire fast append
+
+* Leave some todo
+
+* port changes from 3363 to this PR
+
+* delete snapshot
+
+* Validate seq num and snapshot id in manifest cache
+
+* address comments
+
+* update comments
+
+* address v1 manifest seq num issue, remove AddedManifests
+
+* cleanup
+
+* clean up
+
+* add transaction/snapshot mod, move some validations to fast append",8119f796c461283f559d7b7354963ee3e44dac04,3474,false,,7,1543,844,crates
+apache/iceberg-rust,de0a6ac8471da43f63382d66fac27d7e56fd273e,de0a6ac,Feng Zhang,fengzhang@apache.org,2026-10-27T21:41:05Z,GitHub,noreply@github.com,2026-10-27T21:41:05Z,fix(arrow): read nested struct fields as null for files without ids or name mapping (#3437),"* fix(arrow): read nested struct fields as null for files without ids or name mapping
+
+A Parquet file with no field ids and no name mapping gets fallback ids for
+its top-level columns only. RecordBatchTransformer then matched the id-less
+nested struct fields to the table's by position, so it returned the stored
+values. iceberg-java matches nested fields by id and reads them as absent.
+
+Id-less struct fields now take the absent-field path: identity partition
+constant, null, or an error for a required field. Map key and value match
+by position, as in iceberg-java's map readers.
+
+Closes #3436
+
+* test(arrow): pin struct validity for id-less struct fields
+
+An id-less struct keeps the file's validity and reads its fields as null, as Spark's reader does.
+
+* Address review: map entry count error, drop redundant tests, changelog
+
+- Report a map entry field count mismatch with its own error instead of
+  ""expected struct-typed map entries"".
+- Drop promote_idless_nested_struct_reads_null and
+  promote_idless_map_keeps_data, covered by other tests.
+- Note in the changelog that tables migrated without field ids need a
+  name mapping covering nested fields.",7ae9f4a44a4f8afae1ba6e7caa1456e4cde790e6,3437,false,,3,79,137,CHANGELOG.md; crates
+apache/iceberg-rust,6f23a2a7757a44d03f7cbfc9600a3bee6bd480a9,6f23a2a,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-28T00:55:40Z,GitHub,noreply@github.com,2026-10-28T00:55:40Z,chore: pin cargo-about and cargo-deny for local license checks (#3561),"* chore(python): pin cargo-about for local license checks
+
+LICENSING.md told contributors to install cargo-about 0.9.2 and then run
+`cargo about` directly, so an existing older install was used silently.
+cargo-about's output differs between versions (0.9.1 drops license files
+that 0.9.2 keeps), so local checks could disagree with CI.
+
+Add `install-cargo-about` and `cargo-about` targets to
+bindings/python/Makefile, following the root Makefile's install-<tool>
+convention, and point LICENSING.md at them. Cross-reference the version
+with the CI action.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* chore(release): use the pinned cargo-deny for dependency license checks
+
+The release guide, dev/release/README.md and create_rc.sh ran
+`licenses.py dependencies check` directly, which uses whatever cargo-deny
+is installed and only checks that one exists. A stale cargo-deny can
+give a different license verdict than CI's 0.19.9.
+
+Run `make check-dependency-licenses` instead, which installs the pinned
+version first.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",de0a6ac8471da43f63382d66fac27d7e56fd273e,3561,false,Copilot App,6,14,6,.github; bindings; dev; website
+apache/iceberg-rust,68a17aba6ee0c1500bcb65e881da4c71786bc42a,68a17ab,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-28T09:38:02Z,GitHub,noreply@github.com,2026-10-28T09:38:02Z,fix(python): don't install LICENSE and NOTICE into site-packages (#3563),"* fix(python): stop installing LICENSE and NOTICE into site-packages
+
+Including LICENSE and NOTICE in the wheel puts them at the wheel root,
+so installing pyiceberg-core writes site-packages/LICENSE and
+site-packages/NOTICE, which clash with other packages that do the same.
+maturin already copies both into dist-info/licenses, so only include
+them in the sdist.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* fix(python): note why LICENSE and NOTICE are sdist-only
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",6f23a2a7757a44d03f7cbfc9600a3bee6bd480a9,3563,false,Copilot App,1,3,8,bindings
+apache/iceberg-rust,2135b37730c55ba98fecaae8747bffb7105c0ece,2135b37,Marcelo Tesla,maah.celo.v@gmail.com,2026-10-28T09:54:50Z,GitHub,noreply@github.com,2026-10-28T09:54:50Z,fix(expr): prune In predicates that straddle metrics bounds (#3144),"* fix(expr): prune In predicates that straddle metrics bounds
+
+InclusiveMetricsEvaluator and ManifestEvaluator tested each bound against
+the full literal set, so IN lists with values both below lower and above
+upper were not pruned. Narrow the set the way Java, PyIceberg, and
+StrictMetricsEvaluator::not_in already do.
+
+* fix(expr): check In literals against both bounds together
+
+Apply review feedback: use any() instead of clone/retain, and prune
+straddling In predicates in RowGroupMetricsEvaluator too.
+
+* refactor(expr): share In bound check across metrics evaluators
+
+The three In evaluators used the same match. Pull it into a crate-private helper.
+
+* fix(expr): treat NaN metrics bounds as unbounded for In pruning
+
+A valid min or max still prunes when the other bound is NaN, instead of
+bailing on both sides.
+
+* chore(deps): bump ctutils and tokio past rustsec advisories
+
+The security audit fails on ctutils 0.4.2 and warns on tokio 1.53.1. Both versions are already on main. 0.4.5 and 1.53.3 clear the two advisories.
+
+* fix(expr): keep incomparable In literals from pruning
+
+ge and le are false when Datum::partial_cmp is None, so any_literal_in_bounds treated those literals as outside the range. Prune only when every literal is provably below the lower bound or above the upper bound.
+
+* fix(expr): look up row group stats once for In
+
+min_value and max_value each resolved the same statistics. The In path now uses one stats_and_type_for_field_id lookup and still drops a NaN bound before the prune.
+
+---------
+
+Co-authored-by: Marcelo Tesla <9055877+M-Tesla@users.noreply.github.com>",68a17aba6ee0c1500bcb65e881da4c71786bc42a,3144,false,Marcelo Tesla,5,442,66,Cargo.lock; crates
+apache/iceberg-rust,17b303c0cad70e8249f6284a973b48d51cc3c0d3,17b303c,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-28T09:59:01Z,GitHub,noreply@github.com,2026-10-28T09:59:01Z,ci(python): fail wheel license generation when about.toml needs an update (#3562),"* chore(licensing): drop redundant zstd-sys clarification
+
+With cargo-about 0.9.2, which CI uses, the generated wheel LICENSE is
+byte-identical without this clarification: 0.9.2 keeps zstd-sys's
+detected license files, including the Meta notices. The clarification
+was only needed with 0.9.1, and its checksums go stale on every zstd-sys
+bump.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): fail wheel license generation on stale clarifications
+
+`cargo about generate --fail` exits 0 when a clarification's checksum no
+longer matches; it only logs a WARN and falls back to the license
+template, so the wheel LICENSE gets `<year>` placeholders instead of the
+crate's license text. CI passed, and this was only caught by the manual
+check before a release.
+
+Fail the action on a WARN or a placeholder, so a dependency bump that
+needs an about.toml update fails in its own pull request.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): generate wheel licenses once per pull request
+
+The pull request test job regenerated LICENSE and NOTICE on every OS,
+taking 40-70s each, but the output doesn't depend on the OS and the
+built wheels aren't published. Run it on Linux only; the release and
+nightly workflows still run it for every wheel.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): fail wheel license generation on any cargo-about stderr
+
+Matching `WARN` missed cargo-about's other non-fatal problems: `[ERROR]`
+logs such as an unreadable license file, and the codespan `warning:`
+emitted for a clarification whose crate is no longer a dependency. Fail
+when cargo-about writes anything to stderr instead.
+
+Run the cargo-about binary rather than `cargo about`, since the rustup
+proxy writes to stderr when it installs the pinned toolchain, as it does
+on the Ubuntu PR job. cargo-about's own `cargo metadata` call captures
+its stderr.
+
+Match only `<year>`: every accepted license template with placeholders
+contains it.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): set up the toolchain on Linux and call `cargo about`
+
+`cargo-about` and `cargo about` read too alike to tell apart in review.
+The binary was only called directly because the Linux PR job skipped
+setup-builder, so rustup installed the toolchain inside the cargo about
+step and wrote to stderr. Run setup-builder on Linux too, which moves
+that install out of the step. Release and nightly already set up the
+toolchain first, and the generate step's stderr is empty on all of
+their runners.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): write cargo about output with -o
+
+`2>&1 > file | tee` is easy to misread. With `-o`, cargo about writes the
+output file itself, so its stderr is piped to tee as usual. The file
+loses the trailing newline that stdout adds, so the wheel LICENSE has one
+blank line fewer before the entries from third-party-licenses.txt.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): shorten generate-python-license comment
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): install the toolchain in generate-python-license
+
+Revert the bindings_python_ci.yml changes, so PR CI runs the action on
+every OS again and still skips setup-builder on Linux. Instead, the
+action installs the active toolchain before cargo about, so rustup's
+install output stays out of the stderr check for any caller.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): set up the toolchain in generate-python-license
+
+Use setup-builder before installing cargo-about, like the workflows do,
+instead of a bare `rustup toolchain install` in the generate step. The
+Linux PR job doesn't run setup-builder, so without it rustup would
+install the toolchain during `cargo about` and fail the stderr check.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): drop setup-builder comment in generate-python-license
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* docs(python): rewrite LICENSING.md release checks
+
+Say what CI already checks and how to reproduce a failure, then list the
+hand-maintained entries the release manager checks, and how to check
+each.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): run setup-builder on the Linux PR job
+
+Set up the toolchain in the one job that calls generate-python-license
+without it, instead of in the action. The other jobs already do, so they
+no longer run setup-builder twice.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",2135b37730c55ba98fecaae8747bffb7105c0ece,3562,false,Copilot App,4,15,23,.github; bindings
+apache/iceberg-rust,af1717ae9287c256b987d0418251443052ead66b,af1717a,Anoop Johnson,anoop@apache.org,2026-10-28T10:20:50Z,GitHub,noreply@github.com,2026-10-28T10:20:50Z,perf(scan): skip deleted entries before partition promotion (#3516),"Discard deleted manifest entries before copying their metadata or
+dispatching scan work. Live entries still widen before partition pruning
+and delete matching, consistent with the spec and Java's live-entry scan.
+
+Share the promotion fixtures' old-schema data manifest and source-drop
+setup while preserving their schema, format, and sequence-number cases.
+
+Follow-up to #3483.",17b303c0cad70e8249f6284a973b48d51cc3c0d3,3516,false,,3,67,159,crates

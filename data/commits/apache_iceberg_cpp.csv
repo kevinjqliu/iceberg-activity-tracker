@@ -9565,3 +9565,18 @@ Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",92482014f8e25e618f3034cfc269cad2cfddcd8c,1058,false,dependabot[bot],1,1,1,.github
 apache/iceberg-cpp,e00bc399fc3ad41ef1d270b53851dc13d0e4c0c1,e00bc39,Junwang Zhao,zhjwpku@gmail.com,2026-10-26T16:00:17+08:00,GitHub,noreply@github.com,2026-10-26T16:00:17+08:00,docs: clarify minimum supported MSVC version (#1061),,30950d7f4691e9fafc9820a9e0025b911564eba2,1061,false,,3,3,3,README.md; mkdocs
 apache/iceberg-cpp,9f00612448baa13cd852d2aac34487eb6138f30e,9f00612,Guotao Yu,guotao.yugt@gmail.com,2026-10-27T17:23:54+08:00,GitHub,noreply@github.com,2026-10-27T17:23:54+08:00,fix(schema): preserve doc-only schema evolution (#1052),"Compare field documentation during schema equality so metadata deduplication retains doc-only updates. Cover nested fields, metadata round trips, unchanged docs, and historical schema reuse; align existing deserialization expectations with their fixture docs.",e00bc399fc3ad41ef1d270b53851dc13d0e4c0c1,1052,false,,5,125,7,src
+apache/iceberg-cpp,0471f8fba6063bac5c75ed904e74bd5b65be52e1,0471f8f,lishuxu,lishuxu@gmail.com,2026-10-28T15:02:09+08:00,GitHub,noreply@github.com,2026-10-28T15:02:09+08:00,feat(rest): add an option to ignore server OAuth2 endpoints (#1041),"Introduce `rest.auth.oauth2.trust-server-uri` (default: `true`) to control whether server configuration can select the OAuth2 token endpoint.
+
+When set to `false`:
+- The client must explicitly configure an `oauth2-server-uri` starting with `http://` or `https://`.
+- The client endpoint is preserved after merging server defaults and overrides, even when the server changes `uri`.
+
+Also align OAuth2 endpoint path handling with Java and reuse the resolved endpoint for refresh and child sessions. Add focused tests for these behaviors.
+
+The default config merge precedence remains unchanged.",9f00612448baa13cd852d2aac34487eb6138f30e,1041,false,,9,216,119,src
+apache/iceberg-cpp,83c41e4455ff4bff0b596eb2ebd4d3bc228364e5,83c41e4,Guotao Yu,guotao.yugt@gmail.com,2026-10-28T16:09:37+08:00,GitHub,noreply@github.com,2026-10-28T16:09:37+08:00,fix(manifest): validate struct child lengths (#1054),,0471f8fba6063bac5c75ed904e74bd5b65be52e1,1054,false,,1,14,0,src
+apache/iceberg-cpp,f38dfc79bdd4b690b94c49b21000dddf7c285d05,f38dfc7,Junwang Zhao,zhjwpku@gmail.com,2026-10-28T22:16:54+08:00,GitHub,noreply@github.com,2026-10-28T22:16:54+08:00,fix(rest): preserve scan splits and honor polling deadlines (#1059),"Keep byte ranges when replacing residual filters in REST-planned scan tasks. Bound polling backoff by the remaining timeout and check the budget before issuing another poll.
+
+Apply the response-side timeout check only while the plan is still submitted. Preserve completed tasks and server failures, and release cleanup for cancelled plans, even when the in-flight poll crosses the waiting budget.
+
+Cover normal and incremental scans across direct, polled, and paginated task responses, including split residual replacement and all polling statuses after the timeout.",83c41e4455ff4bff0b596eb2ebd4d3bc228364e5,1059,false,,2,137,13,src

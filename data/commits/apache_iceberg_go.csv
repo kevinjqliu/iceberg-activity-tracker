@@ -33637,3 +33637,328 @@ Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
 ---------
 
 Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",ec863888dccf543972e7bbfbf6b3fbbe8522a4db,2336,false,,99,711,451,catalog; cmd; internal; io; manifest_projection_bench_test.go; manifest_projection_test.go; table; view; website
+apache/iceberg-go,e904fb445780226acf43812afe78c1bd6ea6c80c,e904fb4,Harrison Crosse,harrison@crosse.dev,2026-10-27T16:50:21-04:00,GitHub,noreply@github.com,2026-10-27T16:50:21-04:00,fix(table): treat requirement failures as commit conflicts (#2100),"* fix(table): treat requirement failures as commit conflicts
+
+Catalogs that validate commit requirements client-side (Glue, SQL,
+Hadoop) returned a plain error when a requirement failed, such as a
+branch that moved since the table was loaded. The REST catalog returns
+the same failure as a 409, which already maps to ErrCommitFailed, so the
+same race was retryable through REST and terminal elsewhere. Java,
+PyIceberg, and iceberg-rust all report these failures as retryable
+commit conflicts.
+
+Requirement failures now wrap ErrCommitFailed, keeping their messages.
+Two failures stay terminal because a refresh cannot fix them: targeting
+a tag as a transaction branch, and metadata with no last assigned
+partition id.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(table): shorten requirementFailed comment
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* chore: restore go.sum
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* test(catalog/sql): drop redundant test comment
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(table): pin guarded refs in RollbackToSnapshot and ExpireSnapshots
+
+RollbackToSnapshot asserts its branch head and ExpireSnapshots asserts
+every ref so that a concurrent ref move fails the commit. On retry,
+doCommit rewrites unpinned assertions on the commit branch to the
+refreshed head, so a stale rollback could drop a peer's append and a
+stale expiry could remove snapshots that are back inside the retention
+window after a peer rollback.
+
+Pin the guarded refs the same way Transaction.AssertRefSnapshotID
+does, so the retry fails fast with ErrCommitFailed instead of replaying
+against the new head. This includes a branch the transaction itself
+staged: its absence assertion would otherwise be rebased onto a branch
+a peer created meanwhile. The REST catalog already maps HTTP 409 to
+ErrCommitFailed, so REST tables with retries enabled were exposed
+before requirement failures started wrapping it; pinning fixes this
+for every catalog.
+
+Pins are now published under the same lock hold as the apply that
+registers their requirements, so a failed registration publishes no pin
+and cannot withdraw one that an overlapping registration relies on.
+
+Snapshot producers still assert unpinned so they can rebase, and the
+CLI branch and tag commands call CommitTable directly without retry.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(table): fail fast on non-rebased requirement failures
+
+On retry, doCommit rebases only unpinned AssertRefSnapshotID
+requirements on the commit branch. Every other requirement (schema,
+partition spec, sort order, table UUID, last assigned ids, other refs,
+pinned refs) is resubmitted unchanged, so one the refreshed metadata
+violates fails identically on every attempt, spending the backoff and a
+LoadTable per retry.
+
+After the refresh, validate those requirements against the fresh
+metadata and return immediately on failure, as Java does with
+ValidationFailureException. This generalizes the existing pinned-ref
+check. The error still wraps ErrCommitFailed, so callers can reload
+and rebuild the commit.
+
+Collect the manifests a rewrite producer wrote in the deferred cleanup,
+so this and every other safe early exit removes them; previously only
+an exhausted retry budget or a successful commit collected them.
+Cleanup is still skipped when CommitTable fails in an unknown state.
+
+A failed commit that removed files the staged updates reference (a
+rewrite's merged manifests, or the attempt-0 manifest list a rebuild
+replaced) now also wraps the new ErrTransactionUnusable sentinel, and
+the transaction latches unusable. Later Commit, TableCommit (and so
+catalog.MultiTableTransaction) and staging calls return an error
+wrapping ErrTransactionUnusable instead of resubmitting references to
+deleted files. A failure that removed nothing stays retriable.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* docs: update catalog retry support
+
+The concurrent-writes guide said only the REST catalog engages commit
+retry. REST maps HTTP 409 to ErrCommitFailed, and Glue, SQL, Hive and
+Hadoop wrap their conflicts and failed requirements. Retry stays off
+unless commit.retry.num-retries is set, and requirements other than the
+commit branch head assertion fail without retrying.
+
+Also correct the API guide, which said Commit retries automatically,
+and note on ErrCommitFailed how the retry loop treats requirements and
+that an error also matching ErrTransactionUnusable needs a new
+transaction.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* chore: trim comments and docs
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(table): skip guards for a no-op ExpireSnapshots
+
+ExpireSnapshots pins every ref it asserts, including the commit branch.
+When it stages nothing, the requirements and pins still applied, so a
+transaction that wrote and ran a no-op expiry could no longer rebase
+onto a peer's commit and failed after one attempt. Return before
+applying when there is nothing to remove.
+
+Also correct the comment on the ErrTransactionUnusable latch in
+Transaction.Commit: a clean conflict is not retriable once cleanup has
+removed staged files, which includes an ordinary append whose manifest
+list was rebuilt. Add a transaction-level test for that append path.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* test(catalog/sql): cover an append with a no-op ExpireSnapshots
+
+A transaction that appends and runs an ExpireSnapshots that removes
+nothing must still rebase onto a peer's append on retry. Cover that
+path on the SQL catalog: the commit succeeds on retry and both appends
+are present.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(table): make a non-rebased requirement failure terminal
+
+When a requirement the retry loop does not rebase fails after a
+refresh, committing the same transaction again can only reproduce the
+failure. The error matched only ErrCommitFailed, so a caller retrying
+on errors.Is(err, ErrCommitFailed) would loop on it.
+
+Wrap ErrTransactionUnusable as well, so Transaction.Commit latches the
+transaction and callers can tell this case from a retry-safe conflict.
+Requirement failures at staging time are unchanged. Update the sentinel
+docs and the concurrent-writes guide.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* test(table): pin cleanup after a transient failure following a rebuild
+
+A refresh error or a cancelled context after a rebuilt attempt still
+runs the deferred cleanup, which removes the replaced manifest list the
+staged updates reference. Cover both paths: the error wraps
+ErrTransactionUnusable, the file is gone, and a second Commit on the
+same transaction is rejected with ErrTransactionUnusable.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(table): make a conflict with retries disabled terminal
+
+Transaction.Commit rebuilds its requirements from the table it was
+created from, so a re-commit resends the same requirements. With
+num-retries=0 nothing rebases them, so every ErrCommitFailed, including
+a stale branch head, repeats on each re-commit and a caller retrying on
+errors.Is(err, ErrCommitFailed) spins. A no-replay commit, which carries
+snapshot-relative delete-file removals, aborts on its first conflict
+for the same reason at any retry setting.
+
+In both cases end the commit with ErrTransactionUnusable so
+Transaction.Commit latches the transaction. With retries enabled, the
+next Commit of a replayable transaction refreshes once and a
+requirement that no longer holds already makes it unusable.
+
+The terminal errors now lead with ""transaction cannot be committed
+again"" instead of ""refresh and try again"". They still match the cause,
+and ErrCommitFailed when the cause is a conflict. The cleanup wrap is
+keyed on whether a removal was attempted and skips errors that already
+match ErrTransactionUnusable.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* docs(table): describe when a transaction becomes unusable
+
+Say that ErrCommitFailed is retryable unless the error also matches
+ErrTransactionUnusable, and spell out when a transaction becomes
+unusable: its commit conflicts with retries disabled or while carrying
+delete-file removals that cannot be replayed, a requirement the retry
+loop does not rebase fails against the refreshed table, or files the
+staged updates reference were cleaned up, which follows any failure
+once an attempt was rebuilt or a rewrite staged files, including a
+refresh error or a cancelled context.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(table): resume a re-commit after a conflict from a refresh
+
+Transaction.Commit rebuilt its requirements from the transaction's
+original base, so a re-commit after a failed commit resent the same
+stale requirements and updates. To keep a caller retrying on
+ErrCommitFailed from spinning, the previous change made every conflict
+with retries disabled, and every conflict of a non-replayable commit,
+leave the transaction unusable, which also burned transactions a plain
+re-commit would land.
+
+Treat a re-commit after a failed commit as the next retry attempt, as
+Java does: it refreshes the table, rebases the commit-branch
+assertion, checks the requirements that are not rebased, rebuilds the
+staged snapshots and runs the validators before its first submission.
+The retry budget per Commit is unchanged. A resume always rebuilds, so
+the submitted snapshot and the producers' state come from the same
+pass, and the rewrite producer now publishes a pass's state only after
+its file-count guard passes. A non-replayable commit pins its branch on
+resume, so it resubmits only if the branch head is unchanged. Rebuilt
+manifest lists are numbered after earlier calls' attempts so their
+names stay unique. Drop the blanket latch.
+
+doCommit now deletes only files it wrote that were not committed. On a
+failure it deletes the manifest lists its rebuilds wrote, including a
+partial rebuild's. The staged updates' own files, which a later Commit
+resends, are deleted only once a commit lands, so a failed commit no
+longer makes the transaction unusable. Only a failure of unknown commit
+state is terminal.
+
+After a refresh, a rejection that fails every later attempt the same
+way makes the transaction unusable: a non-rebased requirement, a
+validator conflict, a diverged base, a commit branch that became a tag
+or was deleted, or a replaced table. A validator that fails to read
+stays resumable. TableCommit refuses a transaction whose commit failed,
+since only Commit refreshes it. A no-op ExpireSnapshots now checks that
+the transaction is usable.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* docs(table): describe resuming a transaction after a conflict
+
+Explain that calling Commit again after a failed commit refreshes and
+replays like the next retry attempt, that staged files are kept until a
+commit lands so an abandoned transaction leaves them, and for a rewrite
+the manifests later attempts merged, for orphan file removal, that
+TableCommit refuses a transaction whose commit failed, which rejections
+after a refresh make the transaction unusable, and that a real
+ExpireSnapshots deliberately pins the commit branch.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(catalog): pass requirement errors through unchanged
+
+ValidateRequirements wrapped every failed requirement in
+ErrCommitFailed. Requirement errors already match ErrCommitFailed when
+they report a concurrent change, so the wrap only added the sentinel to
+failures that are not conflicts, such as a tag used as a transaction
+target, and prefixed every message with the sentinel's text. Return the
+requirement's error unchanged apart from the missing-table case.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* docs: limit the catalog support note to conflicting requirement failures
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(table): wrap validator conflicts and pin the dual-match contract
+
+Wrap a validator conflict after a refresh with fmt.Errorf as the other
+terminal rejections are, instead of a dedicated error type that
+rewrote the validator's message. The message now keeps the validator
+error as is, including ErrCommitFailed's text, which holds for a
+conflict: a new transaction built from a reloaded table may land.
+
+Every row of the terminal-rejection matrix now asserts whether its
+error matches ErrCommitFailed, and the matrix gains a stale sort order
+and a moved pinned ref. A SQLite test runs the loop a caller writes
+around ErrCommitFailed: it lands on the next pass after a validator
+conflict or a stale requirement, and stops after one pass when the
+base diverged.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* docs(table): describe what ErrCommitFailed tells a caller
+
+Open the ErrCommitFailed godoc with what it means for a caller: a
+concurrent change caused the failure, so a new transaction built from a
+reloaded table may succeed. Spell out which terminal rejections match it
+and which do not, and say on ErrTransactionUnusable that this
+transaction can't be committed again and that one error can match both.
+Show the dual match in the concurrent-writes guide.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+---------
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+Co-authored-by: Matt Topol <zotthewizard@gmail.com>",d6039b74b17adf3798b891a735421a7ca348cd89,2100,false,Matt Topol,22,1746,192,catalog; table; website
+apache/iceberg-go,8d7be55c962455412cb7e1ce7409f70441d6fd10,8d7be55,Matt Topol,zotthewizard@gmail.com,2026-10-28T17:02:29Z,GitHub,noreply@github.com,2026-10-28T13:02:29-04:00,fix(table): pass contexts in tests broken by concurrent io and rewrite merges (#2346),"#2336 made WriteFile context-aware and #2100 added a context to
+processManifests; tests merged alongside them still used the old
+signatures, so main no longer compiles the table test package.",e904fb445780226acf43812afe78c1bd6ea6c80c,2346,false,,2,6,6,table
+apache/iceberg-go,5f26d3d894aa7cafb1db7d951aab391d1ef64f91,5f26d3d,Minh Vu,vuhoangminh97@gmail.com,2026-10-28T18:06:46+01:00,GitHub,noreply@github.com,2026-10-28T13:06:46-04:00,refactor(catalog): support isolated catalog registries (#2335),"* refactor(catalog)!: support isolated catalog registries
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs(release): note catalog registration errors
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(catalog): cover isolated factories and fix lint
+
+Add coverage for registries sharing a type and zero-value registration.
+Clarify that named catalog configuration remains process-wide.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* refactor(catalog): align registry API and preserve global Register
+
+* test(catalog): cover default snapshots and replacement
+
+* test(catalog): restore legacy Register behavior
+
+* docs(release): remove obsolete catalog breaking-change note
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",8d7be55c962455412cb7e1ce7409f70441d6fd10,2335,false,,8,319,38,catalog
+apache/iceberg-go,35d1bf471ce2c54242c10a09a5cc83c9f164e94a,35d1bf4,Minh Vu,vuhoangminh97@gmail.com,2026-10-28T18:09:08+01:00,GitHub,noreply@github.com,2026-10-28T13:09:08-04:00,refactor(name-mapping)!: make child lookup explicit and stable (#2337),"Return pointers to stored children and report missing names explicitly. Update name-mapping and Parquet callers.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",5f26d3d894aa7cafb1db7d951aab391d1ef64f91,2337,false,,4,71,17,name_mapping.go; name_mapping_test.go; table; website
+apache/iceberg-go,76e295ceb369efd0e50c8249d13eb70f150b3b0c,76e295c,Minh Vu,vuhoangminh97@gmail.com,2026-10-28T18:11:31+01:00,GitHub,noreply@github.com,2026-10-28T13:11:31-04:00,refactor(metadata)!: name the row-lineage column predicate explicitly (#2338),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,35d1bf471ce2c54242c10a09a5cc83c9f164e94a,2338,false,,6,56,5,metadata_columns.go; metadata_columns_test.go; table; website
+apache/iceberg-go,d3ae21a83e73a31ddc309048fe8be85aae0019d4,d3ae21a,Matt Topol,zotthewizard@gmail.com,2026-10-28T18:12:13Z,GitHub,noreply@github.com,2026-10-28T14:12:13-04:00,docs(release): add compatibility notes for pre-v1 renames (#2334),"docs(release): add compatibility notes for pre-v1 renames and breaking changes
+
+Add release notes for the rename batch (#2308, #2314, #2315, #2316, #2317,
+#2319, #2322, #2323) and for #2067, #2290, #2294, #2307, #2310 and #2313.
+Remove stray blank lines inside the compatibility-notes list.",76e295ceb369efd0e50c8249d13eb70f150b3b0c,2334,false,,1,14,2,website
