@@ -1,0 +1,643 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-python,c528cf618c8e4ad570913ff6c907816b2e2cfcff,c528cf6,Kaiqi Jin,kaiqi.jin@databricks.com,2026-10-19T21:18:23Z,GitHub,noreply@github.com,2026-10-19T21:18:23Z,Support range-based reads for deletion vectors (#3478),"* Support range-based reads for deletion vectors
+
+* Test external single and packed deletion vector fixtures
+
+* Make delete file sets read-only and clarify DV validation
+
+* Keep DV range identity internal to scan aggregation
+
+Restore native scan task sets by routing deletion vectors to their referenced data files. Preserve REST range references and cover local and REST scans of packed DV fixtures.
+
+* Preserve validated DV field types and keep helper internal
+
+* Retrigger CI",eb30d8ae6ac4054f751b91cb04d4ae5026354cc2,3478,false,,10,699,26,pyiceberg; tests,114,8,122,base; feature/api verb; strategic: deletion vector; summary signal: deletion vector; deletion vector signal; medium file count; medium churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.26,Spark: Initial support for 4.1.0 <manuzhang>,- Support range-based reads for deletion vectors (#3478) (Thanks Kaiqi Jin!)
+apache/iceberg-python,ea139cc8277c2aa5764b186f3f8fc50e6a98d830,ea139cc,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-10-25T05:25:27Z,GitHub,noreply@github.com,2026-10-25T05:25:27Z,Add rename_view to REST Catalog (#4081),"* just need to add abstract methods
+
+* add abstract methods to additional classes
+
+* Add namespace check on rename_view
+
+* Added test for namespace exists
+
+* rebase
+
+* PR comments
+
+* Address review comments on rename_view
+
+- Add @override to RestCatalog/SqlCatalog rename_view and restore it on
+  BigQueryMetastoreCatalog.load_namespace_properties
+- Split identifiers once in RestCatalog.rename_view
+- Fix ""fully classified"" typo in the Catalog.rename_view docstring
+- Add a cross-namespace rename integration test
+- Drop a stale skip on test_rest_custom_namespace_separator reintroduced by rebase
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* Align rename_view ordering with sibling methods
+
+Put @retry before @override as in rename_table and drop_view, group
+SqlCatalog.rename_view with the other view stubs, and move the
+rename_view unit tests next to the other view tests.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Document rename_view and extend its test coverage
+
+Add a ""Rename a view"" docs section, list the errors rename_view raises
+in its docstring, assert view-endpoints-supported enables V1_RENAME_VIEW,
+and cover rename_view in the special-character identifiers integration test.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",e2c1e787c65e55c736b742da2ef8d6ca405641ed,4081,false,Claude Opus 5.5; Copilot App; Kevin Liu,11,241,1,mkdocs; pyiceberg; tests,73,10,83,base; feature/api verb; strategic: catalog; medium file count; medium churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.32,OpenAPI: Add SetPartitionStatisticsUpdate/RemovePartitionStatisticsUpdate to TableUpdate,"- Add rename_view to REST Catalog (#4081) (Thanks Alex Stephen, Claude Opus 5.5, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,c8502b3925519ca7907de91eddb44d120994d512,c8502b3,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-25T04:08:02Z,GitHub,noreply@github.com,2026-10-25T04:08:02Z,REST: Don't URL-encode view names in create_view and register_view bodies (#4151),"* REST: Send raw view name in create_view and register_view bodies
+
+create_view and register_view took the view name from
+_split_identifier_for_path, which URL-quotes it for use as a path
+segment, and put it in the JSON request body. A view named ""my view""
+was created as ""my%20view"". Use the raw name, as create_table and
+register_table already do.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Test REST identifiers that need URL encoding against the REST fixture
+
+Round-trip namespace, table, and view names containing spaces, reserved
+URL characters, and non-ASCII text through path, query, and body
+parameters. This catches encoding mistakes like the double-encoded
+list_namespaces parent and the encoded view name in create_view.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Cover commit_table in REST identifier integration test
+
+commit_table is the only caller of the TableIdentifier branch of
+_split_identifier_for_path, so table updates had no coverage for names
+that need URL encoding.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Clarify why % is omitted from REST identifier integration test
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Keep _split_identifier_for_path for the register_view path
+
+Matches create_view and register_table: path from _split_identifier_for_path, raw name for the body.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Cover register_view in REST identifier integration test
+
+Register the created view under a second name that needs URL encoding,
+now that View exposes its metadata location (#4088).
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",a1a43c52cdd4a521378fe7f877658d32b45c2d14,4151,false,Copilot App,3,92,7,pyiceberg; tests,67,7,74,base; important area: rest; strategic: round-trip; summary signal: round-trip; multi-area change; co-authored; has PR number; LanceDB similarity 0.25,Add TCK tests for Schema Evolution in BaseFormatModelTests,- REST: Don't URL-encode view names in create_view and register_view bodies (#4151) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-python,12d4a9a3ced73da290626bde6019ac2835d5c636,12d4a9a,Kaanchan Krishna,krishnakaanchan@gmail.com,2026-10-24T23:00:19Z,GitHub,noreply@github.com,2026-10-24T23:00:19Z,FsspecFileIO: Resolve the ADLS account per location instead of caching it in properties (#3886),"* FsspecFileIO: Resolve the ADLS account per location instead of caching it in properties
+
+_adls wrote the account name it inferred back into the properties dict it was
+given, and the caller passes the FileIO's own properties. The first location
+therefore pinned the account for every later one, so a second storage account
+was served a filesystem built for the first. Resolve the account and the SAS
+token into locals and leave the caller's dict alone. Precedence is unchanged:
+an explicit adls.account-name still wins, then a per account SAS token key,
+then the hostname.
+
+* Remove unnecessary comment
+
+* Cover SAS token write-back in ADLS no-mutation test
+
+Add a per-account SAS key so the test also guards against adls.sas-token
+being written back into the FileIO properties.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",59b7c1c6ef93c839bceff3e8a1739341b6586e47,3886,false,Copilot App; Kevin Liu,2,43,9,pyiceberg; tests,66,6,72,base; fix; strategic: storage; community signal: fileio; multi-area change; co-authored; has PR number; LanceDB similarity 0.19,Docs: Add informational properties section for table comment,"- FsspecFileIO: Resolve the ADLS account per location instead of caching it in properties (#3886) (Thanks Kaanchan Krishna, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,945c8db4c82b4fb1c2decc29109bf9630515b0d2,945c8db,Bishop Kammeraad,113325736+porkedchop@users.noreply.github.com,2026-10-24T21:42:14Z,GitHub,noreply@github.com,2026-10-24T21:42:14Z,fix(table): reuse partition field IDs on v3 tables (#4110),"* fix(table): reuse partition field IDs on v3 tables
+
+UpdateSpec only looked up historical partition fields when the format
+version was exactly 2, so v3 tables got a fresh field ID when a removed
+partition field was added back. Java does this for format version >= 2.
+
+* test: cover removing and re-adding a partition field in one update
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c1c49a228c27c777f9e63f7a46d801d85fcfd285,4110,false,Copilot App; Kevin Liu,2,25,1,pyiceberg; tests,63,8,71,base; fix; important area: table; strategic: v3; multi-area change; co-authored; has PR number; LanceDB similarity 0.26,Kafka Connect: fix table UUID check,"- fix(table): reuse partition field IDs on v3 tables (#4110) (Thanks Bishop Kammeraad, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,bd98ff1de88febaca645d54004a83de37a2d5ce9,bd98ff1,Dhruv,41189498+DG47@users.noreply.github.com,2026-10-24T18:17:38Z,GitHub,noreply@github.com,2026-10-24T18:17:38Z,PyArrow: Support view types when writing to a partitioned table (#4121),"* PyArrow: Support view types when writing to a partitioned table
+
+Appending an Arrow table with string_view or binary_view columns, which
+pa.table() produces from a Polars DataFrame, worked for unpartitioned
+tables but failed for partitioned ones: PyArrow has no group by, filter
+or take kernels for view types, and pyiceberg-core's bucket and truncate
+transforms reject them. Cast view types, including nested ones, to their
+large counterparts before splitting the table into partitions.
+
+* Use PyArrowSchemaVisitor to replace view types
+
+* Test appending Polars categorical columns to a partitioned table
+
+Polars exports Categorical as dictionary<string_view> and List(Categorical)
+as large_list<dictionary<string_view>>, which exercise the _keep_dictionary
+paths in _ConvertViewTypes.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c688f1ea4a4fe4af47e06929a39df72c3cf36588,4121,false,Copilot App; Kevin Liu,2,128,1,pyiceberg; tests,63,7,70,base; feature/api verb; community signal: pyiceberg-core; multi-area change; co-authored; has PR number; LanceDB similarity 0.24,"Core, Hive: Detect if a view already exists when registering a table","- PyArrow: Support view types when writing to a partitioned table (#4121) (Thanks Dhruv, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,35bb9bb62a00dcf8560d970403fef1a8047809e8,35bb9bb,Xander,zander181@googlemail.com,2026-10-24T17:31:06Z,GitHub,noreply@github.com,2026-10-24T17:31:06Z,feat(encryption): [7/N] Add encryption key updates (#4148),feat(encryption): Add encryption key updates,2ecd87b222f5c7fe020c93816f8c3830412b7034,4148,false,,2,119,4,pyiceberg; tests,62,8,70,base; feature/api verb; strategic: encryption; multi-area change; has PR number; LanceDB similarity 0.26,"Core, REST: Add support for overwrite in RegisterTableRequest",- feat(encryption): [7/N] Add encryption key updates (#4148) (Thanks Xander!)
+apache/iceberg-python,aa0a9115a67c7f0ddafa93f6373240067adf00e9,aa0a911,Xander,zander181@googlemail.com,2026-10-24T05:43:40Z,GitHub,noreply@github.com,2026-10-24T05:43:40Z,feat(encryption) [6/N] streaming block encryption (#3969),"* feat(encryption) [6/N] streaming encryption
+
+* doc strings
+
+* test fictures
+
+* make everything private
+
+* read me fix
+
+* truncation
+
+* comments
+
+* replace java fixtures with unit tests
+
+Drop the checked-in AGS1 binaries and Java generator so no binaries ship in the sdist; cross-client fixtures will come from iceberg-verification (#4010).
+
+* take kevin's changes
+
+* ci
+
+* push test fixtures
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",44ab85aacbbfc9cb7aba8643f691531bdbeaf84f,3969,false,Kevin Liu,2,323,0,pyiceberg; tests,64,5,69,base; strategic: encryption; medium churn; multi-area change; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.18,Spark 4.1: Refactor metadata column references to use asRef() method,- feat(encryption) [6/N] streaming block encryption (#3969) (Thanks Xander and Kevin Liu!)
+apache/iceberg-python,e6eb6a93b94c547a5f2b68f5eb68f64a44cc48af,e6eb6a9,Soumyadyuti Dey,132326747+Soumo-git-hub@users.noreply.github.com,2026-10-25T03:27:03Z,GitHub,noreply@github.com,2026-10-25T03:27:03Z,REST: Preserve view metadata location (#4088),"* REST: preserve view metadata location
+
+* View: clarify metadata location semantics
+
+* View: include metadata location in equality
+
+Match Table.__eq__ and the REST spec, which uses metadata location to detect
+view changes.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",12d4a9a3ced73da290626bde6019ac2835d5c636,4088,false,Copilot App; Kevin Liu,4,18,2,pyiceberg; tests,47,8,55,base; important area: rest; multi-area change; co-authored; correctness signal; has PR number; LanceDB similarity 0.26,Core: v4 table metadata location should be optional,"- REST: Preserve view metadata location (#4088) (Thanks Soumyadyuti Dey, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,c1c49a228c27c777f9e63f7a46d801d85fcfd285,c1c49a2,Anupam Srivastava,56410840+ooreally@users.noreply.github.com,2026-10-24T21:25:56Z,GitHub,noreply@github.com,2026-10-24T21:25:56Z,Fix filtering on identity partition columns outside the scan projection (#4082),"* Fix filtering on identity partitions outside the scan projection
+
+Resolve manifest partition values for filter fields as well as output fields so scans with narrow projections keep matching rows. Cover name-mapped and field-ID Parquet files and falsy partition values.
+
+* Rename missing projection field IDs for clarity
+
+* Clarify projection docstring and cover count() with filter-only partition column
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",bd98ff1de88febaca645d54004a83de37a2d5ce9,4082,false,Copilot App; Kevin Liu,2,60,22,pyiceberg; tests,48,6,54,base; fix; strategic: manifest; multi-area change; co-authored; has PR number; LanceDB similarity 0.20,"CI: Make CVE scan blocking on PRs, informational on main","- Fix filtering on identity partition columns outside the scan projection (#4082) (Thanks Anupam Srivastava, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,747ebee2d065c5a293786cbede12ccc149544799,747ebee,hedger9487,59910195+hedger9487@users.noreply.github.com,2026-10-24T05:59:01Z,GitHub,noreply@github.com,2026-10-24T05:59:01Z,feat: Support passing kwargs to polars.scan_iceberg in Table.to_polars (#3868),"feat: Support passing kwargs to polars.scan_iceberg in Table.to_polars (#3128)
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",aa0a9115a67c7f0ddafa93f6373240067adf00e9,3868,false,Kevin Liu,2,33,3,pyiceberg; tests,45,7,52,base; feature/api verb; multi-area change; co-authored; has PR number; LanceDB similarity 0.24,Core: Add properties to InMemoryFileIO,- feat: Support passing kwargs to polars.scan_iceberg in Table.to_polars (#3868) (Thanks hedger9487 and Kevin Liu!)
+apache/iceberg-python,e6940798b32f14fc7388eb36066e43457d678f6d,e694079,ump45nose,52391318+ump45nose@users.noreply.github.com,2026-10-24T07:01:41Z,GitHub,noreply@github.com,2026-10-24T07:01:41Z,Support reading Avro timestamp-nanos logical type (#4136),"* Support reading Avro timestamp-nanos logical type
+
+* Use a loop instead of parametrize in timestamp-nanos conversion test
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: ump45nose <ump45nose@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",46669fad031d5b4e7a71c1df13940d17bbc9e71d,4136,false,Copilot App; ump45nose; Kevin Liu,3,61,2,pyiceberg; tests,45,5,50,base; feature/api verb; multi-area change; co-authored; has PR number; LanceDB similarity 0.17,"CI: Make CVE scan blocking on PRs, informational on main","- Support reading Avro timestamp-nanos logical type (#4136) (Thanks ump45nose, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,9345369e8e7411e9351313bda2501df33b99c311,9345369,ChanKyeong Won,brightwon.dev@gmail.com,2026-10-27T15:52:43Z,GitHub,noreply@github.com,2026-10-27T15:52:43Z,Add `hive.kerberos-service-host` configuration option (#3864),"* Add hive.kerberos-service-host configuration option
+
+* Skip the Kerberos transport test on Windows
+
+* Resolve the Kerberos service host default in _HiveClient",042165ace7e96b7d0da61810d1540c01ffff5157,3864,false,,3,47,4,mkdocs; pyiceberg; tests,42,7,49,base; feature/api verb; multi-area change; has PR number; LanceDB similarity 0.22,API: Implement properties method in EncryptingFileIO,- Add `hive.kerberos-service-host` configuration option (#3864) (Thanks ChanKyeong Won!)
+apache/iceberg-python,131b18712f11d695ad4cd47b682f37750dcf3ba6,131b187,Anas Khan,83116240+anxkhn@users.noreply.github.com,2026-10-24T06:40:59Z,GitHub,noreply@github.com,2026-10-24T06:40:59Z,fix: build StaticTable version-hint metadata locations with forward slashes (#3604),"* fix: build StaticTable version-hint metadata locations with forward slashes
+
+StaticTable._metadata_location_from_version_hint built the version-hint and
+resolved metadata locations with os.path.join. Iceberg locations are URIs and
+must always be forward-slash separated, but os.path.join uses the OS separator,
+so on Windows it produced backslash-separated keys such as
+s3://.../taxis\metadata\version-hint.text. That is an invalid object-store key,
+which breaks the documented ""pass the table root path"" usage of
+StaticTable.from_metadata on Windows.
+
+Join the components with explicit forward slashes, matching how locations are
+built elsewhere in pyiceberg (for example pyiceberg/table/locations.py). Behavior
+is unchanged on POSIX. The now-unused os import is removed.
+
+Add an OS-independent regression test that swaps os.path.join for the Windows
+join so the metadata location is asserted to stay a valid forward-slash URI on
+any platform (the existing test only exercised local temp paths, which use the
+POSIX separator on Linux CI and never caught this).
+
+Related: #2477
+
+* Test version-hint resolution with real files instead of fakes
+
+Replace the fake FileIO test with one that writes metadata and
+version-hint files under a file:// URI and asserts the resolved
+metadata location. Windows CI catches a regression to os.path.join.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",4fb9e68c7931538db019d2d92a77aa7a32e3c716,3604,false,Copilot App; Kevin Liu,2,28,5,pyiceberg; tests,46,3,49,base; fix; community signal: fileio; multi-area change; co-authored; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,Docs: Add informational properties section for table comment,"- fix: build StaticTable version-hint metadata locations with forward slashes (#3604) (Thanks Anas Khan, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,f403a326b9ac1909f8b34175accbf453bfd62271,f403a32,Xander,zander181@googlemail.com,2026-10-24T04:50:05Z,GitHub,noreply@github.com,2026-10-24T04:50:05Z,feat(encryption) [5/N] KMS (#3968),"* KMS
+
+* in-memory kms
+
+* comments
+
+* comments
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",09df9d0f224c10922d70193d43243a7bef321368,3968,false,Kevin Liu,3,292,0,pyiceberg; tests,44,5,49,base; strategic: encryption; medium churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.18,Core: Fix metadata table scans with useRef by preserving metadata schema,- feat(encryption) [5/N] KMS (#3968) (Thanks Xander and Kevin Liu!)
+apache/iceberg-python,042165ace7e96b7d0da61810d1540c01ffff5157,042165a,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-10-26T02:35:12Z,GitHub,noreply@github.com,2026-10-26T02:35:12Z,Send the DeleteObjects body to the S3 REST signer (#4039),"s3fs deletes files with DeleteObjects, which lists the object keys in the
+request body. S3V4RestSigner never forwarded the body, so a signing
+service could not authorize the keys before signing.
+
+Also add an S3 test that writes, reads, and deletes through the REST
+signer, which previously had only mocked unit tests.
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",d998670912a050eef9957218a2e9432438e341e9,4039,false,Claude Opus 5.5,2,45,1,pyiceberg; tests,40,8,48,base; strategic: v4; multi-area change; co-authored; has PR number; LanceDB similarity 0.28,OpenAPI: Promote the S3 signing endpoint to the main spec,- Send the DeleteObjects body to the S3 REST signer (#4039) (Thanks Sreesh Maheshwar and Claude Opus 5.5!)
+apache/iceberg-python,19abbcf1b01d60d9bd6b70a265b07e45811514b3,19abbcf,Xander,zander181@googlemail.com,2026-10-25T17:57:08Z,GitHub,noreply@github.com,2026-10-25T17:57:08Z,feat(encryption): [8/N] encryption manager (#4149),"* feat(encryption): [8/N] encryption manager
+
+* remove comment
+
+* raise rather than None
+
+* kek guard
+
+* lazy import",ea139cc8277c2aa5764b186f3f8fc50e6a98d830,4149,false,,4,551,0,pyiceberg; tests,41,6,47,base; strategic: encryption; medium churn; multi-area change; has PR number; LanceDB similarity 0.20,Docs: Add blog post about File Format API,- feat(encryption): [8/N] encryption manager (#4149) (Thanks Xander!)
+apache/iceberg-python,59b7c1c6ef93c839bceff3e8a1739341b6586e47,59b7c1c,Bishop Kammeraad,113325736+porkedchop@users.noreply.github.com,2026-10-24T22:43:10Z,GitHub,noreply@github.com,2026-10-24T22:43:10Z,Validate snapshot sequence numbers on v3 tables (#4125),"* fix(table): validate snapshot sequence numbers on v3 tables
+
+The check that rejects a snapshot whose sequence number is not greater
+than the table's last sequence number only ran for format version 2.
+Java applies it to every format version after 1.
+
+* test: derive expected sequence number from the fixture
+
+The stale sequence-number test built the snapshot from the fixture's
+last_sequence_number but hardcoded 34 in the expected error message.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",41006bf4c5740d84545c096a71cdb3edef0419ef,4125,false,Copilot App; Kevin Liu,2,25,1,pyiceberg; tests,40,6,46,base; strategic: v3; multi-area change; co-authored; has PR number; LanceDB similarity 0.20,Spark: Validate Z-order rewrite does not conflict with internal ICEZVALUE column name,"- Validate snapshot sequence numbers on v3 tables (#4125) (Thanks Bishop Kammeraad, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,2ecd87b222f5c7fe020c93816f8c3830412b7034,2ecd87b,Ankit Raj,ankitraj.srivastava15@gmail.com,2026-10-24T07:21:29Z,GitHub,noreply@github.com,2026-10-24T07:21:29Z,Glue: Prune removed table properties from Glue Parameters (#4133),"* Glue: Prune removed table properties from Glue Parameters
+
+Closes #3977
+
+* Use keyword arguments for _construct_parameters
+
+* Prevent table properties from overwriting reserved Glue parameters
+
+A table property named table_type, metadata_location, or
+previous_metadata_location overwrote the catalog-managed Glue parameter
+of the same name, which could point Glue at a bogus metadata file and
+break load_table. Skip reserved keys when copying table properties,
+matching the Hive catalog.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",58df2cca5c82c0e6cdb2668da7f5834b88d3bee9,4133,false,Copilot App; Kevin Liu,2,79,2,pyiceberg; tests,40,6,46,base; strategic: catalog; multi-area change; co-authored; has PR number; LanceDB similarity 0.19,Docs: Add informational properties section for table comment,"- Glue: Prune removed table properties from Glue Parameters (#4133) (Thanks Ankit Raj, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,d37149c8b5d1b737da0eb9fdcb585bc3ef3bac69,d37149c,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-10-21T22:48:20Z,GitHub,noreply@github.com,2026-10-21T22:48:20Z,move required status checks into Merge Queue ruleset (#4113),"* move required status checks into Merge Queue ruleset
+
+* Let committers bypass the Merge Queue ruleset for urgent fixes
+
+Replace classic branch protection with an equivalent ruleset, since
+classic protection blocks ruleset bypass, and add apache/iceberg-public
+as a pull-request bypass actor on the Merge Queue ruleset. Ports
+apache/iceberg-rust#3458, #3481, and #3489.
+
+* Move urgent PR merge docs to end of contributing guide
+
+Keep the committer-only procedure out of the contributor setup flow, and
+indent the code block 4 spaces so mkdocs renders it inside the list.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",7d51e52bfd42dba2806979ee2554507e95fcfa0a,4113,false,Copilot App; Kevin Liu,3,58,22,.asf.yaml; AGENTS.md; mkdocs,40,6,46,base; multi-area change; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.19,Core: Detect and merge duplicate DVs for a data file and merge them before committing,"- move required status checks into Merge Queue ruleset (#4113) (Thanks Alex Stephen, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,881665bf2cebf946f3264df569e05757339cc479,881665b,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-10-20T00:04:53Z,GitHub,noreply@github.com,2026-10-20T00:04:53Z,CI: Cancel stale merge queue runs + use ubuntu-slim (#4106),"* CI: Cancel stale merge queue runs and move license check to ubuntu-slim
+
+A PR re-added to the merge queue reuses the same queue branch, so its
+runs waited behind the previous attempt's still-queued runs in the same
+concurrency group. Cancel in-progress runs for merge_group as well.
+
+Run the license check on ubuntu-slim to reduce demand for ubuntu-latest
+runners. That image has no Java, so install it explicitly.
+
+* CI: Run lightweight required-path jobs on ubuntu-slim
+
+The required gate jobs, ASF allowlist check, integration coverage report,
+and cibw dev env smoke test only need shell and Python, so ubuntu-slim
+runners suffice and free ubuntu-latest capacity for PR and merge queue runs.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* CI: Cancel stale runs for zizmor and markdown link check
+
+Both workflows run on ubuntu-latest, so superseded queued runs compete
+with required CI for scarce runners.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c528cf618c8e4ad570913ff6c907816b2e2cfcff,4106,false,Copilot App; Kevin Liu,7,21,9,.github,39,5,44,base; medium file count; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.17,Control merge schema evolution via table property in Spark 4.1,"- CI: Cancel stale merge queue runs + use ubuntu-slim (#4106) (Thanks Alex Stephen, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,5becad1aefcc7de7767d2aa30cef07b48c61aff3,5becad1,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-25T04:00:43Z,GitHub,noreply@github.com,2026-10-25T04:00:43Z,REST: Require metadata-location in view responses (#4152),"Require metadata-location in REST view responses
+
+The REST spec marks metadata-location as required in LoadViewResult, and
+Java's LoadViewResponseParser rejects responses without it. Make
+ViewResponse.metadata_location required to match.
+
+Behavior change: create_view, load_view, and register_view now raise a
+pydantic ValidationError for non-compliant servers that omit
+metadata-location, instead of silently accepting the response.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",e6eb6a93b94c547a5f2b68f5eb68f64a44cc48af,4152,false,Copilot App,2,15,1,pyiceberg; tests,35,7,42,base; important area: rest; multi-area change; co-authored; has PR number; LanceDB similarity 0.23,Fix NPE in `ParquetAvroWriter` when schema contains variant type,- REST: Require metadata-location in view responses (#4152) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-python,09df9d0f224c10922d70193d43243a7bef321368,09df9d0,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-24T04:30:40Z,GitHub,noreply@github.com,2026-10-24T04:30:40Z,Infra: Standardize RustFS setup across Iceberg repos (#4017),"* Dev: Use RustFS readiness healthcheck and drop default settings
+
+Use /health/ready so bucket creation waits for storage/IAM readiness,
+enable stdout logging so `docker logs` shows output, and remove settings
+that are already defaults in rustfs/rustfs:1.0.0.
+
+Generated-by: GitHub Copilot
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Infra: Bump RustFS to 1.0.3 and disable the console
+
+Align with the RustFS setup used across Iceberg repos: bump the image to
+1.0.3, set RUSTFS_CONSOLE_ENABLE=false, and stop publishing port 9001.
+
+Generated-by: GitHub Copilot
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",d0ba1d3f3dfacf72374754ca2c07f800d0cb4ce4,4017,false,Copilot App,2,8,14,dev,35,6,41,base; strategic: storage; co-authored; has PR number; LanceDB similarity 0.21,Flink: Backport Add the possibility to use Coordinator Lock when using Flink SQL to 2.0 and 1.20,- Infra: Standardize RustFS setup across Iceberg repos (#4017) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-python,eb30d8ae6ac4054f751b91cb04d4ae5026354cc2,eb30d8a,Dhruv,41189498+DG47@users.noreply.github.com,2026-10-18T12:26:59Z,GitHub,noreply@github.com,2026-10-18T12:26:59Z,REST: Stop double-encoding the parent namespace in list_namespaces (#4112),"list_namespaces passes the parent namespace through requests' params,
+which URL-encodes query values. The namespace parts were already quoted
+with _encode_namespace_path, so any part containing a space, '/', '%'
+or non-ASCII character was encoded twice and the server received e.g.
+""my%20namespace"" instead of ""my namespace"". Join the raw parts with the
+namespace separator instead, matching RESTUtil.namespaceToQueryParam in
+the Java client.",208fd5147aae781aaeb68b204b47e9b6fe08fcc8,4112,false,,2,39,1,pyiceberg; tests,32,7,39,base; important area: rest; multi-area change; has PR number; LanceDB similarity 0.23,Core: Simplify handling of the current planId in client side of remote planning <Eduard Tudenhoefner>,- REST: Stop double-encoding the parent namespace in list_namespaces (#4112) (Thanks Dhruv!)
+apache/iceberg-python,e2c1e787c65e55c736b742da2ef8d6ca405641ed,e2c1e78,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-25T04:23:40Z,GitHub,noreply@github.com,2026-10-25T04:23:40Z,CLI: Show metadata location in `describe view` (#4153),"CLI: show metadata location in describe view
+
+Match describe table text output by including the view's metadata location,
+and document the view CLI commands.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c8502b3925519ca7907de91eddb44d120994d512,4153,false,Copilot App,3,45,4,mkdocs; pyiceberg; tests,27,10,37,base; important area: cli; multi-area change; co-authored; downrank narrow CLI change; has PR number; LanceDB similarity 0.33,Core: v4 table metadata location should be optional,- CLI: Show metadata location in `describe view` (#4153) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-python,41006bf4c5740d84545c096a71cdb3edef0419ef,41006bf,Sung Yun,107272191+sungwy@users.noreply.github.com,2026-10-24T22:37:53Z,GitHub,noreply@github.com,2026-10-24T22:37:53Z,Bug Fix: handle column projection edge case with null identity partition (#4083),"* fix column projection edge case with null identity partition
+
+* Cover filter-only null identity partitions and simplify test
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",945c8db4c82b4fb1c2decc29109bf9630515b0d2,4083,false,Copilot App; Kevin Liu,2,41,5,pyiceberg; tests,28,6,34,base; fix; multi-area change; co-authored; has PR number; LanceDB similarity 0.20,Spark: Validate Z-order rewrite does not conflict with internal ICEZVALUE column name,"- Bug Fix: handle column projection edge case with null identity partition (#4083) (Thanks Sung Yun, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,208fd5147aae781aaeb68b204b47e9b6fe08fcc8,208fd51,Syed Ahnaf Raza,119487797+syahra712@users.noreply.github.com,2026-10-18T12:18:02Z,GitHub,noreply@github.com,2026-10-18T12:18:02Z,Preserve null maps when projecting a map of structs (#4118),"* Preserve null maps when projecting map of structs
+
+* Add test for projecting null map of structs
+
+* Build map entries with StructArray.from_arrays",0cc389bc5e1793ad3cf0f74bdfa7cfa199644ec0,4118,false,,2,54,1,pyiceberg; tests,29,5,34,base; multi-area change; correctness signal; has PR number; LanceDB similarity 0.17,"Core, Spark: Fix equality deletes non-deterministic schema ordering",- Preserve null maps when projecting a map of structs (#4118) (Thanks Syed Ahnaf Raza!)
+apache/iceberg-python,58df2cca5c82c0e6cdb2668da7f5834b88d3bee9,58df2cc,breken,support@brekfuz.com,2026-10-24T07:05:52Z,GitHub,noreply@github.com,2026-10-24T07:05:52Z,fix(expressions): reject fractional decimal literals on integer columns (#4029),"* fix(expressions): reject fractional decimal literals on integer columns
+
+DecimalLiteral.to(IntegerType/LongType) rounded the value with
+to_integral_value(), so an unquoted filter such as ""x > 2.6"" on an int
+column was bound as x > 3 and silently dropped x = 3; ""x < 2.5"" became
+x < 2 and ""x = 2.5"" matched x = 2. Raise a ValueError for a value with a
+fractional part instead, the same way a Decimal with a mismatched scale is
+rejected. Integral values such as 2.00 still convert.
+
+Generated-by: Claude Opus 5.5
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* Check for a fractional part before the integer range check
+
+The range check rounded the decimal first, so a fractional value near the
+int/long bounds became an above/below-max sentinel instead of raising,
+depending on half-even rounding. Reject any fractional value up front.
+Also replace parametrize with loops in the new literal tests.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: breken-ai <312387581+breken-ai@users.noreply.github.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",e6940798b32f14fc7388eb36066e43457d678f6d,4029,false,Claude Opus 5.5; Copilot App; breken-ai; Kevin Liu,3,52,4,pyiceberg; tests,28,5,33,base; fix; multi-area change; co-authored; has PR number; LanceDB similarity 0.18,Core: Avro: Row Lineage Column (ROW_ID) is not populated correctly in case the Data File doesn't have them,"- fix(expressions): reject fractional decimal literals on integer columns (#4029) (Thanks breken, Claude Opus 5.5, Copilot App, breken-ai, and Kevin Liu!)"
+apache/iceberg-python,46669fad031d5b4e7a71c1df13940d17bbc9e71d,46669fa,Rodrigo Stachlewski Palma,86628053+Rodrigo-Palma@users.noreply.github.com,2026-10-24T06:45:20Z,GitHub,noreply@github.com,2026-10-24T06:45:20Z,fix(conversions): reject a Decimal whose scale is negative (#3997),"* fix(conversions): reject a Decimal whose scale is negative
+
+to_bytes compared abs(exponent) against the type scale, so a Decimal carrying
+a negative scale passed as if it had the matching positive one. The exponent is
+then dropped by decimal_to_unscaled, and the value is written four orders of
+magnitude off without an error: Decimal('1E+2') stored in a decimal(10, 2)
+reads back as 0.01.
+
+Decimal('100').normalize() produces exactly that form, and to_bytes writes the
+lower and upper bounds of a data file, so a wrong bound prunes files that do
+hold matching rows.
+
+Compare the signed scale instead.
+
+* fix(expressions): reject decimal literals with a negative scale
+
+DecimalLiteral.to and StringLiteral.to compared abs(exponent) against the
+type's scale, so a filter value like Decimal(""1E+2"") bound to decimal(10, 2)
+as if it were 100.00 while keeping unscaled value 1. Bucket and truncate
+projections then pruned the files holding matching rows and the scan silently
+returned fewer rows. Compare the signed scale so binding raises instead.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",131b18712f11d695ad4cd47b682f37750dcf3ba6,3997,false,Copilot App; Kevin Liu,4,20,5,pyiceberg; tests,28,5,33,base; fix; multi-area change; co-authored; has PR number; LanceDB similarity 0.18,Flink: Fix equalityFieldColumns always null in IcebergSink <GuoYu>,"- fix(conversions): reject a Decimal whose scale is negative (#3997) (Thanks Rodrigo Stachlewski Palma, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,d0ba1d3f3dfacf72374754ca2c07f800d0cb4ce4,d0ba1d3,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-23T21:46:21-07:00,GitHub,noreply@github.com,2026-10-23T21:46:21-07:00,CI: Reduce workflow overhead (#3962),Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>,87a89fa0665e6928d65f8b710bf7f794073f7676,3962,false,Copilot App,11,22,10,.asf.yaml; .github; Makefile,24,7,31,base; medium file count; multi-area change; co-authored; has PR number; LanceDB similarity 0.25,Add Flink Quickstart docker image,- CI: Reduce workflow overhead (#3962) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-python,e3fbd9440ad0bb25c45848797ff9ec5ad7758624,e3fbd94,Yuang Gao,91290127+YuangGao@users.noreply.github.com,2026-10-22T18:55:40Z,GitHub,noreply@github.com,2026-10-22T18:55:40Z,fix: map write.parquet.page-row-limit to pyarrow's max_rows_per_page (#4127),,d37149c8b5d1b737da0eb9fdcb585bc3ef3bac69,4127,false,,2,10,4,pyiceberg; tests,25,6,31,base; fix; multi-area change; has PR number; LanceDB similarity 0.19,Flink: Support Variant to Flink 2.1,- fix: map write.parquet.page-row-limit to pyarrow's max_rows_per_page (#4127) (Thanks Yuang Gao!)
+apache/iceberg-python,b32392dcbafd3b92415a5b5dc0444722ca2091d9,b32392d,Mohamed Laghdaf Dadda,30777718+med9110@users.noreply.github.com,2026-10-10T12:38:16Z,GitHub,noreply@github.com,2026-10-10T12:38:16Z,Avro: Replace manual slots with dataclass slots (#4091),"Use slots=True for ListReader and MapReader instead of
+manually declaring __slots__.
+
+Preserve the original dataclass fields and use two-argument
+super() for compatibility with slotted dataclasses.
+
+Internal cached attributes now use the inherited instance
+dictionary instead of dedicated slots.
+
+Refs #4086",0a536e40259ecf85adee264d19d2080500a07b82,4091,false,,1,4,6,pyiceberg,24,7,31,base; correctness signal; has PR number; LanceDB similarity 0.24,Core: Convert metrics to Content Stats,- Avro: Replace manual slots with dataclass slots (#4091) (Thanks Mohamed Laghdaf Dadda!)
+apache/iceberg-python,5d5ce48f87de5ae4a769f2b77b006151c7c1b240,5d5ce48,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-10-24T04:53:36Z,GitHub,noreply@github.com,2026-10-24T04:53:36Z,Infra: Replace archived pydocstyle hook with ruff D rules (#4014),"pycqa/pydocstyle is archived, which zizmor 1.30.0 flags as archived-uses in
+.pre-commit-config.yaml. Enable ruff's pydocstyle rules with the same ignore
+list and fix the docstrings it reports.
+
+Co-authored-by: Fokko Driesprong <fokko@apache.org>
+Co-authored-by: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",f403a326b9ac1909f8b34175accbf453bfd62271,4014,false,Fokko Driesprong; Claude Opus 5.5 (1M context); Kevin Liu,9,48,48,.pre-commit-config.yaml; pyiceberg; pyproject.toml,24,5,29,base; medium file count; multi-area change; co-authored; has PR number; LanceDB similarity 0.17,OpenAPI: Promote the S3 signing endpoint to the main spec,"- Infra: Replace archived pydocstyle hook with ruff D rules (#4014) (Thanks Alex Stephen, Fokko Driesprong, Claude Opus 5.5 (1M context), and Kevin Liu!)"
+apache/iceberg-python,0a536e40259ecf85adee264d19d2080500a07b82,0a536e4,Kaanchan Krishna,krishnakaanchan@gmail.com,2026-10-10T12:37:22Z,GitHub,noreply@github.com,2026-10-10T12:37:22Z,PyArrow: Derive the ADLS account from the location when it is not configured (#3936),"* PyArrow: Derive the ADLS account from the location when it is not configured
+
+_initialize_azure_fs took no netloc, unlike the S3 and HDFS initialisers next to
+it, so the account could only come from adls.account-name and the account in an
+abfss location was dropped. Pass the netloc through and fall back to the account
+in its host part. An explicit adls.account-name still wins, same precedence as
+FsspecFileIO. The fallback is gated on the userinfo part being present, since a
+container only netloc carries no account.
+
+* Remove unnecessary comment",068aae50402285657b41f5357acb67672b0a053d,3936,false,,2,48,4,pyiceberg; tests,17,7,24,base; multi-area change; has PR number; LanceDB similarity 0.23,OpenAPI: Promote the S3 signing endpoint to the main spec,- PyArrow: Derive the ADLS account from the location when it is not configured (#3936) (Thanks Kaanchan Krishna!)
+apache/iceberg-python,d998670912a050eef9957218a2e9432438e341e9,d998670,Yuya Ebihara,ebyhry@gmail.com,2026-10-26T02:12:07Z,GitHub,noreply@github.com,2026-10-26T02:12:07Z,Infra: Use ubuntu-24.04 instead of ubuntu-latest (#4157),Build: Use ubuntu-24.04 instead of ubuntu-latest,dabfec54b6e5352b559fcc2720d9f4b62160c1f8,4157,false,,7,14,14,.github,16,5,21,base; medium file count; has PR number; LanceDB similarity 0.16,Spark: Add ordering to TestSelect to remove flakiness <Huaxin Gao>,- Infra: Use ubuntu-24.04 instead of ubuntu-latest (#4157) (Thanks Yuya Ebihara!)
+apache/iceberg-python,dabfec54b6e5352b559fcc2720d9f4b62160c1f8,dabfec5,Fokko Driesprong,fokko@apache.org,2026-10-25T19:07:44Z,GitHub,noreply@github.com,2026-10-25T19:07:44Z,Remove unreachable timestamp-micros from `LOGICAL_FIELD_TYPE_MAPPING` (#4139),"timestamp-micros is handled by an explicit branch in _convert_logical_type
+that also honors adjust-to-utc, so the mapping entry was never used.",e55718f89ff0626ad1172fff344d9af8e8ed03ce,4139,false,,1,0,1,pyiceberg,12,5,17,base; has PR number; LanceDB similarity 0.18,OpenAPI: Promote the S3 signing endpoint to the main spec,- Remove unreachable timestamp-micros from `LOGICAL_FIELD_TYPE_MAPPING` (#4139) (Thanks Fokko Driesprong!)
+apache/iceberg-python,87a89fa0665e6928d65f8b710bf7f794073f7676,87a89fa,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-10-23T21:30:15-07:00,GitHub,noreply@github.com,2026-10-23T21:30:15-07:00,Infra: Raise merge queue check timeout to 180 minutes (#4147),This will hopefully give enough time for the merge queue.,e3fbd9440ad0bb25c45848797ff9ec5ad7758624,4147,false,,1,1,1,.asf.yaml,12,5,17,base; has PR number; LanceDB similarity 0.17,"Revert ""Move deleted files to Hadoop trash if configured """,- Infra: Raise merge queue check timeout to 180 minutes (#4147) (Thanks Alex Stephen!)
+apache/iceberg-python,44ab85aacbbfc9cb7aba8643f691531bdbeaf84f,44ab85a,Shahzeb Ali,126076773+Shahzeb-DataEngineer@users.noreply.github.com,2026-10-24T04:57:38Z,GitHub,noreply@github.com,2026-10-24T04:57:38Z,Build: drop the upper bound on requires-python (#4135),"build: drop the upper bound on requires-python
+
+The <4.0.0 cap makes Poetry silently resolve old releases (e.g. 0.10.0)
+for projects declaring an open-ended requires-python range, with no
+error or warning. The cap offers no real protection (see #1348), so
+drop it and keep requires-python as >=3.10.
+
+Signed-off-by: Shahzeb Ali <126076773+Shahzeb-DataEngineer@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",5d5ce48f87de5ae4a769f2b77b006151c7c1b240,4135,false,Kevin Liu,2,2,2,pyproject.toml; uv.lock,5,3,8,base; multi-area change; co-authored; downrank routine build/deps; has PR number; LanceDB similarity 0.16; capped LanceDB boost for routine/low-signal commit,BigQuery: Eliminate redundant table load by using ETag for conflict detection,- Build: drop the upper bound on requires-python (#4135) (Thanks Shahzeb Ali and Kevin Liu!)
+apache/iceberg-python,a1a43c52cdd4a521378fe7f877658d32b45c2d14,a1a43c5,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-25T04:04:50Z,GitHub,noreply@github.com,2026-10-25T04:04:50Z,Prefer for loops over parametrized tests in AGENTS.md (#4150),"* Prefer for loops over parametrized tests in AGENTS.md
+
+Each parametrized case adds per-item pytest overhead (~0.3ms measured), which slows the suite as cases accumulate.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Simplify parametrize guidance in AGENTS.md
+
+Scope the loop preference to many simple cases and note when
+parametrize or separate tests fit better.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",5becad1aefcc7de7767d2aa30cef07b48c61aff3,4150,false,Copilot App,1,1,0,AGENTS.md,3,3,6,base; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Spark: Also disable min/max aggregation push down for binary,- Prefer for loops over parametrized tests in AGENTS.md (#4150) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-python,c688f1ea4a4fe4af47e06929a39df72c3cf36588,c688f1e,Damanpreet Singh,damanpreet8360@gmail.com,2026-10-24T18:14:28Z,GitHub,noreply@github.com,2026-10-24T18:14:28Z,docs: Document missing write table properties in configuration (#3879),"* docs: Document missing write table properties in configuration
+
+The write-options table omitted several properties that PyIceberg reads
+when writing, including write.target-file-size-bytes, write.format.default,
+write.avro.compression-codec, the Parquet row-group/bloom-filter sizes,
+the column metrics-mode properties and write.summary.partition-limit. Add
+rows for them and fix a typo (""coddec"" -> ""codec"") in the existing
+compression-codec entry.
+
+* docs: Remove unimplemented Parquet write properties
+
+PyIceberg ignores write.parquet.row-group-size-bytes and the bloom-filter
+properties, emitting a ""not implemented"" warning when they are set.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* docs: Clarify write table property descriptions
+
+Clarify how write.target-file-size-bytes is measured, what each metrics
+mode collects, which files the Avro codec applies to, and that the default
+write.summary.partition-limit of 0 disables partition summaries.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* docs: Correct metrics mode description
+
+The none mode still records column sizes, and nested fields are capped at
+counts regardless of the configured mode.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",35bb9bb62a00dcf8560d970403fef1a8047809e8,3879,false,Copilot App; Kevin Liu,1,7,1,mkdocs,3,3,6,base; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.27; capped LanceDB boost for routine/low-signal commit,"Core, Data: File Format API interfaces","- docs: Document missing write table properties in configuration (#3879) (Thanks Damanpreet Singh, Copilot App, and Kevin Liu!)"
+apache/iceberg-python,ef95e636adf21273622920fe2f7fd9a97eb1da9b,ef95e63,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-10-16T06:00:44Z,GitHub,noreply@github.com,2026-10-16T06:00:44Z,Tests: Ignore google.api_core unsupported Python version warning (#4100),"google.api_core now emits its ""non-supported Python version"" FutureWarning
+on 3.10, which the existing filter did not match, so test collection failed.
+Widen the filter to cover every variant of the warning.",b32392dcbafd3b92415a5b5dc0444722ca2091d9,4100,false,,1,2,2,pyproject.toml,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,Core: Simplify handling of the current planId in client side of remote planning <Eduard Tudenhoefner>,- Tests: Ignore google.api_core unsupported Python version warning (#4100) (Thanks Alex Stephen!)
+apache/iceberg-python,e55718f89ff0626ad1172fff344d9af8e8ed03ce,e55718f,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-25T17:59:35Z,GitHub,noreply@github.com,2026-10-25T17:59:35Z,Bump integration infra to Iceberg 1.12.0 and Spark 4.1.3 (#4155),"Also bump hadoop-aws, AWS SDK, Hive metastore client, aws-cli, and
+pyspark. Hive 4.2 moved IMetaStoreClient into the new
+hive-standalone-metastore-client artifact, so download it as well.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",19abbcf1b01d60d9bd6b70a265b07e45811514b3,4155,false,Copilot App,5,51,49,dev; pyproject.toml; uv.lock,-36,3,-33,base; medium file count; multi-area change; co-authored; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.29; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Bump integration infra to Iceberg 1.12.0 and Spark 4.1.3 (#4155) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-python,7d51e52bfd42dba2806979ee2554507e95fcfa0a,7d51e52,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-20T06:27:50Z,GitHub,noreply@github.com,2026-10-20T06:27:50Z,Build: Bump aiohttp from 3.14.3 to 3.14.4 (#4124),"---
+updated-dependencies:
+- dependency-name: aiohttp
+  dependency-version: 3.14.4
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",881665bf2cebf946f3264df569e05757339cc479,4124,false,dependabot[bot],1,303,227,uv.lock,-66,3,-63,base; medium churn; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.29; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump aiohttp from 3.14.3 to 3.14.4 (#4124) (Thanks dependabot[bot]!)
+apache/iceberg-python,0cc389bc5e1793ad3cf0f74bdfa7cfa199644ec0,0cc389b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-16T10:16:22Z,GitHub,noreply@github.com,2026-10-16T10:16:22Z,Build: Bump multidict from 6.7.1 to 6.9.1 (#4117),"Bumps [multidict](https://github.com/aio-libs/multidict) from 6.7.1 to 6.9.1.
+- [Release notes](https://github.com/aio-libs/multidict/releases)
+- [Changelog](https://github.com/aio-libs/multidict/blob/master/CHANGES.rst)
+- [Commits](https://github.com/aio-libs/multidict/compare/v6.7.1...v6.9.1)
+
+---
+updated-dependencies:
+- dependency-name: multidict
+  dependency-version: 6.9.1
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",ef95e636adf21273622920fe2f7fd9a97eb1da9b,4117,false,dependabot[bot],1,173,130,uv.lock,-66,3,-63,base; medium churn; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- Build: Bump multidict from 6.7.1 to 6.9.1 (#4117) (Thanks dependabot[bot]!)
+apache/iceberg-python,4fb9e68c7931538db019d2d92a77aa7a32e3c716,4fb9e68,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-24T05:59:47Z,GitHub,noreply@github.com,2026-10-24T05:59:47Z,Build: Bump werkzeug from 3.1.8 to 3.1.9 (#4107),"Bumps [werkzeug](https://github.com/pallets/werkzeug) from 3.1.8 to 3.1.9.
+- [Release notes](https://github.com/pallets/werkzeug/releases)
+- [Changelog](https://github.com/pallets/werkzeug/blob/main/CHANGES.rst)
+- [Commits](https://github.com/pallets/werkzeug/compare/3.1.8...3.1.9)
+
+---
+updated-dependencies:
+- dependency-name: werkzeug
+  dependency-version: 3.1.9
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",747ebee2d065c5a293786cbede12ccc149544799,4107,false,dependabot[bot]; Kevin Liu,1,3,3,uv.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- Build: Bump werkzeug from 3.1.8 to 3.1.9 (#4107) (Thanks dependabot[bot] and Kevin Liu!)

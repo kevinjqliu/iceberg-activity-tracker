@@ -1,0 +1,484 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-cpp,57ec6b8101952a47916ab9cd4328a17319b40195,57ec6b8,Sandeep Gottimukkala,gsandeep.1241@gmail.com,2026-10-14T00:18:33-07:00,GitHub,noreply@github.com,2026-10-14T15:18:33+08:00,feat(rest): add scan plan endpoint support to REST catalog client (#783),"When a table is loaded from a REST catalog with scan-planning-mode=server (table config takes precedence over catalog config), NewScan() now returns a RestTableScanBuilder whose Build() produces a RestTableScan. PlanFiles() and PlanFilesStream() on that scan delegate manifest resolution to the server via POST /plan, GET /plan/{id} (with exponential backoff), POST /tasks, and DELETE /plan/{id} (best-effort cancel), instead of reading manifests locally.
+
+- Add RestTable, RestTableScanBuilder, RestTableScan and RestScanContext
+- Promote DataTableScan::PlanFilesStream, TableScan::io and TableScanBuilder::Build to virtual
+- Convert RestCatalog::client_ and paths_ to shared_ptr so RestScanContext can share ownership with live scans
+- Add REST incremental append planning for scans with an exclusive start snapshot; scans without one (including an inclusive root snapshot) return NotSupported
+- Use storage credentials returned by planning responses in a scan-scoped FileIO",a036fae8ec947b6ea8da1cae36a666add5eea461,783,false,,29,3097,83,src,106,10,116,"base; feature/api verb; important area: rest; strategic: catalog, manifest, storage; community signal: fileio; large file count; large churn; has PR number; LanceDB similarity 0.34",Core: Freshness-aware table loading in REST catalog,- feat(rest): add scan plan endpoint support to REST catalog client (#783) (Thanks Sandeep Gottimukkala!)
+apache/iceberg-cpp,12a16bd592bcd841654a23ed8225dcc2caf807d3,12a16bd,Manu Zhang,OwenZhang1990@gmail.com,2026-10-13T16:02:13+08:00,GitHub,noreply@github.com,2026-10-13T16:02:13+08:00,fix(manifest): round-trip decimal partition values (#998),"Share decimal encoding across direct and generic writers, preserve signed
+values at the schema fixed width, and reject representation overflow.
+Cover exact wire bytes and decimal file round trips in both backends.
+
+Co-authored-by: Codex <codex@openai.com>",de7c9ce0715c5846ab5ce3cbcaa6d90c199a5ba1,998,false,Codex,10,258,11,src,102,7,109,"base; fix; important area: manifest; strategic: manifest, round-trip; summary signal: round-trip; medium file count; medium churn; co-authored; correctness signal; validation/regression test signal; has PR number; LanceDB similarity 0.23",Flink: Support UUID type in Avro and Parquet readers and writers,- fix(manifest): round-trip decimal partition values (#998) (Thanks Manu Zhang!)
+apache/iceberg-cpp,72fbb5aef6cc5950107af385fca76b5bef9978aa,72fbb5a,Jiajia Li,lijiajia@outlook.com,2026-10-18T00:46:04+08:00,GitHub,noreply@github.com,2026-10-18T00:46:04+08:00,feat(io): refresh vended storage credentials per prefix (#892),"Vended storage credentials can expire while an `ArrowS3FileIO` instance and its
+file handles are still in use. This change refreshes them on demand and keeps
+the refresh state scoped to each storage prefix.
+
+The implementation:
+
+- Keeps one `CredentialStore` for credential snapshots, per-prefix slots,
+  expiry state, refresh coordination, backoff, and generation checks.
+- Resolves each credential once into its normalized prefix, effective client
+  properties, client settings, and AWS credentials.
+- Refreshes credentials independently by prefix. A response may update the
+  prefixes that are still active; invalid, expired, missing, or incompatible
+  entries keep their previous state.
+- Preserves S3-compatible schemes during routing. For example, `s3://` and
+  `oss://` remain separate prefixes so credentials for one endpoint cannot be
+  sent to another.
+- Lets existing AWS SDK clients pick up refreshed credentials through
+  `AWSCredentialsProvider`, while keeping clients and handles safe when the
+  `FileIO` or a credential generation is replaced.
+- Uses the REST client connection and request timeout properties for all HTTP
+  methods. Transport failures during table creation or commit are reported as
+  `CommitStateUnknown` because the server may already have applied the write.
+
+The change removes the previous global expiry/layout bookkeeping and duplicate
+credential-property parsing, making the refresh path easier to maintain and
+extend while preserving the existing `StorageCredentialProvider` API.
+
+Tests cover prefix routing, refresh timing and concurrency, failed and invalid
+refreshes, reordered responses, expiry handling, REST client timeouts, and
+real S3-compatible round trips.",cec3229e784bd3ac1f86771cee8c167f7c490385,892,false,,15,1494,128,cmake_modules; mkdocs; src,82,9,91,base; important area: io; strategic: storage; community signal: fileio; medium file count; large churn; multi-area change; has PR number; LanceDB similarity 0.29,GCP: Add scheduled refresh for storage credentials held by GCSFileIO,- feat(io): refresh vended storage credentials per prefix (#892) (Thanks Jiajia Li!)
+apache/iceberg-cpp,4f195d0be65dde346802b3a6555bd46eaf344fa2,4f195d0,Xinli Shang,xinlishang@gmail.com,2026-10-21T01:38:27-07:00,GitHub,noreply@github.com,2026-10-21T16:38:27+08:00,feat(encryption): add AES GCM cipher and AES GCM Stream (AGS1) files (#1030),,08d2f863b3c921674c8cca9b532c84143d05619b,1030,false,,12,1162,19,ci; cmake_modules; src,74,5,79,base; feature/api verb; strategic: encryption; medium file count; large churn; multi-area change; has PR number; LanceDB similarity 0.15,Fix BigQuery dependency leak into runtime JARs,- feat(encryption): add AES GCM cipher and AES GCM Stream (AGS1) files (#1030) (Thanks Xinli Shang!)
+apache/iceberg-cpp,bbc235910706c44dcee69202d3d8c165cede6992,bbc2359,YangJie,yangjie01@baidu.com,2026-10-13T03:15:27-04:00,GitHub,noreply@github.com,2026-10-13T15:15:27+08:00,fix(catalog): validate namespace existence in InMemoryCatalog create and register (#980),"## What
+
+`InMemoryCatalog` did not correctly check that a table's namespace exists, in two methods.
+
+`CreateTable` wrote the table metadata file before validating the namespace. Creating a table under a missing namespace returned `kNoSuchNamespace`, but on object-store `FileIO` it first left an orphaned `00000-<uuid>.metadata.json` that nothing later removes, and on the default local `FileIO` the stray write failed with a misleading `kIOError`.
+
+`RegisterTable` guarded with `if (!root_namespace_->NamespaceExists(identifier.ns))`. `NamespaceExists` returns `Result<bool>`, so `!result` tests `has_value()` rather than the bool, and a missing namespace is a value `false`, not an error. The branch was dead code, and a missing namespace surfaced as `kUnknownError` instead of `kNoSuchNamespace`.
+
+Closes #977.
+
+## How
+
+`CreateTable` now validates the namespace before writing any metadata, matching `SqlCatalog::CreateTable`. `RegisterTable` reads the metadata outside the lock, then validates the namespace and registers under a single lock: the dead `if (!NamespaceExists(...))` check (which tested the `Result<bool>`'s `has_value()` rather than the contained bool) becomes an unwrap that returns `kNoSuchNamespace`. Keeping the namespace check and the registration in one critical section leaves them atomic, and the metadata read stays off the lock. The empty (root) namespace still resolves to `true`, so ordinary table creation is unaffected.
+
+## Testing
+
+Two new tests in `in_memory_catalog_test.cc`:
+
+- `CreateTableNonexistentNamespace` — creating a table under a missing namespace returns `kNoSuchNamespace` and leaves no metadata file behind. It passes an explicit location whose `metadata/` directory already exists, so the pre-fix write lands a detectable orphan there; the zero-file assertion is what fails without the fix. The error-kind assertion alone would still pass pre-fix, because the later `UpdateTableMetadataLocation` also returns `kNoSuchNamespace` after the orphan is written.
+- `RegisterTableNonexistentNamespace` — registering under a missing namespace returns `kNoSuchNamespace`; without the fix the dead `Result<bool>` check let it fall through to `kUnknownError`.",db796cbf5d51bd74aa1cfba7647eae748d91ff05,980,false,,2,55,1,src,73,6,79,base; fix; important area: catalog; strategic: catalog; community signal: fileio; has PR number; LanceDB similarity 0.18,"Core, Spark 4.1: Fix querying equality deletes with schema evolution",- fix(catalog): validate namespace existence in InMemoryCatalog create and register (#980) (Thanks YangJie!)
+apache/iceberg-cpp,d98d851873bd6bd9a456ae7f58fb430da2bceb6e,d98d851,Guotao Yu,guotao.yugt@gmail.com,2026-10-15T15:00:12+08:00,GitHub,noreply@github.com,2026-10-15T15:00:12+08:00,fix(deletes): validate roaring bitmap after deserialization (#1005),"fix(deletes): validate roaring bitmap structure after deserialization
+
+readSafe only bounds-checks the read and does not verify CRoaring's
+structural invariants. A forged deletion vector (e.g. bitset container
+with a wrong cardinality or wrapping run containers) could later cause
+out-of-bounds access during merge or serialize. Call
+roaring_bitmap_internal_validate right after readSafe and reject invalid
+bitmaps with InvalidArgument.",5a9350342b04a102f69aa8f626ca624072f69098,1005,false,,2,36,0,src,72,6,78,"base; fix; strategic: deletion vector, variant; summary signal: deletion vector; deletion vector signal; has PR number; LanceDB similarity 0.19",Core: Fix data loss in partial variant shredding,- fix(deletes): validate roaring bitmap after deserialization (#1005) (Thanks Guotao Yu!)
+apache/iceberg-cpp,0bdf7ce9961d7ef8e1c2b8670ae412e86526c53b,0bdf7ce,Xinli Shang,xinlishang@gmail.com,2026-10-16T15:37:16+09:00,GitHub,noreply@github.com,2026-10-16T14:37:16+08:00,feat: add standard encryption key metadata (#991),"StandardKeyMetadata is the per-file key metadata of the standard Iceberg
+encryption scheme: the data encryption key, the AAD prefix (file ID) and,
+for AES GCM streams, the encrypted file length. It is stored in the
+key_metadata field of data, delete and manifest files, and (encrypted) in
+the table metadata encryption-keys for manifest lists.
+
+The serialized form is Java's: a schema version byte (1) followed by an
+Avro binary record. Tests check byte-for-byte compatibility with vectors
+written by Java (checked in under test/resources/encryption/vectors,
+excluded from the text-fixing pre-commit hooks).
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",310bb055d8f98e6fe31ea103632eb889b7ebc92b,991,false,Claude Opus 5.5,6,379,0,src,68,9,77,"base; feature/api verb; strategic: encryption, manifest; medium file count; medium churn; co-authored; has PR number; LanceDB similarity 0.30",Include key metadata in manifest tables (Spark 4.1),- feat: add standard encryption key metadata (#991) (Thanks Xinli Shang and Claude Opus 5.5!)
+apache/iceberg-cpp,7543e8042180080d34b5ee44a6d4c18b86e47ac1,7543e80,Jiajia Li,lijiajia@outlook.com,2026-10-13T08:47:52+08:00,GitHub,noreply@github.com,2026-10-13T08:47:52+08:00,fix(io): attempt every S3 delete and report how many failed (#966),"Follow-up to https://github.com/apache/iceberg-cpp/pull/898#discussion_r4091927837.
+
+`ArrowS3FileIO::DeleteFiles` returned at the first credential prefix whose delete failed, so files under the remaining prefixes were never attempted. It now attempts every file unless task submission fails, logs deletion failures, and returns `Failed to delete N of M files`. Exceptions thrown by individual deletes are counted too.
+
+- Deletion is sequential by default. `InitializeS3FileIODeleteExecutor(Executor*)` initializes a caller-owned executor shared by all S3 FileIOs, including registry-created instances. Initialize it before the first delete; otherwise, the first delete freezes the default `nullptr`. Repeating the same pointer is allowed, but replacing it is not. The executor must remain alive until the last delete completes.
+- `s3.delete.num-threads` limits worker tasks per call, defaulting to the hardware thread count. Workers share a file index, keeping task/future storage bounded by the configured parallelism. The shared executor controls total concurrency; this property does not create or resize a thread pool.
+- Accepted tasks finish before the call exits, including when submission returns an error or throws. Submission failures are returned without falling back to the calling thread and bypassing the executor's concurrency limit. All workers use the same delegate snapshot and the caller's logger.
+
+Arrow has no public S3 batch-delete API, so each request still deletes one file. `ResolvingFileIO` keeps its existing fail-fast behavior across delegates.
+
+Tests cover deletion across allowed/denied prefixes, thrown deletes, rejected/throwing submissions, bounded task counts and concurrency, immutable executor initialization, and executor configuration for both direct and registry-created FileIOs.",274d1bbb4f46114806dc6515b2493483b47b3702,966,false,,7,553,25,mkdocs; src,68,6,74,base; fix; important area: io; strategic: storage; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.19,Core: Skip unnecessary metadata refresh when producing snapshot event after merge append,- fix(io): attempt every S3 delete and report how many failed (#966) (Thanks Jiajia Li!)
+apache/iceberg-cpp,ad221b772ccbdeebfe6f01748186d1ff6faef944,ad221b7,Nihal Jain,nihaljain.cs@gmail.com,2026-10-14T20:01:27+05:30,GitHub,noreply@github.com,2026-10-14T22:31:27+08:00,feat: support catalog labels on tables loaded from REST catalogs (#960),"Parse the optional `labels` field of the REST load-table response and
+expose it through Table::labels(), mirroring apache/iceberg#18045 and
+apache/iceberg#18046. Labels are catalog-provided rather than table
+state, so they live on the Table instance instead of TableMetadata.
+
+Part of #938.",57ec6b8101952a47916ab9cd4328a17319b40195,960,false,,16,552,38,src,65,6,71,base; feature/api verb; strategic: catalog; medium file count; medium churn; has PR number; LanceDB similarity 0.20,REST Spec: Add unregister table endpoint,- feat: support catalog labels on tables loaded from REST catalogs (#960) (Thanks Nihal Jain!)
+apache/iceberg-cpp,26ae9eab89d809a0861dfcef61ed6dc10f2b30bb,26ae9ea,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-10-14T20:22:33-07:00,GitHub,noreply@github.com,2026-10-15T11:22:33+08:00,feat(scan): Support split and parallel scans - Part-1: validated FileScanTask byte ranges (#976),"Preserve start and length in core and REST JSON, and reject partial
+reads until the reader can honor ranges.
+
+A shared DataFile's size may change after MakeSplit, so ToJson could
+emit a range that FileScanTaskFromJson rejects. Revalidate the range
+before serializing, matching the REST serializer.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",f87954d10c6d9ce61f22dd8fb3b31e525c4e3c1f,976,false,Isaac,12,575,65,src,60,10,70,base; feature/api verb; medium file count; medium churn; co-authored; correctness signal; has PR number; LanceDB similarity 0.35,Flink: Support UUID type in Avro and Parquet readers and writers,- feat(scan): Support split and parallel scans - Part-1: validated FileScanTask byte ranges (#976) (Thanks kamcheungting-db and Isaac!)
+apache/iceberg-cpp,7686cfeae7e735980405b20a2eb7f88b76f0ff6f,7686cfe,Matthias Vallentin,vallentin@berkeley.edu,2026-10-15T08:10:01+02:00,GitHub,noreply@github.com,2026-10-15T14:10:01+08:00,fix(manifest): write spec-compliant partition-spec and schema-id headers (#1017),"The manifest writers stored the full partition spec object, such as
+{""fields"":[],""spec-id"":0}, in the `partition-spec` Avro metadata. The
+spec requires only the partition fields array there. They also omitted
+the separate `schema-id` metadata, which is required for v2 and later.
+
+Add PartitionFieldsToJson to serialize only the partition fields and use
+it for the manifest header in all format versions. ToJson(PartitionSpec)
+keeps producing the full object for table metadata and REST requests.
+Write the ID of the schema used to write the manifest as `schema-id`.",ce4544b1af0b570773a10b89e0e81716ed1200fb,1017,false,,7,147,8,src,59,8,67,base; fix; important area: manifest; strategic: manifest; medium file count; has PR number; LanceDB similarity 0.28,Site: Updates for 1.10.1 Release <Huaxin Gao>,- fix(manifest): write spec-compliant partition-spec and schema-id headers (#1017) (Thanks Matthias Vallentin!)
+apache/iceberg-cpp,ce4544b1af0b570773a10b89e0e81716ed1200fb,ce4544b,Xinli Shang,xinlishang@gmail.com,2026-10-15T14:32:39+09:00,GitHub,noreply@github.com,2026-10-15T13:32:39+08:00,feat: add snapshot encryption key-id (#990),"Spec v3 snapshots of encrypted tables carry `key-id`, the ID of the
+entry in `encryption-keys` that holds the encrypted key metadata of the
+snapshot's manifest list. Add it to Snapshot, read and write it in the
+JSON serde, and include it in snapshot equality.
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",1b6d6a3f85bf9d8f0ffcbe59a67e59310bac6580,990,false,Claude Opus 5.5,4,30,2,src,60,7,67,"base; feature/api verb; strategic: encryption, manifest, v3; co-authored; has PR number; LanceDB similarity 0.24",OpenAPI: Promote the S3 signing endpoint to the main spec,- feat: add snapshot encryption key-id (#990) (Thanks Xinli Shang and Claude Opus 5.5!)
+apache/iceberg-cpp,49f8a8778571789a076b1501950fbd2115c34bb5,49f8a87,Guotao Yu,guotao.yugt@gmail.com,2026-10-22T11:04:07+08:00,GitHub,noreply@github.com,2026-10-22T11:04:07+08:00,fix(manifest): validate enum fields when parsing manifests (#1034),"Manifest and manifest list readers cast raw integers from the file
+straight into ManifestStatus, DataFile::Content and ManifestContent.
+Out-of-range values then reached switches ending in unreachable(),
+which is undefined behavior. Validate these fields through the
+*FromInt helpers at parse time, and return an error instead of
+unreachable() for an unknown status in ManifestWriter::WriteEntry.
+
+ParseDataFile's hand-rolled loop for DataFile::kFileFormatFieldId
+skipped the field when null instead of checking `required` and
+returning MakeNullError like every other field in the switch,
+addressing review feedback on PR #1034.",1b1232bdd0379ee10039dae3170df41ca93181fe,1034,false,,5,170,8,src,59,7,66,base; fix; important area: manifest; strategic: manifest; medium file count; has PR number; LanceDB similarity 0.24,Flink: Support UUID type in Avro and Parquet readers and writers,- fix(manifest): validate enum fields when parsing manifests (#1034) (Thanks Guotao Yu!)
+apache/iceberg-cpp,7f247005e3edc5bce30415b6eea4c9c78fadea95,7f24700,Manu Zhang,OwenZhang1990@gmail.com,2026-10-16T12:43:49+08:00,GitHub,noreply@github.com,2026-10-16T12:43:49+08:00,fix(bucket): use endian-safe MurmurHash block loads (#1019),"fix(bucket): make MurmurHash3 endian-safe
+
+Read unaligned blocks in canonical little-endian order, accept size_t lengths, and mix integer halves directly. Keep path entropy on the raw helper and preserve upstream bucket input validation.
+
+Cover canonical byte hashes, integer encoding, byte literal buckets, and path prefixes with small regressions.",60e67fa2aecf41c3626e26fbc71be6afe5c8ef4a,1019,false,,7,147,454,src,60,6,66,base; fix; medium file count; medium churn; release/security/notice signal; correctness signal; has PR number; LanceDB similarity 0.19,"Data, Spark, Flink: Add TCK for File Format API",- fix(bucket): use endian-safe MurmurHash block loads (#1019) (Thanks Manu Zhang!)
+apache/iceberg-cpp,5107eda08bdea434ede4efee66a8e5bc7732cc22,5107eda,YangJie,yangjie01@baidu.com,2026-10-21T12:11:00-04:00,GitHub,noreply@github.com,2026-10-22T00:11:00+08:00,fix(metadata): write and detect gzip-compressed table metadata (#1014),"Codec::FromFileName used find_last_of with the multi-character suffix
+'.metadata.json', which matches the last single character of the set
+(the final 'n') instead of the suffix. For gzip-compressed metadata
+written by Iceberg Java as '<name>.gz.metadata.json', the resulting
+file_name_without_suffix kept the wrong tail, the '.gz' check failed,
+and the file was misclassified as uncompressed kNone. Reading such a
+file then fails to decompress.
+
+Use rfind so the whole suffix matches. The legacy '.metadata.json.gz'
+compatibility branch is unchanged. Round-trip reading of Java-written
+gzip metadata files is covered by new unit tests.
+
+NewTableMetadataFilePath names the file '<version>-<uuid>.gz.metadata.json'
+when write.metadata.compression-codec is gzip, but Write always emitted plain
+JSON, so the file contradicted its own name and no reader could inflate it.
+Add a GZipCompressor next to the existing GZipDecompressor and compress in
+Write when the location's codec is gzip, completing the round trip.",29900cae9a6a5c110016b6c3e9dca8d14d6beef4,1014,false,,6,193,1,src,56,7,63,base; fix; strategic: round-trip; summary signal: round-trip; medium file count; has PR number; LanceDB similarity 0.24,OpenAPI: Promote the S3 signing endpoint to the main spec,- fix(metadata): write and detect gzip-compressed table metadata (#1014) (Thanks YangJie!)
+apache/iceberg-cpp,70b2b6a1a8b256d15469760d077ebede631ce689,70b2b6a,liuxiaoyu,45345701+MisterRaindrop@users.noreply.github.com,2026-10-09T22:25:35+08:00,GitHub,noreply@github.com,2026-10-09T22:25:35+08:00,feat(hive): add Iceberg-to-HMS schema and record conversion helpers (#904),,dab8664f8650bbe65f4081da7895dff487a8be41,904,false,,10,1015,11,cmake_modules; src,54,6,60,base; feature/api verb; medium file count; large churn; multi-area change; has PR number; LanceDB similarity 0.18,GCP: Add scheduled refresh for storage credentials held by GCSFileIO,- feat(hive): add Iceberg-to-HMS schema and record conversion helpers (#904) (Thanks liuxiaoyu!)
+apache/iceberg-cpp,dab8664f8650bbe65f4081da7895dff487a8be41,dab8664,Ping Liu,155605620+PingLiuPing@users.noreply.github.com,2026-10-09T19:30:22+08:00,GitHub,noreply@github.com,2026-10-09T19:30:22+08:00,feat: make public headers consumable as C++20 in compat mode (#936),"Enable C++20 consumers to include and use iceberg-cpp’s installed public headers when the library is built with ICEBERG_CXX20_COMPAT=ON, while keeping iceberg-cpp implementation code and internal workflows on C++23. C++23 remains the default public API.
+
+Restore the vendored iceberg::expected backport — brings back src/iceberg/compat/expected.h from #40 (removed by [#139](https://github.com/apache/iceberg-cpp/pull/139)), with its test and LICENSE entry. unexpected's comparison operators now go through error().
+
+cpp20_compatibility_test compiles all public headers as C++20, and the C++20 example links against an installed compatibility package.
+
+Fix #928",fa29f665641703dd793553e174afdcf5529bd414,936,false,,73,4740,196,.github; .pre-commit-config.yaml; CMakeLists.txt; LICENSE; README.md; ci; cmake_modules; example; mkdocs; src,53,7,60,base; large file count; large churn; multi-area change; release/security/notice signal; has PR number; LanceDB similarity 0.22,Spark 4.1: Introduce modes in SparkWriteBuilder,- feat: make public headers consumable as C++20 in compat mode (#936) (Thanks Ping Liu!)
+apache/iceberg-cpp,1b6d6a3f85bf9d8f0ffcbe59a67e59310bac6580,1b6d6a3,Xinli Shang,xinlishang@gmail.com,2026-10-15T13:32:26+09:00,GitHub,noreply@github.com,2026-10-15T12:32:26+08:00,build: enable Parquet modular encryption and zstd in vendored Arrow (#989),"Part of #988.
+
+Adds the `ICEBERG_ENCRYPTION` CMake option (default on), which builds the vendored Arrow with Parquet modular encryption and zstd and links OpenSSL into the bundle library. This makes the crypto available for the following table encryption steps; there is no behavior change for tables.
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",26ae9eab89d809a0861dfcef61ed6dc10f2b30bb,989,false,Claude Opus 5.5,11,180,12,.github; CMakeLists.txt; cmake_modules; src,54,3,57,base; feature/api verb; strategic: encryption; medium file count; multi-area change; co-authored; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Flink: Support UUID type in Avro and Parquet readers and writers,- build: enable Parquet modular encryption and zstd in vendored Arrow (#989) (Thanks Xinli Shang and Claude Opus 5.5!)
+apache/iceberg-cpp,0a22087d6fae7b26a6dacd9a64e3ef93239700ea,0a22087,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-10-11T07:54:45-07:00,GitHub,noreply@github.com,2026-10-11T22:54:45+08:00,feat(serde): support standalone FileScanTask JSON in core (#939),,87ed9632fda681fdfaa9d884a0ce47942aff3e56,939,false,,6,851,68,src,45,10,55,base; feature/api verb; medium file count; medium churn; has PR number; LanceDB similarity 0.33,Core: Prevent exceptions in ExpressionUtil for unpartitioned tables,- feat(serde): support standalone FileScanTask JSON in core (#939) (Thanks kamcheungting-db!)
+apache/iceberg-cpp,44e29e109e461e7c9069855c9a90442002580d23,44e29e1,Xinli Shang,xinlishang@gmail.com,2026-10-11T09:30:30+09:00,GitHub,noreply@github.com,2026-10-11T08:30:30+08:00,feat: add CherryPickOperation and wire SnapshotManager::Cherrypick (#926),"Adds `CherryPickOperation` and implements `SnapshotManager::Cherrypick()`, which was a TODO stub.
+
+Follows Java's `CherryPickOperation`: appends re-apply their added files, dynamic overwrites (`replace-partitions`) re-apply adds and deletes and are rejected if a replaced partition changed, and anything else can only be fast-forward. Records `source-snapshot-id` and `published-wap-id`, and rejects a WAP id that was already published.
+
+Like Java, the operation is reachable only through `Transaction`, not `Table`.
+
+Fast-forwards also follow Java: `Apply()` returns the picked snapshot itself when it is a child of the current state, so no new snapshot is created. Because that decision is re-evaluated on every apply, a commit retry against moved metadata replays the pick on top of the new state instead of being rejected.
+
+Tests ported from Java `TestSnapshotManager` and `TestWapWorkflow`, plus regression coverage for commit retries and the fast-forward/replay transitions.
+
+Part of #637.",a88f88a0ba5a3ce4d1b6cd1876483a668d8cf871,926,false,,14,1302,8,src,49,6,55,base; feature/api verb; medium file count; large churn; has PR number; LanceDB similarity 0.19,Add idempotency adapter and E2E coverage,- feat: add CherryPickOperation and wire SnapshotManager::Cherrypick (#926) (Thanks Xinli Shang!)
+apache/iceberg-cpp,5a9350342b04a102f69aa8f626ca624072f69098,5a93503,advancedxy,807537+advancedxy@users.noreply.github.com,2026-10-15T14:18:41+08:00,GitHub,noreply@github.com,2026-10-15T14:18:41+08:00,feat(parquet): add row number reader for selected row groups (#1006),,f8eca4faae2c8fcbc6484fbfa476254b851cc2d7,1006,false,,13,755,73,src,45,9,54,base; feature/api verb; medium file count; medium churn; has PR number; LanceDB similarity 0.30,Add TCK tests for Schema Evolution in BaseFormatModelTests,- feat(parquet): add row number reader for selected row groups (#1006) (Thanks advancedxy!)
+apache/iceberg-cpp,504542718687f097c9b3e0bd65b804c85bbd6e92,5045427,Gang Wu,ustcwg@gmail.com,2026-10-23T15:44:04+08:00,GitHub,noreply@github.com,2026-10-23T15:44:04+08:00,refactor(auth): refresh OAuth2 tokens on a caller-provided executor (#1033),"Replace TokenRefreshScheduler with an internal ScheduledExecutor using
+one process-wide timer. Pass a borrowed auth executor through
+RestCatalog and AuthManager.
+
+Use RetryRunner for HTTP retries within each refresh task, matching
+Java's retry settings. Stop refreshing when submission fails.
+
+Cancel pending refreshes and wait for active refreshes when closing
+the session.",0aaed8d5236cf197590f86a1c854fb625e71c7fa,1033,false,,25,962,511,src,48,5,53,base; strategic: catalog; large file count; large churn; has PR number; LanceDB similarity 0.17,Fix NPE in `ParquetAvroWriter` when schema contains variant type,- refactor(auth): refresh OAuth2 tokens on a caller-provided executor (#1033) (Thanks Gang Wu!)
+apache/iceberg-cpp,62c5c2f81b1d31622e343890b4cd0ba7d2a9eca9,62c5c2f,Manu Zhang,OwenZhang1990@gmail.com,2026-10-22T20:46:12+08:00,GitHub,noreply@github.com,2026-10-22T20:46:12+08:00,fix(parquet): validate geospatial projection parameters (#1050),"Reject incompatible geometry/geography CRS and geography edge algorithms during projection. Resolve omitted Parquet CRS to OGC:CRS84 and include the field path in mismatch errors.
+
+Extract common CRS normalization, parameter comparison, and mismatch reporting into a helper used by geometry and geography projection.
+
+Co-authored-by: Codex <codex@openai.com>",48d0a5f17c959f7f0290527992728280013bc241,1050,false,Codex,2,138,10,src,41,9,50,"base; fix; community signal: geography, geometry, geospatial; co-authored; has PR number; LanceDB similarity 0.31",Bump to Parquet 1.17.0,- fix(parquet): validate geospatial projection parameters (#1050) (Thanks Manu Zhang!)
+apache/iceberg-cpp,059a116435698db0397594abf35c104331f8a234,059a116,lishuxu,lishuxu@gmail.com,2026-10-19T13:05:41+08:00,GitHub,noreply@github.com,2026-10-19T13:05:41+08:00,fix(rest): do not follow HTTP redirects in HttpClient (#1024),"Signed requests are bound to the exact request URL and cannot be
+transparently re-signed for a redirect target, and custom headers set
+on the request are forwarded verbatim when cpr follows a redirect.
+Disable redirect following for all HttpClient requests so that a 3xx
+response is surfaced to the caller as an error.",20f2407105d1a918e7084daf0e224d3497c4af91,1024,false,,2,211,8,src,39,7,46,base; fix; important area: rest; medium churn; has PR number; LanceDB similarity 0.24,"API, Spark: Optimize NOT IN and != predicate evaluation for fields containing a single-value <Joy Haldar>",- fix(rest): do not follow HTTP redirects in HttpClient (#1024) (Thanks lishuxu!)
+apache/iceberg-cpp,39c04b908d4d02112d4bea7312ad10207e317562,39c04b9,Zehua Zou,zehuazou2000@gmail.com,2026-10-10T10:49:23+08:00,GitHub,noreply@github.com,2026-10-10T10:49:23+08:00,refactor: simplify src/iceberg/manifest/manifest_group.cc (#952),,5a9d91a399f00a691fb2498720414c0e455d967b,952,false,,3,332,265,src,36,9,45,base; strategic: manifest; medium churn; has PR number; LanceDB similarity 0.29,Include key metadata in manifest tables (Spark 4.1),- refactor: simplify src/iceberg/manifest/manifest_group.cc (#952) (Thanks Zehua Zou!)
+apache/iceberg-cpp,e1633ad5667f9933c0876bdcf2402ec9657814f3,e1633ad,Haoxiang Meng,52441206+fairytale0828@users.noreply.github.com,2026-10-19T15:22:54+08:00,GitHub,noreply@github.com,2026-10-19T15:22:54+08:00,fix: preserve list types for empty Parquet splits (#1040),"Use Arrow's record batch reader for empty splits so schema alignment preserves configured and stored list types. Add regression tests for empty-split schema consistency and end-of-stream behavior.
+
+Co-authored-by: kiwimeng <kiwimeng@tencent.com>",059a116435698db0397594abf35c104331f8a234,1040,false,kiwimeng,2,153,23,src,35,7,42,base; fix; co-authored; correctness signal; has PR number; LanceDB similarity 0.25,Flink: Support UUID type in Avro and Parquet readers and writers,- fix: preserve list types for empty Parquet splits (#1040) (Thanks Haoxiang Meng and kiwimeng!)
+apache/iceberg-cpp,c712948f8cd29e14a3d83ae7070b3724579d34ac,c712948,Manu Zhang,OwenZhang1990@gmail.com,2026-10-11T21:19:38+08:00,GitHub,noreply@github.com,2026-10-11T21:19:38+08:00,refactor: move each TableScan subclass to its own file (#994),"Move DataTableScan, IncrementalAppendScan and IncrementalChangelogScan
+into data_table_scan.{h,cc}, incremental_append_scan.{h,cc} and
+incremental_changelog_scan.{h,cc}. table_scan.{h,cc} keep TableScan,
+IncrementalScan, TableScanBuilder, the scan task types and
+TableScanContext.
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",ecf36247c6abbfaee591a0c89f8c5055344e3a1b,994,false,Claude Opus 5.5,16,731,487,example; src,32,9,41,base; medium file count; large churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.29,Core: Fix BinPackRewriteFilePlanner producing incorrect output file count with max-files-to-rewrite,- refactor: move each TableScan subclass to its own file (#994) (Thanks Manu Zhang and Claude Opus 5.5!)
+apache/iceberg-cpp,79fdb86853450397f64a4bc22ad93d1cf0eb44c9,79fdb86,Jiajia Li,plusplusjiajia@alibaba-inc.com,2026-10-08T23:46:13+08:00,GitHub,noreply@github.com,2026-10-08T23:46:13+08:00,feat(rest): load table credentials from the LoadCredentials endpoint (#899),,85f8a840083e2c5123a365ee55533bb50c390f1c,899,false,,14,362,29,src,35,6,41,base; important area: rest; medium file count; medium churn; has PR number; LanceDB similarity 0.20,REST Spec: Add unregister table endpoint,- feat(rest): load table credentials from the LoadCredentials endpoint (#899) (Thanks Jiajia Li!)
+apache/iceberg-cpp,db796cbf5d51bd74aa1cfba7647eae748d91ff05,db796cb,Manu Zhang,OwenZhang1990@gmail.com,2026-10-13T14:48:15+08:00,GitHub,noreply@github.com,2026-10-13T14:48:15+08:00,fix: preserve partition types after source columns are dropped (#999),Co-authored-by: Codex <codex@openai.com>,f799dcbc41a19f589123a4f5966075503347a49a,999,false,Codex,2,12,10,src,35,5,40,base; fix; co-authored; correctness signal; has PR number; LanceDB similarity 0.16,GCP: Add scheduled refresh for storage credentials held by GCSFileIO,- fix: preserve partition types after source columns are dropped (#999) (Thanks Manu Zhang!)
+apache/iceberg-cpp,8e35d0560419be6b422dfa95c74289a172e21373,8e35d05,Manu Zhang,OwenZhang1990@gmail.com,2026-10-21T15:31:32+08:00,GitHub,noreply@github.com,2026-10-21T15:31:32+08:00,fix: qualify Iceberg names in public error macros (#1026),"ICEBERG_RETURN_UNEXPECTED, and through it ICEBERG_ASSIGN_OR_RAISE, named
+Error without its namespace. ICEBERG_PRECHECK and ICEBERG_CHECK did the
+same with InvalidArgument and ValidationFailed, and the ICEBERG_BUILDER_*
+macros with ErrorKind. Those names resolve only inside namespace iceberg,
+so code that includes the installed headers could not use the macros.
+
+Qualify them with ::iceberg::, as the logging macros already do, and use
+::iceberg:: in the exception macros as well.
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",7f8009f88372a6adc950fb0ae6457e50273c2aa1,1026,false,Claude Opus 5.5,5,173,34,src,31,8,39,base; fix; medium file count; medium churn; co-authored; has PR number; LanceDB similarity 0.25,Flink: Support UUID type in Avro and Parquet readers and writers,- fix: qualify Iceberg names in public error macros (#1026) (Thanks Manu Zhang and Claude Opus 5.5!)
+apache/iceberg-cpp,66d7ef5c75db7fbdb710d115a5ad52fc12eb677c,66d7ef5,advancedxy,807537+advancedxy@users.noreply.github.com,2026-10-10T13:51:50+08:00,GitHub,noreply@github.com,2026-10-10T13:51:50+08:00,fix: respect nullability in nested struct accessors (#967),,39c04b908d4d02112d4bea7312ad10207e317562,967,false,,5,235,30,src,28,7,35,base; fix; medium file count; medium churn; has PR number; LanceDB similarity 0.22,Core: Fix rewriting delete manifests in RewriteTablePathUtil,- fix: respect nullability in nested struct accessors (#967) (Thanks advancedxy!)
+apache/iceberg-cpp,48d0a5f17c959f7f0290527992728280013bc241,48d0a5f,Haoxiang Meng,52441206+fairytale0828@users.noreply.github.com,2026-10-22T14:56:40+08:00,GitHub,noreply@github.com,2026-10-22T14:56:40+08:00,feat(parquet): apply name mapping to files without field IDs (#1044),Co-authored-by: kiwimeng <kiwimeng@tencent.com>,041459e4d092c82c2fec9a8c3601fbddc12a561b,1044,false,kiwimeng,5,361,8,src,23,8,31,base; medium file count; medium churn; co-authored; has PR number; LanceDB similarity 0.26,OpenAPI: Add CatalogObjectIdentifier schema,- feat(parquet): apply name mapping to files without field IDs (#1044) (Thanks Haoxiang Meng and kiwimeng!)
+apache/iceberg-cpp,f799dcbc41a19f589123a4f5966075503347a49a,f799dcb,YinZheng-Sun,57469177+YinZheng-Sun@users.noreply.github.com,2026-10-13T10:36:43+08:00,GitHub,noreply@github.com,2026-10-13T10:36:43+08:00,fix(expression): treat constants as neutral in IsBoundVisitor (#1004),"AlwaysTrue/AlwaysFalse no longer make IsBoundVisitor fail. Constants contain no references and are now neutral when combining binding states, so And(True, unbound) is unbound and And(True, bound) is bound. Mixing bound and unbound predicates is rejected with an error. This follows Java's IsBoundVisitor.
+
+Co-authored-by: yinzhengsun <yinzhengsun@tencent.com>",7543e8042180080d34b5ee44a6d4c18b86e47ac1,1004,false,yinzhengsun,3,98,38,src,23,8,31,base; fix; co-authored; has PR number; LanceDB similarity 0.27,Flink: Support UUID type in Avro and Parquet readers and writers,- fix(expression): treat constants as neutral in IsBoundVisitor (#1004) (Thanks YinZheng-Sun and yinzhengsun!)
+apache/iceberg-cpp,08d2f863b3c921674c8cca9b532c84143d05619b,08d2f86,YinZheng-Sun,57469177+YinZheng-Sun@users.noreply.github.com,2026-10-21T15:47:42+08:00,GitHub,noreply@github.com,2026-10-21T15:47:42+08:00,fix(row): apply array offsets in ArrowArray wrappers (#1039),"ArrowArrayStructLike, ArrowArrayArrayLike and ArrowArrayMapLike ignored the
+offset of the wrapped ArrowArray, so sliced inputs returned wrong rows:
+
+- Struct children are not shifted by the parent's offset in the Arrow C data
+  interface, so GetField must add the struct's own offset.
+- ArrowArrayViewListChildOffset and the raw map offsets buffer are indexed
+  without the array's offset, so list/map rows must add it before lookup.
+- Map key/value children are not shifted by the entries struct's offset.
+
+Add tests for sliced struct, list and map arrays.
+
+Co-authored-by: yinzhengsun <yinzhengsun@tencent.com>",8e35d0560419be6b422dfa95c74289a172e21373,1039,false,yinzhengsun,2,133,7,src,23,7,30,base; fix; co-authored; has PR number; LanceDB similarity 0.24,Core: Fix data loss in partial variant shredding,- fix(row): apply array offsets in ArrowArray wrappers (#1039) (Thanks YinZheng-Sun and yinzhengsun!)
+apache/iceberg-cpp,90c93405ff09bde5395b5e69ddf8786abe81f955,90c9340,lishuxu,lishuxu@gmail.com,2026-10-20T08:44:53+08:00,GitHub,noreply@github.com,2026-10-20T08:44:53+08:00,fix(json): limit nesting depth of parsed JSON documents (#1025),"Type, name-mapping and expression parsers walk parsed JSON recursively,
+so a deeply nested document could exhaust the stack. Check the nesting
+depth of objects and arrays iteratively right after parsing in
+FromJsonString and FileMetadataFromJsonString, and reject documents
+nested deeper than 200 levels, matching the default limit of
+Jackson's StreamReadConstraints.",e1633ad5667f9933c0876bdcf2402ec9657814f3,1025,false,,5,68,13,src,24,6,30,base; fix; medium file count; has PR number; LanceDB similarity 0.19,Flink: Support UUID type in Avro and Parquet readers and writers,- fix(json): limit nesting depth of parsed JSON documents (#1025) (Thanks lishuxu!)
+apache/iceberg-cpp,20f2407105d1a918e7084daf0e224d3497c4af91,20f2407,lishuxu,lishuxu@gmail.com,2026-10-19T11:26:47+08:00,GitHub,noreply@github.com,2026-10-19T11:26:47+08:00,fix(json): omit JSON values from parse errors (#1003),"Malformed REST responses and metadata can produce parse errors containing entire JSON documents or raw field values. Report field names, JSON types, and structural reasons instead, and report only the input byte count when JSON parsing fails.
+
+The shared helpers also omit underlying exception text. Add regression coverage for REST table responses, OAuth token responses, and malformed JSON, and update existing assertions to use the new diagnostics. Successful parsing behavior is unchanged.",6b7e5ac8805a657534f83591121805972ca9bc06,1003,false,,4,195,98,src,24,6,30,base; fix; medium churn; has PR number; LanceDB similarity 0.19,Website: remove duplicated entries from search,- fix(json): omit JSON values from parse errors (#1003) (Thanks lishuxu!)
+apache/iceberg-cpp,87ed9632fda681fdfaa9d884a0ce47942aff3e56,87ed963,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-10-11T06:55:34-07:00,GitHub,noreply@github.com,2026-10-11T21:55:34+08:00,fix(serde): make DataFile JSON compatible with Java Iceberg (#975),,ed6608de5d3095550dd1631d9d0a4073b3034e1e,975,false,,3,470,52,src,24,6,30,base; fix; medium churn; has PR number; LanceDB similarity 0.19,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- fix(serde): make DataFile JSON compatible with Java Iceberg (#975) (Thanks kamcheungting-db!)
+apache/iceberg-cpp,0919f96b042e0fb832578d5eeb35574d69f55e4b,0919f96,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-10-11T06:05:56-07:00,GitHub,noreply@github.com,2026-10-11T21:05:56+08:00,refactor(serde): move DataFile JSON handling from REST to core (#974),,44e29e109e461e7c9069855c9a90442002580d23,974,false,,6,535,484,src,24,6,30,base; medium file count; large churn; has PR number; LanceDB similarity 0.19,Core: Fix metadata table scans with useRef by preserving metadata schema,- refactor(serde): move DataFile JSON handling from REST to core (#974) (Thanks kamcheungting-db!)
+apache/iceberg-cpp,7f8009f88372a6adc950fb0ae6457e50273c2aa1,7f8009f,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-10-20T20:22:01-07:00,GitHub,noreply@github.com,2026-10-21T11:22:01+08:00,feat(scan): read Parquet files by task range (#1002),,90c93405ff09bde5395b5e69ddf8786abe81f955,1002,false,,10,713,70,src,20,9,29,base; medium file count; medium churn; has PR number; LanceDB similarity 0.30,Bump to Parquet 1.17.0,- feat(scan): read Parquet files by task range (#1002) (Thanks kamcheungting-db!)
+apache/iceberg-cpp,cbca7d268f5a96848eb40de5fa5bfe8c763e1e98,cbca7d2,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-10-11T08:24:58-07:00,GitHub,noreply@github.com,2026-10-11T23:24:58+08:00,fix(serde): reject invalid schema and partition IDs in JSON (#940),,0a22087d6fae7b26a6dacd9a64e3ef93239700ea,940,false,,4,190,17,src,24,5,29,base; fix; medium churn; has PR number; LanceDB similarity 0.18,Fix NPE in `ParquetAvroWriter` when schema contains variant type,- fix(serde): reject invalid schema and partition IDs in JSON (#940) (Thanks kamcheungting-db!)
+apache/iceberg-cpp,5a9d91a399f00a691fb2498720414c0e455d967b,5a9d91a,rohanjain101,38412262+rohanjain101@users.noreply.github.com,2026-10-09T07:28:30-07:00,GitHub,noreply@github.com,2026-10-09T22:28:30+08:00,fix: move int128_t and uint128_t aliases into the iceberg namespace (#972),"The aliases were declared at global scope in the public header iceberg/util/int128.h. Any consumer that includes an iceberg header then gets global int128_t and uint128_t names, which conflict with other libraries or application code that define the same names. All uses in the project are already inside namespace iceberg, so this change is source compatible within the project.
+
+Co-authored-by: Rohan Jain <rohanjain@microsoft.com>",70b2b6a1a8b256d15469760d077ebede631ce689,972,false,Rohan Jain,1,10,3,src,23,6,29,base; fix; co-authored; has PR number; LanceDB similarity 0.21,Flink: Add the possibility to use Coordinator Lock when using Flink SQL,- fix: move int128_t and uint128_t aliases into the iceberg namespace (#972) (Thanks rohanjain101 and Rohan Jain!)
+apache/iceberg-cpp,29900cae9a6a5c110016b6c3e9dca8d14d6beef4,29900ca,YangJie,yangjie01@baidu.com,2026-10-21T12:03:14-04:00,GitHub,noreply@github.com,2026-10-22T00:03:14+08:00,fix(metadata): drop removed schema ids from the builder's schema index (#1012),"RemoveSchemas filtered metadata_.schemas but left schemas_by_id_
+untouched, so within one builder session the removed ids stayed
+resolvable: SetCurrentSchema on a removed id passed its existence
+check and Build() emitted metadata whose current-schema-id dangles
+outside schemas, and a later AddSchema reuse of the id took the
+update path against a schema the metadata no longer contains. Erase
+the removed ids from the index alongside the vector filter.",c6ccd05f310f9d3088024032885a03c1eb0d5ee5,1012,false,,3,85,0,src,20,8,28,base; fix; has PR number; LanceDB similarity 0.28,OpenAPI: Promote the S3 signing endpoint to the main spec,- fix(metadata): drop removed schema ids from the builder's schema index (#1012) (Thanks YangJie!)
+apache/iceberg-cpp,768ac65919ce7d1bc8dc51371f7b87f045d882c2,768ac65,wzhuo,wngzhuo@gmail.com,2026-10-15T16:42:39+08:00,GitHub,noreply@github.com,2026-10-15T16:42:39+08:00,fix(bucket): reject oversized input in BucketUtils::HashBytes (#961),"* fix(bucket): reject oversized input in BucketUtils::HashBytes
+
+HashBytes passed a size_t length straight to the vendored
+MurmurHash3_x86_32, whose length parameter is a signed 32-bit int. For
+inputs of 2^31 bytes or more the length wrapped negative, making the
+hash loop read far out of bounds (and nblocks * 4 signed-overflow UB);
+for inputs above 2^32 bytes a silently wrong prefix was hashed, breaking
+the bucket contract against other implementations.
+
+Every literal hash path (kDecimal/kString/kUuid/kBinary/kFixed) funnels
+through this one function, so guard it there: reject lengths above
+INT32_MAX with ICEBERG_CHECK_OR_DIE before the narrowing cast. The bound
+matches the limit implied by iceberg-java's byte arrays, so no legal
+bucket input is rejected. The vendored murmurhash3_internal.cc is left
+untouched (tagged third-party code) and the now-checked narrowing is
+made explicit with static_cast<int>.
+
+Add BucketUtilsTest.HashBytesRejectsOversizedInput, which fabricates an
+oversized span over a 1-byte buffer (never dereferenced, so no 2 GiB
+allocation is needed in CI). Without the guard the test segfaults.
+
+* test(bucket): guard raw byte input so the oversized-length test is well-formed
+
+The regression test built a std::span over INT32_MAX + 1 elements of a
+one-byte object, which violates the std::span constructor precondition and
+is undefined behavior even though the data is never read.
+
+Move the length guard into an internal HashBytes(const uint8_t*, size_t)
+overload and keep BucketUtils::HashBytes(std::span) as a thin wrapper, so the
+test can pass a null pointer with the oversized length instead.
+
+Also document that HashBytes and BucketIndex throw IcebergError for inputs
+larger than INT32_MAX, which the public headers did not mention.
+
+---------
+
+Co-authored-by: Gang Wu <ustcwg@gmail.com>",d98d851873bd6bd9a456ae7f58fb430da2bceb6e,961,false,Gang Wu,4,92,1,src,23,5,28,base; fix; co-authored; has PR number; LanceDB similarity 0.18,Fix incorrect partition bounds calculation in manifest on deletion,- fix(bucket): reject oversized input in BucketUtils::HashBytes (#961) (Thanks wzhuo and Gang Wu!)
+apache/iceberg-cpp,a036fae8ec947b6ea8da1cae36a666add5eea461,a036fae,Gang Wu,ustcwg@gmail.com,2026-10-13T17:57:12+08:00,GitHub,noreply@github.com,2026-10-13T17:57:12+08:00,fix: respect ancestor nullability when folding IS NULL/NOT NULL predicates (#995),"A required field nested in an optional struct, list, or map can be null when its
+parent is null, so IS NULL and NOT NULL must not be folded for it. Only fold
+when the field and all of its ancestors are required, matching Java's
+UnboundPredicate#bindUnaryOperation.",12a16bd592bcd841654a23ed8225dcc2caf807d3,995,false,,3,81,7,src,20,8,28,base; fix; has PR number; LanceDB similarity 0.27,Core: populate manifest created/replaced/kept count when commit a snapshot,- fix: respect ancestor nullability when folding IS NULL/NOT NULL predicates (#995) (Thanks Gang Wu!)
+apache/iceberg-cpp,de7c9ce0715c5846ab5ce3cbcaa6d90c199a5ba1,de7c9ce,YangJie,yangjie01@baidu.com,2026-10-13T03:16:52-04:00,GitHub,noreply@github.com,2026-10-13T15:16:52+08:00,fix(expression): treat COUNT(*) as referencing no fields in GetReferencedFieldIds (#981),"ReferenceVisitor::Aggregate unconditionally called
+aggregate->reference()->field_id(), but BoundAggregate::reference()
+returns nullptr for aggregates without a term such as COUNT(*), so
+GetReferencedFieldIds on a bound count(*) dereferenced null and
+crashed. Skip the insert when there is no reference; the aggregate
+then correctly contributes no field ids, matching the Java reference.",bbc235910706c44dcee69202d3d8c165cede6992,981,false,,2,23,1,src,20,8,28,base; fix; has PR number; LanceDB similarity 0.27,Core: Detect and merge duplicate DVs for a data file and merge them before committing,- fix(expression): treat COUNT(*) as referencing no fields in GetReferencedFieldIds (#981) (Thanks YangJie!)
+apache/iceberg-cpp,1b1232bdd0379ee10039dae3170df41ca93181fe,1b1232b,Guotao Yu,guotao.yugt@gmail.com,2026-10-22T11:01:13+08:00,GitHub,noreply@github.com,2026-10-22T11:01:13+08:00,fix(avro): key projection cache on Avro node to avoid OOB read (#1022),"The avro-to-projection cache was keyed on projections.data() only. All
+empty-struct projections share the same (null) data(), so a second empty
+struct with more Avro fields reused a cached vector sized for the first
+and read out of bounds. Include the Avro node in the key and reject
+out-of-range projected field indexes.",5107eda08bdea434ede4efee66a8e5bc7732cc22,1022,false,,4,128,9,src,20,7,27,base; fix; has PR number; LanceDB similarity 0.24,"CI: Make CVE scan blocking on PRs, informational on main",- fix(avro): key projection cache on Avro node to avoid OOB read (#1022) (Thanks Guotao Yu!)
+apache/iceberg-cpp,84fb526b312c03021c8e0952207d836039342998,84fb526,Gang Wu,ustcwg@gmail.com,2026-10-10T17:43:36+08:00,GitHub,noreply@github.com,2026-10-10T17:43:36+08:00,fix: prevent copying and moving StructLikeAccessor (#993),,b409051bd019ea8afb92e2a7ea280fcc5ff03e85,993,false,,1,6,0,src,20,7,27,base; fix; has PR number; LanceDB similarity 0.24,GCP: Add scheduled refresh for storage credentials held by GCSFileIO,- fix: prevent copying and moving StructLikeAccessor (#993) (Thanks Gang Wu!)
+apache/iceberg-cpp,b409051bd019ea8afb92e2a7ea280fcc5ff03e85,b409051,YinZheng-Sun,57469177+YinZheng-Sun@users.noreply.github.com,2026-10-10T14:34:05+08:00,GitHub,noreply@github.com,2026-10-10T14:34:05+08:00,fix(parquet): accept Decimal32 and Decimal64 during schema projection (#992),,66d7ef5c75db7fbdb710d115a5ad52fc12eb677c,992,false,,3,82,2,src,20,7,27,base; fix; has PR number; LanceDB similarity 0.22,Flink: Support UUID type in Avro and Parquet readers and writers,- fix(parquet): accept Decimal32 and Decimal64 during schema projection (#992) (Thanks YinZheng-Sun!)
+apache/iceberg-cpp,041459e4d092c82c2fec9a8c3601fbddc12a561b,041459e,Manu Zhang,OwenZhang1990@gmail.com,2026-10-22T12:01:07+08:00,GitHub,noreply@github.com,2026-10-22T12:01:07+08:00,ci: use ASF-approved sccache action v0.0.11 (#1051),Co-authored-by: Codex <codex@openai.com>,49f8a8778571789a076b1501950fbd2115c34bb5,1051,false,Codex,1,1,1,.github,15,11,26,base; co-authored; has PR number; LanceDB similarity 0.37,Add idempotency adapter and E2E coverage,- ci: use ASF-approved sccache action v0.0.11 (#1051) (Thanks Manu Zhang!)
+apache/iceberg-cpp,ed6608de5d3095550dd1631d9d0a4073b3034e1e,ed6608d,YangJie,yangjie01@baidu.com,2026-10-11T09:21:45-04:00,GitHub,noreply@github.com,2026-10-11T21:21:45+08:00,fix(json): return a parse error for a list type missing 'element' (#997),"ListTypeFromJson read the nested element type with the raw const
+json[kElement] accessor, which is undefined behavior (an assertion in
+debug nlohmann builds) when a list type object is missing the required
+'element' key. Use GetJsonValue<nlohmann::json>(json, kElement) like
+the sibling MapTypeFromJson does, so malformed schema or table-metadata
+JSON yields JsonParseError instead of asserting.",c712948f8cd29e14a3d83ae7070b3724579d34ac,997,false,,2,13,1,src,20,6,26,base; fix; has PR number; LanceDB similarity 0.20,Site: Updates for 1.10.1 Release <Huaxin Gao>,- fix(json): return a parse error for a list type missing 'element' (#997) (Thanks YangJie!)
+apache/iceberg-cpp,ecf36247c6abbfaee591a0c89f8c5055344e3a1b,ecf3624,YangJie,yangjie01@baidu.com,2026-10-11T09:16:30-04:00,GitHub,noreply@github.com,2026-10-11T21:16:30+08:00,fix(expression): return a parse error for non-string type nodes in expression JSON (#982),"IsTransformTerm, NamedReferenceFromJson, both LiteralFromJson
+overloads, and ExpressionFromJson read the 'type' discriminator with
+json[kType].get<std::string>() guarded only by contains(), so a
+present-but-non-string 'type' (e.g. a number) threw an uncaught
+nlohmann type_error out of the Result-returning parse API. Check
+is_string() first, matching the sibling OperationTypeFromJson guard,
+so malformed expression JSON yields JsonParseError instead of an
+escaped exception.",0919f96b042e0fb832578d5eeb35574d69f55e4b,982,false,,2,34,6,src,20,6,26,base; fix; has PR number; LanceDB similarity 0.21,"API, Spark: Optimize NOT IN and != predicate evaluation for fields containing a single-value <Joy Haldar>",- fix(expression): return a parse error for non-string type nodes in expression JSON (#982) (Thanks YangJie!)
+apache/iceberg-cpp,0aaed8d5236cf197590f86a1c854fb625e71c7fa,0aaed8d,Junwang Zhao,zhjwpku@gmail.com,2026-10-23T15:43:42+08:00,GitHub,noreply@github.com,2026-10-23T15:43:42+08:00,refactor: keep snapshot update operation hooks protected (#1049),"Align operation override visibility across merge append, delete, overwrite, replace partitions, rewrite files, and row delta updates. Validate operation classification through committed snapshot summaries in the existing tests.",7ed8202351a0f213fba42e5de6d1777b67c4f1e0,1049,false,,8,27,14,src,16,7,23,base; medium file count; has PR number; LanceDB similarity 0.23,Core: Skip unnecessary metadata refresh when producing snapshot event after merge append,- refactor: keep snapshot update operation hooks protected (#1049) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,310bb055d8f98e6fe31ea103632eb889b7ebc92b,310bb05,advancedxy,807537+advancedxy@users.noreply.github.com,2026-10-16T14:24:29+08:00,GitHub,noreply@github.com,2026-10-16T14:24:29+08:00,refactor(parquet): simplify row position handling in projections (#1020),,31659e73db59396bf5c8a4086f39e5b235a3bf68,1020,false,,3,57,25,src,12,10,22,base; has PR number; LanceDB similarity 0.34,Fix Internal to Generic conversion of TIMESTAMP_NANO,- refactor(parquet): simplify row position handling in projections (#1020) (Thanks advancedxy!)
+apache/iceberg-cpp,c6ccd05f310f9d3088024032885a03c1eb0d5ee5,c6ccd05,Minh Vu,vuhoangminh97@gmail.com,2026-10-21T17:46:57+02:00,GitHub,noreply@github.com,2026-10-21T23:46:57+08:00,perf(util): encode Base64 in three-byte blocks (#1045),,8698e9351f357d36b33e8e4f39350b11566132d1,1045,false,,2,54,18,src,12,9,21,base; has PR number; LanceDB similarity 0.29,Spark 4.1: Introduce modes in SparkWriteBuilder,- perf(util): encode Base64 in three-byte blocks (#1045) (Thanks Minh Vu!)
+apache/iceberg-cpp,60e67fa2aecf41c3626e26fbc71be6afe5c8ef4a,60e67fa,Gang Wu,ustcwg@gmail.com,2026-10-15T17:47:05+08:00,GitHub,noreply@github.com,2026-10-15T17:47:05+08:00,refactor: guard oversized bucket hash input in BucketIndex (#1023),"BucketUtils::HashBytes still rejects inputs larger than INT32_MAX with an
+IcebergError, but BucketIndex now checks the byte length of string, binary, and
+fixed literals before hashing and returns InvalidArgument instead, so the
+Result-returning entry point no longer throws.
+
+This replaces the internal HashBytes(const uint8_t*, size_t) overload and the
+bucket_util_internal.h header, which existed only so a test could reach the
+guard without materializing an oversized value. That overload, the header, and
+the HashBytesRejectsOversizedInput test are all removed: the guard cannot be
+exercised from a test without either a 2 GiB allocation or an invalid
+std::span.",768ac65919ce7d1bc8dc51371f7b87f045d882c2,1023,false,,4,37,82,src,12,6,18,base; has PR number; LanceDB similarity 0.21,Flink: Support Variant to Flink 2.1,- refactor: guard oversized bucket hash input in BucketIndex (#1023) (Thanks Gang Wu!)
+apache/iceberg-cpp,a88f88a0ba5a3ce4d1b6cd1876483a668d8cf871,a88f88a,Byeonggyu Park,byeonggyu1214@gmail.com,2026-10-10T18:50:41+09:00,GitHub,noreply@github.com,2026-10-10T17:50:41+08:00,feat: fold IS NULL/NOT NULL predicates on unknown type (#983),,84fb526b312c03021c8e0952207d836039342998,983,false,,2,26,2,src,12,6,18,base; has PR number; LanceDB similarity 0.20,"CI: Make CVE scan blocking on PRs, informational on main",- feat: fold IS NULL/NOT NULL predicates on unknown type (#983) (Thanks Byeonggyu Park!)
+apache/iceberg-cpp,274d1bbb4f46114806dc6515b2493483b47b3702,274d1bb,Manu Zhang,OwenZhang1990@gmail.com,2026-10-12T09:57:09+08:00,GitHub,noreply@github.com,2026-10-12T09:57:09+08:00,chore: upgrade CRoaring to 4.7.1 (#1001),"Include the upstream portable IO endian fix and check canonical
+little-endian bitmap bytes when serializing and reading.
+
+Preserve the fixture's embedded zeros and exact wire length while
+satisfying modernize-avoid-c-arrays.",cbca7d268f5a96848eb40de5fa5bfe8c763e1e98,1001,false,,2,23,1,cmake_modules; src,14,3,17,base; multi-area change; correctness signal; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,- chore: upgrade CRoaring to 4.7.1 (#1001) (Thanks Manu Zhang!)
+apache/iceberg-cpp,9f00612448baa13cd852d2aac34487eb6138f30e,9f00612,Guotao Yu,guotao.yugt@gmail.com,2026-10-27T17:23:54+08:00,GitHub,noreply@github.com,2026-10-27T17:23:54+08:00,fix(schema): preserve doc-only schema evolution (#1052),"Compare field documentation during schema equality so metadata deduplication retains doc-only updates. Cover nested fields, metadata round trips, unchanged docs, and historical schema reuse; align existing deserialization expectations with their fixture docs.",e00bc399fc3ad41ef1d270b53851dc13d0e4c0c1,1052,false,,5,125,7,src,12,3,15,base; fix; medium file count; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Core: Fix metadata table scans with useRef by preserving metadata schema,- fix(schema): preserve doc-only schema evolution (#1052) (Thanks Guotao Yu!)
+apache/iceberg-cpp,7ed8202351a0f213fba42e5de6d1777b67c4f1e0,7ed8202,Manu Zhang,OwenZhang1990@gmail.com,2026-10-23T00:04:59+08:00,GitHub,noreply@github.com,2026-10-23T00:04:59+08:00,fix(ci): scope PR tests to relevant workflow changes (#1048),"Skip unrelated GitHub workflow and configuration updates in the general, AWS, SQL catalog, and sanitizer test suites. Keep each suite's own workflow and shared actions as inputs, together with sanitizer suppression files.
+
+Co-authored-by: Codex <codex@openai.com>",62c5c2f81b1d31622e343890b4cd0ba7d2a9eca9,1048,false,Codex,4,46,24,.github,11,3,14,base; fix; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,[SPEC] Add relative paths to v4 spec,- fix(ci): scope PR tests to relevant workflow changes (#1048) (Thanks Manu Zhang!)
+apache/iceberg-cpp,fa29f665641703dd793553e174afdcf5529bd414,fa29f66,rohanjain101,38412262+rohanjain101@users.noreply.github.com,2026-10-08T18:51:02-07:00,GitHub,noreply@github.com,2026-10-09T09:51:02+08:00,fix(cmake): record avro-cpp as system dependency in installed config (#987),"The installed iceberg-config.cmake called find_dependency(Avro), but the package found is avro-cpp, which does not provide an Avro package. Closes #973
+
+Co-authored-by: Rohan Jain <rohanjain@microsoft.com>",79fdb86853450397f64a4bc22ad93d1cf0eb44c9,987,false,Rohan Jain,1,1,1,cmake_modules,8,3,11,base; fix; co-authored; downrank routine build/deps; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,API: Optimize NOT IN and != predicates for single-value partition manifests,- fix(cmake): record avro-cpp as system dependency in installed config (#987) (Thanks rohanjain101 and Rohan Jain!)
+apache/iceberg-cpp,e00bc399fc3ad41ef1d270b53851dc13d0e4c0c1,e00bc39,Junwang Zhao,zhjwpku@gmail.com,2026-10-26T16:00:17+08:00,GitHub,noreply@github.com,2026-10-26T16:00:17+08:00,docs: clarify minimum supported MSVC version (#1061),,30950d7f4691e9fafc9820a9e0025b911564eba2,1061,false,,3,3,3,README.md; mkdocs,5,3,8,base; multi-area change; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.13; capped LanceDB boost for routine/low-signal commit,Add idempotency adapter and E2E coverage,- docs: clarify minimum supported MSVC version (#1061) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,f87954d10c6d9ce61f22dd8fb3b31e525c4e3c1f,f87954d,Manu Zhang,OwenZhang1990@gmail.com,2026-10-15T10:05:18+08:00,GitHub,noreply@github.com,2026-10-15T10:05:18+08:00,chore: upgrade avro to 3a207fa (#1018),Co-authored-by: Codex <codex@openai.com>,ad221b772ccbdeebfe6f01748186d1ff6faef944,1018,false,Codex,1,1,1,cmake_modules,0,3,3,base; co-authored; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,Flink: Dynamic Sink: Add case-insensitive field matching,- chore: upgrade avro to 3a207fa (#1018) (Thanks Manu Zhang!)
+apache/iceberg-cpp,cec3229e784bd3ac1f86771cee8c167f7c490385,cec3229,Raúl Cumplido,raulcd@apache.org,2026-10-17T06:47:17+01:00,GitHub,noreply@github.com,2026-10-17T13:47:17+08:00,build: apply patch on Arrow so it can be used with older versions of CMake (#1029),,0bdf7ce9961d7ef8e1c2b8670ae412e86526c53b,1029,false,,2,51,4,cmake_modules,-3,3,0,base; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,Core: Add test for freshness-aware table loading with lazy snapshot loading,- build: apply patch on Arrow so it can be used with older versions of CMake (#1029) (Thanks Raúl Cumplido!)
+apache/iceberg-cpp,31659e73db59396bf5c8a4086f39e5b235a3bf68,31659e7,Gang Wu,ustcwg@gmail.com,2026-10-16T12:44:10+08:00,GitHub,noreply@github.com,2026-10-16T12:44:10+08:00,build: rename VendoredArrow to Arrow (#1021),,7f247005e3edc5bce30415b6eea4c9c78fadea95,1021,false,,1,7,9,cmake_modules,-3,3,0,base; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,Flink: DynamicSink: Report writer records/bytes send metrics <aiborodin>,- build: rename VendoredArrow to Arrow (#1021) (Thanks Gang Wu!)
+apache/iceberg-cpp,f8eca4faae2c8fcbc6484fbfa476254b851cc2d7,f8eca4f,Gang Wu,ustcwg@gmail.com,2026-10-15T14:12:20+08:00,GitHub,noreply@github.com,2026-10-15T14:12:20+08:00,build: avoid duplicate libraries in the C++20 compatibility test (#1015),,7686cfeae7e735980405b20a2eb7f88b76f0ff6f,1015,false,,1,11,0,src,-7,3,-4,base; fix; downrank docs/tests/benchmarks; downrank routine build/deps; has PR number; LanceDB similarity 0.16; capped LanceDB boost for routine/low-signal commit,Core: Load snapshot after it has been committed to prevent accidental cleanup of files,- build: avoid duplicate libraries in the C++20 compatibility test (#1015) (Thanks Gang Wu!)
+apache/iceberg-cpp,8698e9351f357d36b33e8e4f39350b11566132d1,8698e93,Manu Zhang,OwenZhang1990@gmail.com,2026-10-21T23:25:51+08:00,GitHub,noreply@github.com,2026-10-21T23:25:51+08:00,chore(deps): bump allowlist-check to v1.0.1 (#1047),"Use the commit referenced by the allowlist-check/v1.0.1 tag to avoid the ref-version-mismatch failure in PR #1037.
+
+Co-authored-by: Codex <codex@openai.com>",4f195d0be65dde346802b3a6555bd46eaf344fa2,1047,false,Codex,1,1,1,.github,-45,3,-42,base; co-authored; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.31; capped LanceDB boost for routine/low-signal commit,Bump to Parquet 1.17.0,- chore(deps): bump allowlist-check to v1.0.1 (#1047) (Thanks Manu Zhang!)
+apache/iceberg-cpp,30950d7f4691e9fafc9820a9e0025b911564eba2,30950d7,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-26T15:49:18+08:00,GitHub,noreply@github.com,2026-10-26T15:49:18+08:00,chore(deps): bump zizmorcore/zizmor-action from 0.6.4 to 0.7.1 (#1058),"Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.6.4 to 0.7.1.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/cc914d7f3750a2d13d75c7f184a1060aa0e9d482...85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.7.1
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",92482014f8e25e618f3034cfc269cad2cfddcd8c,1058,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,Add 404 response for REST catalog config endpoint when warehouse is missing,- chore(deps): bump zizmorcore/zizmor-action from 0.6.4 to 0.7.1 (#1058) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,92482014f8e25e618f3034cfc269cad2cfddcd8c,9248201,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-26T11:45:01+08:00,GitHub,noreply@github.com,2026-10-26T11:45:01+08:00,chore(deps): bump the codeql-action group with 2 updates (#1056),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.38.3 to 4.39.0
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/24c54180a607b1449ed407dd24f251e4e9147c8d...6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee)
+
+Updates `github/codeql-action/analyze` from 4.38.3 to 4.39.0
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/24c54180a607b1449ed407dd24f251e4e9147c8d...6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.39.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.39.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",493721da723599c2e5fe271f6f56a43a7cc28126,1056,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#1056) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,493721da723599c2e5fe271f6f56a43a7cc28126,493721d,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-26T11:44:40+08:00,GitHub,noreply@github.com,2026-10-26T11:44:40+08:00,chore(deps): bump apache/infrastructure-actions/allowlist-check from 1.0.1 to 1.0.4 (#1057),"chore(deps): bump apache/infrastructure-actions/allowlist-check
+
+Bumps [apache/infrastructure-actions/allowlist-check](https://github.com/apache/infrastructure-actions) from 1.0.1 to 1.0.4.
+- [Commits](https://github.com/apache/infrastructure-actions/compare/df54e48ff76152790f317934c691cfa7fd7a1a46...47b297bbe90f580139129bee531bd84bd95b7f5d)
+
+---
+updated-dependencies:
+- dependency-name: apache/infrastructure-actions/allowlist-check
+  dependency-version: 1.0.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",504542718687f097c9b3e0bd65b804c85bbd6e92,1057,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- chore(deps): bump apache/infrastructure-actions/allowlist-check from 1.0.1 to 1.0.4 (#1057) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,6b7e5ac8805a657534f83591121805972ca9bc06,6b7e5ac,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-19T09:56:05+08:00,GitHub,noreply@github.com,2026-10-19T09:56:05+08:00,chore(deps): bump actions/download-artifact from 8.0.1 to 8.0.2 (#1038),"Bumps [actions/download-artifact](https://github.com/actions/download-artifact) from 8.0.1 to 8.0.2.
+- [Release notes](https://github.com/actions/download-artifact/releases)
+- [Commits](https://github.com/actions/download-artifact/compare/3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c...9000827ccba6bdab643e8b6fd33ac0654aef8333)
+
+---
+updated-dependencies:
+- dependency-name: actions/download-artifact
+  dependency-version: 8.0.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",1534d5c7c0cceae3046a612f4f1cb3feb3558a13,1038,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Core: Convert metrics to Content Stats,- chore(deps): bump actions/download-artifact from 8.0.1 to 8.0.2 (#1038) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,1534d5c7c0cceae3046a612f4f1cb3feb3558a13,1534d5c,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-19T09:55:45+08:00,GitHub,noreply@github.com,2026-10-19T09:55:45+08:00,chore(deps): bump the codeql-action group with 2 updates (#1035),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.38.2 to 4.38.3
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2...24c54180a607b1449ed407dd24f251e4e9147c8d)
+
+Updates `github/codeql-action/analyze` from 4.38.2 to 4.38.3
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2...24c54180a607b1449ed407dd24f251e4e9147c8d)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.38.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.38.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",cc51b9b796db0870e7e650b129b18bee197819c2,1035,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#1035) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,cc51b9b796db0870e7e650b129b18bee197819c2,cc51b9b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-10-19T09:55:38+08:00,GitHub,noreply@github.com,2026-10-19T09:55:38+08:00,chore(deps): bump actions/upload-artifact from 7.0.1 to 7.0.2 (#1036),"Bumps [actions/upload-artifact](https://github.com/actions/upload-artifact) from 7.0.1 to 7.0.2.
+- [Release notes](https://github.com/actions/upload-artifact/releases)
+- [Commits](https://github.com/actions/upload-artifact/compare/043fb46d1a93c77aae656e7c1c64a875d1fc6a0a...cf430e030ddbb5b0abf93d22962f4752f3646cd9)
+
+---
+updated-dependencies:
+- dependency-name: actions/upload-artifact
+  dependency-version: 7.0.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",72fbb5aef6cc5950107af385fca76b5bef9978aa,1036,false,dependabot[bot],2,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.20; capped LanceDB boost for routine/low-signal commit,Core: Convert metrics to Content Stats,- chore(deps): bump actions/upload-artifact from 7.0.1 to 7.0.2 (#1036) (Thanks dependabot[bot]!)
