@@ -9580,3 +9580,24 @@ apache/iceberg-cpp,f38dfc79bdd4b690b94c49b21000dddf7c285d05,f38dfc7,Junwang Zhao
 Apply the response-side timeout check only while the plan is still submitted. Preserve completed tasks and server failures, and release cleanup for cancelled plans, even when the in-flight poll crosses the waiting budget.
 
 Cover normal and incremental scans across direct, polled, and paginated task responses, including split residual replacement and all polling statuses after the timeout.",83c41e4455ff4bff0b596eb2ebd4d3bc228364e5,1059,false,,2,137,13,src
+apache/iceberg-cpp,748162b3fa0b7a20181fdf86530b6c6c51dbdf91,748162b,YinZheng-Sun,57469177+YinZheng-Sun@users.noreply.github.com,2026-10-29T13:30:06+08:00,GitHub,noreply@github.com,2026-10-29T13:30:06+08:00,feat(parquet): add statistics-based row group filtering (#956),"## What
+
+Adds `ParquetMetricsRowGroupFilter` to evaluate Iceberg predicates against Parquet footer statistics before reading row groups.
+
+Adds tests covering split intersection, non-contiguous row groups, physical row positions, unprojected filter columns, schema evolution, missing statistics, predicate binding, and delete handling.
+
+## Why
+
+The Parquet reader previously selected row groups only by file split. Filter predicates could not eliminate row groups whose footer statistics ruled out matching rows.
+
+## Behavior change
+
+- Enables statistics-based pruning by default through `read.parquet.row-group-filter.enabled`.
+- Retained row groups still require residual predicate evaluation; this does not implement exact row filtering.
+- Physical row positions and row IDs remain correct across pruned row groups, even when a batch spans multiple row groups.
+- Negated range predicates preserve boolean NOT semantics for nulls. Predicate negation adds a null check, and out-of-range comparisons retain null checks when folded.",f38dfc79bdd4b690b94c49b21000dddf7c285d05,956,false,,24,1814,92,src
+apache/iceberg-cpp,df19627a27af737452835c60cfb3bd6faf26699d,df19627,Saurabh,saurabhofficial@hotmail.com,2026-10-29T10:08:40Z,GitHub,noreply@github.com,2026-10-29T18:08:40+08:00,fix(cmake): Serialize test linking on Windows to avoid applocal races (#1064),"vcpkg's post-link z-applocal steps copy DLLs into the shared test directory
+and collide when Ninja links tests in parallel. Link tests one at a time on
+Windows (https://cmake.org/cmake/help/latest/variable/WIN32.html).
+
+Closes #944",748162b3fa0b7a20181fdf86530b6c6c51dbdf91,1064,false,,1,9,0,src

@@ -8538,3 +8538,114 @@ apache/iceberg,e5998eb8c147426397d726a29aa6d2f9185adfb1,e5998eb,Szehon Ho,szehon
 Generated-by: Codex",6275107e38cc87a7d416ef231019ceb51556f196,18667,false,,1,1,1,gradle
 apache/iceberg,b61ef96a34bd1054fca4a705ee73c7567f84781b,b61ef96,zhengxiang378928908-code,zhengxiang378928908@gmail.com,2026-10-28T18:34:53+08:00,GitHub,noreply@github.com,2026-10-28T11:34:53+01:00,Flink: Fix dynamic sink HASH keying of records sent to the table updater (#18602),,e5998eb8c147426397d726a29aa6d2f9185adfb1,18602,false,,4,207,13,flink
 apache/iceberg,e6191b9eda6938bda0fcba63910dc4bc3bf847c5,e6191b9,Anurag Mantripragada,amantripragada@apple.com,2026-10-28T09:37:20-07:00,GitHub,noreply@github.com,2026-10-28T11:37:20-05:00,"Spark 4.0, 4.2: Port MergingSortedRowDataReader to 4.0 and 4.2  (#18492)",,b61ef96a34bd1054fca4a705ee73c7567f84781b,18492,false,,4,2922,0,spark
+apache/iceberg,d5d6bc0faaf8c4aa2ebd3f3a4fcb41b9c8727efb,d5d6bc0,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-10-28T11:58:46-07:00,GitHub,noreply@github.com,2026-10-28T11:58:46-07:00,Spark: Emit geometry bounds in Parquet writers (#18501),,e6191b9eda6938bda0fcba63910dc4bc3bf847c5,18501,false,,4,264,26,spark
+apache/iceberg,9b9be7e62909fe58918ab125997dca92ab473495,9b9be7e,Szehon Ho,szehon.apache@gmail.com,2026-10-28T12:06:32-07:00,GitHub,noreply@github.com,2026-10-28T12:06:32-07:00,Spark: Upgrade to 4.0.5 (#18670),"Use the released maintenance version to include security and correctness fixes.
+
+Generated-by: Codex",d5d6bc0faaf8c4aa2ebd3f3a4fcb41b9c8727efb,18670,false,,1,1,1,gradle
+apache/iceberg,c759fb82db214ff310b6dd1126e485d0b5061df8,c759fb8,Szehon Ho,szehon.apache@gmail.com,2026-10-28T12:07:33-07:00,GitHub,noreply@github.com,2026-10-28T12:07:33-07:00,Spark: Upgrade to 4.2.1 (#18666),"Use the latest Spark 4.2 maintenance release for the integration.
+
+Generated-by: Codex",9b9be7e62909fe58918ab125997dca92ab473495,18666,false,,1,1,1,gradle
+apache/iceberg,339be73d22dbb444b1ea3ad37ea5a9e38d08532d,339be73,Raunaq Morarka,raunaqmorarka@users.noreply.github.com,2026-10-29T01:01:41+05:30,GitHub,noreply@github.com,2026-10-28T20:31:41+01:00,Core: Reduce DeleteFileIndex memory for file-scoped position deletes (#18359),"* Core: Copy file-scoped position deletes without stats in DeleteFileIndex
+
+A position delete whose file_path bounds name a single data file is
+matched by location, so the copy records the data file in
+referencedDataFile and drops column stats.
+
+JOL retained bytes per delete, 100k v2 position deletes, 150-char paths:
+
+| data files | before   | after   |
+|------------|----------|---------|
+| 100k (1:1) | 2122.6 B | 810.6 B |
+| 37k (2.7:1)| 1908.1 B | 717.0 B |
+
+* Core: Share referenced data file locations in DeleteFileIndex
+
+Position deletes of the same data file hold one location String.
+
+JOL retained bytes per delete, 100k v2 position deletes, 150-char paths,
+2.7 deletes per data file: 717.0 B before, 596.1 B after.",c759fb82db214ff310b6dd1126e485d0b5061df8,18359,false,,5,153,51,core
+apache/iceberg,07454273f14436db02e3ee85c03b0b90a5244f18,0745427,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-28T15:31:10-07:00,GitHub,noreply@github.com,2026-10-28T15:31:10-07:00,INFRA: Add labeler configuration for blog files (#18345),,339be73d22dbb444b1ea3ad37ea5a9e38d08532d,18345,false,,1,5,0,.github
+apache/iceberg,514387a4845f5a41492bb15599f4cdcb08c0b7b9,514387a,raashed,mohammedraashed10@gmail.com,2026-10-29T04:46:01+05:30,GitHub,noreply@github.com,2026-10-28T16:16:01-07:00,"Spark 3.5, 4.0: Fix rewrite failure on tables created with a sort order (#18510)",,07454273f14436db02e3ee85c03b0b90a5244f18,18510,false,,6,121,2,spark
+apache/iceberg,a6461374fd5ebd4c074cd21d9f71cf434ca46bd1,a646137,Huaxin Gao,huaxin.gao11@gmail.com,2026-10-28T16:44:13-07:00,GitHub,noreply@github.com,2026-10-28T16:44:13-07:00,Spec: v4 constraints (#17822),"* Spec: Add table constraints
+
+* nit
+
+* more changes
+
+* fix constraint spec based on the sync
+
+* address comments
+
+* Spec: add constraints and schema evolution section
+
+* clarify constraint status semantics
+
+* clarify constraint validation status semantics
+
+* clarify check expression scope and incremental validation
+
+* address comments
+
+* address comments
+
+* address comments
+
+* address comments
+
+* address comments
+
+* address comments
+
+* address comments
+
+* address comments
+
+* address comments
+
+* address comments
+
+* address comments
+
+* address comments
+
+* move constraint-statuses into v4 snapshot table
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+* address comments
+
+* Remove unvalidated rule for check constraints that call a UDF
+
+* Assume UDFs do not change in check constraints
+
+* remove redudant sentence
+
+* address comments
+
+* address comments
+
+* Remove unknown constraint type rule
+
+* Address Ryan's comments
+
+* Address review comments
+
+---------
+
+Co-authored-by: Cursor <cursoragent@cursor.com>",514387a4845f5a41492bb15599f4cdcb08c0b7b9,17822,false,Cursor,1,118,6,format
+apache/iceberg,e17f4824458948d1e53a6efea0000b0855c4d62a,e17f482,Manu Zhang,OwenZhang1990@gmail.com,2026-10-29T08:06:51+08:00,GitHub,noreply@github.com,2026-10-28T17:06:51-07:00,Build: Fix Guava CVE scan failures in GCP and Kafka (#18679),"Co-authored-by: Codex <codex@openai.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>",a6461374fd5ebd4c074cd21d9f71cf434ca46bd1,18679,false,Codex; Copilot App; Kevin Liu,5,16,7,.github; gcp-bundle; kafka-connect; kafka-connect-runtime.trivyignore.yaml
+apache/iceberg,f8f4b7476c42a592b6a50ef59dd9dfb1c21757ae,f8f4b74,Manu Zhang,OwenZhang1990@gmail.com,2026-10-29T09:31:32+08:00,GitHub,noreply@github.com,2026-10-28T18:31:32-07:00,Spark 4.2: Test legacy position deletes when upgrading to v3 tables (#18214),"Position delete files that contain deletes for more than one data file
+must be kept in table metadata until all of their deletes are replaced
+by DVs. Cover that in the reader and in the rewrite position deletes
+action.
+
+Generated-by: Claude Code",e17f4824458948d1e53a6efea0000b0855c4d62a,18214,false,,2,153,27,spark
+apache/iceberg,29d21c2b73c2fb910cd7fa513dc2229327037846,29d21c2,Prathamesh Kulkarni,prathameshk2696@gmail.com,2026-10-28T22:52:42-07:00,GitHub,noreply@github.com,2026-10-28T22:52:42-07:00,Core: Handle null snapshot summary during incremental cleanup (#18624),,f8f4b7476c42a592b6a50ef59dd9dfb1c21757ae,18624,false,,1,12,8,core
+apache/iceberg,d293148e4abcb99dca8d056eac66937987355b7c,d293148,Dzeri96,13813363+Dzeri96@users.noreply.github.com,2026-10-29T15:27:14+01:00,GitHub,noreply@github.com,2026-10-29T09:27:14-05:00,Spark: Route `defaultNamespace` call to wrapped catalog in `SparkSessionCatalog` (#17029),,29d21c2b73c2fb910cd7fa513dc2229327037846,17029,false,,5,6,9,docs; spark
+apache/iceberg,058898c7b546e92ed5afa12f035fd4d6925a0540,058898c,yhyyz,48501245+yhyyz@users.noreply.github.com,2026-10-29T22:45:19+08:00,GitHub,noreply@github.com,2026-10-29T15:45:19+01:00,Flink: Fix ConvertEqualityDeletes key serialization for temporal equality fields (#18610),,d293148e4abcb99dca8d056eac66937987355b7c,18610,false,,4,90,4,flink
+apache/iceberg,1fbd13e42b285359f62828ee2743f78537006ba0,1fbd13e,Raunaq Morarka,raunaqmorarka@users.noreply.github.com,2026-10-29T22:36:32+05:30,GitHub,noreply@github.com,2026-10-29T12:06:32-05:00,Core: Block on unfinished futures in Tasks.waitFor instead of polling (#18540),,058898c7b546e92ed5afa12f035fd4d6925a0540,18540,false,,3,184,58,core
+apache/iceberg,2ebe838e314e5f1ad8c5fb16662e7434fc11de38,2ebe838,Alejandro Morgante,62363051+AlejandroMorgante@users.noreply.github.com,2026-10-29T14:12:20-03:00,GitHub,noreply@github.com,2026-10-29T10:12:20-07:00,AWS: Fix zero-length S3 tail reads (#18329),* AWS: Avoid S3 requests for zero-length range reads,1fbd13e42b285359f62828ee2743f78537006ba0,18329,false,,3,52,1,aws
+apache/iceberg,1498feeebe44c43070480fbfe462664897e9d731,1498fee,Simranjeet Singh,simarjeet.singh004@gmail.com,2026-10-30T00:06:22+05:30,GitHub,noreply@github.com,2026-10-29T11:36:22-07:00,Spark: Compare filtered scan results by their unique record IDs so tests do not depend on Spark task or row ordering (#18645),,2ebe838e314e5f1ad8c5fb16662e7434fc11de38,18645,false,,4,32,72,spark
+apache/iceberg,6955fcd1f350856d96a572e3f53f01bdab748e7f,6955fcd,jiwen624,jiwen624@gmail.com,2026-10-29T11:43:15-07:00,GitHub,noreply@github.com,2026-10-29T11:43:15-07:00,API: Fix failed scans and wrong results for IN/NOT IN on timestamp_ns partitions (#18478),,1498feeebe44c43070480fbfe462664897e9d731,18478,false,,2,43,1,api

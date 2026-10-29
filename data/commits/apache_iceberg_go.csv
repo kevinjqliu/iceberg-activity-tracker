@@ -33962,3 +33962,56 @@ apache/iceberg-go,d3ae21a83e73a31ddc309048fe8be85aae0019d4,d3ae21a,Matt Topol,zo
 Add release notes for the rename batch (#2308, #2314, #2315, #2316, #2317,
 #2319, #2322, #2323) and for #2067, #2290, #2294, #2307, #2310 and #2313.
 Remove stray blank lines inside the compatibility-notes list.",76e295ceb369efd0e50c8249d13eb70f150b3b0c,2334,false,,1,14,2,website
+apache/iceberg-go,8fe62fb42b778e72472f3571cc42d94c18f176bb,8fe62fb,Harrison Crosse,harrison@crosse.dev,2026-10-28T15:42:45-04:00,GitHub,noreply@github.com,2026-10-28T15:42:45-04:00,fix(table): treat stale snapshot values as commit conflicts (#2342),"When a peer commits on another branch, the commit branch requirement
+still holds, but the metadata builder rejects the staged snapshot
+because its sequence number is no longer above last-sequence-number, or
+on v3 its first-row-id is behind next-row-id. The SQL, Glue, Hive and
+Hadoop catalogs returned that rejection as a plain error, so doCommit
+treated it as an unknown commit state: it did not retry, skipped
+cleanup, and Transaction.Commit refused a re-commit, although nothing
+was written and a refresh and rebuild would land it.
+
+Wrap ErrCommitFailed for these two checks only, as Java does with
+RetryableValidationException, which its REST handlers report as a 409.
+The row-id rejection still matches ErrInvalidRowLineage. The timestamp
+checks and every other builder error stay unchanged, since a rebuild
+keeps the snapshot timestamp and would fail the same way.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",d3ae21a83e73a31ddc309048fe8be85aae0019d4,2342,false,,7,125,16,catalog; table; website
+apache/iceberg-go,4acc0415c28b57caee589188f6f66c4b95dbda0c,4acc041,Harrison Crosse,harrison@crosse.dev,2026-10-28T15:47:34-04:00,GitHub,noreply@github.com,2026-10-28T15:47:34-04:00,fix(table): delete manifests that superseded commit attempts wrote (#2343),"Merge-append and overwrite rebuild their manifests against the fresh
+parent on every retry and every resumed Commit. A merge writes new
+merged manifests, and an overwrite writes rewritten parent manifests
+and tombstones. doCommit tracked only the manifest lists those passes
+wrote, so a retried commit that landed left attempt 0's manifests and
+every superseded rebuild's manifests unreferenced on storage, and a
+failed commit left the manifests its rebuilds wrote.
+
+Every snapshot producer now records the manifests each pass writes,
+replacing the rewrite producer's private superseded list, and doCommit
+treats them like manifest lists. Once a commit lands it deletes the
+recorded manifests no committed snapshot references, including attempt
+0's. After a known failure it deletes only those this call's rebuilds
+wrote, and after an unknown commit state it deletes nothing. Before
+deleting, it reads every committed snapshot's manifest list and keeps
+the files they reference.
+
+A merge that consumes its added-content manifest now deletes it once
+the commit lands, with or without a retry, as Java's
+MergingSnapshotProducer does. The rewrite producer still keeps its
+merged manifests after a failed commit, since a resume can reuse them.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",8fe62fb42b778e72472f3571cc42d94c18f176bb,2343,false,,6,563,43,table
+apache/iceberg-go,2b67a12a8437aa3ef3df630029cdeadc30494a89,2b67a12,Minh Vu,vuhoangminh97@gmail.com,2026-10-29T17:12:07+01:00,GitHub,noreply@github.com,2026-10-29T17:12:07+01:00,refactor(table)!: consolidate ReplaceFiles APIs (#2309),"refactor(table)!: remove ReplaceFilesWithDeleteFiles in favor of NewRewrite
+
+Keep the five-argument ReplaceFiles signature unchanged. Route delete-file
+replacements through NewRewrite and AddDeleteFileWithDataSequenceNumber,
+which records a replace snapshot. Update regression tests and document the
+migration in the release notes.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+Co-authored-by: Andrei Tserakhau <laskoviymishka@gmail.com>",4acc0415c28b57caee589188f6f66c4b95dbda0c,2309,false,Andrei Tserakhau,3,84,89,table; website
+apache/iceberg-go,4dac365176b5bebfd42e1e6849debb5e6988dd3b,4dac365,Matt Topol,zotthewizard@gmail.com,2026-10-29T16:12:38Z,GitHub,noreply@github.com,2026-10-29T17:12:38+01:00,docs: mark sentinel-gated Ref accessors as module-internal (#2348),"Schema.FieldsRef, Schema.FindFieldByIDRef and PartitionSpec.FieldsRef take
+an argument from the internal package, so only iceberg-go's own packages
+can call them. Document that they are not covered by compatibility
+guarantees and point external users at the cloning accessors.",2b67a12a8437aa3ef3df630029cdeadc30494a89,2348,false,,2,12,0,partitions.go; schema.go
