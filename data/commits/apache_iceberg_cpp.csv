@@ -9601,3 +9601,38 @@ and collide when Ninja links tests in parallel. Link tests one at a time on
 Windows (https://cmake.org/cmake/help/latest/variable/WIN32.html).
 
 Closes #944",748162b3fa0b7a20181fdf86530b6c6c51dbdf91,1064,false,,1,9,0,src
+apache/iceberg-cpp,61fa6ed9fc0c654afb256337fb75b893fa7c0dbb,61fa6ed,Xinli Shang,xinlishang@gmail.com,2026-10-29T23:47:32-07:00,GitHub,noreply@github.com,2026-10-30T14:47:32+08:00,"feat: add KeyManagementClient, KmsRegistry and InMemoryKms (#1031)","- KeyManagementClient (core): wraps and unwraps keys with master keys held in
+  a KMS, mirroring Java's interface, including optional key generation.
+- KmsRegistry (core): creates the catalog's KMS client from the same catalog
+  properties as Java, `encryption.kms-type` (aws, gcp, azure) or
+  `encryption.kms-impl` (a registered name). As in Java, a property that is
+  present but empty is a misconfiguration rather than ""no KMS"". Clients are
+  initialized with the catalog properties.
+- InMemoryKms (bundle): master keys in memory, for tests and local use. Wire
+  compatible with Java's MemoryMockKMS, so it unwraps keys written by Java
+  tests. Master keys can be given as catalog properties
+  (encryption.in-memory-kms.key.<id> = Base64).",df19627a27af737452835c60cfb3bd6faf26699d,1031,false,,10,555,3,src
+apache/iceberg-cpp,942e9af077cf5dacc7daf0eefe55fbe74597b4cf,942e9af,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-10-30T01:29:47-07:00,GitHub,noreply@github.com,2026-10-30T16:29:47+08:00,feat: apply write defaults in DataWriter (#942),"Writing a batch with an older schema should fill omitted columns with Iceberg
+write-default values. This PR adds optional `DataWriterOptions::input_schema`;
+for a required column with initial-default 42 and write-default 7, input
+`[[1], [2]]` writes `[[1, 7], [2, 7]]`.
+
+DataWriter prepares a reusable `WriteProjection` once in `Make` and applies it
+to each batch. The projection matches fields by ID recursively, preserves
+supplied values and explicit nulls, fills missing optional fields with typed
+nulls, and materializes missing fields from their write-default. When no
+`input_schema` is provided, or the schemas are identical, the original Arrow
+batch is passed through without projection.
+
+Incompatible schemas fail before opening the file, including extra input IDs,
+missing required fields without a write-default, optional-to-required fields,
+and concrete-to-unknown writes. Existing primitive types must match; read
+projection behavior is unchanged.
+
+Parquet and Avro writers remain unchanged and continue to expect batches
+matching their complete target schema. The shared projection is implemented in
+core using nanoarrow shared buffers without adding an Arrow C++ dependency.
+
+Addresses the write-path portion of #637.",61fa6ed9fc0c654afb256337fb75b893fa7c0dbb,942,false,,10,856,20,src
+apache/iceberg-cpp,a899511ce9eda52e2b79cdb2abfaefccd4841ea3,a899511,Guotao Yu,guotao.yugt@gmail.com,2026-10-30T17:33:57+08:00,GitHub,noreply@github.com,2026-10-30T17:33:57+08:00,fix(arrow): make full batch validation configurable (#1043),,942e9af077cf5dacc7daf0eefe55fbe74597b4cf,1043,false,,6,185,44,src
+apache/iceberg-cpp,d0ca49fc0c089d0ed4c16b4c4eadcc22faba983f,d0ca49f,Manu Zhang,OwenZhang1990@gmail.com,2026-10-30T22:29:43+08:00,GitHub,noreply@github.com,2026-10-30T22:29:43+08:00,feat(inspect): support selecting columns in metadata table scans (#1008),,a899511ce9eda52e2b79cdb2abfaefccd4841ea3,1008,false,,15,804,83,src

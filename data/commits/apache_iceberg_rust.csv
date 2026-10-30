@@ -34574,3 +34574,64 @@ setup while preserving their schema, format, and sequence-number cases.
 
 Follow-up to #3483.",17b303c0cad70e8249f6284a973b48d51cc3c0d3,3516,false,,3,67,159,crates
 apache/iceberg-rust,beba39c8d62810fa101740bb2dbb03ab0d8f07ac,beba39c,Xuanyi Li,shanelxy@outlook.com,2026-10-28T20:49:40Z,GitHub,noreply@github.com,2026-10-28T20:49:40Z,feat: add geospatial read support [2/3] (#3341),feat: add geospatial read support,af1717ae9287c256b987d0418251443052ead66b,3341,false,,9,421,85,Cargo.lock; Cargo.toml; crates
+apache/iceberg-rust,4dd8c946432f5e56a3ccc88e5b438a356ba28287,4dd8c94,Swanand Mulay,73115739+swanandx@users.noreply.github.com,2026-10-29T17:34:38Z,GitHub,noreply@github.com,2026-10-29T17:34:38Z,fix(arrow): spawn data file opens on the IO runtime (#3277),"* fix(arrow): spawn data file opens on the IO runtime
+
+Opens run ahead of the reads. Once try_flatten_unordered holds
+concurrency_limit_data_files streams it stops polling the opens, and a
+half-read response keeps part of the HTTP/2 connection window, which
+stalls every other read on that connection.
+
+Spawning the open is what load_deletes already does.
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+* fix(arrow): abort the data file opens when the scan is dropped
+
+A dropped JoinHandle detaches the task, so a cancelled scan left its opens
+fetching a result nobody reads. Add a pub(crate) abort-on-drop handle and
+use it for the opens.
+
+JoinHandle already maps JoinError, so the open needs no second wrapper.
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+* fix(arrow): spawn only the data file open
+
+Only the open needs to escape the polling gap, so the spawn moves inside
+process() and the read() call site returns to what main has.
+
+Two tests in pipeline.rs replace the flow control harness: an open must
+proceed when nothing polls the scan, and a dropped scan must stop opening
+files.
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+* test(arrow): reuse the parquet writer and the scan metrics
+
+counted_scan now builds its file with write_plain_parquet, and the tests
+watch metrics().bytes_read() instead of their own request counter, so the
+counting storage only adds the yield.
+
+The comment above the spawn drops the HTTP/2 detail that #3276 already
+carries.
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+* test(arrow): tighten the open tests and the comments
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+* fix(arrow): spawn the bloom filter fetch
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+* docs(arrow): note what else runs in the spawned open
+
+The spawned task decodes the footer, and the page index when it is
+preloaded. With a split runtime that work runs on the IO runtime.
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+---------
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>",beba39c8d62810fa101740bb2dbb03ab0d8f07ac,3277,false,,3,420,20,crates

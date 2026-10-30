@@ -34015,3 +34015,183 @@ apache/iceberg-go,4dac365176b5bebfd42e1e6849debb5e6988dd3b,4dac365,Matt Topol,zo
 an argument from the internal package, so only iceberg-go's own packages
 can call them. Document that they are not covered by compatibility
 guarantees and point external users at the cloning accessors.",2b67a12a8437aa3ef3df630029cdeadc30494a89,2348,false,,2,12,0,partitions.go; schema.go
+apache/iceberg-go,00fbb576ea4e8e9d87757189cc690f3c137dcbca,00fbb57,Saurabh Kumar Ojha,30659684+saurabhojha@users.noreply.github.com,2026-10-30T01:36:37+05:30,GitHub,noreply@github.com,2026-10-29T16:06:37-04:00,feat(table): sort-order rewrite strategy for data file compaction (#2345),"* feat(table): add sort-order data file compaction
+
+Compaction only bin-packed: ExecuteCompactionGroup streamed each
+group's rows straight into WriteRecords, which sorts every record batch
+on its own by the table's default sort order. Output files were
+therefore sorted per batch, not per file, overlapped each other on the
+sort key, and recorded no sort_order_id.
+
+WithCompactionSortOrder switches a group rewrite to sort. The group's
+rows are materialized, split by the table's current partition spec,
+and each partition is sorted as a whole with sort_indices. Sorted rows
+are gathered from the source batches one output batch at a time, so no
+column is concatenated beyond one output batch (Arrow's chunked Take
+would concatenate whole struct, list and decimal columns per call).
+The writer is told the stream is presorted: it skips the per-batch
+sort, and since every rolled file is a contiguous run of the stream,
+each file records the order's id as sort_order_id when the order is
+one of the table's sort orders and every field is a single-source,
+order-preserving transform.
+
+Splitting by partition before sorting keeps the stream clustered for
+the clustered writer even when a group spans files written under an
+older partition spec.
+
+compaction.Config.RewriteAll mirrors Java's rewrite-all so files that
+size-based selection skips as optimal can be sorted too. The CLI gains
+`compact run --sort` (table default sort order) and `--rewrite-all`.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+Signed-off-by: saurabhojha <ojhasaurabh2099@gmail.com>
+
+* feat(table): k-way merge presorted files in sort compaction
+
+When every file of a sort group records the order's sort_order_id and
+was written under the current partition spec, ExecuteCompactionGroup
+now reads each file as its own stream and k-way merges the streams per
+partition instead of materializing and sorting the whole group. Memory
+drops from the decoded group to about two batches per file. Each merge
+step copies the longest run of the minimum stream that precedes the
+runner-up as one zero-copy slice, so files with disjoint ranges are
+merged a batch at a time. A file whose rows are not actually sorted
+fails the group rather than producing output that claims an order it
+does not have. Scan.readTasksPerTask backs the merge: one stream per
+task sharing one set of delete loaders, so a shared position or
+equality delete file is read once.
+
+Sorting now uses one Iceberg-ordered row comparator for both the
+in-memory sort and the merge. Arrow's sort kernel places NaN next to
+nulls, while the spec puts NaN after +Inf ascending and first
+descending. Bound to a partition's batches the comparator matches the
+kernel's speed (1M rows: ~347ms vs ~345ms int64, ~548ms vs ~570ms
+string).
+
+sort_order_id is now claimed only when every field but the last is
+identity. Ordering by the source column of a coarser transform such as
+day(ts) also orders the rows the transform ties on, so for
+[day(ts), id] the rows were not sorted by id within a day.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+Signed-off-by: saurabhojha <ojhasaurabh2099@gmail.com>
+
+* refactor(table): use only container/heap's public API in the sort merge
+
+Pop the minimum cursor, peek the new root as the runner-up and push the
+cursor back, instead of reading the root's children by index.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+Signed-off-by: saurabhojha <ojhasaurabh2099@gmail.com>
+
+* feat(compaction): cap groups by MaxGroupSizeBytes
+
+PlanCompaction bin-packed each partition's candidates to
+TargetFileSizeBytes, so a group held about one output file's worth of
+input. That suits bin-pack, but a sort rewrite orders rows only within
+a group: with one-file groups every sorted output file of a partition
+overlapped the others on the sort key, and files from an earlier sort
+rewrite (already target-sized) each landed in a group of their own, so
+the k-way merge path never saw two of them together.
+
+compaction.Config.MaxGroupSizeBytes, mirroring Java's
+max-file-group-size-bytes, caps a group's input size independently of
+the output file size; ExecuteCompactionGroup already rolls output at
+the target size, so one group yields many sorted, non-overlapping
+files. Zero keeps the previous packing, so existing plans are
+unchanged. The CLI gains --max-group-size on compact analyze and run.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+Signed-off-by: saurabhojha <ojhasaurabh2099@gmail.com>
+
+* refactor(table): select compaction rewrite strategy behind an interface
+
+ExecuteCompactionGroup branched on the sort order in three places. Move
+the read-and-arrange step and the writer options into an internal
+rewriteStrategy with bin-pack (default) and sort implementations, chosen
+once from the CompactionGroupOptions. The public API is unchanged.
+
+Also correct the planner comment: PlanCompaction only groups candidates
+by size; the rewrite strategy is chosen per group.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+Signed-off-by: saurabhojha <ojhasaurabh2099@gmail.com>
+
+* docs(compaction): explain why MaxGroupSizeBytes is separate from the target file size
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+Signed-off-by: saurabhojha <ojhasaurabh2099@gmail.com>
+
+* docs(compaction): trim MaxGroupSizeBytes comment
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+Signed-off-by: saurabhojha <ojhasaurabh2099@gmail.com>
+
+* fix(table): address sort compaction merge review
+
+- Merge only orders whose fields are all identity. The merge compares
+  source values, and a file sorted by [day(ts)] may validly be unsorted
+  by ts within a day, so such files failed the group on every run. They
+  now take the in-memory path; output still records the id when it is
+  claimable.
+- Cap the merge fan-in at the scan concurrency. Each file is its own
+  stream, so a partition with more files than the scan concurrency now
+  takes the in-memory path instead of opening every file at once. Docs
+  state the real cost: up to about five batches per merged file.
+- Gather interleaved runs instead of slicing each. Overlapping inputs
+  give mostly one-row runs, and concatenating a slice per run made the
+  merge ~20x slower than sorting in memory. Runs are now recorded as
+  (batch, range) and each output batch is built with the existing Take
+  gather; a batch that is one run stays a zero-copy slice. On 2 x 131k
+  rows x 32 int64 columns: interleaved 1.32s -> 64ms, disjoint 3ms
+  unchanged (BenchmarkMergeInterleaved/Disjoint).
+- api.md: sort_order_id is recorded only when the order is claimable;
+  the in-memory path can reach about twice the group's decoded size and
+  is always taken by the first sort rewrite.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+Signed-off-by: saurabhojha <ojhasaurabh2099@gmail.com>
+
+---------
+
+Signed-off-by: saurabhojha <ojhasaurabh2099@gmail.com>
+Co-authored-by: Cursor <cursoragent@cursor.com>",4dac365176b5bebfd42e1e6849debb5e6988dd3b,2345,false,Cursor,15,2334,57,cmd; table; website
+apache/iceberg-go,bf1536b7ab70e1685f27a329da1560c7c11ec1bc,bf1536b,Minh Vu,vuhoangminh97@gmail.com,2026-10-30T09:22:14+01:00,GitHub,noreply@github.com,2026-10-30T09:22:14+01:00,refactor(puffin): centralize writer state checks (#2365),,00fbb576ea4e8e9d87757189cc690f3c137dcbca,2365,false,,2,107,25,puffin
+apache/iceberg-go,cbd8b70593f81198717979b4f9e6301732e427da,cbd8b70,Harrison Crosse,harrison@crosse.dev,2026-10-30T11:47:32-04:00,GitHub,noreply@github.com,2026-10-30T11:47:32-04:00,fix(table): clean up expired files from planning metadata (#2351),"* fix(table): clean up expired files from planning metadata
+
+Cleanup uses the metadata that expiration was planned against to find
+snapshots and statistics staged in the same transaction. For multiple
+expirations, cleanup collects files before deleting any. Cleanup keeps
+files for snapshots that remain in the committed table.
+
+A retry that rebuilds an expired snapshot can still cause a cleanup error
+after the commit succeeds. I will replan expiration in a follow-up PR.
+
+Part of #2339.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* refactor(table): retain only expired snapshots for cleanup
+
+I replaced the metadata copy per expiry with copies of the expired
+snapshots and their statistics file paths. `ExpireSnapshots` no longer
+clones or builds metadata. I added tests for mixed cleanup and
+statistics cleanup within a transaction.
+
+Part of #2339.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+---------
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",bf1536b7ab70e1685f27a329da1560c7c11ec1bc,2351,false,,5,411,34,table
+apache/iceberg-go,b653f8b227b69b10e13e6ee0d3ddff381b68b35f,b653f8b,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-10-30T22:28:39+05:30,GitHub,noreply@github.com,2026-10-30T12:58:39-04:00,fix(table): make NotIn skip NULL rows in scans (#2369),"Why: the record filter compiled a multi-value NOT IN as not(is_in(x, set)),
+and is_in is false for a NULL term, so the negation was true and the NULL
+row matched. A one-value NOT IN binds to NOT_EQ, which is NULL for a NULL
+term, so the two paths disagreed, and copy-on-write deletes diverged from
+scans for the multi-value form. Guard the negation with is_not_null so
+NOT IN never matches NULL, whichever path built it.
+
+Fixes #2132
+
+Signed-off-by: Anurag Singh <anuragsingh2313@gmail.com>",cbd8b70593f81198717979b4f9e6301732e427da,2369,false,,3,54,2,table
