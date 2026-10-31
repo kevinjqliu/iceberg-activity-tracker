@@ -34195,3 +34195,27 @@ NOT IN never matches NULL, whichever path built it.
 Fixes #2132
 
 Signed-off-by: Anurag Singh <anuragsingh2313@gmail.com>",cbd8b70593f81198717979b4f9e6301732e427da,2369,false,,3,54,2,table
+apache/iceberg-go,5bd08d6d700f4a0c8dfafb8335326cf3dd88c183,5bd08d6,Revanth,revanthcse1@gmail.com,2026-10-30T13:50:16-05:00,GitHub,noreply@github.com,2026-10-30T14:50:16-04:00,fix: make In and NotIn NULL for a NULL value in the row filter (#2356),"* fix: make In and NotIn NULL for a NULL value in the row filter
+
+* docs: link the Java issue and note the NULL semantics change
+
+* docs: name NOT(NotIn) in the NULL semantics release note",b653f8b227b69b10e13e6ee0d3ddff381b68b35f,2356,false,,6,278,19,table; visitors.go; website
+apache/iceberg-go,2a51abaf7490d9f1714785a5be2b144cd0b727b4,2a51aba,Digvijay,digvijay.vaghela@yahoo.com,2026-10-30T17:26:57-05:00,GitHub,noreply@github.com,2026-10-30T23:26:57+01:00,feat(table): plan delete-file changes in incremental changelog scans (#2169),,5bd08d6d700f4a0c8dfafb8335326cf3dd88c183,2169,false,,3,2363,93,table
+apache/iceberg-go,a4d6a0949a3ddc1f1b6f2cc7bec5c479cedb012e,a4d6a09,Digvijay,digvijay.vaghela@yahoo.com,2026-10-30T17:29:44-05:00,GitHub,noreply@github.com,2026-10-30T23:29:44+01:00,feat(table): read file-level incremental changelog rows (#2170),,2a51abaf7490d9f1714785a5be2b144cd0b727b4,2170,false,,3,909,0,table
+apache/iceberg-go,38d1707d7bebbc8eefa4f2e063da38e90d681f83,38d1707,Andrei Tserakhau,laskoviymishka@gmail.com,2026-10-31T09:43:45+01:00,GitHub,noreply@github.com,2026-10-31T09:43:45+01:00,fix(catalog/hive): keep the caller's view version in CreateView (#2353),"Hive's CreateView only used the caller's version to pick a SQL string,
+then rebuilt the view from that one representation. The stored metadata
+lost the other representations and the caller's summary, default
+namespace and default catalog, which was always written as ""hive"".
+Java's BaseMetastoreViewCatalog keeps what the engine passes.
+
+Add view.CreateViewFromVersion, which writes the caller's version as is
+apart from its IDs, and use it from Hive. CreateView and
+CreateViewWithIOProperties now delegate to it, and the SQL catalog can
+reuse it once its view API matches ViewCatalog. The metastore's view
+text still comes from the Hive-dialect SQL.
+
+Refs #2062",a4d6a0949a3ddc1f1b6f2cc7bec5c479cedb012e,2353,false,,5,153,27,catalog; view; website
+apache/iceberg-go,a7f0d585a69adcc5ada3d8da697208f8f3b1fcbd,a7f0d58,Minh Vu,vuhoangminh97@gmail.com,2026-10-31T09:47:41+01:00,GitHub,noreply@github.com,2026-10-31T09:47:41+01:00,perf(rest): avoid repeated schema-history clones in partition decoding (#2362),,38d1707d7bebbc8eefa4f2e063da38e90d681f83,2362,false,,3,265,5,catalog
+apache/iceberg-go,311cbf674923f2032b4711b67f681dc7cbbc12e2,311cbf6,Minh Vu,vuhoangminh97@gmail.com,2026-10-31T09:48:27+01:00,GitHub,noreply@github.com,2026-10-31T09:48:27+01:00,perf(table): bound partition metadata record batches (#2364),,a7f0d585a69adcc5ada3d8da697208f8f3b1fcbd,2364,false,,2,251,19,table
+apache/iceberg-go,d883b2c6873386babaa6ea2c5cbea18a30c2459c,d883b2c,Minh Vu,vuhoangminh97@gmail.com,2026-10-31T11:09:24+01:00,GitHub,noreply@github.com,2026-10-31T11:09:24+01:00,perf(table): avoid gathering already ordered compaction batches (#2373),,311cbf674923f2032b4711b67f681dc7cbbc12e2,2373,false,,2,562,0,table
+apache/iceberg-go,b35450588e2d586c883bd90e77c9faa6ae8396fe,b354505,Minh Vu,vuhoangminh97@gmail.com,2026-10-31T11:09:46+01:00,GitHub,noreply@github.com,2026-10-31T11:09:46+01:00,refactor(catalog)!: split catalog capability interfaces (#2349),,d883b2c6873386babaa6ea2c5cbea18a30c2459c,2349,false,,19,332,30,catalog; cmd; website
