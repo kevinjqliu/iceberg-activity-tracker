@@ -8790,3 +8790,88 @@ updated-dependencies:
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",8a00c9531f91bba9c637a3d050091490a7d3b11d,18727,false,dependabot[bot],1,1,1,gradle
+apache/iceberg,e58bb8aaefd10cbfbb17e861be3e4652dba50f03,e58bb8a,Yuya Ebihara,ebyhry@gmail.com,2026-11-02T11:25:44+09:00,GitHub,noreply@github.com,2026-11-01T18:25:44-08:00,Build: Bump software.amazon.awssdk:bom from 2.56.0 to 2.57.3 (#18741),"Bumps software.amazon.awssdk:bom from 2.56.0 to 2.57.3.
+
+---
+updated-dependencies:
+- dependency-name: software.amazon.awssdk:bom
+  dependency-version: 2.57.3
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",2742348d7c794bb896d7cf1c2fbb0c07e027c202,18741,false,dependabot[bot],3,91,91,aws-bundle; gradle; kafka-connect
+apache/iceberg,66a6c2478b089ec77625b318642bd66862650a3b,66a6c24,Yuya Ebihara,ebyhry@gmail.com,2026-11-02T16:02:06+09:00,GitHub,noreply@github.com,2026-11-02T08:02:06+01:00,Core: Use Iceberg relocated VisibleForTesting (#18654),,e58bb8aaefd10cbfbb17e861be3e4652dba50f03,18654,false,,2,2,2,.baseline; core
+apache/iceberg,cbfabba93b6c59ba84984269c332a22312435235,cbfabba,Venkata krishnan Sowrirajan,vsowrirajan@linkedin.com,2026-11-01T23:05:32-08:00,GitHub,noreply@github.com,2026-11-02T08:05:32+01:00,Spark 4.1: Add per-task scanDuration metric (#17562),"* Spark 4.1: Add per-task scanDuration metric
+
+Iceberg reports scan bytes and file/manifest counts per task, but the only
+timer in the metrics system is totalPlanningDuration, which measures
+driver-side planning. There is no metric for how long a task spent actually
+reading data, so a scan's throughput cannot be derived from Iceberg metrics
+alone.
+
+Add scanDuration: wall time a task spends in BaseReader.next(), accumulated
+per call rather than per row so the timer costs nothing measurable relative
+to the read. Emitted as TaskScanDuration from BatchDataReader and
+RowDataReader, aggregated by ScanDuration, mirroring the existing
+TotalPlanningDuration pair.
+
+Values are nanoseconds: a single split can be read in well under a
+millisecond, so a millisecond timer would round most per-task reads to zero.
+ScanDuration formats the aggregate as ns/us/ms/s for the UI.
+
+Generated-by: Claude Opus 5
+Co-authored-by: Venkata Krishnan Sowrirajan <vsowrirajan@microsoft.com>",66a6c2478b089ec77625b318642bd66862650a3b,17562,false,Venkata Krishnan Sowrirajan,8,278,2,spark
+apache/iceberg,c583efe6e9a2c1a7604b557ed33fdefa1cbb9322,c583efe,Yuya Ebihara,ebyhry@gmail.com,2026-11-02T16:07:53+09:00,GitHub,noreply@github.com,2026-11-02T08:07:53+01:00,"Build, GCP: Bump com.google.cloud.gcs.analytics:gcs-analytics-core from 1.5.0 to 1.6.0 (#18686)",,cbfabba93b6c59ba84984269c332a22312435235,18686,false,,4,16,14,gcp; gcp-bundle; gradle; kafka-connect
+apache/iceberg,9fffeb63b1605a7c3acf218e58b7eeb43bdb1b01,9fffeb6,yhyyz,48501245+yhyyz@users.noreply.github.com,2026-11-02T17:32:40+08:00,GitHub,noreply@github.com,2026-11-02T10:32:40+01:00,Flink: Backport: Fix ConvertEqualityDeletes key serialization for temporal equality fields (#18610) (#18720),,c583efe6e9a2c1a7604b557ed33fdefa1cbb9322,18720,false,,8,180,8,flink
+apache/iceberg,605e426148b46b6760324abc1fbf071501d34c3f,605e426,slfan1989,55643692+slfan1989@users.noreply.github.com,2026-11-02T21:54:52+08:00,GitHub,noreply@github.com,2026-11-02T14:54:52+01:00,Build: Fix Gradle wrapper download failure handling (#18634),,9fffeb63b1605a7c3acf218e58b7eeb43bdb1b01,18634,false,,1,9,2,gradlew
+apache/iceberg,65b3ef316ae0c6fb13a9150b5eaac1258f8cda47,65b3ef3,Venkata krishnan Sowrirajan,vsowrirajan@linkedin.com,2026-11-02T05:57:03-08:00,GitHub,noreply@github.com,2026-11-02T14:57:03+01:00,Spark 4.2: Add scanDuration read metric (#18751),"Port of #17562 to Spark 4.2. Reports how long each task spends reading its
+splits as the scanDuration custom metric, in nanoseconds.
+
+Generated-by: Claude Opus 5.5
+
+Co-authored-by: Venkata Krishnan Sowrirajan <vsowrirajan@microsoft.com>",605e426148b46b6760324abc1fbf071501d34c3f,18751,false,Venkata Krishnan Sowrirajan,8,278,2,spark
+apache/iceberg,c2c460586c7ff79e9b8dc530e5b73d3b4425f34c,c2c4605,Ross Andreucetti,ross.andreucetti@gmail.com,2026-11-02T15:55:06Z,GitHub,noreply@github.com,2026-11-02T07:55:06-08:00,"Arrow, Spark: Skip unprojected shredded variants in vectorized Parquet reads (#18434)","* Arrow, Spark: Skip unprojected shredded variants in vectorized Parquet reads
+
+VectorizedReaderBuilder visited every variant group in the file schema,
+including variants that are not projected, and VectorizedVariantVisitor
+throws on a shredded typed_value. A vectorized read that did not select a
+shredded variant column therefore failed. Skip the variant visit when the
+column is not in the expected schema, as is already done for primitives.
+
+Closes #18430
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+
+* Address review: cover nested unprojected variants, rename new tests
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+
+* Address review: run the Spark regression test on 4.0 and 4.1, assert columnar scan
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+
+* Address review: cover an unprojected variant without a field id
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+
+---------
+
+Co-authored-by: randreucetti <7765549+randreucetti@users.noreply.github.com>
+Co-authored-by: Claude Opus 5.5 (1M context) <noreply@anthropic.com>",65b3ef316ae0c6fb13a9150b5eaac1258f8cda47,18434,false,Claude Opus 5.5 (1M context); randreucetti,5,285,0,arrow; spark
+apache/iceberg,ebf2ff8a938177a6c37a165b4cc2543f15d9c4e1,ebf2ff8,Anoop Johnson,anoop@apache.org,2026-11-02T08:33:48-08:00,GitHub,noreply@github.com,2026-11-02T09:33:48-07:00,Core: Support projecting content stats in the V4 file planner (#18740),"Add FilePlanner.projectStats(int...) so callers can request content stats
+for specific table field IDs. The field IDs are forwarded to the root and
+leaf manifest readers; when unset, no stats are returned.
+
+Follow-up to
+https://github.com/apache/iceberg/pull/17541#discussion_r4169414840",c2c460586c7ff79e9b8dc530e5b73d3b4425f34c,18740,false,,2,93,11,core
+apache/iceberg,6951360ec8a01644d3c24824ab635e06a82f8a7c,6951360,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-02T09:12:00-08:00,GitHub,noreply@github.com,2026-11-02T10:12:00-07:00,Parquet: Read file metrics from natively encrypted files (#18535),"ParquetUtil.fileMetrics opened the footer without decryption properties,
+so it failed on files written with Parquet native encryption. When the
+input is a NativeEncryptionInputFile, open the footer with the file's
+encryption key and AAD prefix.",ebf2ff8a938177a6c37a165b4cc2543f15d9c4e1,18535,false,,2,127,1,parquet
+apache/iceberg,f5704ee94b62839d79d9caf38045a3275fd3b4f0,f5704ee,Anoop Johnson,anoop@apache.org,2026-11-02T12:41:33-08:00,GitHub,noreply@github.com,2026-11-02T13:41:33-07:00,Core: v4: Prune leaf manifests with no live files in FilePlanner (#18725),"Scan planning returns only live files (ADDED, EXISTING, or MODIFIED).
+Skip expanding a leaf manifest whose manifest_info reports none of these
+live file counts: the leaf is never opened and is counted as a skipped
+data manifest.",6951360ec8a01644d3c24824ab635e06a82f8a7c,18725,false,,2,78,14,core
+apache/iceberg,3ad26de2bd62600724d38d3428f65f4f7cde2586,3ad26de,Ryan Blue,blue@apache.org,2026-11-02T13:53:09-08:00,GitHub,noreply@github.com,2026-11-02T13:53:09-08:00,Spec: Add stats-only fields to table metadata (#18405),,f5704ee94b62839d79d9caf38045a3275fd3b4f0,18405,false,,1,24,0,format
