@@ -9710,3 +9710,29 @@ apache/iceberg-cpp,49b84a0621ef952095aa8ba52bb08fe25ee85976,49b84a0,Gang Wu,ustc
 - Consolidate projected-column append helpers with lazy batch construction.
 - Preserve all merged metadata inspection test scenarios and cover planned
   projections, task reuse, stream lifetimes, batching, and vector<bool>.",d5970d932f4fab508d6bf6e74bea3a7406ccafa9,1066,false,,25,1342,487,metadata_scan_util_internal.h; src
+apache/iceberg-cpp,9c478f7571e89ef6388c4fa776d7a4e5f448cbac,9c478f7,lishuxu,lishuxu@gmail.com,2026-11-04T16:43:28+08:00,GitHub,noreply@github.com,2026-11-04T16:43:28+08:00,feat(auth): implement AuthSessionCache for OAuth2 child sessions (#985),"Cache contextual and table-scoped OAuth2 child sessions so that context
+credentials do not trigger a token request on every catalog call (#962).
+
+AuthSessionCache:
+- Expire entries after auth.session-timeout-ms without access (default
+  1 hour), and when the token of an OAuth2 session expires.
+- Load each key once under concurrent Get() calls, with the loader
+  running outside the lock. Failed loads are not cached.
+- Hand every removed session to the removal listener exactly once. A
+  session loaded after Close() is removed immediately.
+- Sweep expired entries periodically on the auth refresh executor, every
+  session timeout clamped to [1s, 60s]. Without an executor, entries are
+  reclaimed when accessed again or on Close().
+
+OAuth2Manager:
+- Cache contextual sessions by session_id and table sessions by token.
+- Authenticate child token requests with the parent session's headers.
+- Credential child sessions follow token-refresh-enabled and, with
+  refresh enabled, require the auth executor. Token and exchange child
+  sessions do not refresh until refresh via token exchange is supported.
+- Token child sessions no longer carry the parent's credential.
+
+OAuth2Session:
+- Add StopRefreshing(), a non-blocking stop used on cache removal.
+- Add ExpiresAt() and IsRefreshable(), and include the session headers
+  in OAuth2Info().",49b84a0621ef952095aa8ba52bb08fe25ee85976,985,false,,12,1705,40,src

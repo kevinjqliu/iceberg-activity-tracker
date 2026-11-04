@@ -34252,3 +34252,548 @@ Signed-off-by: Harrison Crosse <harrison@crosse.dev>
 
 Signed-off-by: Harrison Crosse <harrison@crosse.dev>",b35450588e2d586c883bd90e77c9faa6ae8396fe,2350,false,,15,523,11,catalog; table; website
 apache/iceberg-go,8ef0a092fcbaf70f99aa8935481bc95071eb41b1,8ef0a09,Digvijay,digvijay.vaghela@yahoo.com,2026-11-03T08:05:34-06:00,GitHub,noreply@github.com,2026-11-03T15:05:34+01:00,feat(table): read rows removed by incremental changelog deletes (#2171),,c37ed1a8401c325fbc3291a04360a2686dd939d8,2171,false,,7,960,39,table; website
+apache/iceberg-go,84b84fb5f7a5923ea909a931b2ce8ea005867be4,84b84fb,Matt Topol,zotthewizard@gmail.com,2026-11-04T10:40:13-05:00,GitHub,noreply@github.com,2026-11-04T10:40:13-05:00,fix(table): check partial-progress batches against the planning snapshot (#2302),"* fix(table): check partial-progress batches against the planning snapshot
+
+Partial-progress compaction plans every group once, then commits batches one by one, each starting from the previous batch's committed table. When a batch's refresh-and-replay retry rebases onto a peer snapshot, that snapshot becomes the next batch's base, so the next batch's commit-time validator never sees it. If the peer added a position delete or deletion vector for a data file in a later batch, that batch rewrote the file from tasks planned without the delete, then CollectDeadPositionDeletes removed the delete as dead, bringing the deleted rows back.
+
+Before rewriting a batch, run the rewrite conflict rules over every snapshot committed since planning. A conflicting batch is recorded in FailedGroups and counts toward MaxFailedCommits, like a failed commit, and nothing is written for it.
+
+* test(table): pin rejected batches against MaxFailedCommits
+
+Address review: count planning-snapshot rejections toward
+MaxFailedCommits in a test, and update the FailedGroups doc to cover
+batches rejected before reaching the catalog. Rebase onto main
+(AddFiles is now AddDataFilesByPath).
+
+* refactor(table): read each snapshot once when checking partial-progress batches
+
+Collect the delete files committed since planning incrementally, so each
+batch only reads snapshots committed since the previous batch instead of
+rewalking the whole window. Document that partial-progress groups must be
+planned from the transaction's table, and report batches rejected by the
+planning check as rejected rather than committed.
+
+* test(table): cover deletion vectors absorbed by an earlier partial-progress batch",8ef0a092fcbaf70f99aa8935481bc95071eb41b1,2302,false,,4,400,47,table
+apache/iceberg-go,a7592ed0f311a2b5248e0a14f1f40fcd3bb80ca2,a7592ed,Ish,71601156+Dem1241@users.noreply.github.com,2026-11-04T16:50:13+01:00,GitHub,noreply@github.com,2026-11-04T16:50:13+01:00,fix(table)!: honor object storage partitioned-paths for partitioned writes (#2368),,84b84fb5f7a5923ea909a931b2ce8ea005867be4,2368,false,,6,123,122,table; website
+apache/iceberg-go,76a731b91a34d78faa4edb37840ac5740d531791,76a731b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-04T10:52:13-05:00,GitHub,noreply@github.com,2026-11-04T10:52:13-05:00,build(deps): bump the codeql-action group with 2 updates (#2385),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.39.0 to 4.39.1
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee...9b3254085494b55a0f7c4c2b3d2d52cc712ce370)
+
+Updates `github/codeql-action/analyze` from 4.39.0 to 4.39.1
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee...9b3254085494b55a0f7c4c2b3d2d52cc712ce370)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.39.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.39.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",a7592ed0f311a2b5248e0a14f1f40fcd3bb80ca2,2385,false,dependabot[bot],1,2,2,.github
+apache/iceberg-go,ecf5d0b70cf0edff7b21985f66215fb5f34db683,ecf5d0b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-04T10:52:35-05:00,GitHub,noreply@github.com,2026-11-04T10:52:35-05:00,build(deps): bump zizmorcore/zizmor-action from 0.7.1 to 0.8.0 (#2386),"Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.7.1 to 0.8.0.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e...53290badfa369cb0bf7ad16342cb62c2fa47ac7b)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.8.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",76a731b91a34d78faa4edb37840ac5740d531791,2386,false,dependabot[bot],1,1,1,.github
+apache/iceberg-go,bbb920087ec0597b83d583715554d967fa89485a,bbb9200,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-04T10:52:57-05:00,GitHub,noreply@github.com,2026-11-04T10:52:57-05:00,build(deps): bump the gomod_updates group with 10 updates (#2387),"Bumps the gomod_updates group with 10 updates:
+
+| Package | From | To |
+| --- | --- | --- |
+| [cloud.google.com/go/storage](https://github.com/googleapis/google-cloud-go) | `1.69.0` | `1.70.0` |
+| [github.com/RoaringBitmap/roaring/v2](https://github.com/RoaringBitmap/roaring) | `2.29.0` | `2.30.0` |
+| [github.com/aws/aws-sdk-go-v2](https://github.com/aws/aws-sdk-go-v2) | `1.47.3` | `1.47.4` |
+| [github.com/aws/aws-sdk-go-v2/config](https://github.com/aws/aws-sdk-go-v2) | `1.33.9` | `1.33.10` |
+| [github.com/aws/aws-sdk-go-v2/credentials](https://github.com/aws/aws-sdk-go-v2) | `1.20.9` | `1.20.10` |
+| [github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager](https://github.com/aws/aws-sdk-go-v2) | `0.4.16` | `0.4.19` |
+| [github.com/aws/aws-sdk-go-v2/service/glue](https://github.com/aws/aws-sdk-go-v2) | `1.171.0` | `1.172.0` |
+| [github.com/aws/aws-sdk-go-v2/service/s3](https://github.com/aws/aws-sdk-go-v2) | `1.114.3` | `1.114.5` |
+| [github.com/aws/smithy-go](https://github.com/aws/smithy-go) | `1.28.5` | `1.28.6` |
+| [google.golang.org/api](https://github.com/googleapis/google-api-go-client) | `0.304.0` | `0.307.0` |
+
+
+Updates `cloud.google.com/go/storage` from 1.69.0 to 1.70.0
+- [Release notes](https://github.com/googleapis/google-cloud-go/releases)
+- [Changelog](https://github.com/googleapis/google-cloud-go/blob/main/CHANGES.md)
+- [Commits](https://github.com/googleapis/google-cloud-go/compare/compute/v1.69.0...compute/v1.70.0)
+
+Updates `github.com/RoaringBitmap/roaring/v2` from 2.29.0 to 2.30.0
+- [Release notes](https://github.com/RoaringBitmap/roaring/releases)
+- [Commits](https://github.com/RoaringBitmap/roaring/compare/v2.29.0...v2.30.0)
+
+Updates `github.com/aws/aws-sdk-go-v2` from 1.47.3 to 1.47.4
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/v1.47.3...v1.47.4)
+
+Updates `github.com/aws/aws-sdk-go-v2/config` from 1.33.9 to 1.33.10
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/config/v1.33.9...config/v1.33.10)
+
+Updates `github.com/aws/aws-sdk-go-v2/credentials` from 1.20.9 to 1.20.10
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/kms/v1.20.9...service/emr/v1.20.10)
+
+Updates `github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager` from 0.4.16 to 0.4.19
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/feature/s3/transfermanager/v0.4.16...feature/s3/transfermanager/v0.4.19)
+
+Updates `github.com/aws/aws-sdk-go-v2/service/glue` from 1.171.0 to 1.172.0
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/ec2/v1.171.0...service/ec2/v1.172.0)
+
+Updates `github.com/aws/aws-sdk-go-v2/service/s3` from 1.114.3 to 1.114.5
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/s3/v1.114.3...service/s3/v1.114.5)
+
+Updates `github.com/aws/smithy-go` from 1.28.5 to 1.28.6
+- [Release notes](https://github.com/aws/smithy-go/releases)
+- [Changelog](https://github.com/aws/smithy-go/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/aws/smithy-go/compare/v1.28.5...v1.28.6)
+
+Updates `google.golang.org/api` from 0.304.0 to 0.307.0
+- [Release notes](https://github.com/googleapis/google-api-go-client/releases)
+- [Changelog](https://github.com/googleapis/google-api-go-client/blob/main/CHANGES.md)
+- [Commits](https://github.com/googleapis/google-api-go-client/compare/v0.304.0...v0.307.0)
+
+---
+updated-dependencies:
+- dependency-name: cloud.google.com/go/storage
+  dependency-version: 1.70.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/RoaringBitmap/roaring/v2
+  dependency-version: 2.30.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2
+  dependency-version: 1.47.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/config
+  dependency-version: 1.33.10
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/credentials
+  dependency-version: 1.20.10
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager
+  dependency-version: 0.4.19
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/glue
+  dependency-version: 1.172.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/s3
+  dependency-version: 1.114.5
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/smithy-go
+  dependency-version: 1.28.6
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: google.golang.org/api
+  dependency-version: 0.307.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",ecf5d0b70cf0edff7b21985f66215fb5f34db683,2387,false,dependabot[bot],2,75,75,go.mod; go.sum
+apache/iceberg-go,8f8b994aadeca0299aec7ad8343b0812987660c8,8f8b994,Akriti,akriti.shakya@datazip.io,2026-11-04T21:36:45+05:30,GitHub,noreply@github.com,2026-11-04T11:06:45-05:00,fix(table): snapshot summary counts and sizes for deletion vectors (#2352),"* dev
+
+* test(table): address review feedback on DV summary tests
+
+* fix: calculate dv sizes
+
+* docs: add compatibility note for DV snapshot summaries
+
+* docs: refine DV compatibility note",bbb920087ec0597b83d583715554d967fa89485a,2352,false,,7,96,11,table; website
+apache/iceberg-go,c3e33dc1007cd191256c8c26202ff18fa875e375,c3e33dc,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-04T11:13:43-05:00,GitHub,noreply@github.com,2026-11-04T11:13:43-05:00,build(deps): bump github.com/go-jose/go-jose/v4 from 4.1.5 to 4.1.6 (#2405),"Bumps [github.com/go-jose/go-jose/v4](https://github.com/go-jose/go-jose) from 4.1.5 to 4.1.6.
+- [Release notes](https://github.com/go-jose/go-jose/releases)
+- [Commits](https://github.com/go-jose/go-jose/compare/v4.1.5...v4.1.6)
+
+---
+updated-dependencies:
+- dependency-name: github.com/go-jose/go-jose/v4
+  dependency-version: 4.1.6
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",8f8b994aadeca0299aec7ad8343b0812987660c8,2405,false,dependabot[bot],2,3,3,go.mod; go.sum
+apache/iceberg-go,2c5bc23598aed1e160a8285f8af5c8c1bf33f507,2c5bc23,Revanth,revanthcse1@gmail.com,2026-11-04T11:10:19-06:00,GitHub,noreply@github.com,2026-11-04T12:10:19-05:00,fix: keep NaN rows when RewriteNotExpr pushes a NOT down (#2355),"* fix: keep NaN rows when RewriteNotExpr pushes a NOT down
+
+* docs: link the follow-up issues and note the float comparison change",c3e33dc1007cd191256c8c26202ff18fa875e375,2355,false,,9,493,15,exprs.go; exprs_test.go; literals.go; table; visitors.go; visitors_test.go; website
+apache/iceberg-go,7581291e82650407697232213ab8551c1e0b957e,7581291,Revanth,revanthcse1@gmail.com,2026-11-04T11:11:50-06:00,GitHub,noreply@github.com,2026-11-04T12:11:50-05:00,refactor: encode nested types without aliasing their exported fields (#2361),"* refactor: encode nested types without aliasing their exported fields
+
+* refactor: name every JSON key in Schema and NestedField decoding",2c5bc23598aed1e160a8285f8af5c8c1bf33f507,2361,false,,4,246,57,nested_type_json_internal_test.go; schema.go; types.go; types_test.go
+apache/iceberg-go,d1800ed88e213e44b4023ef65de82319442d61d8,d1800ed,Revanth,revanthcse1@gmail.com,2026-11-04T11:17:02-06:00,GitHub,noreply@github.com,2026-11-04T12:17:02-05:00,fix(rest): layer vended credentials onto the base config everywhere (#2417),,7581291e82650407697232213ab8551c1e0b957e,2417,false,,3,130,50,catalog
+apache/iceberg-go,aff45ee17cd76c69f7847622913de5c066684651,aff45ee,Revanth,revanthcse1@gmail.com,2026-11-04T11:18:38-06:00,GitHub,noreply@github.com,2026-11-04T12:18:38-05:00,fix: make ExpressionEvaluator ordering comparisons false for NaN (#2418),,d1800ed88e213e44b4023ef65de82319442d61d8,2418,false,,2,119,4,table; visitors.go
+apache/iceberg-go,0e6b8d2d4fa387d2aaeb1cf43a2cc72a0466512d,0e6b8d2,Revanth,revanthcse1@gmail.com,2026-11-04T11:21:22-06:00,GitHub,noreply@github.com,2026-11-04T12:21:22-05:00,feat(table): record NaN value counts for float columns on write (#2420),,aff45ee17cd76c69f7847622913de5c066684651,2420,false,,2,306,0,table
+apache/iceberg-go,21d99303341c44b243821a23e74c0b03728657d0,21d9930,Shruthi,sruthi1reddy3@gmail.com,2026-11-04T09:29:39-08:00,GitHub,noreply@github.com,2026-11-04T12:29:39-05:00,"fix(cli): report missing table, not namespace, in describe (#2424)","Signed-off-by: Shruthi Yaramada <shrutyar@amazon.com>
+Co-authored-by: Shruthi Yaramada <shrutyar@amazon.com>",0e6b8d2d4fa387d2aaeb1cf43a2cc72a0466512d,2424,false,Shruthi Yaramada,2,68,2,cmd
+apache/iceberg-go,b1de1bd578c895faa16bdd28bfbfc0fdfa776ca9,b1de1bd,Harrison Crosse,harrison@crosse.dev,2026-11-04T12:31:22-05:00,GitHub,noreply@github.com,2026-11-04T12:31:22-05:00,fix(table): match equality deletes on dictionary columns (#2427),"Encode dictionary columns by their values so equality keys match plain columns
+on both the data side and the delete file side.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",21d99303341c44b243821a23e74c0b03728657d0,2427,false,,2,112,0,table
+apache/iceberg-go,5cee5eb305c75bb312408863b04e787aed6d80c8,5cee5eb,Revanth,revanthcse1@gmail.com,2026-11-04T11:34:14-06:00,GitHub,noreply@github.com,2026-11-04T12:34:14-05:00,feat(metrics): report skipped-data-files and skipped-delete-files in ScanReport (#2430),,b1de1bd578c895faa16bdd28bfbfc0fdfa776ca9,2430,false,,7,323,12,table
+apache/iceberg-go,a15bea70891abc79a3eea7bdf7db5ec9f5acc97f,a15bea7,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T18:39:10+01:00,GitHub,noreply@github.com,2026-11-04T18:39:10+01:00,feat(rest): support isolated IO registries (#2366),,5cee5eb305c75bb312408863b04e787aed6d80c8,2366,false,,6,267,13,catalog
+apache/iceberg-go,346019c1795621675a6c04d77eea2a8e794f7028,346019c,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T18:41:48+01:00,GitHub,noreply@github.com,2026-11-04T12:41:48-05:00,perf(maintenance): bound orphan reference buffers (#2379),"* perf(maintenance): bound orphan reference buffers
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(maintenance): consolidate orphan reference tests
+
+Move batching tests into existing cleanup tests and keep the
+production-path benchmark next to other cleanup benchmarks.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",a15bea70891abc79a3eea7bdf7db5ec9f5acc97f,2379,false,,3,128,18,table
+apache/iceberg-go,bc6105cb408d0da5493d8d768424da927ef1cd5e,bc6105c,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T18:44:39+01:00,GitHub,noreply@github.com,2026-11-04T12:44:39-05:00,refactor(catalog/sql)!: align view APIs with ViewCatalog (#2378),"* refactor(catalog/sql)!: align view APIs with ViewCatalog
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(catalog/sql): satisfy gofumpt and nlreturn
+
+* fix(catalog/sql): satisfy gofumpt and nlreturn
+
+* fix(catalog/sql): satisfy gofumpt and nlreturn
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",346019c1795621675a6c04d77eea2a8e794f7028,2378,false,,6,128,36,catalog; website
+apache/iceberg-go,774b4be6da83c730500995614fc7e1e47c9ba558,774b4be,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T18:55:39+01:00,GitHub,noreply@github.com,2026-11-04T12:55:39-05:00,perf(table): simplify equality delete conflict filters (#2380),"* perf(table): simplify equality delete conflict filters
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* refactor(table): address equality delete filter review
+
+Restore conflict-filter rationale and reuse source field types.
+Remove arbitrary grouping threshold and consolidate test coverage.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(table): group high-precision decimal equality delete partitions
+
+Compare decimal scale against the source field instead of literal precision.
+Avoid unused group maps and add cast and decimal regression coverage.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(table): fix nlreturn in equality delete literal guard
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",bc6105cb408d0da5493d8d768424da927ef1cd5e,2380,false,,3,320,19,table
+apache/iceberg-go,622967e983a9ad3ee3d8fd26e32afabc0d7abdf7,622967e,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T18:59:27+01:00,GitHub,noreply@github.com,2026-11-04T12:59:27-05:00,refactor(table): centralize unique manifest traversal (#2404),"* refactor(table): expose unique manifest stream
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover manifest stream prefetch and error propagation
+
+* test(table): cover v1 embedded manifests in unique stream
+
+* refactor(table): keep unique manifest stream internal until inspect extraction
+
+* test(table): trim redundant manifest traversal coverage
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",774b4be6da83c730500995614fc7e1e47c9ba558,2404,false,,4,225,3,table
+apache/iceberg-go,24cd5be0f33cdb0defd2c1a5cd77c0449f9cc9ec,24cd5be,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T19:01:58+01:00,GitHub,noreply@github.com,2026-11-04T13:01:58-05:00,feat(puffin): read compressed blobs (#2400),"* feat(puffin): read compressed blobs
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(puffin): reject trailing zstd frames
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(puffin): reject compressed deletion vectors on read
+
+* test(puffin): reject compressed DV footer and external metadata
+
+* fix(puffin): allow common zstd windows for small blobs
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(puffin): defer DV compression rejection to blob reads
+
+* test(puffin): preserve DV reader error contract
+
+* fix(puffin): reject explicit empty compression codec
+
+* refactor(puffin): share LZ4 and Zstd codec constants
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",622967e983a9ad3ee3d8fd26e32afabc0d7abdf7,2400,false,,4,492,12,puffin
+apache/iceberg-go,c5661c0caab434d72861424b5239c62708baaf13,c5661c0,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T19:03:48+01:00,GitHub,noreply@github.com,2026-11-04T13:03:48-05:00,feat(table): write and register v1 partition statistics (#2396),"* feat(table): compute and write v1 partition statistics
+
+* test(table): cover v1 partition statistics schema, sorting and metadata updates
+
+* fix(table): order binary and UUID partition tuples without reflection copy panic
+
+* test(table): use schema field slice in partition statistics assertions
+
+* test(table): verify partition statistics from live manifests and deleted entries
+
+* fix(table): guard partition statistics for unsupported layouts
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): refuse duplicate files in partition statistics
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): sort decimal partition statistics by numeric value
+
+* test(table): cover decimal partition statistics ordering
+
+* feat(table): support embedded partition statistics manifests
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): infer omitted v1 embedded manifest spec IDs
+
+* fix(table): accept legacy v1 fields without explicit IDs
+
+* test(table): cover optional v1 partition spec IDs
+
+* fix(table): match Java partition statistics ordering and API
+
+* test(table): cover float and UUID partition statistics sorting
+
+* style(table): separate early returns in partition statistics comparator
+
+* refactor(table): share embedded v1 manifest spec parsing with audit
+
+* fix(table): normalize decoded decimal partition statistics
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",24cd5be0f33cdb0defd2c1a5cd77c0449f9cc9ec,2396,false,,4,1432,0,table
+apache/iceberg-go,a19082e2d50d24d27710968d759338d931ba8442,a19082e,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T19:05:04+01:00,GitHub,noreply@github.com,2026-11-04T13:05:04-05:00,feat(puffin): write compressed blobs (#2401),"* feat(puffin): read compressed blobs
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(puffin): reject trailing zstd frames
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* feat(puffin): write compressed blobs
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(puffin): validate metadata first and verify frame sizes
+
+* fix(puffin): reject compressed deletion vectors on read
+
+* test(puffin): reject compressed DV footer and external metadata
+
+* test(puffin): verify offsets of mixed-codec blobs
+
+* fix(puffin): allow common zstd windows for small blobs
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(puffin): defer DV compression rejection to blob reads
+
+* test(puffin): preserve DV reader error contract
+
+* style(puffin): use complete ASF license header
+
+* style(puffin): use complete ASF license header
+
+* docs(puffin): clarify per-blob compression input
+
+* test(puffin): cover LZ4 frame checksum and raw blocks
+
+* fix(puffin): reject explicit empty compression codec
+
+* refactor(puffin): share LZ4 and Zstd codec constants
+
+* fix(puffin): handle unused encoder cleanup result
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",c5661c0caab434d72861424b5239c62708baaf13,2401,false,,3,381,3,puffin
+apache/iceberg-go,2ee04d9b2dc9937986f2a749501055770df4a459,2ee04d9,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T19:08:17+01:00,GitHub,noreply@github.com,2026-11-04T13:08:17-05:00,feat(table): validate snapshot manifests (#2397),"* feat(table): validate snapshot manifests
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): validate tombstone entry content during snapshot audit
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): exercise snapshot tombstones with valid fixtures
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): reject missing required v2/v3 manifest counts
+
+* test(table): cover required manifest-list counts
+
+* feat(table): validate deletion vector targets
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): report invalid deletion vector blob ranges during audits
+
+* test(table): cover invalid and missing deletion vector ranges
+
+* style(table): align snapshot validation issue constants
+
+* fix(table): align snapshot audit with inspect and projected manifests
+
+* fix(table): do not mark canceled snapshot audits complete
+
+* fix(table): use snapshot lookup sentinels in validation
+
+* fix(table): infer optional v1 embedded manifest spec IDs in audit
+
+* test(table): verify v1 snapshot audit without header spec IDs
+
+* style(table): satisfy nlreturn in snapshot audit
+
+* test(table): use a non-empty manifest for v1 header validation
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): de-duplicate snapshot manifest audit issues and share v1 spec parsing
+
+* docs(table): preserve escaped newlines in snapshot audit example
+
+* fix(table): validate embedded v1 header specs during snapshot audits
+
+* fix(table): reject deletion vector blob ranges beyond file size
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",a19082e2d50d24d27710968d759338d931ba8442,2397,false,,4,1192,2,table; website
+apache/iceberg-go,d6831edf0f98c7554d00fb2957ac2b51ba897822,d6831ed,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T19:11:40+01:00,GitHub,noreply@github.com,2026-11-04T13:11:40-05:00,feat(table): import bucket-partitioned Parquet files (#2395),"* feat(table): import bucket-partitioned Parquet into v1 tables
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): preserve file import API compatibility
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): snapshot partition values before concurrent imports
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): reject unknown partition transforms during file import
+
+* test(table): prevent unknown transform bypass via supplied partition tuple
+
+* fix(table): validate supplied partition values against Parquet bounds
+
+* style(table): sort arrow utils imports
+
+* fix(table): preserve addFilesOperation comparability
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",2ee04d9b2dc9937986f2a749501055770df4a459,2395,false,,6,666,28,table
+apache/iceberg-go,b00fada37e8238e4538ec409eef822850fe32053,b00fada,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T19:20:30+01:00,GitHub,noreply@github.com,2026-11-04T13:20:30-05:00,feat(table): remove dangling delete files (#2408),"* feat(table): remove dangling delete files
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): preserve partition-scoped deletes during dangling cleanup
+
+* perf(table): avoid scanning data manifests without dangling delete candidates
+
+* test(table): cover scoped delete references and fix nlreturn lint
+
+* perf(table): index only explicitly referenced data paths
+
+* test(table): verify dangling delete cleanup without delete manifests is a no-op
+
+* test(table): fence dangling delete cleanup with retries enabled
+
+* fix(table): include unpartitioned tables in dangling delete cleanup
+
+* test(table): verify unpartitioned dangling delete cleanup
+
+* fix(table): match Java scan-based dangling delete cleanup
+
+* style(table): remove trailing blank lines in dangling delete tests
+
+* refactor(table): stage dangling delete cleanup in transactions
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",d6831edf0f98c7554d00fb2957ac2b51ba897822,2408,false,,3,649,0,table
+apache/iceberg-go,b95d4fc8018ed6a6def40a97e4926401577af005,b95d4fc,Revanth,revanthcse1@gmail.com,2026-11-04T12:29:14-06:00,GitHub,noreply@github.com,2026-11-04T13:29:14-05:00,fix!: reject NaN literals when binding predicates (#2432),,b00fada37e8238e4538ec409eef822850fe32053,2432,false,,8,208,18,bound_set_literal_view_internal_test.go; exprs.go; exprs_test.go; table; website
+apache/iceberg-go,19c888720daf8f3fd8d0a2bb14cd9e8e32ce0a51,19c8887,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T19:38:51+01:00,GitHub,noreply@github.com,2026-11-04T13:38:51-05:00,feat(table): rewrite v2 position delete files (#2409),"* feat(table): rewrite position delete files
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): preserve unscoped position deletes and validate positions
+
+* fix(table): skip ineligible position delete rewrites and clean partial outputs
+
+* test(table): cover no-op delete rewrites with read-only file IO
+
+* fix(table): repair delete rewrite lint and preserve no-op behavior
+
+* fix(table): compact position deletes across source sequences
+
+* test(table): cover source sequences in delete rewrite chunks
+
+* test(table): retain delete applicability across commit sequences
+
+* style(table): satisfy nlreturn in position delete rewrite
+
+* test(table): assert position delete rewrites stop on pinned ref conflict
+
+* fix(table): preserve cross-spec position deletes
+
+* refactor(table): stage position delete rewrites in transactions
+
+* fix(table): match location provider signature in position delete rewrite
+
+* style(table): fix position delete rewrite test formatting
+
+* style(table): fix position delete rewrite test formatting
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",b95d4fc8018ed6a6def40a97e4926401577af005,2409,false,,3,962,0,table

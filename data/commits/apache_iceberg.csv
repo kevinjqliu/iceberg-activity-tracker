@@ -8882,3 +8882,153 @@ apache/iceberg,ae869756da0f30a4bf67723351c8de2a2a8b924b,ae86975,Sergei Nikolaev,
 apache/iceberg,866bca5d6291d19b3480bb55529c9eebec82d0d2,866bca5,Maximilian Michels,mxm@apache.org,2026-11-03T16:28:01+01:00,GitHub,noreply@github.com,2026-11-03T16:28:01+01:00,Flink: ConvertEqualityDeletes: Fix index consistency after a failure or restore (#18674),,ae869756da0f30a4bf67723351c8de2a2a8b924b,18674,false,,9,907,83,docs; flink
 apache/iceberg,5a2ccf5ba830838ecf182bccb516d5ee48f8b8ed,5a2ccf5,Philipp Fischbeck,mail@pfischbeck.de,2026-11-03T18:13:36+01:00,GitHub,noreply@github.com,2026-11-03T09:13:36-08:00,Spec: fix formatting of geospatial CRS examples (#17724),,866bca5d6291d19b3480bb55529c9eebec82d0d2,17724,false,,1,2,1,format
 apache/iceberg,e055c68fff4472dbd79fde05711b238d22b04c7d,e055c68,Ryan Blue,blue@apache.org,2026-11-03T11:46:18-08:00,GitHub,noreply@github.com,2026-11-03T11:46:18-08:00,Core: Add MutableBitmap.merge (#18704),Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>,5a2ccf5ba830838ecf182bccb516d5ee48f8b8ed,18704,false,Claude Opus 5.5,3,540,15,core
+apache/iceberg,b71a64ddc28e4b39e07cec71cd12bc5ed293f8bb,b71a64d,Prashant Singh,35593236+singhpk234@users.noreply.github.com,2026-11-03T14:47:21-08:00,GitHub,noreply@github.com,2026-11-03T14:47:21-08:00,Spark: [3/N] Support sending referenced-by to all endpoints (#13979),"* Spark: Send the referenced-by view chain through SparkCatalog
+
+Resolve the chain of views a relation was reached through and pass it to the
+catalog as a LoadContext, so a REST catalog can forward it to the server.
+
+SparkSupportsLoadContext extends the loading contract with context-carrying
+overloads of loadTable and loadView, including the time-travel forms, and
+SparkCatalog and SparkSessionCatalog implement it. ResolveViews records the
+chain while resolving nested views, with UnResolvedRelationFromView carrying it
+through analysis. Cross-catalog view references fail rather than silently
+dropping the chain.
+
+Gated behind spark.sql.iceberg.referenced-by-enabled, off by default.
+
+* Spark: Move referenced-by context to Spark 4.2
+
+Generated-by: Codex
+
+* Spark: Fix ViewUtil Scala import grouping
+
+Generated-by: Codex
+
+* Spark 4.2: Implement contextual loadTable in TestSparkCatalog
+
+TestSparkCatalog only overrode loadTable(Identifier), so once the read
+path started resolving through loadRelation -> loadTable(Identifier,
+LoadContext), the double was no longer consulted and lookups fell
+through to the real catalog.
+
+Override the contextual variant to delegate to the existing one. The
+double ignores the context; TestReferencedByViewChain covers the
+referenced-by behaviour against real catalogs.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+
+* Spark 4.2: Restore explicit referenced-by view resolution
+
+Restore the Spark 4.1-style analyzer path for referenced-by propagation in Spark 4.2. ResolveViews now expands Iceberg views, carries the view chain through UnResolvedRelationFromView, and loads nested relations with an explicit LoadContext instead of using SQLConf-backed view metadata.
+
+Generated-by: Codex
+
+* Core, Spark: Address referenced-by review feedback
+
+Preserve existing cross-catalog view behavior by dropping catalog-relative referenced-by entries that cannot be represented for the target catalog. Bypass CachingCatalog for non-empty LoadContext loads so referenced-by reaches catalogs such as REST, and add regression coverage for cache-enabled Spark reads, time-travel views, and cross-catalog view references.
+
+Generated-by: Codex
+
+* Spark 4.2: Gate referenced-by view resolution
+
+Add a default-off Spark SQL flag for referenced-by view-chain propagation. When disabled, Spark keeps its native view resolution behavior, including cross-catalog views. When enabled, Iceberg uses the explicit analyzer path and rejects cross-catalog chains because LoadContext carries catalog-relative identifiers.
+
+Generated-by: Codex
+
+* Spark 4.2: Use resolved view identity for referenced-by
+
+Build the referenced-by view chain from the catalog and identifier Spark resolved when loading the view. Keep view metadata current catalog and namespace only for resolving unqualified references inside the view SQL.
+
+Generated-by: Codex
+
+* Spark 4.2: Address referenced-by review feedback
+
+Keep the view chain on Spark's pre-execution table refresh by binding
+it to the catalog of relations resolved through a view, so a table read
+through a view is never reloaded as direct access. Convert view time
+travel with Spark's TimeTravelSpec so string and integer timestamps work
+and pinned snapshots are not refreshed. Leave V1 and delegating tables
+read through a view to Spark, and alias view-resolved tables so
+table-qualified columns resolve. Remove loadRelation overrides that
+duplicate BaseCatalog.
+
+* Spark 4.2: Resolve referenced-by views in a dedicated rule
+
+Move referenced-by view expansion out of ResolveViews into
+ResolveReferencedByViews, which does nothing when referenced-by is
+disabled. ResolveViews is back to its main behavior.
+
+With referenced-by enabled, BaseCatalog.loadRelation returns tables
+only, so Spark resolves tables itself and leaves Iceberg views
+unresolved for the new rule. This removes the hint-batch registration,
+which Spark's Hive session state ignores, and keeps a table read to a
+single load. Expanded views are wrapped in Spark's View node so cycle
+detection and cache invalidation keep working, and parse, streaming and
+not-found errors match Spark's.
+
+LoadContext gains equals and hashCode so cached plans over a view are
+reused by later queries.
+
+SparkSessionCatalog fails a load with a referenced-by chain when its
+Iceberg catalog cannot pass the context, instead of dropping it.
+
+Generated-by: Claude Code
+
+* Core, Spark 4.2: Bound referenced-by view depth and canonicalize contextual loads
+
+Fail referenced-by view expansion past spark.sql.view.maxNestedViewDepth
+with the same error Spark raises when referenced-by is disabled, so a
+view cycle no longer overflows the stack during analysis.
+
+CachingCatalog now sends contextual loads the same canonical identifier
+as cached loads, so a table read through a view and read directly reach
+the delegate under one name when the cache is case-insensitive.
+
+Drop two Spark tests covered by more specific ones.
+
+Generated-by: Claude Code
+
+* Spark 4.2: Expand referenced-by views through SessionCatalog.getRelation
+
+Referenced-by view expansion now uses the same Spark path as when the
+flag is off, so view columns bind by name, every view schema mode is
+honored, and the view text is parsed with the SQL configs stored at
+CREATE VIEW. Previously columns were bound by position, which returned
+wrong data after the underlying columns were reordered.
+
+Tests that should behave the same with the flag on or off now run with
+both settings and assert the expected outcome directly.
+
+Generated-by: Claude Code
+
+---------
+
+Co-authored-by: Prashant Singh <prashant.singh@snowflake.com>
+Co-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>",e055c68fff4472dbd79fde05711b238d22b04c7d,13979,false,Claude Opus 5 (1M context); Prashant Singh,17,1573,12,api; core; spark
+apache/iceberg,c484d46fde82028ed351e9a8f0b665261d7c1581,c484d46,raashed,mohammedraashed10@gmail.com,2026-11-04T13:13:03+05:30,GitHub,noreply@github.com,2026-11-04T08:43:03+01:00,"Core, Spark: Rethrow ValidationException from REST 400 responses (#18473)","* Core, Spark: Rethrow ValidationException from REST 400 responses
+
+The REST client turned every 400 into a BadRequestException, so a
+ValidationException raised by the server surfaced as a different exception
+than with the Hive or Hadoop catalogs. Like #9225 did for
+IllegalArgumentException, DefaultErrorHandler now rethrows a
+ValidationException when the error type matches. This lets
+testCreateTableCommitProperties run against the REST catalog.",b71a64ddc28e4b39e07cec71cd12bc5ed293f8bb,18473,false,,6,52,24,core; spark
+apache/iceberg,66a1417a7674d677aee6c6d24cc6486ec33b2192,66a1417,GuoYu,511955993@qq.com,2026-11-04T18:49:55+08:00,GitHub,noreply@github.com,2026-11-04T11:49:55+01:00,Flink: Backport Support Lookup Join using full in-memory lookup cache (#18766),,c484d46fde82028ed351e9a8f0b665261d7c1581,18766,false,,25,2659,201,flink; gradle.properties
+apache/iceberg,6383a3df85f3ad245b8aa921b35b68436ea6919e,6383a3d,Swapna Marru,swapna267@gmail.com,2026-11-04T02:52:07-08:00,GitHub,noreply@github.com,2026-11-04T11:52:07+01:00,Flink: Backport: resolving the record serializer without loading the table (#18525) (#18781),,66a1417a7674d677aee6c6d24cc6486ec33b2192,18781,false,,20,528,143,flink
+apache/iceberg,22ed06b9792c7161523e5ffa5dde4b199e0c6629,22ed06b,Joy Haldar,joyno.23@gmail.com,2026-11-04T20:26:35+05:30,GitHub,noreply@github.com,2026-11-04T15:56:35+01:00,"Data, Spark 4.2: Add format model TCK coverage for vectorized reads (#17610)",,6383a3df85f3ad245b8aa921b35b68436ea6919e,17610,false,,5,382,127,data; spark
+apache/iceberg,5f2976d1edddff7dfb8c69f9ddf0f06059155054,5f2976d,Maximilian Michels,mxm@apache.org,2026-11-04T16:18:24+01:00,GitHub,noreply@github.com,2026-11-04T16:18:24+01:00,Flink: Backport: ConvertEqualityDeletes: Fix index consistency after a failure or restore (#18674) (#18777),,22ed06b9792c7161523e5ffa5dde4b199e0c6629,18777,false,,16,1794,160,flink
+apache/iceberg,d303e7e8804385bf5e25813c3547911a219e4c80,d303e7e,Huaxin Gao,huaxin.gao11@gmail.com,2026-11-04T08:58:41-08:00,GitHub,noreply@github.com,2026-11-04T08:58:41-08:00,Spec: Clarify row-level delete sections after v4 equality-delete prohibition (#18301),"* Spec: Clarify row-level delete sections for v4
+
+* address comments",5f2976d1edddff7dfb8c69f9ddf0f06059155054,18301,false,,1,15,6,format
+apache/iceberg,0c3465b5416e7929493efe1ba719e583df9e6956,0c3465b,GuoYu,511955993@qq.com,2026-11-05T01:33:07+08:00,GitHub,noreply@github.com,2026-11-04T18:33:07+01:00,Flink: Fix DynamicSink silently dropping commits after stateless restart (#18303),,d303e7e8804385bf5e25813c3547911a219e4c80,18303,false,,11,388,74,docs; flink
+apache/iceberg,ea73769d120dc3819d8cfa2253b6dba4bb394886,ea73769,Joy Haldar,joyno.23@gmail.com,2026-11-04T23:07:28+05:30,GitHub,noreply@github.com,2026-11-04T09:37:28-08:00,"Spark 3.5, 4.0, 4.1: Backport format model TCK coverage for vectorized reads (#18790)","* Spark 3.5, 4.0, 4.1: Backport format model TCK coverage for vectorized reads
+
+Co-authored-by: Joy Haldar <joy.haldar@target.com>
+
+* Fix formatting
+
+Co-authored-by: Joy Haldar <joy.haldar@target.com>
+
+---------
+
+Co-authored-by: Joy Haldar <joy.haldar@target.com>",0c3465b5416e7929493efe1ba719e583df9e6956,18790,false,Joy Haldar,3,622,0,spark

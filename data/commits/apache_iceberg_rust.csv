@@ -34927,3 +34927,83 @@ when main was one of them. Route the dangling refs through remove_ref,
 matching Java's TableMetadata.Builder.
 
 Co-authored-by: Isaac <no-reply@databricks.com>",896f9d6c50ff52fa9e43aec170d3f14bfb40b512,3580,false,Isaac,1,153,2,crates
+apache/iceberg-rust,200ee6593dee84654a3b98aed724c7d094aa18cf,200ee65,Liang-Chi Hsieh,viirya@gmail.com,2026-11-03T22:57:48Z,GitHub,noreply@github.com,2026-11-03T22:57:48Z,fix(arrow): map Iceberg Binary to Arrow Binary instead of LargeBinary (#2710),"* fix(arrow): map Iceberg Binary to Arrow Binary instead of LargeBinary
+
+`type_to_arrow_type` mapped `PrimitiveType::Binary` to `DataType::LargeBinary`,
+which is inconsistent with both the Java implementation
+(`ArrowSchemaUtil` maps Iceberg Binary to Arrow `Binary`) and parquet-rs,
+which reads an unannotated Parquet `BYTE_ARRAY` column as `DataType::Binary`
+by default. The mismatch forces an unnecessary cast when reading Binary
+columns and diverges from the rest of the ecosystem.
+
+Map `PrimitiveType::Binary` to `DataType::Binary`. The reverse conversion
+(`arrow_schema_to_schema`), the arrow-to-literal path, and the bucket
+transform already accept both `Binary` and `LargeBinary`, so externally
+produced `LargeBinary` columns keep working.
+
+Closes #2698
+
+* fix(writer): accept LargeBinary equality columns after the Binary mapping change
+
+With Iceberg Binary now mapped to Arrow Binary, the equality delete
+projector builds its output batch against a Binary schema while reusing
+the input arrays as-is, so batches carrying LargeBinaryArray equality
+columns (accepted before) failed RecordBatch::try_new. Cast LargeBinary
+to Binary in RecordBatchProjector::project_batch and add a regression
+test. Also drop redundant `.as_slice()` in test fixtures.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* fix(arrow): accept LargeBinary source columns in partition value calculation
+
+PartitionValueCalculator builds its result struct against the partition
+Arrow type, which now uses Binary for Iceberg binary fields, while the
+identity transform passes the projected LargeBinary column through, so
+StructArray::try_new failed. Move the LargeBinary -> Binary cast from
+RecordBatchProjector::project_batch into project_column so both callers
+get columns matching the projected schema. This also lets truncate
+partitions on binary fields accept LargeBinary input.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",0ebe240a0f73a3efca2ad4a98326b06ccfd2e30e,2710,false,Isaac,5,160,9,crates
+apache/iceberg-rust,2079e5851768bc4ef24df707d7faa664406375bf,2079e58,Xuanyi Li,shanelxy@outlook.com,2026-11-04T04:17:28Z,GitHub,noreply@github.com,2026-11-04T04:17:28Z,feat: add geospatial parquet write support [3/3] (#3342),"* feat: add geospatial parquet write support
+
+Aggregate Parquet Geometry statistics into Iceberg file bounds using the spec-defined coordinate encoding. Carry the field type with the bounds state, keep incomplete bounds unknown, and omit Geography bounds until geodesic bounds are supported. Export an unset CRS without Arrow CRS metadata.
+
+Keep spatial bounds out of scalar metrics comparisons. Cover Parquet payload and metadata round-trips, manifest bounds, and scalar filtering separately, with focused tests for coordinate dimensions, wrapping Geometry boxes, and missing statistics.
+
+* fix: preserve supplied geography bounds
+
+Consume existing Parquet bounding boxes for Geography as well as Geometry. Bounds generation and edge interpolation remain the Parquet writer responsibility. Preserve wraparound and serialize full longitude coverage using the canonical range.",200ee6593dee84654a3b98aed724c7d094aa18cf,3342,false,,5,602,27,crates
+apache/iceberg-rust,46e51d80f78906013783c91b74f4d4ef7b4a352b,46e51d8,Yuang Gao,91290127+YuangGao@users.noreply.github.com,2026-11-04T06:12:54Z,GitHub,noreply@github.com,2026-11-04T06:12:54Z,feat(transaction): add jitter to the commit retry backoff (#3610),"* feat(transaction): add jitter to the commit retry backoff
+
+* test(transaction): compare two backoffs instead of asserting jitter bounds",2079e5851768bc4ef24df707d7faa664406375bf,3610,false,,1,13,0,crates
+apache/iceberg-rust,f53314e4fab2e2708bd6b94041b701463653fcc2,f53314e,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-11-04T17:31:07Z,GitHub,noreply@github.com,2026-11-04T17:31:07Z,feat(arrow): read manifest entries into Arrow with arrow-avro (#3388),"* feat(arrow): convert manifest entries to an Arrow RecordBatch
+
+* test(arrow): cover manifest versions, count overflow, and a PyIceberg manifest
+
+* refactor(arrow): assert the shape of the generated manifest_entry schema
+
+* feat(arrow): read manifest entries into Arrow with arrow-avro
+
+* address PR feedback
+
+* Return an error if arrow-avro splits a manifest into more than one batch
+
+* fix v2 discrepancy
+
+* Update manifest reader tests for Arrow Binary mapping
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Export read_manifest_entries by name
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",46e51d80f78906013783c91b74f4d4ef7b4a352b,3388,false,Copilot App; Kevin Liu,7,1474,2,Cargo.lock; Cargo.toml; crates
