@@ -9032,3 +9032,52 @@ Co-authored-by: Joy Haldar <joy.haldar@target.com>
 ---------
 
 Co-authored-by: Joy Haldar <joy.haldar@target.com>",0c3465b5416e7929493efe1ba719e583df9e6956,18790,false,Joy Haldar,3,622,0,spark
+apache/iceberg,cb5f345a267331a5aef4bb65c3616463c01bbadd,cb5f345,Anurag Mantripragada,amantripragada@apple.com,2026-11-04T13:59:37-08:00,GitHub,noreply@github.com,2026-11-04T13:59:37-08:00,Spark 3.5: Backport custom snapshot property from session configuration (#14545) (#18792),,ea73769d120dc3819d8cfa2253b6dba4bb394886,18792,false,,3,60,0,spark
+apache/iceberg,f72900ee02cbb9bde4b1523d696a7258690a943c,f72900e,Anurag Mantripragada,amantripragada@apple.com,2026-11-04T15:47:12-08:00,GitHub,noreply@github.com,2026-11-04T15:47:12-08:00,Spark 3.5: Backport apply session snapshot properties to maintenance actions and procedures (#18801),Spark 3.5: Backport session snapshot properties for actions and procedures (#18406),cb5f345a267331a5aef4bb65c3616463c01bbadd,18801,false,,10,124,11,spark
+apache/iceberg,7b8cbc7fef332a8ca66cb6691c361ad0dc5963a6,7b8cbc7,GuoYu,511955993@qq.com,2026-11-05T17:44:21+08:00,GitHub,noreply@github.com,2026-11-05T10:44:21+01:00,Flink: BackPort fix DynamicSink silently dropping commits after stateless restart (#18805),,f72900ee02cbb9bde4b1523d696a7258690a943c,18805,false,,20,775,148,flink
+apache/iceberg,b59c059430d334d6a381c484fb73bb5094d00741,b59c059,Aditya Kumar,aditya.kumar@ksolves.com,2026-11-05T16:12:24+05:30,GitHub,noreply@github.com,2026-11-05T11:42:24+01:00,Flink: Fix DynamicIcebergSink TableMetadataCache resolving retired field ids (#18517),,7b8cbc7fef332a8ca66cb6691c361ad0dc5963a6,18517,false,,4,302,13,docs; flink
+apache/iceberg,9f04b05090ade75d50eef5f244914181393adbb7,9f04b05,Eunbin Son,58901024+thswlsqls@users.noreply.github.com,2026-11-06T00:29:49+09:00,GitHub,noreply@github.com,2026-11-05T16:29:49+01:00,Nessie: Check namespace existence at the ref HEAD in listNamespaces (#18035),"listNamespaces(Namespace) mixed two commit points inside one method. The
+parent namespace existence check called api.getContent().reference(getReference()),
+which pins the request to the hash the client cached when it first resolved
+the reference. The child listing right below it used withReference(api.getEntries()),
+which sends only the branch name for a mutable reference so the server answers
+from the HEAD of the ref. A client that had not seen a newer commit therefore
+got NoSuchNamespaceException for a namespace another client had just created,
+even though the child listing would have found it.
+
+Use the withReference(api.getContent()) idiom for the existence check so both
+halves of the method read the same commit. loadNamespaceMetadata() in the same
+class already reads namespace content that way.
+
+The three remaining api.getContent().reference(getReference()) calls in this
+class (createNamespace, dropNamespace, updateProperties) are left alone. They
+are pre-checks that run right before a commit against that same hash, so
+pinning the hash there is the intended behavior.
+
+Generated-by: Claude Code
+
+* Nessie: Reword test comment and use containsExactly in TestMultipleClients
+
+Review follow-up for listNestedNamespacesFromAnotherClient. The first
+listNamespaces() call does not pin the other client to a hash; it only
+forces the client to resolve its reference before the commits below so
+the hash it caches is older than those commits. Say that instead of
+""pins"", and use containsExactly since the listing has a single entry.
+
+Generated-by: Claude Code
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+
+---------
+
+Co-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>",b59c059430d334d6a381c484fb73bb5094d00741,18035,false,Claude Opus 5 (1M context),2,15,5,nessie
+apache/iceberg,753c82df656bacf516c17ccddc0792a62933aa17,753c82d,Swapna Marru,swapna267@gmail.com,2026-11-05T08:20:28-08:00,GitHub,noreply@github.com,2026-11-05T17:20:28+01:00,Flink: Allow configuring a branch for rewrite data files action (#18661),,9f04b05090ade75d50eef5f244914181393adbb7,18661,false,,7,173,11,docs; flink
+apache/iceberg,30c246a03b43f6f67ebc0e98c5adebef3dbe3c16,30c246a,Sylwester Lachiewicz,slachiewicz@apache.org,2026-11-05T17:59:59+01:00,GitHub,noreply@github.com,2026-11-05T17:59:59+01:00,Core: Fix the timestamp race in TestFindFiles#testAsOfTimestamp (#18779),"The as-of timestamp was read right after FILE_B's commit, so FILE_C's snapshot could land in the same millisecond and be included. Wait until the clock is past FILE_B's snapshot, and past the timestamp before committing FILE_C.
+
+Generated-by: Claude Code",753c82df656bacf516c17ccddc0792a62933aa17,18779,false,,1,2,1,core
+apache/iceberg,d2df5101dc39f74e328319845c771fed0afbfe3e,d2df510,chenjian2664,chenjian2664@gmail.com,2026-11-06T02:25:20+08:00,GitHub,noreply@github.com,2026-11-05T10:25:20-08:00,Spark 4.1: Backport: Fix predicate pushdown on changelog metadata column (#18148) (#18808),"Filtering a changelog table on _change_type, _change_ordinal or
+_commit_snapshot_id failed with a ValidationException because the
+predicate was pushed into the Iceberg scan, where these generated
+columns do not exist. Leave such predicates for Spark to evaluate after
+the scan, as Spark 4.2 already does.",30c246a03b43f6f67ebc0e98c5adebef3dbe3c16,18808,false,,2,65,0,spark
+apache/iceberg,b56b4bf9d6f3f4547fd3773e8fd78239869fad4b,b56b4bf,gaborkaszab,gaborkaszab@gmail.com,2026-11-05T20:12:47+01:00,GitHub,noreply@github.com,2026-11-05T13:12:47-06:00,Core: Basic fields and schemas for column files (#16285),,d2df5101dc39f74e328319845c771fed0afbfe3e,16285,false,,18,757,38,core

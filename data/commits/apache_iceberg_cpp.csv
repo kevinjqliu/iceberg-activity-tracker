@@ -9736,3 +9736,21 @@ OAuth2Session:
 - Add StopRefreshing(), a non-blocking stop used on cache removal.
 - Add ExpiresAt() and IsRefreshable(), and include the session headers
   in OAuth2Info().",49b84a0621ef952095aa8ba52bb08fe25ee85976,985,false,,12,1705,40,src
+apache/iceberg-cpp,8f63dfd5d19dc91838a96e15d38c77414e548f7d,8f63dfd,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-05T02:22:15Z,GitHub,noreply@github.com,2026-11-05T10:22:15+08:00,feat(io): expose FileIO configuration properties (#963),,9c478f7571e89ef6388c4fa776d7a4e5f448cbac,963,false,,5,46,0,src
+apache/iceberg-cpp,3bd08083d948df53e56fc6e8f36f42e0ff280a19,3bd0808,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-05T06:50:41Z,GitHub,noreply@github.com,2026-11-05T14:50:41+08:00,fix: include <cstdint> in url_encoder.cc (#1093),"url_encoder.cc uses int8_t but relied on another header to declare it,
+which MinGW's headers don't.
+
+Co-authored-by: Claude Opus 5.5 (1M context) <noreply@anthropic.com>",8f63dfd5d19dc91838a96e15d38c77414e548f7d,1093,false,Claude Opus 5.5 (1M context),1,1,0,src
+apache/iceberg-cpp,9d42a74def0be91d35b2a3f8402c9f86290f972c,9d42a74,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-05T06:51:40Z,GitHub,noreply@github.com,2026-11-05T14:51:40+08:00,refactor: use contains for membership checks (#1086),,3bd08083d948df53e56fc6e8f36f42e0ff280a19,1086,false,,4,5,6,src
+apache/iceberg-cpp,ce262f54ca1aab4bfacc5ccfc8a1a1716160496f,ce262f5,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-05T06:52:35Z,GitHub,noreply@github.com,2026-11-05T14:52:35+08:00,docs: document Table thread safety (#1094),Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>,9d42a74def0be91d35b2a3f8402c9f86290f972c,1094,false,Claude Opus 5.5,1,6,0,src
+apache/iceberg-cpp,44a4e988d0052b4f7f5a38d5141ad8e496449f2c,44a4e98,Guotao Yu,guotao.yugt@gmail.com,2026-11-05T14:58:32+08:00,GitHub,noreply@github.com,2026-11-05T14:58:32+08:00,"fix(build): pin croaring, nlohmann_json, spdlog, cpr, sqlpp23 fetches (#1082)","These FetchContent downloads had no integrity pin, unlike Arrow,
+nanoarrow, and utf8proc in the same file, so a tampered archive or
+mirror would be compiled unverified. nlohmann_json keeps a URL_HASH
+(its tarball is a stable uploaded release asset). The other four use
+GitHub's auto-generated tag-archive endpoint, which is not byte-stable
+across requests and cannot be hash-pinned reliably (confirmed: the
+same tag download returned different checksums on different
+requests), so they switch to GIT_REPOSITORY + GIT_TAG pinned to the
+tag's full commit SHA, the same pattern already used here for Avro,
+googletest, and google_benchmark.",ce262f54ca1aab4bfacc5ccfc8a1a1716160496f,1082,false,,1,64,36,cmake_modules
+apache/iceberg-cpp,8ec915e167ee453dfe9679d3572bfca70a9be6b1,8ec915e,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-05T08:51:14Z,GitHub,noreply@github.com,2026-11-05T16:51:14+08:00,docs: fix public API comment mismatches (#1085),,44a4e988d0052b4f7f5a38d5141ad8e496449f2c,1085,false,,4,6,6,src
