@@ -35008,3 +35008,104 @@ Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",46e51d80f78906013783c91b74f4d4ef7b4a352b,3388,false,Copilot App; Kevin Liu,7,1474,2,Cargo.lock; Cargo.toml; crates
 apache/iceberg-rust,f533cd6175bb42b5788537f589cd9450a3054d27,f533cd6,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T20:50:19Z,GitHub,noreply@github.com,2026-11-04T20:50:19Z,fix(spec): reject non-finite decimal values (#3331),,f53314e4fab2e2708bd6b94041b701463653fcc2,3331,false,,3,100,3,crates
+apache/iceberg-rust,fedc8e84655b8b93147b7416e1719d89e0ec3238,fedc8e8,Szehon Ho,szehon.apache@gmail.com,2026-11-05T20:10:22Z,GitHub,noreply@github.com,2026-11-05T20:10:22Z,perf(spec): remove snapshots with direct map lookups (#3615),"* perf(spec): remove snapshots with direct map lookups
+
+* chore(spec): address snapshot removal review feedback
+
+---------
+
+Co-authored-by: Andrei Tserakhau <laskoviymishka@gmail.com>",f533cd6175bb42b5788537f589cd9450a3054d27,3615,false,Andrei Tserakhau,1,41,8,crates
+apache/iceberg-rust,72addd94670db273cdb03f4efce23913991a049e,72addd9,Yuang Gao,91290127+YuangGao@users.noreply.github.com,2026-11-06T07:41:53Z,GitHub,noreply@github.com,2026-11-06T07:41:53Z,fix!(io): bound S3 write request size with a configurable part size (#3179),"* fix(io): bound S3 write request size with a configurable part size
+
+* fix(io): store multipart part size as u64 and refresh public API snapshots
+
+* fix(io): validate S3 part size ceiling and cover the one-shot write path
+
+* fix(io): mark the S3 variant non_exhaustive and stabilize the MinIO part-count helper
+
+* fix(io): cap S3 part size at Java's int limit and point slow links to the IO timeout",fedc8e84655b8b93147b7416e1719d89e0ec3238,3179,false,,7,272,23,crates
+apache/iceberg-rust,6f6d68bb29d00cd34a93a4d598f882b97020f676,6f6d68b,龙骑士k,37928252+dragonknightk@users.noreply.github.com,2026-11-06T07:45:07Z,GitHub,noreply@github.com,2026-11-06T07:45:07Z,fix(transform): avoid overflow panic in truncate at integer minimum (#3573),"* fix(transform): match Java truncate wrapping arithmetic
+
+## Which issue does this PR close?
+
+- Closes issue 3141.
+
+## What changes are included in this PR?
+
+`truncate_i32` used `rem_euclid`, while `truncate_i64` and `truncate_decimal_i128` used `(v % w + w) % w`. Both shapes differ from Iceberg Java's `TruncateUtil`, which relies on `int`/`long` overflow wrapping:
+
+- For `truncate_i32`, `rem_euclid` never overflows, so any width above `2^30` produced a different partition value than Java.
+- For the other two, the final subtraction overflowed at the integer minimum, panicking in debug builds and wrapping to the Java value only in release builds.
+
+All three helpers now use `wrapping_sub` and `wrapping_add`, so every width reproduces the Java result in both debug and release builds. Each helper has a comment noting that the formula intentionally matches Java, so it is not ""simplified"" back to `rem_euclid` later. The function signatures, the public API, and the call sites are unchanged.
+
+## Are these changes tested?
+
+Three unit tests in `crates/iceberg/src/transform/truncate.rs`. All expected values were computed with Iceberg Java's `TruncateUtil` (1.11.0, JDK 17):
+
+- `test_truncate_int_matches_java` covers the three `i32` cases from the issue, plus the smallest width where `(v % w) + w` can overflow (`2^30 + 1`) and a tiny value at the maximum width. Each case is checked through both `transform` on an array and `transform_literal`.
+- `test_truncate_long_min_matches_java` covers `i64::MIN` with widths 1000 and `i32::MAX`, through the same two paths.
+- `test_truncate_decimal_i128_min_does_not_panic` pins that the decimal path does not panic at `i128::MIN`. That value is outside the range of a 38-digit Iceberg decimal, and Java's `truncateDecimal` works on `BigInteger`, so there is no wrapping result to compare against.
+
+Reverting the helpers to their previous bodies makes all three tests fail. For the `i64` cases the old formula happens to give the Java values once wrapped, so it is caught by the debug-build overflow panic.
+
+## AI Disclosure
+
+Human-led contribution. Codex and Grok Bot, working for dragonknightk, assisted with this change. All submitted content was reviewed by a human before submission.
+
+* fix(transform): follow the spec for truncate remainders
+
+* test(transform): document truncate wrap results and assert the i128 value",72addd94670db273cdb03f4efce23913991a049e,3573,false,,1,92,3,crates
+apache/iceberg-rust,59946648ef56dcd5b70d46cc7ef90b25a00ed9fb,5994664,JeonDaehong,90895144+JeonDaehong@users.noreply.github.com,2026-11-06T07:45:40Z,GitHub,noreply@github.com,2026-11-06T07:45:40Z,fix(arrow): release a positional delete file whose load fails (#3435),"* fix(arrow): release a positional delete file whose load fails
+
+try_start_pos_del_load marks a positional delete file Loading, and only
+the success path marked it Loaded. If opening or parsing the file
+failed, or the load was dropped because another delete file failed,
+the entry stayed Loading: a retry on the same loader, a clone of the
+same ArrowReader, or a concurrent load of the same file waited for a
+notification that never came.
+
+The Load action now carries a PosDelLoadGuard. finish() marks the file
+loaded; dropping the guard without finishing removes the Loading marker
+and wakes the waiters. A woken waiter checks the state again and loads
+the file itself if it isn't loaded, instead of assuming it is.
+
+Closes #3434.
+
+* refactor(arrow): assert the Loading invariant when abandoning a load
+
+Only try_start_pos_del_load inserts into positional_deletes, and only the
+guard that it returns changes the entry afterwards, so the entry is always
+the guard's Loading marker when it is abandoned.
+
+* test(arrow): cover waiters that load after an abandoned positional load
+
+Hold the Load guard, poll load_file_for_task for the same file until it
+waits, then drop the guard: the waiter loads the file itself, or returns
+the open error when the file is gone. Also load a positional delete file
+that opens but fails to parse, then rewrite it and load it again on the
+same loader, which hangs without the guard.
+
+* fix(arrow): return a failed positional delete load's error to its waiters
+
+Waiters on a failed load used to retry it one after another, so a missing
+file shared by many tasks was opened once per task. The load now records
+its error and the tasks waiting on that attempt return it. A load dropped
+without an error, when a sibling's error stops load_deletes, still lets
+its waiters retry, and later calls start a new attempt either way.
+
+Abandoning a load also tolerates a poisoned lock, since it runs from Drop.
+
+* test(arrow): keep the sibling's load in flight when another delete file fails
+
+On the current-thread test runtime the local filesystem never yields, so the
+valid file was only loaded on the second call and its guard was never dropped
+mid-load. A test storage now yields before reads and holds one file until the
+test opens a gate.
+
+* fix(arrow): pass the whole load error to waiters",6f6d68bb29d00cd34a93a4d598f882b97020f676,3435,false,,2,598,56,crates
+apache/iceberg-rust,5370b61638e205d7caf97889affe5da63aea9b16,5370b61,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-11-06T18:05:35Z,GitHub,noreply@github.com,2026-11-06T18:05:35Z,feat(arrow): read manifest lists into Arrow with arrow-avro (#3631),"* feat(arrow): read manifest lists into Arrow with arrow-avro
+
+* refactor(spec): define manifest field IDs next to their fields.
+
+* fix(arrow): reject unknown manifest list format versions",59946648ef56dcd5b70d46cc7ef90b25a00ed9fb,3631,false,,6,627,95,crates
