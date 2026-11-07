@@ -8400,3 +8400,30 @@ Human-led contribution. Grok Bot, working for dragonknightk, assisted with this 
 apache/iceberg-python,e3564a54c10960307147377c578680276865ed18,e3564a5,Orest Tokovenko,hi@oresttokovenko.com,2026-11-02T16:33:11Z,GitHub,noreply@github.com,2026-11-02T16:33:11Z,chore: read the codespell settings from pyproject.toml (#4213),"dev: read the codespell settings from pyproject.toml
 
 codespell reads [tool.codespell], so the separate .codespellrc file is one less thing at the root of the repository.",1a47b078a3b32f2467a6a1761685cfec4749b529,4213,false,,2,3,18,.codespellrc; pyproject.toml
+apache/iceberg-python,718c7908b36117974257e3d214959bffcada14a1,718c790,Xander,zander181@googlemail.com,2026-11-06T23:40:36Z,GitHub,noreply@github.com,2026-11-06T23:40:36Z,feat(encryption): [9/N] Read encrypted manifest lists (#4159),"* Read encrypted manifest lists
+
+* Pass encryption manager to remaining manifest list reads
+
+inspect.partitions(), the CLI files output and purge_table read manifest
+lists without the encryption manager, so they failed on encrypted tables.
+purge_table now builds the manager before dropping the table, so a missing
+KMS client no longer leaves a dropped table with unpurged files.
+
+* Reuse the encryption manager until table metadata changes
+
+Building a manager on every access discarded its KEK cache, so each manifest list read called the KMS again.
+
+* Read encrypted and plain manifest lists through one path in Snapshot.manifests
+
+* Track the encryption manager's metadata in a NamedTuple
+
+Replace the bare (metadata, manager) tuple with a NamedTuple so the
+property reads as ""rebuild when the metadata changed since it was built"",
+while still swapping the pair in a single assignment.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",e3564a54c10960307147377c578680276865ed18,4159,false,Copilot App; Kevin Liu,15,384,18,pyiceberg; tests
