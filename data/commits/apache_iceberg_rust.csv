@@ -35109,3 +35109,92 @@ apache/iceberg-rust,5370b61638e205d7caf97889affe5da63aea9b16,5370b61,Matt Butrov
 * refactor(spec): define manifest field IDs next to their fields.
 
 * fix(arrow): reject unknown manifest list format versions",59946648ef56dcd5b70d46cc7ef90b25a00ed9fb,3631,false,,6,627,95,crates
+apache/iceberg-rust,9aa0b489b89944a88a21975b268b8e15de1eeae2,9aa0b48,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-11-09T10:03:56Z,GitHub,noreply@github.com,2026-11-09T10:03:56Z,docs: ask agents to consider public API maintenance (#3638),"* docs: ask agents to consider public API maintenance
+
+* docs: lead public API guidance with justification",5370b61638e205d7caf97889affe5da63aea9b16,3638,false,,1,17,0,AGENTS.md
+apache/iceberg-rust,8e8f14459da3d1697fb37bf9514440c1554f5370,8e8f144,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-11-09T10:05:13Z,GitHub,noreply@github.com,2026-11-09T10:05:13Z,ci: add bypass capability for PR limits and document (#3644),"* add bypass capability for PR limits and document, add dannycjones and xanderbailey
+
+* Update CONTRIBUTING.md
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>
+
+* Update .asf.yaml
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",9aa0b489b89944a88a21975b268b8e15de1eeae2,3644,false,Kevin Liu,2,12,0,.asf.yaml; CONTRIBUTING.md
+apache/iceberg-rust,ffdf043e182e0bb492b9b6f026d49b00991e48ba,ffdf043,Liang-Chi Hsieh,viirya@gmail.com,2026-11-09T19:41:44Z,GitHub,noreply@github.com,2026-11-09T19:41:44Z,feat(catalog): support write.metadata.delete-after-commit.enabled (#3582),"* feat(catalog): support write.metadata.delete-after-commit.enabled
+
+Add the `write.metadata.delete-after-commit.enabled` table property
+(default false). When it is set, catalogs that write metadata files
+themselves delete the previous metadata files that fall out of the
+metadata log (bounded by `write.metadata.previous-versions-max`) after
+a successful commit, matching Java's
+`CatalogUtil.deleteRemovedMetadataFiles`.
+
+The shared `delete_removed_metadata_files` helper diffs the base and
+committed metadata logs and deletes best-effort, logging failures
+without failing the commit. It is wired into the memory, SQL and Glue
+catalogs. REST and S3 Tables are left out because the server or
+service owns metadata file cleanup, and HMS does not support commits
+yet.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* test(catalog): cover enabling delete-after-commit in the same commit
+
+Address review: test that cleanup reads the property from the new
+metadata, and say the property must be true in the helper's doc.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",8e8f14459da3d1697fb37bf9514440c1554f5370,3582,false,Isaac,8,349,8,crates
+apache/iceberg-rust,c523def0a080dac58ef93e6ecd52abec24f006c2,c523def,Radostin Emanuilov,28630746+emanuilov@users.noreply.github.com,2026-11-09T22:25:43Z,GitHub,noreply@github.com,2026-11-09T22:25:43Z,feat(storage-opendal): configurable retry policy via opendal.retry.* and s3.retry.* (#3605),"* feat(storage-opendal): read the s3.retry.* properties
+
+The S3 operator was always wrapped in `RetryLayer::new()`: 3 retries, a 1 s
+first delay, no jitter. A throttled bucket (S3 `SlowDown`) answers a burst of
+requests faster than that policy gives up, and the error reaches the caller
+after about 7 s.
+
+Define Iceberg Java's `s3.retry.num-retries`, `s3.retry.min-wait-ms` and
+`s3.retry.max-wait-ms` in `iceberg::io` so every S3 backend can read the same
+keys, and apply them to the opendal S3 operator. Setting any of them also turns
+on jitter; with none set the layer stays `RetryLayer::new()`.
+
+Generated-by: Claude Code (Sonnet 5.5)
+
+* feat(storage-opendal): add backend-independent opendal.retry.* properties
+
+`opendal.retry.num-retries`, `opendal.retry.min-wait-ms` and `opendal.retry.max-wait-ms`
+configure the `RetryLayer` of every backend, in the place where the `TimeoutLayer` is
+applied. For S3 each `s3.retry.*` key overrides the matching `opendal.retry.*` key,
+resolved per key; unset keeps OpenDAL's default. Any set key turns jitter on.
+
+Generated-by: Claude Code (Sonnet 5.5)
+
+* refactor(storage-opendal): keep the reviewed retry tests, add only the new cases
+
+Restore the four tests of a767ae1e0 as they were (their S3-only semantics still hold) and
+add only the generic-keys and per-key precedence cases; `s3_retry_layer` stays as a thin
+wrapper of `retry_layer(true)`.
+
+Generated-by: Claude Code (Sonnet 5.5)
+
+* refactor(storage-opendal): resolve s3.retry.* overrides when building the S3 storage
+
+Parse the s3.retry.* properties next to the other s3.* properties and
+overlay them, per key, onto the opendal.retry.* settings of the S3
+variant's client config. OpenDalClientConfig no longer knows about S3, so
+retry_layer takes no backend flag and other backends neither parse nor
+serialize s3.retry.*.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FhHg5U2mpkFVSMgVtmhThk
+
+---------
+
+Co-authored-by: Claude <noreply@anthropic.com>",ffdf043e182e0bb492b9b6f026d49b00991e48ba,3605,false,Claude Opus 5.5; Claude,6,283,9,crates

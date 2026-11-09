@@ -34923,3 +34923,359 @@ Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
 ---------
 
 Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",e7f50c3a2d6fa9a4bdd8f03e85c91bc6e88c1787,2363,false,,3,237,9,internal
+apache/iceberg-go,94102c5cb24f437a7c33e6bf53e2acb4efacdcc5,94102c5,Harrison Crosse,harrison@crosse.dev,2026-11-08T16:17:02-05:00,GitHub,noreply@github.com,2026-11-08T22:17:02+01:00,feat(table): replan snapshot expiration on commit retry (#2354),,2e69b8adb8f0db0ecdd7a48cf4280737f4704fe6,2354,false,,10,1514,313,catalog; table; website
+apache/iceberg-go,379dbf7d3d9ae16d592e0d7cef553b8a9f8e14de,379dbf7,Harrison Crosse,harrison@crosse.dev,2026-11-09T12:24:04-05:00,GitHub,noreply@github.com,2026-11-09T12:24:04-05:00,perf(table): match single-column equality deletes per dictionary entry (#2442),"When a single string or binary equality key column arrives as a dictionary
+no larger than the batch, match each dictionary entry once and map rows
+through their indices instead of encoding a key per row.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",94102c5cb24f437a7c33e6bf53e2acb4efacdcc5,2442,false,,2,176,4,table
+apache/iceberg-go,a1e50aa5c9b0bace998eaece66a5c0850af8977e,a1e50aa,Shruthi,sruthi1reddy3@gmail.com,2026-11-09T09:27:28-08:00,GitHub,noreply@github.com,2026-11-09T12:27:28-05:00,fix(table): avoid duplicate column IDs when last-column-id is stale (#2453),"* fix(table): return error from UpdateSchema when last-column-id is below assigned field IDs
+
+Signed-off-by: Shruthi Yaramada <shrutyar@amazon.com>
+
+* fix(table): seed column ID counter from schema history
+
+Signed-off-by: Shruthi Yaramada <shrutyar@amazon.com>
+
+---------
+
+Signed-off-by: Shruthi Yaramada <shrutyar@amazon.com>
+Co-authored-by: Shruthi Yaramada <shrutyar@amazon.com>",379dbf7d3d9ae16d592e0d7cef553b8a9f8e14de,2453,false,Shruthi Yaramada,3,77,7,table
+apache/iceberg-go,96be131bdfd6b3d7704982410039b409248eeb55,96be131,Shivam Sharma,192242476+ShivamSharma43@users.noreply.github.com,2026-11-09T23:00:43+05:30,GitHub,noreply@github.com,2026-11-09T12:30:43-05:00,fix(literals): reject string-to-decimal casts that would round (#2458),"StringLiteral.To(DecimalType) used decimal128.FromString, which rounds
+to the target scale. A predicate bound with more fractional digits than
+the column's scale was silently rounded, so price > ""12.345"" on a
+decimal(9, 2) column bound as price > 12.35 and dropped rows equal to
+12.35.
+
+Return ErrBadCast when the string needs more fractional digits than the
+scale. Values the scale represents exactly still convert as before.
+
+Closes #2457
+
+Signed-off-by: Shivam Sharma <192242476+ShivamSharma43@users.noreply.github.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",a1e50aa5c9b0bace998eaece66a5c0850af8977e,2458,false,Claude Opus 5.5,2,75,0,literals.go; literals_test.go
+apache/iceberg-go,5cf3cbe68f0c6d3ec0866408f8fc41363acf12ad,5cf3cbe,slfan1989,55643692+slfan1989@users.noreply.github.com,2026-11-10T01:34:42+08:00,GitHub,noreply@github.com,2026-11-09T12:34:42-05:00,fix(cli): reject unsupported format versions in upgrade dry runs (#2460),Signed-off-by: slfan1989 <slfan1989@apache.org>,96be131bdfd6b3d7704982410039b409248eeb55,2460,false,,2,29,13,cmd
+apache/iceberg-go,0b7901ba54e12e515551e3a43d86f584255000a3,0b7901b,jj.lee,63435794+jx2lee@users.noreply.github.com,2026-11-10T02:37:09+09:00,GitHub,noreply@github.com,2026-11-09T12:37:09-05:00,fix(catalog/rest): report missing namespace on RenameView 404 (#2454),"* report missing ns on RenameView 404
+
+Signed-off-by: jx2lee <dev.jaejun.lee.1991@gmail.com>
+
+* add comments above req
+
+---------
+
+Signed-off-by: jx2lee <dev.jaejun.lee.1991@gmail.com>",5cf3cbe68f0c6d3ec0866408f8fc41363acf12ad,2454,false,,2,25,1,catalog
+apache/iceberg-go,910200843e12a78fd25aa4f9236151e55a984306,9102008,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-09T12:37:16-05:00,GitHub,noreply@github.com,2026-11-09T12:37:16-05:00,build(deps): bump the gomod_updates group with 9 updates (#2461),"Bumps the gomod_updates group with 9 updates:
+
+| Package | From | To |
+| --- | --- | --- |
+| [github.com/aws/aws-sdk-go-v2](https://github.com/aws/aws-sdk-go-v2) | `1.47.4` | `1.47.5` |
+| [github.com/aws/aws-sdk-go-v2/config](https://github.com/aws/aws-sdk-go-v2) | `1.33.10` | `1.33.13` |
+| [github.com/aws/aws-sdk-go-v2/credentials](https://github.com/aws/aws-sdk-go-v2) | `1.20.10` | `1.20.13` |
+| [github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager](https://github.com/aws/aws-sdk-go-v2) | `0.4.19` | `0.5.2` |
+| [github.com/aws/aws-sdk-go-v2/service/glue](https://github.com/aws/aws-sdk-go-v2) | `1.172.0` | `1.172.2` |
+| [github.com/aws/aws-sdk-go-v2/service/s3](https://github.com/aws/aws-sdk-go-v2) | `1.114.5` | `1.114.6` |
+| [github.com/aws/smithy-go](https://github.com/aws/smithy-go) | `1.28.6` | `1.28.7` |
+| [github.com/twmb/murmur3](https://github.com/twmb/murmur3) | `1.2.1` | `1.2.2` |
+| [google.golang.org/api](https://github.com/googleapis/google-api-go-client) | `0.307.0` | `0.310.0` |
+
+
+Updates `github.com/aws/aws-sdk-go-v2` from 1.47.4 to 1.47.5
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/v1.47.4...v1.47.5)
+
+Updates `github.com/aws/aws-sdk-go-v2/config` from 1.33.10 to 1.33.13
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/config/v1.33.10...config/v1.33.13)
+
+Updates `github.com/aws/aws-sdk-go-v2/credentials` from 1.20.10 to 1.20.13
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/emr/v1.20.10...credentials/v1.20.13)
+
+Updates `github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager` from 0.4.19 to 0.5.2
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/feature/s3/transfermanager/v0.4.19...feature/s3/transfermanager/v0.5.2)
+
+Updates `github.com/aws/aws-sdk-go-v2/service/glue` from 1.172.0 to 1.172.2
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/ec2/v1.172.0...service/glue/v1.172.2)
+
+Updates `github.com/aws/aws-sdk-go-v2/service/s3` from 1.114.5 to 1.114.6
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/s3/v1.114.5...service/s3/v1.114.6)
+
+Updates `github.com/aws/smithy-go` from 1.28.6 to 1.28.7
+- [Release notes](https://github.com/aws/smithy-go/releases)
+- [Changelog](https://github.com/aws/smithy-go/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/aws/smithy-go/compare/v1.28.6...v1.28.7)
+
+Updates `github.com/twmb/murmur3` from 1.2.1 to 1.2.2
+- [Commits](https://github.com/twmb/murmur3/compare/v1.2.1...v1.2.2)
+
+Updates `google.golang.org/api` from 0.307.0 to 0.310.0
+- [Release notes](https://github.com/googleapis/google-api-go-client/releases)
+- [Changelog](https://github.com/googleapis/google-api-go-client/blob/main/CHANGES.md)
+- [Commits](https://github.com/googleapis/google-api-go-client/compare/v0.307.0...v0.310.0)
+
+---
+updated-dependencies:
+- dependency-name: github.com/aws/aws-sdk-go-v2
+  dependency-version: 1.47.5
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/config
+  dependency-version: 1.33.13
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/credentials
+  dependency-version: 1.20.13
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager
+  dependency-version: 0.5.2
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/glue
+  dependency-version: 1.172.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/s3
+  dependency-version: 1.114.6
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/smithy-go
+  dependency-version: 1.28.7
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/twmb/murmur3
+  dependency-version: 1.2.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: google.golang.org/api
+  dependency-version: 0.310.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",0b7901ba54e12e515551e3a43d86f584255000a3,2461,false,dependabot[bot],2,85,85,go.mod; go.sum
+apache/iceberg-go,a9bb6fd24444f49de987aa949cd6c26d9691b9df,a9bb6fd,Ayaan,103879986+AynSiddiqui@users.noreply.github.com,2026-11-09T23:08:18+05:30,GitHub,noreply@github.com,2026-11-09T12:38:18-05:00,docs: set AWS_S3_ENDPOINT in integration test instructions (#2456),"* docs: set AWS_S3_ENDPOINT in integration test instructions
+
+Signed-off-by: Ayaan <ayaansiddiqui68@gmail.com>
+
+* docs: use localhost S3 endpoint and scope integration test packages
+
+Signed-off-by: Ayaan <ayaansiddiqui68@gmail.com>
+
+* docs: use absolute README link so it resolves on the docs site
+
+---------
+
+Signed-off-by: Ayaan <ayaansiddiqui68@gmail.com>",910200843e12a78fd25aa4f9236151e55a984306,2456,false,,1,6,1,CONTRIBUTING.md
+apache/iceberg-go,b8e4b2eeb6e113e72c408506f41123e6eab041b6,b8e4b2e,Minh Vu,vuhoangminh97@gmail.com,2026-11-09T18:45:33+01:00,GitHub,noreply@github.com,2026-11-09T12:45:33-05:00,refactor(io)!: add context to StatIO.Stat (#2448),"* refactor(io)!: add context to StatIO.Stat
+
+* fix(io): preserve stat operation context and propagate errors",a9bb6fd24444f49de987aa949cd6c26d9691b9df,2448,false,,15,195,43,catalog; io; table; website
+apache/iceberg-go,d840452bda30329cf76ce27597c8bd721aa0f5dc,d840452,Minh Vu,vuhoangminh97@gmail.com,2026-11-09T18:55:21+01:00,GitHub,noreply@github.com,2026-11-09T12:55:21-05:00,feat(table): rename snapshot branches (#2441),"* feat(table): rename snapshot branches atomically
+
+* test(table): cover branch rename and concurrent ref changes
+
+* style(table): format branch rename tests
+
+* fix(table): reject branch rename to same name
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): match snapshot ref field name
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(table): format branch rename test
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): assign valid sequence to concurrent branch snapshot
+
+* style(table): gofmt concurrent branch rename test
+
+* docs(table): clarify rename branch concurrency guarantees
+
+* test(table): cover branch renames with optional retention
+
+* fix(table): guard renamed branch type in local commits
+
+* test(table): reject concurrent rename source changes
+
+* test(table): verify branch rename REST commit payload
+
+* refactor(table): stage branch renames in transactions
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",b8e4b2eeb6e113e72c408506f41123e6eab041b6,2441,false,,2,521,0,table
+apache/iceberg-go,45d5a65c16b8c58bcccd3aa0d699f218a4821cfe,45d5a65,Minh Vu,vuhoangminh97@gmail.com,2026-11-09T19:01:56+01:00,GitHub,noreply@github.com,2026-11-09T13:01:56-05:00,feat(table): register Puffin statistics in transactions (#2437),"* feat(table): register Puffin statistics files in transactions
+
+* test(table): cover Puffin statistics registration and validation
+
+* fix(table): align Puffin statistics registration with Java
+
+* test(table): assert unchanged metadata for no-op statistics transaction
+
+* test(table): preserve registered statistics on unmatched removal
+
+* fix(table): address Puffin statistics review feedback
+
+* test(puffin): cover writer size accessors across codecs",d840452bda30329cf76ce27597c8bd721aa0f5dc,2437,false,,8,548,14,puffin; table; website
+apache/iceberg-go,4c10131375cb8a9674d90645280d183a3dcefafc,4c10131,Minh Vu,vuhoangminh97@gmail.com,2026-11-09T19:03:55+01:00,GitHub,noreply@github.com,2026-11-09T13:03:55-05:00,feat(view): resolve historical versions by timestamp (#2436),"* feat(view): resolve retained view versions by history
+
+* test(view): cover historical version lookup and rollbacks
+
+* fix(view): use reverse slice iteration
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* refactor(view): clarify timestamp history lookup boundaries
+
+* test(view): cover duplicate timestamps and Java-style history expiry
+
+* fix(view): match Java-style timestamp ordering in version lookups
+
+* test(view): cover clock skew, timestamp ties, and inclusive time travel
+
+* perf(view): use indexed lookup for retained versions
+
+* fix(view): resolve as-of versions by latest eligible log entry
+
+* test(view): cover builder rollback and log-order timestamp ties
+
+* docs(view): list historical version accessors
+
+* fix(view): use slices.Backward for version history lookup
+
+* test(view): cover builder-created history and rollback
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",45d5a65c16b8c58bcccd3aa0d699f218a4821cfe,2436,false,,3,344,5,view; website
+apache/iceberg-go,7a4fc6c8ca4d344ec385fcede944b7ed2eb84d9c,7a4fc6c,Minh Vu,vuhoangminh97@gmail.com,2026-11-09T19:18:07+01:00,GitHub,noreply@github.com,2026-11-09T13:18:07-05:00,feat(table): support data-preserving rewrites by file path (#2383),"* feat(table): stage data-preserving file rewrites by path
+
+Rebase on main after partitioned Parquet imports.
+Compare only complete metrics, tolerate missing null and NaN counts,
+and retain missing-column protection with regression tests.
+
+* style(table): gofmt path rewrite metric regression fixture
+
+* fix(table): reject concurrent reuse of path rewrite outputs
+
+* fix(table): pass context when checking rewrite delete entries
+
+* fix(table): pass context when loading transaction entries",4c10131375cb8a9674d90645280d183a3dcefafc,2383,false,,5,1187,9,table; website
+apache/iceberg-go,b1206c60aeabb6a9a31f72daccf98305dcf5d759,b1206c6,Minh Vu,vuhoangminh97@gmail.com,2026-11-09T19:23:52+01:00,GitHub,noreply@github.com,2026-11-09T13:23:52-05:00,feat(table): support dynamic partition overwrite (#2381),"* feat(table): support dynamic partition overwrite
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): honor cancellation before dynamic overwrite staging
+
+Check cancellation before writing files and registering commit requirements.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): preserve dynamic overwrite semantics for empty and unpartitioned partitions
+
+* test(table): cover unpartitioned dynamic overwrite and new partitions
+
+* perf(table): reuse validated paths during partition overwrite
+
+* test(table): cover v1 dynamic partition overwrite
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): verify dynamic overwrite ref pin with commit retries
+
+* fix(table): validate touched partitions on dynamic overwrite
+
+* test(table): cover v3 and mixed-spec dynamic overwrite
+
+* test(table): verify dynamic overwrite retry and branch fencing
+
+* docs(table): clarify partition predicate scope
+
+* test(table): fix partition iterator and assert shape rejection
+
+* test(table): preserve only untouched partition deletes
+
+* style(table): satisfy nlreturn in overwrite helpers
+
+* style(table): satisfy nlreturn in partition test
+
+* fix(table): inherit v3 row IDs during dynamic overwrite
+
+* fix(table): resolve dynamic overwrite lint and test assertion
+
+* test(table): cover null and date dynamic partition overwrites
+
+* test(table): cover dynamic overwrite delete conflicts and DV cleanup
+
+* style(table): satisfy nlreturn in dynamic overwrite tests
+
+* style(table): gofmt dynamic overwrite integration tests
+
+* fix(table): pass context to dynamic overwrite manifest APIs
+
+* test(table): keep main intact on branch dynamic overwrite
+
+* fix(table): preserve old specs in dynamic overwrite
+
+* fix(table): remove unused overwrite locals
+
+* fix(table): preserve deletes for surviving partition-spec data
+
+* fix(table): fence old-spec writes in unpartitioned overwrite retries
+
+* style(table): format dynamic overwrite regression tests
+
+* test(table): filter delete files from dynamic overwrite data assertion
+
+* docs(table): clarify dynamic overwrite with evolved partition specs
+
+* test(table): cover staged dynamic overwrite and Arrow table API
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",7a4fc6c8ca4d344ec385fcede944b7ed2eb84d9c,2381,false,,5,1431,5,table; website
+apache/iceberg-go,ed823616ba729ee4b1afdd93487d4c80ef934942,ed82361,Minh Vu,vuhoangminh97@gmail.com,2026-11-09T20:18:06+01:00,GitHub,noreply@github.com,2026-11-09T14:18:06-05:00,fix(view): snapshot builder properties (#2465),,b1206c60aeabb6a9a31f72daccf98305dcf5d759,2465,false,,2,22,1,view
+apache/iceberg-go,170be776b9a9aa93a8dc22a3e61a60b23819999f,170be77,Minh Vu,vuhoangminh97@gmail.com,2026-11-09T20:21:40+01:00,GitHub,noreply@github.com,2026-11-09T14:21:40-05:00,fix(view): compare metadata properties (#2464),,ed823616ba729ee4b1afdd93487d4c80ef934942,2464,false,,3,65,1,view
+apache/iceberg-go,059d0b7ba8cd050c53a83eb75bde17ae655a41f1,059d0b7,Minh Vu,vuhoangminh97@gmail.com,2026-11-09T20:45:57+01:00,GitHub,noreply@github.com,2026-11-09T14:45:57-05:00,fix(table): rename void field before reusing its name (#2473),fix(table): preserve void tombstones when renaming fields,170be776b9a9aa93a8dc22a3e61a60b23819999f,2473,false,,2,47,8,table
+apache/iceberg-go,887694fbf014564040c8607cf635af89d76badda,887694f,Minh Vu,vuhoangminh97@gmail.com,2026-11-09T20:47:18+01:00,GitHub,noreply@github.com,2026-11-09T14:47:18-05:00,fix(table): keep main as a branch (#2472),fix(table): require main snapshot ref to be a branch,059d0b7ba8cd050c53a83eb75bde17ae655a41f1,2472,false,,4,46,6,table
+apache/iceberg-go,f4f0f0e760c57a3681041ff21897d640ef4c2afb,f4f0f0e,Minh Vu,vuhoangminh97@gmail.com,2026-11-09T21:23:49+01:00,GitHub,noreply@github.com,2026-11-09T15:23:49-05:00,fix(table): validate path-scoped position delete partitions (#2471),fix(table): validate path-scoped position deletes,887694fbf014564040c8607cf635af89d76badda,2471,false,,3,91,37,table
+apache/iceberg-go,e561c00b2d0cf57f00c772d88c89c6f5dd3d0d6c,e561c00,Harrison Crosse,harrison@crosse.dev,2026-11-09T15:48:04-05:00,GitHub,noreply@github.com,2026-11-09T15:48:04-05:00,fix(table): use one transaction replay path and renew snapshot timestamps (#2468),"* fix(table): replay every retried transaction through stagedReplay
+
+`Transaction.Commit` created `stagedReplay` only for transactions with snapshot expiry. Other retries used `rebuildSnapshotUpdates`, which ignored staged ref moves. After a peer committed to another branch, a retry could undo `RollbackToSnapshot` by rebuilding the following append on the head from before the rollback. A ref reset between two appends could also give the second append the wrong parent.
+
+Use `stagedReplay` for every refreshed attempt and remove `rebuildSnapshotUpdates`. `Transaction.Commit` supplies replay state, and `doCommit` creates it when none is supplied. `stagedReplay.requirements` supplies expiry assertions for each attempt.
+
+If a staged update cannot apply after refresh, return `ErrTransactionUnusable` for every transaction. Preserve the metadata builder's cause, including `ErrCommitFailed` for conflicts. A catalog rejection on the first attempt still returns `ErrCommitRejected` and leaves the transaction resumable. A later `Commit` refreshes and replays, and ends the transaction if the update cannot apply.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(table): renew snapshot timestamps when replaying a retry
+
+A retry kept each staged snapshot's original timestamp, whether it rebuilt or reused the manifest list. If a peer wrote metadata more than a minute after staging, the metadata builder rejected the snapshot and ended the transaction. Replaying every transaction locally also exposed this rejection for REST catalogs. A server using Java's `TableMetadata` could accept this retry on a branch other than `main`, or when the peer added no entry to the snapshot log for `main`.
+
+Stamp each replayed producer snapshot with the current time, or one millisecond after its parent if that is later. This follows Java's `SnapshotProducer` timestamp rule. The manifest list, summary and IDs do not carry the timestamp, so renewal changes only the snapshot's timestamp and metadata derived from it.
+
+The committed timestamp reflects the successful attempt rather than staging time. If `ExpireSnapshots` was staged after the write in the same transaction, retry replanning keeps the renewed snapshot because it is newer than the expiry cutoff. Java instead expires the snapshot selected on its first attempt.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+---------
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",f4f0f0e760c57a3681041ff21897d640ef4c2afb,2468,false,,12,295,249,catalog; table; website
+apache/iceberg-go,9199115b6e8e26d0f2043002cdfc05fcd97f564c,9199115,Revanth,revanthcse1@gmail.com,2026-11-09T15:02:13-06:00,GitHub,noreply@github.com,2026-11-09T16:02:13-05:00,feat: add nested type constructors and StructType field accessors (#2431),,e561c00b2d0cf57f00c772d88c89c6f5dd3d0d6c,2431,false,,4,111,2,table; types.go; types_test.go; website

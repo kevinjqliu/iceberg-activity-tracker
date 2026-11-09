@@ -8664,3 +8664,45 @@ Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.c
 apache/iceberg-python,9febaf3596cf90fab40252e902ea4fe8217cdafe,9febaf3,sarthak kuwar,118105182+sarthakuwar@users.noreply.github.com,2026-11-07T20:26:55Z,GitHub,noreply@github.com,2026-11-07T20:26:55Z,docs: Fix GCS default bucket location key and document s3.ssl.ca-cert (#4179),,15d4a16024fc02627b3603092c0cc6ccb7ec6c1c,4179,false,,1,2,1,mkdocs
 apache/iceberg-python,1c800eb33bce585c73eb7056fb9acece8550ce6d,1c800eb,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-11-07T20:31:50Z,GitHub,noreply@github.com,2026-11-07T20:31:50Z,Reject encryption properties on pre-v3 tables (#4173),"Spec compliance indicates that encryption (and its properties) aren't
 allowable on pre-v3 tables.",9febaf3596cf90fab40252e902ea4fe8217cdafe,4173,false,,4,74,0,pyiceberg; tests
+apache/iceberg-python,cd2b0a0f4972dcf57b2d0c6efc2c0661395379fc,cd2b0a0,Yuya Ebihara,ebyhry@gmail.com,2026-11-09T03:23:57Z,GitHub,noreply@github.com,2026-11-09T03:23:57Z,Build: Bump duckdb from 1.5.5 to 2.0.0 (#4261),"Bumps [duckdb](https://github.com/duckdb/duckdb-python) from 1.5.5 to 2.0.0.
+- [Release notes](https://github.com/duckdb/duckdb-python/releases)
+- [Commits](https://github.com/duckdb/duckdb-python/compare/v1.5.5...v2.0.0)
+
+---
+updated-dependencies:
+- dependency-name: duckdb
+  dependency-version: 2.0.0
+  dependency-type: direct:production
+  update-type: version-update:semver-major
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",1c800eb33bce585c73eb7056fb9acece8550ce6d,4261,false,dependabot[bot],2,21,35,tests; uv.lock
+apache/iceberg-python,e9f7f6b43dcefa9ccbd02be47d71e630921e54dd,e9f7f6b,Yuya Ebihara,ebyhry@gmail.com,2026-11-09T03:24:32Z,GitHub,noreply@github.com,2026-11-09T03:24:32Z,Build: Bump pandas from 3.0.3 to 3.1.0 (#4262),"Bumps [pandas](https://github.com/pandas-dev/pandas) from 3.0.3 to 3.1.0.
+- [Release notes](https://github.com/pandas-dev/pandas/releases)
+- [Commits](https://github.com/pandas-dev/pandas/compare/v3.0.3...v3.1.0)
+
+---
+updated-dependencies:
+- dependency-name: pandas
+  dependency-version: 3.1.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",cd2b0a0f4972dcf57b2d0c6efc2c0661395379fc,4262,false,dependabot[bot],2,62,50,pyproject.toml; uv.lock
+apache/iceberg-python,2549061f904af87f85e1201f1bd6dc3ab2f1ba2c,2549061,Javier de la Torre,jatorre@carto.com,2026-11-09T17:30:23Z,GitHub,noreply@github.com,2026-11-09T17:30:23Z,Avro: read a file without avro.codec as uncompressed (#4296),"The Avro specification makes null the default codec. PyIceberg fell back to the Iceberg table
+property default (gzip), which is not an Avro codec name, so it raised 'Unsupported codec: gzip' on
+manifests written without the entry (iceberg-rust writes them so).",e9f7f6b43dcefa9ccbd02be47d71e630921e54dd,4296,false,,2,9,4,pyiceberg; tests
+apache/iceberg-python,2ed79b696120467c4733c52a55c8302a9a2052d9,2ed79b6,David,avisonlivingstone@gmail.com,2026-11-09T19:48:37Z,GitHub,noreply@github.com,2026-11-09T19:48:37Z,Add inspect regression test for bounds after type promotion (#4314),"Bounds written before an int->long or float->double promotion keep their
+4-byte encoding. #3293 fixed decoding them, but only covered the metrics
+evaluators. Cover the inspect metadata tables too, so the crash reported
+in #3744 can't regress.
+
+Closes #3744",2549061f904af87f85e1201f1bd6dc3ab2f1ba2c,4314,false,,1,33,1,tests
+apache/iceberg-python,c8d67230cfdc4ce883a5166c1c2616e7403bde5f,c8d6723,Xander,zander181@googlemail.com,2026-11-09T20:24:26Z,GitHub,noreply@github.com,2026-11-09T20:24:26Z,feat(encryption): [10/N] Read encrypted manifests (#4308),"Read encrypted manifests
+
+A manifest list entry's key_metadata is the plaintext key metadata of its
+manifest, so fetch_manifest_entry decrypts with it when it is set, as
+iceberg-rust's ManifestReader does.",2ed79b696120467c4733c52a55c8302a9a2052d9,4308,false,,4,62,2,pyiceberg; tests
