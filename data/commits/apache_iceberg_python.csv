@@ -8706,3 +8706,41 @@ apache/iceberg-python,c8d67230cfdc4ce883a5166c1c2616e7403bde5f,c8d6723,Xander,za
 A manifest list entry's key_metadata is the plaintext key metadata of its
 manifest, so fetch_manifest_entry decrypts with it when it is set, as
 iceberg-rust's ManifestReader does.",2ed79b696120467c4733c52a55c8302a9a2052d9,4308,false,,4,62,2,pyiceberg; tests
+apache/iceberg-python,1310a19a1939320b299b9a9837bcf7498a70ab71,1310a19,Xander,zander181@googlemail.com,2026-11-09T23:40:08Z,GitHub,noreply@github.com,2026-11-09T23:40:08Z,feat(encryption): [11/N] Read encrypted Parquet data files (#4309),"* Read encrypted Parquet data and position delete files
+
+A data file's key_metadata holds its Parquet encryption key and AAD prefix,
+so scans decrypt with pyarrow's direct key API when it is set, as iceberg-rust
+does. That API needs pyarrow 25.
+
+* Simplify encrypted read format and fail closed on unsupported formats
+
+Merge format selection and Parquet decryption into _create_arrow_read_format,
+dropping the lru_cache so per-file keys are not retained. Detect PyArrow
+decryption support by import instead of parsing the version. Reject encrypted
+non-Parquet files, including deletion vectors, with the file path.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c8d67230cfdc4ce883a5166c1c2616e7403bde5f,4309,false,Copilot App; Kevin Liu,4,142,7,pyiceberg; tests
+apache/iceberg-python,9cbf09a1176af290cc10c7f27745edeb9c21d5f4,9cbf09a,Xander,zander181@googlemail.com,2026-11-10T17:27:41Z,GitHub,noreply@github.com,2026-11-10T17:27:41Z,feat(encryption): [12/N] Read encrypted deletion vectors (#4326),"Read encrypted deletion vectors
+
+A Puffin delete file's key_metadata holds the plaintext key metadata of its
+AGS1 stream, so deletion vector reads decrypt with it when it is set, as
+iceberg-rust does. Content offsets refer to the decrypted file.",1310a19a1939320b299b9a9837bcf7498a70ab71,4326,false,,5,88,9,pyiceberg; tests
+apache/iceberg-python,ddfb7ddec7f31852600544c96f7ec596e216482c,ddfb7dd,Burak,burake1009@gmail.com,2026-11-10T19:25:56Z,GitHub,noreply@github.com,2026-11-10T19:25:56Z,Order -0.0 below 0.0 in partition field summary bounds (#4324),Co-authored-by: Burak Ozakinci <burakoz@amazon.com>,9cbf09a1176af290cc10c7f27745edeb9c21d5f4,4324,false,Burak Ozakinci,2,26,2,pyiceberg; tests
+apache/iceberg-python,9f6c171035ecd35e4f5d7890767450d324f71898,9f6c171,Wei Luo,wluo416@gmail.com,2026-11-10T19:49:28Z,GitHub,noreply@github.com,2026-11-10T19:49:28Z,Parse catalog labels in REST load table and load view responses (#4320),"* Parse catalog labels in REST load table and load view responses
+
+The REST spec adds an optional `labels` field to LoadTableResult and
+LoadViewResult for catalog-provided enrichment such as ownership or
+classification. PyIceberg dropped the field. Add `Labels` and
+`FieldLabel` models and parse `labels` on `TableResponse` and
+`ViewResponse`, matching the Java read path (apache/iceberg#18045).
+
+* Read non-object labels as empty
+
+A string, list, number, or bool `labels` value failed the whole load.
+Java `LabelsParser` reads keys only under `hasNonNull`, so it returns
+empty labels for any non-object value. Do the same.",ddfb7ddec7f31852600544c96f7ec596e216482c,4320,false,,4,145,0,pyiceberg; tests

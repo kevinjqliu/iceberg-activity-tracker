@@ -9218,3 +9218,121 @@ apache/iceberg,16c8a32303542e992160a85645d78835179467e7,16c8a32,Andrei Tserakhau
 load-table and load-view responses, plus a test that asserts they
 round-trip over the wire. This gives other client implementations a
 reference server that returns labels to test against.",52fc764127402ade8170b1b53ddd95fde13cb75c,18047,false,,2,214,0,open-api
+apache/iceberg,d866880e20d21a2038a6820479c99c2265ff32dc,d866880,mengna-lin,mengna_lin@apple.com,2026-11-09T18:25:30-08:00,GitHub,noreply@github.com,2026-11-09T18:25:30-08:00,Core: Parquet per column compression (#16094),"* Add per-column compression codec and level property prefixes
+
+* Add per-column compression context
+
+* Add setColumnCompressionConfig helper and wire into WriteBuilder
+
+* Add tests for global and per-column compression codec
+
+* Parquet: Support per-column compression on released Parquet 1.18.0
+
+Pin Parquet 1.18.0 and build the page store via the public
+ColumnChunkPageWriteStore.builder().withCompressorProvider(...) API, resolving
+each column's codec/level from ParquetProperties with a table-level fallback.
+Also dedupe the new TestParquet tests via helpers.
+
+* Build: Regenerate runtime-deps baselines for Parquet 1.18.0
+
+Regenerate the Spark, Flink, and Kafka Connect runtime-deps.txt baselines so
+checkRuntimeDeps passes after the Parquet 1.18.0 bump (parquet 1.17 -> 1.18).
+
+* Parquet: Extract applyCompressionLevel to satisfy method length limit
+
+Move the compression-level config out of build() into a helper so build()
+stays under the checkstyle MethodLength limit.
+
+* Parquet: Address review feedback on per-column compression
+
+Validate a per-column compression level with an actionable, column-naming
+error instead of letting a raw NumberFormatException surface. Memoize
+per-column compressor resolution so it is computed once per column rather
+than on every row group. Document that a column overriding the codec but
+not the level inherits the table-level level only when its codec matches
+the table codec.
+
+Also convert applyCompressionLevel to an arrow switch, add a positive test
+for a valid per-column level, and make the new tests package-private.
+
+Generated-by: Claude Code
+
+* Parquet: Address more review feedback on per-column compression
+
+- Document the valid per-column compression level values for each codec.
+- Verify in TestParquet that a per-column compression level changes the
+  compressed size of the column, not just its codec.
+
+Generated-by: Claude Code
+
+* Parquet: Add blank lines after control flow blocks in per-column compression
+
+Generated-by: Claude Code
+
+* Parquet: Address more review feedback on per-column compression
+
+- Update per-column compression properties when a column is renamed or
+  dropped, like the other per-column Parquet properties.
+- Make parseCompressionLevel static.
+- Add a test for an invalid per-column compression codec.
+- Remove a test that duplicates perColumnCompressionCodec, and drop an
+  unrelated assertion and global codec from the compression level test.
+
+Generated-by: Claude Code
+
+* Parquet: Address more review feedback on per-column compression
+
+- Use the codec factory's cache for per-column compressors instead of a
+  separate per-column map in ParquetWriter.
+- Add a test for out-of-range per-column compression levels.
+- Describe the per-column compression level range by reference to the
+  Parquet documentation instead of listing codec-specific ranges.
+
+Generated-by: Claude Code
+
+* Docs: Simplify per-column Parquet compression level description
+
+Generated-by: Claude Code
+
+* Parquet: Remove redundant null check on codecFactory in ParquetWriter
+
+Generated-by: Claude Code",16c8a32303542e992160a85645d78835179467e7,16094,false,,7,328,33,core; docs; parquet
+apache/iceberg,c05e1229565901184eb8ad7ae7ab7867225979bf,c05e122,Yuya Ebihara,ebyhry@gmail.com,2026-11-10T14:28:09+09:00,GitHub,noreply@github.com,2026-11-09T21:28:09-08:00,Build: Bump com.google.cloud:libraries-bom from 26.90.0 to 26.91.0 (#18838),"* Build: Bump com.google.cloud:libraries-bom from 26.90.0 to 26.91.0
+
+Bumps [com.google.cloud:libraries-bom](https://github.com/googleapis/google-cloud-java) from 26.90.0 to 26.91.0.
+- [Release notes](https://github.com/googleapis/google-cloud-java/releases)
+- [Changelog](https://github.com/googleapis/google-cloud-java/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/googleapis/google-cloud-java/compare/libraries-bom/v26.90.0...libraries-bom/v26.91.0)
+
+---
+updated-dependencies:
+- dependency-name: com.google.cloud:libraries-bom
+  dependency-version: 26.91.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+* fixup! Build: Bump com.google.cloud:libraries-bom from 26.90.0 to 26.91.0
+
+---------
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",d866880e20d21a2038a6820479c99c2265ff32dc,18838,false,dependabot[bot],5,72,82,bigquery; gcp-bundle; gradle; kafka-connect
+apache/iceberg,cedbad29821b4ebfd44702ac4d4e2ef16c970362,cedbad2,Swapna Marru,swapna267@gmail.com,2026-11-10T03:24:21-08:00,GitHub,noreply@github.com,2026-11-10T12:24:21+01:00,Flink: Backport: Distribute rows by custom fields to DynamicWriter in DynamicSink (#18668) (#18854),,c05e1229565901184eb8ad7ae7ab7867225979bf,18854,false,,12,850,40,flink
+apache/iceberg,c27f75528a7c012b562d07cd784432a4f68a3322,c27f755,chenjian2664,chenjian2664@gmail.com,2026-11-10T19:26:11+08:00,GitHub,noreply@github.com,2026-11-10T12:26:11+01:00,Flink: Backport: Fix range distribution with truncate on binary columns (#18696) (#18855),,cedbad29821b4ebfd44702ac4d4e2ef16c970362,18855,false,,4,6,8,flink
+apache/iceberg,4bfcaf3d309400c281d06ca48618cb9e7d005305,4bfcaf3,Maximilian Michels,mxm@apache.org,2026-11-10T14:40:08+01:00,GitHub,noreply@github.com,2026-11-10T14:40:08+01:00,Flink: ConvertEqualityDeletes: Add support for incremental re-indexing (#18717),,c27f75528a7c012b562d07cd784432a4f68a3322,18717,false,,10,1469,170,docs; flink
+apache/iceberg,4e61757dcf568051a13bb8d4c00ef57c9f248947,4e61757,Lavkush Kumar,106930153+lavkushry@users.noreply.github.com,2026-11-10T19:32:34+05:30,GitHub,noreply@github.com,2026-11-10T06:02:34-08:00,Docs: Use replaceTag for audit-tag in Java API quickstart (#18868),"docs: use replaceTag for audit-tag in Java API quickstart
+
+replaceBranch rejects tag refs at runtime. Use replaceTag for the
+audit-tag example and align the comment with snapshot 4.
+
+Fixes #17081",4bfcaf3d309400c281d06ca48618cb9e7d005305,18868,false,,1,2,2,docs
+apache/iceberg,26c9544ea4744df3d09bb3a9abcefd43997fa595,26c9544,mengna-lin,mengna_lin@apple.com,2026-11-10T08:59:12-08:00,GitHub,noreply@github.com,2026-11-10T10:59:12-06:00,Spark 4.2: Best-effort ExpireSnapshots when metadata reachable only from expired snapshots is missing (#18477),,4e61757dcf568051a13bb8d4c00ef57c9f248947,18477,false,,3,210,25,spark
+apache/iceberg,c136f05607c8a1e477ea307d34f42d5c024e53ef,c136f05,Anoop Johnson,anoop@apache.org,2026-11-10T10:11:33-08:00,GitHub,noreply@github.com,2026-11-10T10:11:33-08:00,"API, Core: Implement v4 file-level tight_stats (#18598)","Implements the file-level tight_stats flag on v4 tracked files and the
+related content stats changes.
+
+Spec PR: https://github.com/apache/iceberg/pull/18585",26c9544ea4744df3d09bb3a9abcefd43997fa595,18598,false,,22,194,173,api; core
+apache/iceberg,385d9fdc98f9c89918745cee31078cef62815411,385d9fd,Maximilian Michels,mxm@apache.org,2026-11-10T19:23:52+01:00,GitHub,noreply@github.com,2026-11-10T19:23:52+01:00,Flink: Backport: ConvertEqualityDeletes: Add support for incremental re-indexing (#18717) (#18873),,c136f05607c8a1e477ea307d34f42d5c024e53ef,18873,false,,18,2920,328,flink
+apache/iceberg,83dffbeafc9c86aabf97acfb405c5907bc145d75,83dffbe,Kaiqi Jin,kaiqi.jin@databricks.com,2026-11-10T11:52:14-08:00,GitHub,noreply@github.com,2026-11-10T11:52:14-08:00,Core: Add a longitude bounds collector for geography (#18811),,385d9fdc98f9c89918745cee31078cef62815411,18811,false,,2,311,0,core

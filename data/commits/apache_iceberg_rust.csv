@@ -35198,3 +35198,34 @@ Claude-Session: https://claude.ai/code/session_01FhHg5U2mpkFVSMgVtmhThk
 ---------
 
 Co-authored-by: Claude <noreply@anthropic.com>",ffdf043e182e0bb492b9b6f026d49b00991e48ba,3605,false,Claude Opus 5.5; Claude,6,283,9,crates
+apache/iceberg-rust,e6bb84e24e820a54a7ef37fa192951a4ca1a1dab,e6bb84e,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-11-10T00:31:55Z,GitHub,noreply@github.com,2026-11-10T00:31:55Z,ci: temporarily ignore SQLite advisory blocked by sqlx (#3660),"Document the dev-only SQLite usage and remove the exception once sqlx supports a patched libsqlite3-sys release.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c523def0a080dac58ef93e6ecd52abec24f006c2,3660,false,Copilot App,1,6,0,.cargo
+apache/iceberg-rust,63d3d522c44aec588ebb7207834a37a141c3837a,63d3d52,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-11-10T00:51:08Z,GitHub,noreply@github.com,2026-11-10T00:51:08Z,build(python): build pyiceberg-core wheel with opt-level = 3 (#3653),"* build(python): build pyiceberg-core wheel with opt-level = 3
+
+* update docs",e6bb84e24e820a54a7ef37fa192951a4ca1a1dab,3653,false,,1,4,3,bindings
+apache/iceberg-rust,14d4b5ffe1cc7deede7240c83864f55476da0764,14d4b5f,Javier de la Torre,jatorre@carto.com,2026-11-10T17:31:01Z,GitHub,noreply@github.com,2026-11-10T17:31:01Z,fix(spec): write manifests and manifest lists with the deflate codec (#3643),"* fix(spec): write manifests and manifest lists with the deflate codec
+
+They were written without an avro.codec entry (uncompressed). Readers that assume a default for a
+missing entry refuse them: PyIceberg 0.12 reads it as ""gzip"" and raises 'Unsupported codec: gzip',
+so a table with one snapshot from iceberg-rust cannot be scanned from PyIceberg. Deflate is what
+other writers use for manifests, and it makes them smaller.
+
+* fix(avro): centralize deflate writer defaults
+
+Use a shared internal factory for Avro container writers and verify codec metadata in existing round-trip tests.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",63d3d522c44aec588ebb7207834a37a141c3837a,3643,false,Copilot App; Kevin Liu,5,58,10,crates
+apache/iceberg-rust,b879b9626754501f025516ce0f0e9535fa6fd414,b879b96,Adam Gutglick,adamgsal@gmail.com,2026-11-10T17:37:52Z,GitHub,noreply@github.com,2026-11-10T17:37:52Z,chore: Bump reqwest to 0.13.5 (#3666),Bump reqwest to 0.13.5,14d4b5ffe1cc7deede7240c83864f55476da0764,3666,false,,3,29,76,Cargo.lock; Cargo.toml; crates
+apache/iceberg-rust,6c9739191da5e44c5c097714fa68c0e32696ba8f,6c97391,Gabriel,45515538+gabotechs@users.noreply.github.com,2026-11-10T19:34:43Z,GitHub,noreply@github.com,2026-11-10T19:34:43Z,Bump to Arrow 60 (#3257),"* Bump to Arrow 60
+
+* fix(arrow): borrow page indexes and cover missing offsets
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",b879b9626754501f025516ce0f0e9535fa6fd414,3257,false,Kevin Liu,8,312,229,Cargo.lock; Cargo.toml; crates

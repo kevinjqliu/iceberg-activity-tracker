@@ -35279,3 +35279,452 @@ Signed-off-by: Harrison Crosse <harrison@crosse.dev>
 
 Signed-off-by: Harrison Crosse <harrison@crosse.dev>",f4f0f0e760c57a3681041ff21897d640ef4c2afb,2468,false,,12,295,249,catalog; table; website
 apache/iceberg-go,9199115b6e8e26d0f2043002cdfc05fcd97f564c,9199115,Revanth,revanthcse1@gmail.com,2026-11-09T15:02:13-06:00,GitHub,noreply@github.com,2026-11-09T16:02:13-05:00,feat: add nested type constructors and StructType field accessors (#2431),,e561c00b2d0cf57f00c772d88c89c6f5dd3d0d6c,2431,false,,4,111,2,table; types.go; types_test.go; website
+apache/iceberg-go,a929eec575ad373b1fa341297a38145ff37eabb9,a929eec,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-10T00:12:25+01:00,GitHub,noreply@github.com,2026-11-10T00:12:25+01:00,feat(table)!: retry conflicting commits 4 times by default (#2462),"commit.retry.num-retries has defaulted to 0 since #912, when a retry
+re-sent the same stale commit. #945 added refresh-and-replay, so that
+reason is gone, and Java and PyIceberg both default to 4. A writer
+ported from either client, or sharing a table with them, failed on the
+first conflict with nothing in the code pointing at retries.
+
+The default is now 4, and the docs and a compatibility note say so.
+Setting commit.retry.num-retries to 0 keeps the old fail-fast behavior.
+Tests that exercise the no-retry and resume paths now set it explicitly,
+and a new test checks that a conflict is retried within one Commit by
+default.
+
+Closes #1015.
+Refs #2062.",9199115b6e8e26d0f2043002cdfc05fcd97f564c,2462,false,,7,41,23,table; website
+apache/iceberg-go,be2ab9891961ccca26f9f01b99c8779b6baf37cd,be2ab98,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T17:43:03+01:00,GitHub,noreply@github.com,2026-11-10T11:43:03-05:00,refactor(io)!: add context to ReadFileIO.ReadFile (#2449),"* refactor(io)!: add context to ReadFileIO.ReadFile
+
+* test(io): verify ReadFile uses the caller deadline and context
+
+* test(io): cover context-aware and plain FS read cancellation",a929eec575ad373b1fa341297a38145ff37eabb9,2449,false,,16,196,36,catalog; internal; io; table; view; website
+apache/iceberg-go,bc758ef0cd19d950cec5631b2b6a0118e0ee456e,bc758ef,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T17:45:00+01:00,GitHub,noreply@github.com,2026-11-10T11:45:00-05:00,fix(view): validate required metadata fields (#2466),"* fix(view): validate required metadata fields
+
+* fix(view): normalize nil required fields and read legacy nulls
+
+* test(view): cover legacy nulls, nil round trips, and SQL fields",be2ab9891961ccca26f9f01b99c8779b6baf37cd,2466,false,,3,298,7,view
+apache/iceberg-go,0a72dfee24f9b42d1979d23b3c7b236a6bd31695,0a72dfe,Neelesh Salian,nssalian@users.noreply.github.com,2026-11-10T08:47:30-08:00,GitHub,noreply@github.com,2026-11-10T11:47:30-05:00,fix(table): infer small variant integers as int32 when shredding (#2375),"* fix(table): infer small variant integers as int32 when shredding
+
+Signed-off-by: Neelesh Salian <n_salian@apple.com>
+
+* PR comment fixes
+
+* write variant int bounds at the typed column's width
+
+---------
+
+Signed-off-by: Neelesh Salian <n_salian@apple.com>",bc758ef0cd19d950cec5631b2b6a0118e0ee456e,2375,false,,7,307,38,table
+apache/iceberg-go,59f6074d51df750bb83bc9c44a4e3ee2176cb6a6,59f6074,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T17:53:15+01:00,GitHub,noreply@github.com,2026-11-10T11:53:15-05:00,feat(table): read Avro data files (#2398),"* feat(table): read Avro data files
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): honor cancellation while iterating Avro batches
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(table): format Avro record reader methods
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): reject unsafe Avro unions and reused file streams
+
+* fix(table): report invalid nested Avro batches without panicking
+
+* fix(table): prevent incompatible Avro timestamp retagging
+
+* test(table): reject incompatible Avro timestamp schemas
+
+* fix(table): resolve Avro scan lint failures
+
+* Avro reader: strengthen validation and resolve Go lint
+
+* Avro format: strengthen validation and resolve Go lint
+
+* test(table): cover reserved field IDs and reader guards
+
+* style(table): gofmt Avro retag regression tests
+
+* fix(table): reject unsupported Avro column selection
+
+* fix(table): bound Avro schema nesting depth
+
+* test(table): reject unsupported Avro projection without consuming reader
+
+* test(table): reject deeply nested Avro schemas
+
+* style(table): gofmt Avro schema validation test
+
+* test(table): cover Avro table reads and field IDs
+
+* test(table): compare Arrow table column count as int64
+
+* fix(table): avoid Avro file I/O on canceled contexts
+
+* test(table): reject canceled Avro opens before I/O
+
+* test(table): scan Avro data files in v1 tables
+
+* fix(table): guard Avro decoder batches and in-flight cancellation
+
+* refactor(table): decode Avro OCF with twmb into Arrow builders
+
+* fix(table): close twmb Avro reader once and validate map values
+
+* style(table): fix Avro reader lint and formatting
+
+* fix(table): preserve Iceberg UUID types in Avro scans
+
+* style(table): address remaining Avro gofumpt and nlreturn checks
+
+* fix(table): satisfy nlreturn in Avro Arrow type mapping
+
+* style(table): fix remaining Avro nlreturn diagnostics
+
+* test(table): cover Avro records across multiple Arrow batches
+
+* chore(table): remove leftover Avro decoder dependencies from go.mod
+
+* chore(table): remove leftover Avro decoder dependencies from go.sum
+
+* style(table): fix nlreturn in Avro Arrow builders
+
+* style(table): separate remaining Avro builder returns
+
+* style(table): resolve remaining Avro nlreturn lint errors
+
+* style(table): fix Avro reader nlreturn lint
+
+* style(table): fix remaining Avro nlreturn lint
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",0a72dfee24f9b42d1979d23b3c7b236a6bd31695,2398,false,,12,1695,1,table
+apache/iceberg-go,71fd798de8212bc44c3bac5ceb24da4cd70bb212,71fd798,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T17:55:24+01:00,GitHub,noreply@github.com,2026-11-10T11:55:24-05:00,fix(table): avoid strict metrics proofs for nested columns (#2478),"* fix(table): avoid strict metrics proofs for nested columns
+
+* test(table): cover nested strict metrics with null parents",59f6074d51df750bb83bc9c44a4e3ee2176cb6a6,2478,false,,2,117,0,table
+apache/iceberg-go,72ace2a8a23b6e57df7ea04bfdaf79a2f8448acb,72ace2a,Revanth,revanthcse1@gmail.com,2026-11-10T10:58:09-06:00,GitHub,noreply@github.com,2026-11-10T11:58:09-05:00,refactor: use nested type constructors in root package tests (#2484),,71fd798de8212bc44c3bac5ceb24da4cd70bb212,2484,false,,8,350,704,defaults_test.go; expr_json_test.go; partitions_test.go; schema_compatibility_test.go; schema_test.go; transforms_test.go; types_test.go; visitors_test.go
+apache/iceberg-go,4ca8e06407bc06faf705d142c46da39a8838b117,4ca8e06,Harrison Crosse,harrison@crosse.dev,2026-11-10T12:07:34-05:00,GitHub,noreply@github.com,2026-11-10T12:07:34-05:00,refactor(table): move stagedReplay into its own file (#2483),"Move `stagedReplay` to `staged_replay.go` because it handles every retried transaction, not only snapshot expiry. `expire_replay.go` keeps expiry replanning and assertions. No behavior changes.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",72ace2a8a23b6e57df7ea04bfdaf79a2f8448acb,2483,false,,2,145,122,table
+apache/iceberg-go,055371ab8c31e62e15fcfbc479a55fd173b3502d,055371a,Sylwester Lachiewicz,slachiewicz@apache.org,2026-11-10T18:09:13+01:00,GitHub,noreply@github.com,2026-11-10T12:09:13-05:00,fix(catalog/rest): make ErrEndpointNotSupported an ErrNotImplemented (#2488),"An operation the server does not advertise failed with an error that did
+not match iceberg.ErrNotImplemented, though a server answering 501 for the
+same operation produces one. catalogtest asserts ErrNotImplemented for a
+catalog without rename or namespace properties, so it failed against any
+REST server that leaves those optional endpoints out.",4ca8e06407bc06faf705d142c46da39a8838b117,2488,false,,2,12,3,catalog
+apache/iceberg-go,fc8a68fea54bb8ca09e565b4257ed5945e117dc2,fc8a68f,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T18:23:33+01:00,GitHub,noreply@github.com,2026-11-10T12:23:33-05:00,perf(table): prune manifests for dynamic partition overwrite (#2447),"* perf(table): prune manifests for dynamic partition overwrite
+
+Use partition summaries to avoid opening unrelated manifests during Arrow
+overwrite planning while retaining incomplete summaries and older-spec
+manifests conservatively. Keep duplicate-path checks for prewritten files.
+
+Add coverage for incomplete summaries and unreliable old-spec counts.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(table): simplify iterator declarations
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",055371ab8c31e62e15fcfbc479a55fd173b3502d,2447,false,,3,658,9,table
+apache/iceberg-go,c59ac5c1bb14ef42c55671d3483f49e7b318f60f,c59ac5c,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T18:23:50+01:00,GitHub,noreply@github.com,2026-11-10T12:23:50-05:00,fix(table): skip missing v1 manifest lists during snapshot cleanup (#2477),"* fix(table): skip missing v1 manifest lists during snapshot cleanup
+
+* style(table): format v1 snapshot expiry test",fc8a68fea54bb8ca09e565b4257ed5945e117dc2,2477,false,,2,50,1,table
+apache/iceberg-go,e1023497d4fe6aff28d24d85c7503f98c8b2b623,e102349,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T18:25:16+01:00,GitHub,noreply@github.com,2026-11-10T12:25:16-05:00,fix(table): keep both signed zeros in Parquet Bloom predicates (#2480),"* fix(table): keep both signed zeros in Parquet Bloom predicates
+
+* style(table): format signed-zero Bloom predicate tests
+
+* style(table): separate Bloom pruning returns",c59ac5c1bb14ef42c55671d3483f49e7b318f60f,2480,false,,2,127,4,table
+apache/iceberg-go,748dfa4443da4019cb4d76df834cca968cceb47a,748dfa4,Shivam Sharma,192242476+ShivamSharma43@users.noreply.github.com,2026-11-10T22:55:51+05:30,GitHub,noreply@github.com,2026-11-10T12:25:51-05:00,fix(table): omit snapshot totals the parent summary does not report (#2490),"updateSnapshotSummaries read a missing or unparseable previous total as
+0, so a new snapshot could report e.g. total-data-files=1 on a table
+with thousands of files when the parent summary lacked that total.
+
+Write a total only when the previous one is present, parses and is
+non-negative, matching Java's SnapshotProducer.updateTotal. A nil
+previous summary still starts every total at 0.
+
+Signed-off-by: Shivam Sharma <192242476+ShivamSharma43@users.noreply.github.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",e1023497d4fe6aff28d24d85c7503f98c8b2b623,2490,false,Claude Opus 5.5,2,56,1,table
+apache/iceberg-go,7cec336696e9785e9a68fb3537d0759c62903259,7cec336,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T18:27:14+01:00,GitHub,noreply@github.com,2026-11-10T12:27:14-05:00,feat(table): support transaction table location updates (#2435),"* feat(table): support transaction table location updates
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): account for implicit branch ref requirement
+
+* fix(table): resolve staged location and properties for transaction writes
+
+* fix(table): write transaction data files under the staged table location
+
+* fix(table): write staged position deletes under the updated location
+
+* fix(table): write equality deletes under the transaction location
+
+* fix(table): write transaction manifests using staged paths
+
+* fix(table): write transaction partition stats using staged paths
+
+* test(table): cover relocated data and manifest paths in transactions
+
+* test(table): retain existing file references after location updates
+
+* test(table): cover staged equality-delete file locations
+
+* fix(table): address location update review findings
+
+* style(table): format location regression test spacing
+
+* fix(table): correct staged compaction and manifest test calls
+
+* fix(table): reject Azure container moves in SetLocation
+
+* test(table): cover staged overwrite, CoW and position-delete paths
+
+* style(table): format transaction location regression tests
+
+* test(table): read old and relocated data files after table reload
+
+* test(table): verify all files added by location update snapshots
+
+* fix(table): honor staged location in dynamic partition overwrite
+
+* test(table): cover relocated partition overwrite across multiple partitions
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",748dfa4443da4019cb4d76df834cca968cceb47a,2435,false,,9,700,9,table
+apache/iceberg-go,730e028e3aeb786bbdacdadaad161d1a168d1639,730e028,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T18:35:26+01:00,GitHub,noreply@github.com,2026-11-10T12:35:26-05:00,feat(table): compare live files between snapshots (#2394),"* feat(table): compare live files between snapshots
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): reject duplicate live files in snapshot comparisons
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): identify non-vector content files by path in snapshot diffs
+
+* test(table): reject content-path collisions and changed file types
+
+* fix(table): make snapshot file diff scalable and align inspection API
+
+* test(table): use modern Go pointer expressions for DV range cases
+
+* test(table): avoid assuming manifest order in branch diff test
+
+* style(table): fix snapshot diff test formatting
+
+* fix(table): drain parallel manifest readers and simplify test fixtures
+
+* test(table): cover branch deletes in physical snapshot diffs
+
+* fix(table): reject deletion vectors without referenced data files
+
+* fix(table): pass context when reading snapshot diff manifests
+
+* refactor(table): use public manifest provider in snapshot diffs
+
+* fix(table): remove slice capacities from manifest iterators
+
+* test(table): cover snapshot diff edge cases
+
+* style(table): format snapshot diff test literals
+
+* docs: align snapshot file diff support marker
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",7cec336696e9785e9a68fb3537d0759c62903259,2394,false,,6,1065,0,README.md; table; website
+apache/iceberg-go,89aac66d2fd9449473e5c688d3553cf2c8d74d02,89aac66,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T18:35:58+01:00,GitHub,noreply@github.com,2026-11-10T12:35:58-05:00,feat(table): convert equality deletes to deletion vectors (#2434),"**What**
+- Convert v3 equality deletes to file-specific deletion vectors.
+
+**Why**
+- Reduce repeated equality-delete work in later CDC scans.
+
+**Implementation**
+- Read each data file targeted by an applicable equality delete.
+- Commit the conversion in one replace snapshot.
+- Reject conversion when an unscoped or partition-scoped position delete would remain.
+- Reject concurrent first DVs in merge-on-read `DELETE` with `ErrConflictingDeleteFiles`.
+- A concurrent branch commit may fail with `ErrCommitFailed`; refresh and retry.
+- Abandoned staged transactions may leave Puffin files for orphan cleanup.
+
+**Benchmark**
+- Same synthetic local scan: one 10k-row file with 10% deletes: upstream/main 2.062 ms / 3.10 MB; branch 1.648 ms / 2.81 MB (median of 3 runs).
+
+**References**
+- Java [BaseDVFileWriter](https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/deletes/BaseDVFileWriter.java) and [DeleteFile](https://github.com/apache/iceberg/blob/main/api/src/main/java/org/apache/iceberg/DeleteFile.java).
+- Iceberg spec: [Deletion Vectors](https://iceberg.apache.org/spec/#deletion-vectors) and [Equality Delete Files](https://iceberg.apache.org/spec/#equality-delete-files).",730e028e3aeb786bbdacdadaad161d1a168d1639,2434,false,,12,1555,22,table
+apache/iceberg-go,00b99bd0f43ace091e6fcb3f8bce38584da17620,00b99bd,Shivam Sharma,192242476+ShivamSharma43@users.noreply.github.com,2026-11-10T23:07:04+05:30,GitHub,noreply@github.com,2026-11-10T12:37:04-05:00,fix(view): reuse existing versions from base metadata (#2470),"Replacing a view with a definition it already had (for example,
+reverting to an earlier query) failed with ""duplicate version-id"".
+addVersion found the matching version and reused its ID, but only
+skipped the append if the version had been added in the current
+builder. Versions from the base metadata were appended again.
+
+Return the existing version ID whenever the version is already known,
+as Java's ViewMetadata.Builder.addVersionInternal does. The last added
+version ID is only set when the version was added in this builder.
+
+Signed-off-by: Shivam Sharma <192242476+ShivamSharma43@users.noreply.github.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",89aac66d2fd9449473e5c688d3553cf2c8d74d02,2470,false,Claude Opus 5.5,2,36,2,view
+apache/iceberg-go,87fae3d0cd06ded02796120fb25c24c358a53c13,87fae3d,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T18:40:24+01:00,GitHub,noreply@github.com,2026-11-10T12:40:24-05:00,feat(table): cherry-pick snapshots (#2382),"* feat(table): cherry-pick append snapshots
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* perf(table): skip inherited manifests during snapshot cherry-pick
+
+Only manifests created by the source snapshot can contain its added entries.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): fast-forward directly applicable cherry-picks
+
+* test(table): cover cherry-pick fast-forward and v3 row lineage
+
+* test(table): exercise non-append cherry-picks only on divergent branches
+
+* test(table): verify direct fast-forward of overwrite snapshots
+
+* fix(table): prevent forged WAP publication on cherry-pick
+
+* fix(table): avoid propagating staged WAP IDs on cherry-pick
+
+* fix(table): avoid propagating staged WAP IDs on cherry-pick
+
+* test(table): verify cherry-pick preserves source WAP provenance
+
+* fix(table): clarify unsupported cherry-pick operations
+
+* test(table): reject cherry-picking files already live on target
+
+* style(table): satisfy nlreturn in cherry-pick regression test
+
+* test(table): cover v1 snapshot cherry-pick
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): avoid name mapping changes during cherry-pick
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): preserve name mapping on cherry-pick
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): reject cherry-picks when target ancestry is incomplete
+
+* test(table): reject cherry-picks with omitted target ancestors
+
+* fix(table): retain typed missing-source error with refs-mode hint
+
+* test(table): document refs-mode hint on missing cherry-pick source
+
+* docs(table): explain expired ancestry in cherry-pick validation
+
+* fix(table): make snapshot cherry-picks safe under retries and partial history
+
+* test(table): cover cherry-pick WAP ancestry and partition spec evolution
+
+* test(table): guard cherry-pick of source published on main concurrently
+
+* fix(table): call partition spec ID on addressable values
+
+* test(table): fix cherry-pick test lint
+
+* test(table): strengthen cherry-pick branch and history coverage
+
+* fix(table): address cherry-pick concurrency and REST history review
+
+* test(table): check concurrent main head on cherry-pick replay
+
+* fix(table): preserve refs-only history on staged tables
+
+* test(rest): guard cherry-picks on staged refs-only tables
+
+* test(rest): use offline IO for refs-only cherry-pick lifecycle
+
+* test(table): seed branch retention in base metadata for cherry-pick
+
+* fix(table): pass context to cherry-pick manifest readers
+
+* test(table): cover WAP validation on cherry-pick fast-forward
+
+* fix(table): retry cherry-pick fast-forwards
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): remove unused cherry-pick test assignment
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",00b99bd0f43ace091e6fcb3f8bce38584da17620,2382,false,,9,1292,14,catalog; table; website
+apache/iceberg-go,1efc21ed132754971df193308845bc65f5e1388b,1efc21e,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T19:15:02+01:00,GitHub,noreply@github.com,2026-11-10T13:15:02-05:00,fix(table): normalize promoted equality delete keys (#2474),"* fix(table): normalize promoted equality delete keys
+
+* fix(table): allow date promotion for equality delete keys
+
+* test(table): cover promoted equality key encoding
+
+* test(table): assert equality delete results through promotion
+
+* refactor(table): require typed equality delete encoders
+
+* refactor(table): centralize equality delete type validation
+
+* test(table): assert surviving long row after equality delete promotion
+
+* test(table): cover changelog equality key promotion and required types
+
+* test(table): initialize equality delete key types in fixtures
+
+* test(table): initialize equality delete key types in fixtures
+
+* test(table): initialize equality delete key types in fixtures
+
+* test(table): initialize equality delete key types in fixtures
+
+* test(table): initialize equality delete key types in fixtures
+
+* style(table): group equality delete test imports
+
+* test(table): complete synthetic equality delete type metadata
+
+* perf(table): use long delete index for promoted int values",87fae3d0cd06ded02796120fb25c24c358a53c13,2474,false,,9,692,151,table
+apache/iceberg-go,7998201aa25863bacfa3d1ce68535fb51549b9cc,7998201,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T19:19:20+01:00,GitHub,noreply@github.com,2026-11-10T13:19:20-05:00,fix(schema): validate identifier field IDs (#2481),"* fix(schema): validate identifier fields before metadata serialization
+
+* fix(table): reject invalid row identifiers during schema writes
+
+* test(schema): cover identifier ID constraints and JSON round trips
+
+* test(table): reject invalid identifiers before committing schemas
+
+* test(schema): use a valid identifier in round-trip fixture
+
+* test(view): correct invalid identifier in metadata fixture
+
+* fix(schema): address identifier validation review",1efc21ed132754971df193308845bc65f5e1388b,2481,false,,8,283,11,catalog; schema.go; schema_identifier_fields_validation_test.go; schema_test.go; table; view; website
+apache/iceberg-go,80ec6372925b16e8a2c8210864d75577681d2fd2,80ec637,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T19:22:16+01:00,GitHub,noreply@github.com,2026-11-10T13:22:16-05:00,fix(literals): decode bounds after numeric type promotion (#2493),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,7998201aa25863bacfa3d1ce68535fb51549b9cc,2493,false,,3,207,0,literals.go; literals_promoted_bounds_test.go; table
+apache/iceberg-go,739d6ac2aca80fe4474ea1804a576e8f437d9948,739d6ac,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T19:25:21+01:00,GitHub,noreply@github.com,2026-11-10T13:25:21-05:00,fix(table): preserve multi-source sort IDs (#2495),"fix(table): preserve multi-source sort IDs during reassignment
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",80ec6372925b16e8a2c8210864d75577681d2fd2,2495,false,,2,155,7,table
+apache/iceberg-go,2314aefaa03fce1a7eb226dacde2c23f735459b7,2314aef,Revanth,revanthcse1@gmail.com,2026-11-10T12:35:08-06:00,GitHub,noreply@github.com,2026-11-10T13:35:08-05:00,"refactor: use nested type constructors in catalog, cmd and view tests (#2496)",,739d6ac2aca80fe4474ea1804a576e8f437d9948,2496,false,,7,102,204,catalog; cmd; view
+apache/iceberg-go,68c2f00274855163e98a73ad252b561853ec6262,68c2f00,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T20:25:42+01:00,GitHub,noreply@github.com,2026-11-10T14:25:42-05:00,fix(types): reject timestamp-to-nanosecond overflow (#2500),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,2314aefaa03fce1a7eb226dacde2c23f735459b7,2500,false,,2,58,0,types.go; types_test.go
+apache/iceberg-go,548f83f28d24dc75a9abc55c50bc5c0f3a4a7675,548f83f,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T20:46:03+01:00,GitHub,noreply@github.com,2026-11-10T14:46:03-05:00,fix(puffin): reject missing required footer fields (#2497),"* fix(puffin): reject missing required footer fields
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(puffin): simplify footer validation diagnostics
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",68c2f00274855163e98a73ad252b561853ec6262,2497,false,,3,142,11,puffin
+apache/iceberg-go,722126d0e1e19932544b5e36e28479e8b47b8fe5,722126d,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T20:48:51+01:00,GitHub,noreply@github.com,2026-11-10T14:48:51-05:00,fix(table): treat missing null counts as unknown (#2498),"* fix(table): treat missing null counts as unknown
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): use testify in NOT STARTS WITH metrics cases
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",548f83f28d24dc75a9abc55c50bc5c0f3a4a7675,2498,false,,3,69,4,table
+apache/iceberg-go,00397437f0949bdfe9bd829f8c28c6fcdb6e03f0,0039743,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T20:58:26+01:00,GitHub,noreply@github.com,2026-11-10T14:58:26-05:00,fix(dv): write row-position field metadata (#2501),"* fix(dv): write row-position field metadata
+
+* test(dv): remove redundant file close",722126d0e1e19932544b5e36e28479e8b47b8fe5,2501,false,,11,51,24,metadata_columns.go; puffin; table; website
