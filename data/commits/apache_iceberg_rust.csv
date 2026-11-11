@@ -35229,3 +35229,107 @@ apache/iceberg-rust,6c9739191da5e44c5c097714fa68c0e32696ba8f,6c97391,Gabriel,455
 ---------
 
 Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",b879b9626754501f025516ce0f0e9535fa6fd414,3257,false,Kevin Liu,8,312,229,Cargo.lock; Cargo.toml; crates
+apache/iceberg-rust,0dc4c601089191a048f45adf07786179ba3cc80d,0dc4c60,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-10T22:49:17Z,GitHub,noreply@github.com,2026-11-10T22:49:17Z,feat(rest): use iceberg-rust as the User-Agent product token (#3668),"The REST catalog spec recommends a standard User-Agent format whose
+library token for Rust is iceberg-rust (apache/iceberg#17727), so send
+iceberg-rust/<version> instead of iceberg-rs/<version>. A header.user-agent
+property still overrides the default.",6c9739191da5e44c5c097714fa68c0e32696ba8f,3668,false,,1,3,3,crates
+apache/iceberg-rust,ebf2d6e6dfcf6c3843aba4dc8ba5b273b7ad326d,ebf2d6e,Xander,zander181@googlemail.com,2026-11-11T04:28:20Z,GitHub,noreply@github.com,2026-11-11T04:28:20Z,fix(encryption): reject encryption.key-id on pre-v3 tables (#3659),"* fix(encryption): reject encryption.key-id on pre-v3 tables
+
+EncryptionManager::from_table_metadata returned Ok(None) for v1/v2 tables
+before reading encryption.key-id, so commits to such tables silently wrote
+plaintext manifest lists and manifests. Return DataInvalid instead, matching
+iceberg-python.
+
+* fix(encryption): reject pre-v3 encryption properties on metadata updates
+
+Reject encryption.key-id and encryption.data-key-length when creating a
+table or setting properties below v3, before anything is persisted.
+Pre-v3 tables that already carry them still load, so they can be
+repaired by removing the properties or upgrading to v3, and snapshot
+production on them fails before any manifest is written.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* fix(encryption): reject pre-v3 encryption properties only on table creation
+
+Match Java, which runs EncryptionUtil.checkCompatibility only when
+creating new table metadata: check in TableMetadataBuilder::new and
+leave property updates, loading, and snapshot writes unchanged.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* refactor(spec): inline pre-v3 encryption property check
+
+Only TableMetadataBuilder::new uses it, so check inline like the
+reserved-property check instead of adding a TableProperties method.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* refactor(spec): move pre-v3 encryption check into a helper
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* test(spec): cover pre-v3 encryption check at the builder level
+
+Test v1, v2, and v3 with each encryption property and both together in
+TableMetadataBuilder, where the check lives, instead of through the
+memory catalog.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* fix(spec): reject pre-v3 encryption properties in set_properties
+
+Check in TableMetadataBuilder::set_properties so both table creation and
+property updates reject encryption.key-id and
+encryption.data-key-length below v3, as iceberg-python does. Only the
+properties being set are checked, so existing pre-v3 tables that already
+carry them can still be loaded and updated.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* refactor(spec): rename property format-version check helper
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* fix(spec): check property format compatibility on every metadata build
+
+Run check_properties_format_compatibility in TableMetadataBuilder::build
+against the final properties and format version, so every metadata
+mutation is checked rather than only set_properties. A pre-v3 table that
+already has encryption properties must remove them or upgrade to v3 in
+its next commit; loading it is unaffected.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* refactor(spec): shorten format compatibility helper name
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* fix(spec): reject encryption keys on pre-v3 table metadata
+
+v1 and v2 metadata do not serialize encryption-keys, so a key added
+below v3 was silently dropped on write. Check it in
+check_format_compatibility so every metadata build rejects it.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* test(spec): consolidate pre-v3 encryption tests
+
+Merge the property and encryption-key tests into one table-driven test,
+and keep only the unrelated-update and removal cases for pre-v3 tables
+that already have encryption.key-id.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* test(spec): tidy pre-v3 encryption tests
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",0dc4c601089191a048f45adf07786179ba3cc80d,3659,false,Copilot App; Kevin Liu,1,130,1,crates
+apache/iceberg-rust,cfbfb2789fb8899f3ffceef25e168ad04ab3a5d7,cfbfb27,Sebastian Baunsgaard,seb@bgaard.dk,2026-11-11T10:20:12Z,GitHub,noreply@github.com,2026-11-11T10:20:12Z,fix(arrow): promote FixedSizeList file columns to List (#3629),"fix(arrow): rewrite FixedSizeList file hints to List
+
+parquet-rs picks its list reader from the embedded Arrow schema. Iceberg
+has no fixed-size list type, so coerce FixedSizeList hints to List before
+name mapping and fallback IDs. The 3-level LIST reader then handles null
+rows without PromotePlan conversion or pad filtering.",ebf2d6e6dfcf6c3843aba4dc8ba5b273b7ad326d,3629,false,,3,608,13,crates

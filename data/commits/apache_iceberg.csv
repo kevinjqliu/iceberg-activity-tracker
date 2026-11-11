@@ -9336,3 +9336,52 @@ related content stats changes.
 Spec PR: https://github.com/apache/iceberg/pull/18585",26c9544ea4744df3d09bb3a9abcefd43997fa595,18598,false,,22,194,173,api; core
 apache/iceberg,385d9fdc98f9c89918745cee31078cef62815411,385d9fd,Maximilian Michels,mxm@apache.org,2026-11-10T19:23:52+01:00,GitHub,noreply@github.com,2026-11-10T19:23:52+01:00,Flink: Backport: ConvertEqualityDeletes: Add support for incremental re-indexing (#18717) (#18873),,c136f05607c8a1e477ea307d34f42d5c024e53ef,18873,false,,18,2920,328,flink
 apache/iceberg,83dffbeafc9c86aabf97acfb405c5907bc145d75,83dffbe,Kaiqi Jin,kaiqi.jin@databricks.com,2026-11-10T11:52:14-08:00,GitHub,noreply@github.com,2026-11-10T11:52:14-08:00,Core: Add a longitude bounds collector for geography (#18811),,385d9fdc98f9c89918745cee31078cef62815411,18811,false,,2,311,0,core
+apache/iceberg,0d07c4118432d168c628351c739d260e5ac40f19,0d07c41,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-10T13:42:19-08:00,GitHub,noreply@github.com,2026-11-10T22:42:19+01:00,OpenAPI: Recommend a standard User-Agent format for REST clients (#17727),"Adds a recommended, consistent User-Agent format to the REST spec so
+clients identify themselves the same way, and documents that client
+identification is optional and informational only (not authentication,
+not capability negotiation).
+
+Spec-only; no behavior change. Client libraries would be updated to emit
+this format as follow-ups.",83dffbeafc9c86aabf97acfb405c5907bc145d75,17727,false,,1,53,1,open-api
+apache/iceberg,c75374cb0e49c17eac133358776910112c153ff6,c75374c,Amogh Jahagirdar,amoghj@apache.org,2026-11-10T16:00:55-07:00,GitHub,noreply@github.com,2026-11-10T15:00:55-08:00,Core: Add util to derive source column bounds from monotonic partition transforms (#18604),"Adds StatsUtil.sourceBoundsFor, which returns inclusive bounds on the
+source column values allowed by a partition value for order-preserving
+transforms (identity, truncate, year, month, day, and hour).
+
+Generated-by: OpenCode (Claude Opus 5.5)",0d07c4118432d168c628351c739d260e5ac40f19,18604,false,,3,647,0,api; core
+apache/iceberg,85d5fb99a3a0b39ebf0c5de545feb704953f1f09,85d5fb9,YangJie,yangjie01@baidu.com,2026-11-10T21:14:57-05:00,GitHub,noreply@github.com,2026-11-10T18:14:57-08:00,API: Fix ClassCastException when sanitizing bound IN/NOT_IN predicates (#18413),,c75374cb0e49c17eac133358776910112c153ff6,18413,false,,2,112,3,api
+apache/iceberg,b6c6af15993103c73028ee7d6658d1630b8bbf13,b6c6af1,Manu Zhang,OwenZhang1990@gmail.com,2026-11-11T16:49:50+08:00,GitHub,noreply@github.com,2026-11-11T09:49:50+01:00,Parquet: Upgrade to 1.18.2 (#18789),"* Parquet: Verify 1.18.2 RC1
+
+Resolve Parquet 1.18.2 from the RC1 staging repository
+(orgapacheparquet-1092) to validate the release candidate against
+Iceberg's test suite.
+
+Also drop the Trivy ignores for the jackson-core / jackson-databind CVEs
+shaded into parquet-jackson. 1.18.2 shades Jackson 2.22.4, which includes
+the fixes, so the CVE scan verifies they are gone.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* Parquet: Verify 1.18.2 RC2
+
+Resolve Parquet 1.18.2 from staging orgapacheparquet-1093 to exercise
+the new release candidate in Iceberg CI.
+
+Generated-by: Codex
+
+* Parquet: Use released 1.18.2 artifacts
+
+Remove the RC staging repository override now that Parquet 1.18.2 is available from Maven Central.
+
+Generated-by: Codex
+
+---------
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",85d5fb99a3a0b39ebf0c5de545feb704953f1f09,18789,false,Claude Opus 5.5,2,1,16,.github; gradle
+apache/iceberg,7f07cfb6ec4444706af66e8f9c7c5e83c1ff5071,7f07cfb,Yuya Ebihara,ebyhry@gmail.com,2026-11-11T18:18:13+09:00,GitHub,noreply@github.com,2026-11-11T10:18:13+01:00,Flink: Always reset commit service after watermark in DataFileRewriteCommitter (#18849),,b6c6af15993103c73028ee7d6658d1630b8bbf13,18849,false,,2,62,3,flink
+apache/iceberg,db9a8b56a726337ba35e3ae32ed473a4b997c943,db9a8b5,Yuya Ebihara,ebyhry@gmail.com,2026-11-11T19:42:03+09:00,GitHub,noreply@github.com,2026-11-11T11:42:03+01:00,Flink: Backport: Always reset commit service after watermark in DataFileRewriteCommitter (#18849) (#18888),,7f07cfb6ec4444706af66e8f9c7c5e83c1ff5071,18888,false,,4,124,6,flink
+apache/iceberg,014b3ce5ffbf7c1c51dabb144f4d94e45addcd88,014b3ce,Gang Wu,ustcwg@gmail.com,2026-11-11T22:33:48+08:00,GitHub,noreply@github.com,2026-11-11T22:33:48+08:00,Docs: Clarify committer expectations across implementations (#18752),,db9a8b56a726337ba35e3ae32ed473a4b997c943,18752,false,,2,5,3,site
+apache/iceberg,83bf0ffab77bb45468348fa3f1e9f0e5801e4f62,83bf0ff,Romain Manni-Bucau,rmannibucau@gmail.com,2026-11-11T18:48:24+01:00,GitHub,noreply@github.com,2026-11-11T09:48:24-08:00,Site: Replace hidden partitioning Lottie animation with a video (#18107),"Co-authored-by: Romain Manni-Bucau <rmannibucau@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",014b3ce5ffbf7c1c51dabb144f4d94e45addcd88,18107,false,Romain Manni-Bucau; Copilot App; Kevin Liu,4,7,85,site
+apache/iceberg,ab8a86d5e5fd173f682142573de12d3e978fbe7b,ab8a86d,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-11-11T11:28:43-08:00,GitHub,noreply@github.com,2026-11-11T11:28:43-08:00,Open-API: Stage REST fixture runtime JARs for Docker (#16214),Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>,83bf0ffab77bb45468348fa3f1e9f0e5801e4f62,16214,false,Copilot App,7,40,21,.github; build.gradle; docker

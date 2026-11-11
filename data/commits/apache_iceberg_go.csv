@@ -35728,3 +35728,59 @@ Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",548f83f28d24dc75a9abc55c50bc5c
 apache/iceberg-go,00397437f0949bdfe9bd829f8c28c6fcdb6e03f0,0039743,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T20:58:26+01:00,GitHub,noreply@github.com,2026-11-10T14:58:26-05:00,fix(dv): write row-position field metadata (#2501),"* fix(dv): write row-position field metadata
 
 * test(dv): remove redundant file close",722126d0e1e19932544b5e36e28479e8b47b8fe5,2501,false,,11,51,24,metadata_columns.go; puffin; table; website
+apache/iceberg-go,fd938954ba8638db84f9e087e0be2633056c0267,fd93895,Akriti,akriti.shakya@datazip.io,2026-11-11T02:57:02+05:30,GitHub,noreply@github.com,2026-11-10T16:27:02-05:00,fix(table): treat ErrDataFilesMissing as a terminal validation error (#2463),"* Make ErrDataFilesMissing terminal instead of retryable
+
+* Fix doc comments and drop the release note
+
+* Address review comments
+
+* Document ErrDataFilesMissing as terminal",00397437f0949bdfe9bd829f8c28c6fcdb6e03f0,2463,false,,8,69,44,table; website
+apache/iceberg-go,7c93b271c97ed8424cfacb1bf9140b51e6e93309,7c93b27,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T22:34:19+01:00,GitHub,noreply@github.com,2026-11-10T16:34:19-05:00,fix(table): preserve multi-source partition IDs (#2503),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,fd938954ba8638db84f9e087e0be2633056c0267,2503,false,,4,169,23,partitions.go; partitions_test.go; table
+apache/iceberg-go,8b487ffa3934567cba05ed296503ed8c924cb89e,8b487ff,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T22:36:20+01:00,GitHub,noreply@github.com,2026-11-10T16:36:20-05:00,fix(literals): compare decimals across scales (#2504),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,7c93b271c97ed8424cfacb1bf9140b51e6e93309,2504,false,,2,87,4,literals.go; literals_decimal_comparator_test.go
+apache/iceberg-go,759fff94c2f4a8310543700d1b6e0b9167d7ff75,759fff9,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T22:36:51+01:00,GitHub,noreply@github.com,2026-11-10T16:36:51-05:00,fix(table): preserve snapshot encryption key IDs (#2505),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,8b487ffa3934567cba05ed296503ed8c924cb89e,2505,false,,4,161,0,table
+apache/iceberg-go,a073e6d3dd4b5c7091ce0941df4c0014e62ca4b3,a073e6d,Minh Vu,vuhoangminh97@gmail.com,2026-11-10T22:37:42+01:00,GitHub,noreply@github.com,2026-11-10T16:37:42-05:00,fix(table): omit negative snapshot ref retention (#2506),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,759fff94c2f4a8310543700d1b6e0b9167d7ff75,2506,false,,2,90,0,table
+apache/iceberg-go,df0fe9a488985734575e21cf8999c5e68e4e1e6d,df0fe9a,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-11T02:08:41-08:00,GitHub,noreply@github.com,2026-11-11T11:08:41+01:00,feat(catalog/rest): use the REST spec User-Agent format (#2516),"Send iceberg-go/<version> (go <go version>) as the default User-Agent,
+following the format recommended by the REST catalog spec
+(apache/iceberg#17727). Headers configured by the caller still take
+precedence over the default.",a073e6d3dd4b5c7091ce0941df4c0014e62ca4b3,2516,false,,3,29,4,catalog
+apache/iceberg-go,271c6a6b660051d183452590e6c742f9d3aa8590,271c6a6,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T11:34:45+01:00,GitHub,noreply@github.com,2026-11-11T11:34:45+01:00,refactor(io)!: add context to rename operations (#2450),,df0fe9a488985734575e21cf8999c5e68e4e1e6d,2450,false,,9,253,19,catalog; io; website
+apache/iceberg-go,8986b1ad07207c9e73292863e02f91697cd9d0b1,8986b1a,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T11:37:59+01:00,GitHub,noreply@github.com,2026-11-11T11:37:59+01:00,"feat(table,cli): support snapshot branch promotion (#2384)",,271c6a6b660051d183452590e6c742f9d3aa8590,2384,false,,12,1559,12,cmd; table; website
+apache/iceberg-go,968530942605bfc1359edaed09ff90d4b5510d93,9685309,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T13:26:16+01:00,GitHub,noreply@github.com,2026-11-11T13:26:16+01:00,refactor(table): preserve removals from single-use manifest iterators (#2509),,8986b1ad07207c9e73292863e02f91697cd9d0b1,2509,false,,2,73,2,table
+apache/iceberg-go,0d6657c406b2418c86462236f74fb0cf707a79bf,0d6657c,Revanth,revanthcse1@gmail.com,2026-11-11T11:24:57-06:00,GitHub,noreply@github.com,2026-11-11T12:24:57-05:00,feat(rest): select authentication with rest.auth.type and add Google auth (#2502),"* feat(rest): select authentication with rest.auth.type and add Google auth
+
+* docs(rest): note that Google token requests skip the catalog transport
+
+* test(rest): use maps.Copy in auth registry test helper",968530942605bfc1359edaed09ff90d4b5510d93,2502,false,,7,943,7,catalog; website
+apache/iceberg-go,7cff263a6d95909bd4bd8457257e90b152d5d9f7,7cff263,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T18:51:45+01:00,GitHub,noreply@github.com,2026-11-11T12:51:45-05:00,feat(table): support sort order replacement in transactions (#2438),"Add the transaction sort-order replacement builder with staged schema binding,
+transform validation, historical order reuse, and scoped case-insensitive
+name collision checks. Cover the behavior with regression tests and docs.",0d6657c406b2418c86462236f74fb0cf707a79bf,2438,false,,17,1429,33,exprs.go; schema.go; schema_name_index_internal_test.go; table; website
+apache/iceberg-go,d560930ed4d7eb44890860895b339ce8605499db,d560930,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T18:52:23+01:00,GitHub,noreply@github.com,2026-11-11T12:52:23-05:00,fix(table): isolate object-store paths across tables (#2499),"* fix(table): isolate external object-store paths
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs: note external object-store path compatibility
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",7cff263a6d95909bd4bd8457257e90b152d5d9f7,2499,false,,3,119,6,table; website
+apache/iceberg-go,3bf14fc0c4d08db52e7022f52379d5dea4f574a9,3bf14fc,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T18:52:57+01:00,GitHub,noreply@github.com,2026-11-11T12:52:57-05:00,fix(table): write small-precision decimals as Parquet integers (#2527),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,d560930ed4d7eb44890860895b339ce8605499db,2527,false,,3,160,41,table
+apache/iceberg-go,f515561aecc3c30285af520ef6767e2f206dd934,f515561,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T19:06:47+01:00,GitHub,noreply@github.com,2026-11-11T13:06:47-05:00,fix(schema): preserve 64-bit JSON defaults (#2494),"* fix(schema): preserve 64-bit JSON defaults
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(schema): preserve nested default number precision
+
+Use json.Number for values in object and list defaults, cover map/list
+and non-long expression cases, and document the decoding change.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(view): fix invalid long defaults in metadata fixture
+
+* style(schema): fix long default decoding lint
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",3bf14fc0c4d08db52e7022f52379d5dea4f574a9,2494,false,,4,217,10,types.go; types_test.go; view; website

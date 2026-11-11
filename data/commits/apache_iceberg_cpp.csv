@@ -9760,3 +9760,10 @@ apache/iceberg-cpp,89e4c20f47384cee23a5150a71614bd3e621a5c4,89e4c20,Junwang Zhao
 apache/iceberg-cpp,cda824400a9032b72850d92df507009da80cebe5,cda8244,Gang Wu,ustcwg@gmail.com,2026-11-09T11:02:23+08:00,GitHub,noreply@github.com,2026-11-09T11:02:23+08:00,fix(cmake): preserve module path when dependency discovery fails (#1097),Co-authored-by: Junwang Zhao <zhjwpku@gmail.com>,89e4c20f47384cee23a5150a71614bd3e621a5c4,1097,false,Junwang Zhao,1,10,17,src
 apache/iceberg-cpp,03dd5fe52044af55783babe681c829eea708abae,03dd5fe,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-10T09:23:47Z,GitHub,noreply@github.com,2026-11-10T17:23:47+08:00,refactor: drop redundant Overloaded deduction guide (#1088),,cda824400a9032b72850d92df507009da80cebe5,1088,false,,1,0,2,src
 apache/iceberg-cpp,a82619e7fe158899528c82d87cfbce4b0db1edac,a82619e,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-11-10T01:38:40-08:00,GitHub,noreply@github.com,2026-11-10T17:38:40+08:00,feat(data): enforce residual filters in the task reader (#1065),,03dd5fe52044af55783babe681c829eea708abae,1065,false,,10,773,60,src
+apache/iceberg-cpp,36e0d1a791f8868bb827986ae48199cced0be52f,36e0d1a,Nikita Glebskii,66133525+Femistoclus@users.noreply.github.com,2026-11-11T12:53:25+03:00,GitHub,noreply@github.com,2026-11-11T17:53:25+08:00,perf(json): avoid quadratic copies in ToJsonList and ToJsonMap (#1111),"ToJsonList and ToJsonMap folded with std::accumulate over a nlohmann::json
+init value while the lambda took array_t/object_t by value, so every step
+converted the accumulated json back to array_t/object_t and deep-copied all
+elements serialized so far. Serializing n items was O(n^2), which made
+ToJson(TableMetadata) quadratic in the number of retained snapshots.
+
+Build the array/object directly instead. The output is unchanged.",a82619e7fe158899528c82d87cfbce4b0db1edac,1111,false,,1,22,20,src

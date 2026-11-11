@@ -8744,3 +8744,175 @@ classification. PyIceberg dropped the field. Add `Labels` and
 A string, list, number, or bool `labels` value failed the whole load.
 Java `LabelsParser` reads keys only under `hasNonNull`, so it returns
 empty labels for any non-object value. Do the same.",ddfb7ddec7f31852600544c96f7ec596e216482c,4320,false,,4,145,0,pyiceberg; tests
+apache/iceberg-python,aafad6e912c35e72ab74a6c08147c5d204a067f1,aafad6e,Remenby31,baptiste.cruvellier31@gmail.com,2026-11-10T20:17:54Z,GitHub,noreply@github.com,2026-11-10T20:17:54Z,Drop column bounds when a row group with values has no min/max (#4313),,9f6c171035ecd35e4f5d7890767450d324f71898,4313,false,,2,57,0,pyiceberg; tests
+apache/iceberg-python,1561cd19bf77a225d5d5b8e758fb9cd553713d27,1561cd1,chenjian2664,chenjian2664@gmail.com,2026-11-10T20:19:48Z,GitHub,noreply@github.com,2026-11-10T20:19:48Z,test: Cover Avro compression codecs against fastavro (#4311),"No unit test read or wrote a snappy or bzip2 Avro block, so a broken
+snappy checksum (fixed in #2252) went unnoticed. Exchanging files with
+fastavro checks each codec's framing against an independent
+implementation of the Avro spec.",aafad6e912c35e72ab74a6c08147c5d204a067f1,4311,false,,1,31,0,tests
+apache/iceberg-python,b05d860366223c7a90c6b297a6b721829ad06807,b05d860,Mohammad Sohail Shaikh,122166523+sohailshk@users.noreply.github.com,2026-11-10T20:49:13Z,GitHub,noreply@github.com,2026-11-10T20:49:13Z,Allow adding a partition field with the name of a removed one (#4307),"update_spec().remove_field(name).add_field(..., name) raised ""Cannot add
+duplicate partition field name"" because add_field checked whether the
+new field's id was being removed instead of the existing field's id.
+Replacing a partition field while keeping its name, for example to
+change the number of buckets, works in Java.
+
+Check the existing field instead, and on v1 tables rename the removed
+field, which stays in the spec as a void transform, to name_<field id>
+as Java does.",1561cd19bf77a225d5d5b8e758fb9cd553713d27,4307,false,,2,26,1,pyiceberg; tests
+apache/iceberg-python,1a5b7519d2b2ef4797529a93ec5783e9fa5f7c41,1a5b751,Yuang Gao,91290127+YuangGao@users.noreply.github.com,2026-11-10T20:49:15Z,GitHub,noreply@github.com,2026-11-10T20:49:15Z,feat: send Idempotency-Key on REST mutations when the server advertises it (#4310),,b05d860366223c7a90c6b297a6b721829ad06807,4310,false,,3,105,16,mkdocs; pyiceberg; tests
+apache/iceberg-python,533a617539348c7e111a48b0e8358a6c7370f633,533a617,David,avisonlivingstone@gmail.com,2026-11-10T20:49:17Z,GitHub,noreply@github.com,2026-11-10T20:49:17Z,"Assert every ref a transaction writes, not just the first (#4315)","Transaction._stage de-duplicated requirements by type, so a transaction
+writing two branches only sent AssertRefSnapshotId for the first one and
+a concurrent change to the second was overwritten. Key ref assertions by
+ref name so each ref keeps its base assertion, as Java does.
+
+Closes #4183",1a5b7519d2b2ef4797529a93ec5783e9fa5f7c41,4315,false,,2,80,3,pyiceberg; tests
+apache/iceberg-python,639a3bf505b6932945bba3f661395255bac872c2,639a3bf,Deep Dave,deep.dave6942@gmail.com,2026-11-10T20:49:21Z,GitHub,noreply@github.com,2026-11-10T20:49:21Z,Reject existing ref names in create_branch and create_tag (#4319),"* Reject existing ref names in create_branch and create_tag
+
+ManageSnapshots.create_branch and create_tag set the ref without checking
+whether the name is taken, so an existing branch was reset to the given
+snapshot and lost its commits, and an existing tag moved. remove_branch and
+remove_tag checked nothing either: a missing name was accepted, a tag could
+be removed as a branch, and remove_branch(""main"") emptied the table.
+
+Check the names against the refs as they stand after the earlier
+operations in the same chain, and raise ValueError with the messages the
+Java UpdateSnapshotReferencesOperation uses: ""Ref x already exists"",
+""Cannot remove main branch"", ""Branch does not exist: x"", ""Tag does not
+exist: x"", ""Ref x is a tag not a branch"", ""Ref x is a branch not a tag"".
+
+Closes #4187
+
+* Raise NoSuchSnapshotRefError and SnapshotRefTypeError from remove_branch and remove_tag
+
+The rest of ManageSnapshots raises these domain exceptions for a missing
+ref and for a ref of the wrong kind, so the remove methods now do the
+same. Each refusal gets its own test, and a chain that removes a tag and
+creates a branch under the same name is covered.",533a617539348c7e111a48b0e8358a6c7370f633,4319,false,,2,105,1,pyiceberg; tests
+apache/iceberg-python,a60c7cc50e04aac9aee9062f4bd9b7f97e69bc3d,a60c7cc,Yuya Ebihara,ebyhry@gmail.com,2026-11-11T12:35:47Z,GitHub,noreply@github.com,2026-11-11T12:35:47Z,Respect REST endpoint capabilities when checking view existence (#4337),"* Respect REST endpoint capabilities when checking view existence
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Trim redundant view existence fallback tests
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Clarify view existence fallback test setup
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Keep only the missing-view fallback error regression
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Split view existence fallback configuration cases
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Explain the view existence fallback for older REST catalogs
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",639a3bf505b6932945bba3f661395255bac872c2,4337,false,Copilot App; Kevin Liu,2,55,0,pyiceberg; tests
+apache/iceberg-python,3228b17d900bcf71e2ebca750d559b13c735951f,3228b17,Wei Luo,wluo416@gmail.com,2026-11-11T12:46:19Z,GitHub,noreply@github.com,2026-11-11T12:46:19Z,Expose catalog labels on Table (#4321),"* Parse catalog labels in REST load table and load view responses
+
+The REST spec adds an optional `labels` field to LoadTableResult and
+LoadViewResult for catalog-provided enrichment such as ownership or
+classification. PyIceberg dropped the field. Add `Labels` and
+`FieldLabel` models and parse `labels` on `TableResponse` and
+`ViewResponse`, matching the Java read path (apache/iceberg#18045).
+
+* Read non-object labels as empty
+
+A string, list, number, or bool `labels` value failed the whole load.
+Java `LabelsParser` reads keys only under `hasNonNull`, so it returns
+empty labels for any non-object value. Do the same.
+
+* Expose catalog labels on Table
+
+Labels parsed from the load response were not reachable from the
+loaded table. Add `Table.labels`. The REST catalog sets it on load,
+create, and register. Other catalogs and staged tables
+(`create_table_transaction`) get empty labels. Labels are not table
+state: they are not part of equality, and refresh and commits keep
+them. This matches the Java `SupportsLabels` behavior
+(apache/iceberg#18046).
+
+* Test labels on create, register, and pickle
+
+Create and register hand labels to the same `_response_to_table` as
+load, but only load was tested. Check all three. Also pin that a
+pickled table keeps its labels, the one intended difference from Java,
+where `BaseTable.labels` is transient.
+
+---------
+
+Co-authored-by: Fokko Driesprong <fokko@apache.org>",a60c7cc50e04aac9aee9062f4bd9b7f97e69bc3d,4321,false,Fokko Driesprong,4,52,0,pyiceberg; tests
+apache/iceberg-python,5a79430aa8a41e3c2b7986c12891dfceabae2b8f,5a79430,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-11T17:04:46Z,GitHub,noreply@github.com,2026-11-11T17:04:46Z,SQL: Accept an existing SQLAlchemy engine in SqlCatalog (#4336),Accept an existing SQLAlchemy engine in SqlCatalog,3228b17d900bcf71e2ebca750d559b13c735951f,4336,false,,2,35,7,pyiceberg; tests
+apache/iceberg-python,3cca3d5e56c990461b831ea9f1bedc4fcf11b64d,3cca3d5,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-11T17:40:03Z,GitHub,noreply@github.com,2026-11-11T17:40:03Z,REST: Use the standard User-Agent format (#4330),"* REST: Use the standard User-Agent format
+
+Send pyiceberg/<version> (<python implementation> <python version>), for
+example pyiceberg/0.11.0 (cpython 3.11.4), the format recommended by the
+REST catalog spec (apache/iceberg#17727).
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Use a loop for User-Agent test cases
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+Co-authored-by: Fokko Driesprong <fokko@apache.org>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",5a79430aa8a41e3c2b7986c12891dfceabae2b8f,4330,false,Isaac; Copilot App; Fokko Driesprong; Kevin Liu,2,18,2,pyiceberg; tests
+apache/iceberg-python,76ce3edba555a6493b98ae27f4473f8471bbba9e,76ce3ed,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-11T17:57:27Z,GitHub,noreply@github.com,2026-11-11T17:57:27Z,Core: Check whether a failed last commit attempt landed before cleanup (#4339),Check whether a failed last commit attempt landed before cleanup,3cca3d5e56c990461b831ea9f1bedc4fcf11b64d,4339,false,,2,100,7,pyiceberg; tests
+apache/iceberg-python,4feb1710bb3f53a1d726f8e0572138fdeec6b661,4feb171,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-11T17:57:33Z,GitHub,noreply@github.com,2026-11-11T17:57:33Z,Core: Write added files under the partition spec they were planned with (#4338),Write added files under the partition spec they were planned with,76ce3edba555a6493b98ae27f4473f8471bbba9e,4338,false,,3,79,17,pyiceberg; tests
+apache/iceberg-python,8e1f4a34a91515a768009325ddf5b0fcfdb7638b,8e1f4a3,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-11T17:57:41Z,GitHub,noreply@github.com,2026-11-11T17:57:41Z,Core: Compare upsert rows column by column instead of cell by cell (#4334),Compare upsert rows column by column instead of cell by cell,4feb1710bb3f53a1d726f8e0572138fdeec6b661,4334,false,,2,62,20,pyiceberg; tests
+apache/iceberg-python,826da07def86d988e88f46631a1639275b5a7ac4,826da07,David,avisonlivingstone@gmail.com,2026-11-11T17:57:46Z,GitHub,noreply@github.com,2026-11-11T17:57:46Z,Validate each branch against its own commits on retry (#4317),"* Assert every ref a transaction writes, not just the first
+
+Transaction._stage de-duplicated requirements by type, so a transaction
+writing two branches only sent AssertRefSnapshotId for the first one and
+a concurrent change to the second was overwritten. Key ref assertions by
+ref name so each ref keeps its base assertion, as Java does.
+
+Closes #4183
+
+* Validate each branch against its own commits on retry
+
+The retry path and the empty-output validation path resolved one
+CommitWindow from the first snapshot producer and reused it for every
+producer, so in a multi-branch transaction a delete or overwrite on a
+later branch was validated against the first branch's commits and could
+skip validation entirely. Resolve one window per target branch, based on
+the first producer on that branch, since later producers on the same
+branch start from a snapshot staged by this transaction.
+
+Closes #4316
+
+---------
+
+Co-authored-by: Fokko Driesprong <fokko@apache.org>",8e1f4a34a91515a768009325ddf5b0fcfdb7638b,4317,false,Fokko Driesprong,2,86,14,pyiceberg; tests
+apache/iceberg-python,ab67e68a20172f1b2678af44ba668421c760c7ba,ab67e68,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-11T18:07:42Z,GitHub,noreply@github.com,2026-11-11T18:07:42Z,Serialize purgeRequested as a lowercase boolean in REST drop_table (#4341),"* Serialize purgeRequested as a lowercase boolean in REST drop_table
+
+* Fold purgeRequested assertions into test_delete_table_204 and test purge_table
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",826da07def86d988e88f46631a1639275b5a7ac4,4341,false,Copilot App; Kevin Liu,2,19,2,pyiceberg; tests
+apache/iceberg-python,e6ff315b4b24816f73078eb106e4afbb05758ad3,e6ff315,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-11-11T18:20:11Z,GitHub,noreply@github.com,2026-11-11T18:20:11Z,Add row-lineage support with Spark tests (#3972),"* Add row-lineage support with Spark tests
+
+This ensures that row lineage values are updated.
+
+* general cleanup
+
+* Compare first row IDs against Spark's entries metadata table
+
+Spark's _row_id is not a valid market once rows are rewritten, since updated rows
+keep their original row ID. Use Iceberg's entries table,
+and cover copy-on-write updates, deleted entries, and deletion vectors.",ab67e68a20172f1b2678af44ba668421c760c7ba,3972,false,,6,171,12,pyiceberg; tests
