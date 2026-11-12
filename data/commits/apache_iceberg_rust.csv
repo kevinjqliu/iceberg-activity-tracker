@@ -35333,3 +35333,42 @@ parquet-rs picks its list reader from the embedded Arrow schema. Iceberg
 has no fixed-size list type, so coerce FixedSizeList hints to List before
 name mapping and fallback IDs. The 3-level LIST reader then handles null
 rows without PromotePlan conversion or pad filtering.",ebf2d6e6dfcf6c3843aba4dc8ba5b273b7ad326d,3629,false,,3,608,13,crates
+apache/iceberg-rust,b03f4c2826116e64799c0a0b1fd6669c24251031,b03f4c2,Ethan Woodbury,ewoodbury@x.ai,2026-11-12T08:12:13Z,GitHub,noreply@github.com,2026-11-12T08:12:13Z,fix(arrow): keep struct presence when its requested children are missing (#3438),"* fix(arrow): keep struct presence when its requested children are missing
+
+When none of a struct's requested children are in a Parquet file and
+another column is projected, the projection mask selected no leaf under
+the struct, so it read as NULL on every row. Read one leaf under such a
+struct for its definition level, like Java's PresenceColumnSelector:
+inner structs first, then the leaf with the lowest repetition level,
+then the first. A leaf under a map reads the whole map, and a candidate
+must pass the projection's type check.
+
+Closes #3378
+
+* fix(arrow): count list views in the presence walk, group projected field ids
+
+* fix(arrow): record no presence leaf under a list view",cfbfb2789fb8899f3ffceef25e168ad04ab3a5d7,3438,false,,1,614,39,crates
+apache/iceberg-rust,27ce65cd344a3e8b38c28fd9c51e1d4c1b0c487d,27ce65c,Christian,christian@vakamo.com,2026-11-12T16:31:53Z,GitHub,noreply@github.com,2026-11-12T16:31:53Z,feat(arrow): read unshredded variant columns (#2880),"* feat(arrow): read unshredded variant columns
+
+Rebased onto main.
+
+* fix(arrow): address review on unshredded variant read
+
+- RecordBatchTransformer matches a variant's metadata/value by name, casts
+  binary storage to the table type and sets arrow.parquet.variant on output
+- projection validates projected variants and tags only projected ones
+- files without field ids or name mapping reject variant projection
+- shredded variants fail with FeatureUnsupported linking #3606
+- tests assert the extension end to end, cover a VARIANT-annotated file,
+  dictionary and LargeBinary storage, name mapping and every malformed shape
+
+* fix(arrow): share variant storage check and cover null reads
+
+- projection and RecordBatchTransformer validate variant storage with one
+  check, so both report shredded storage as FeatureUnsupported and
+  malformed storage as DataInvalid naming the column and field id
+- an optional variant metadata field is DataInvalid
+- tests read null variant rows and a file written before the variant
+  column was added
+
+* test(arrow): read a nested variant under a null struct row",b03f4c2826116e64799c0a0b1fd6669c24251031,2880,false,,3,1747,69,crates

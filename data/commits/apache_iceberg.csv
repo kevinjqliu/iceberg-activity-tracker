@@ -9385,3 +9385,29 @@ Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
 Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",014b3ce5ffbf7c1c51dabb144f4d94e45addcd88,18107,false,Romain Manni-Bucau; Copilot App; Kevin Liu,4,7,85,site
 apache/iceberg,ab8a86d5e5fd173f682142573de12d3e978fbe7b,ab8a86d,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-11-11T11:28:43-08:00,GitHub,noreply@github.com,2026-11-11T11:28:43-08:00,Open-API: Stage REST fixture runtime JARs for Docker (#16214),Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>,83bf0ffab77bb45468348fa3f1e9f0e5801e4f62,16214,false,Copilot App,7,40,21,.github; build.gradle; docker
+apache/iceberg,faa4410313fdc85ba6a3d52a198407606b828349,faa4410,Yuya Ebihara,ebyhry@gmail.com,2026-11-12T07:40:33+09:00,GitHub,noreply@github.com,2026-11-11T14:40:33-08:00,Kafka Connect: Upgrade hadoop-shaded-guava to 1.6.0 (#18889),Drop the trivy ignore for the guava CVE fixed in guava 33.7.2.,ab8a86d5e5fd173f682142573de12d3e978fbe7b,18889,false,,3,3,8,.github; kafka-connect
+apache/iceberg,e31ea5f39b3e7d4a536cad3a4dbdc16dcf1e1553,e31ea5f,Anoop Johnson,anoop@apache.org,2026-11-11T18:06:15-08:00,GitHub,noreply@github.com,2026-11-11T19:06:15-07:00,Core: Count total data manifests in v4 scan planning (#18905),"A v4 scan did not increment totalDataManifests, so scan reports showed zero total data manifests even when manifests were scanned or skipped. Increment it alongside scannedDataManifests and skippedDataManifests so total equals scanned plus skipped.",faa4410313fdc85ba6a3d52a198407606b828349,18905,false,,3,12,1,core
+apache/iceberg,acea99d28a4be93a8c0dfc7bd8ece4a237324243,acea99d,Rakesh Pai,41351936+developer-rpai@users.noreply.github.com,2026-11-12T01:37:39-08:00,GitHub,noreply@github.com,2026-11-12T10:37:39+01:00,Core: Use Caffeine's default executor in AuthSessionCache (#18378),,e31ea5f39b3e7d4a536cad3a4dbdc16dcf1e1553,18378,false,,1,9,10,core
+apache/iceberg,14690428f7a8c0e8f5f1fa04895b1380f371d717,1469042,Steven Zhen Wu,stevenz3wu@gmail.com,2026-11-12T10:46:24-08:00,GitHub,noreply@github.com,2026-11-12T10:46:24-08:00,Core: Add v4 TrackedFile write wrappers for leaf and root manifests (#18853),"Adds reusable wrappers that write a TrackedFile, with the tracking
+supplied by the writer, using the v4 tracked file schema.
+
+The leaf wrapper accepts only data files and writes tracking as given so
+unassigned sequence numbers and first row IDs are inherited on read,
+rejecting null sequence numbers that cannot be inherited. The root
+wrapper requires the tracking to carry a snapshot ID and writes the
+sequence numbers, manifest min sequence number, and first row ID that
+the spec requires in the root manifest, assigning the commit's values to
+files added by the commit. Both project spec partitions to the union
+partition type when writing, and write a null spec ID and partition for
+files whose spec has no partition fields, as the v4 spec requires for
+unpartitioned files.
+
+Content stats are written through a view laid out by the manifest's
+content stats type, so stats from any ContentStats implementation,
+including stats adapted from DataFile metrics, are written at the
+correct positions.
+
+Generated-by: Cursor
+Co-authored-by: Cursor <cursoragent@cursor.com>
+Co-authored-by: Ryan Blue <blue@apache.org>",acea99d28a4be93a8c0dfc7bd8ece4a237324243,18853,false,Cursor; Ryan Blue,6,1372,5,core
+apache/iceberg,805a2868ffaab46ca08620a186ace8d990eb8d52,805a286,Yuya Ebihara,ebyhry@gmail.com,2026-11-13T04:14:49+09:00,GitHub,noreply@github.com,2026-11-12T11:14:49-08:00,Open-API: Upgrade hadoop-shaded-guava to 1.6.0 in REST fixture runtime (#18907),,14690428f7a8c0e8f5f1fa04895b1380f371d717,18907,false,,2,2,6,.github; build.gradle

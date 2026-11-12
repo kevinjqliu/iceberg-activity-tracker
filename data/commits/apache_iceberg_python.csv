@@ -8916,3 +8916,131 @@ This ensures that row lineage values are updated.
 Spark's _row_id is not a valid market once rows are rewritten, since updated rows
 keep their original row ID. Use Iceberg's entries table,
 and cover copy-on-write updates, deleted entries, and deletion vectors.",ab67e68a20172f1b2678af44ba668421c760c7ba,3972,false,,6,171,12,pyiceberg; tests
+apache/iceberg-python,260b8d17de174d63f1525fa24fadaf19bf711440,260b8d1,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-11T19:51:10Z,GitHub,noreply@github.com,2026-11-11T19:51:10Z,Widen decimal literal precision in scan filters (#4348),"A decimal filter literal with more digits than the column, such as
+amt < 1000.00 on decimal(5, 2), failed with ArrowInvalid because the Arrow
+literal took the column's precision. Widen the literal's precision to fit
+its digits and keep the column's scale, so the comparison is by value.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",e6ff315b4b24816f73078eb106e4afbb05758ad3,4348,false,Isaac,2,60,3,pyiceberg; tests
+apache/iceberg-python,640c4145c1267ad7b0ef50b8529b01ca2ac2a83d,640c414,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-11T20:09:25Z,GitHub,noreply@github.com,2026-11-11T20:09:25Z,Fix append when a data column is named like a partition helper column (#4344),"* Fix append when a data column is named like a partition helper column
+
+_determine_partitions adds the transformed partition values as columns named
+_partition_<field name>. A data column with the same name made the column
+lookup ambiguous and the append raised KeyError. Pick helper names that are
+not already in the table.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Retrigger CI
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",260b8d17de174d63f1525fa24fadaf19bf711440,4344,false,Isaac,2,33,2,pyiceberg; tests
+apache/iceberg-python,2b67a43f8edab423d1fd482a94c0c1f3fee87228,2b67a43,Harrison Crosse,harrison@crosse.dev,2026-11-11T20:25:57Z,GitHub,noreply@github.com,2026-11-11T20:25:57Z,Match NaN partition values with `IsNaN` in partition predicates (#4281),"`_build_partition_predicate` emitted `EqualTo` for every non-null partition value. Expression literals reject NaN, so deleting, overwriting or upserting a file in a NaN identity partition raised, as did a dynamic partition overwrite with NaN in the incoming data.
+
+Closes #4277",640c4145c1267ad7b0ef50b8529b01ca2ac2a83d,4281,false,,4,146,10,pyiceberg; tests
+apache/iceberg-python,c5aadd9af07e8a849b5773168ec475644eea60d2,c5aadd9,ayush,ayushkumarsaha32@gmail.com,2026-11-11T20:55:30Z,GitHub,noreply@github.com,2026-11-11T20:55:30Z,"fix: handle negative-scale Decimals in increment, decrement and truncate_decimal (#4285)","Decimal.as_tuple().exponent carries the negated scale, so a Decimal with a
+non-negative exponent (1E+2) has a negative scale. abs() turned that exponent
+into a positive scale, so increment()/decrement() returned values on the wrong
+order of magnitude (1E+2 -> 0.02 instead of 2E+2) and truncate_decimal() landed
+on a wrong scale. Same root cause as #3997, remaining call sites.
+
+Signed-off-by: Ayush Kumar Saha <225407166+AP24110011695@users.noreply.github.com>
+Co-authored-by: Ayush Kumar Saha <225407166+AP24110011695@users.noreply.github.com>",2b67a43f8edab423d1fd482a94c0c1f3fee87228,4285,false,Ayush Kumar Saha,4,39,4,pyiceberg; tests
+apache/iceberg-python,d570334f2d09c0acead6ba141972b67f203f3fad,d570334,ayush,ayushkumarsaha32@gmail.com,2026-11-11T20:56:41Z,GitHub,noreply@github.com,2026-11-11T20:56:41Z,fix(expressions): reject non-finite floats on conversion to Decimal (#4287),"float('inf') is a valid float/double literal, but converting it to a
+Decimal type crashed with a bare decimal.InvalidOperation instead of the
+ValueError every other impossible conversion in this module raises.
+NaN is already rejected at literal construction; infinity now gets a
+clean, consistent domain error.
+
+Signed-off-by: Ayush Kumar Saha <225407166+AP24110011695@users.noreply.github.com>
+Co-authored-by: Ayush Kumar Saha <225407166+AP24110011695@users.noreply.github.com>",c5aadd9af07e8a849b5773168ec475644eea60d2,4287,false,Ayush Kumar Saha,2,21,1,pyiceberg; tests
+apache/iceberg-python,03e80a7b22dcc351935eb4e0dad7a7c75c8e85e1,03e80a7,Haizhou Zhao,zhaohaizhou940527@gmail.com,2026-11-11T21:02:15Z,GitHub,noreply@github.com,2026-11-11T21:02:15Z,Skip unknown nested fields when resolving Avro read schemas (#4289),"Fields are resolved by ID, so a file field that is not in the read schema
+should be read and dropped. This already worked for primitives, but a
+file-only map, list, or struct raised ResolveError, e.g. when a writer adds
+extra map fields to data_file in manifests.
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",d570334f2d09c0acead6ba141972b67f203f3fad,4289,false,Claude Opus 5.5,2,74,0,pyiceberg; tests
+apache/iceberg-python,c4cd5130382d3240ff034c67ebcf74d3d9c986cc,c4cd513,Dhruv Gupta,41189498+DG47@users.noreply.github.com,2026-11-11T21:44:39Z,GitHub,noreply@github.com,2026-11-11T21:44:39Z,fix(io): keep null lists of structs when projecting Arrow data (#4065),"The projection visitor rebuilds a list of structs from its offsets alone,
+which cannot represent a null list, so every null list<struct<...>> was
+turned into an empty list. On the write path this is persisted into the
+Parquet file and the null is lost for every reader.
+
+Rebuild the list from the original validity and offsets buffers instead,
+which also keeps the original array offset so sliced batches stay correct.
+
+Closes #3833",03e80a7b22dcc351935eb4e0dad7a7c75c8e85e1,4065,false,,3,46,6,pyiceberg; tests
+apache/iceberg-python,c97d6fc660709fa1832bb0480f7280c1ed3d80dd,c97d6fc,Huy-Cuong Nguyen,84272014+dedyoc@users.noreply.github.com,2026-11-12T17:55:12Z,GitHub,noreply@github.com,2026-11-12T17:55:12Z,Skip copying the table metadata when a transaction has nothing staged (#4302),"Transaction.table_metadata deep-copied the whole metadata on every read, even
+with nothing staged, so appends slowed down as the snapshot history grew.",c4cd5130382d3240ff034c67ebcf74d3d9c986cc,4302,false,,3,18,0,pyiceberg; tests
+apache/iceberg-python,8d1aa1509078db09711eb6a983d33fdaa105f14a,8d1aa15,ASRodrigo1,45823308+ASRodrigo1@users.noreply.github.com,2026-11-12T17:56:03Z,GitHub,noreply@github.com,2026-11-12T17:56:03Z,Share unchanged models in update_table_metadata instead of deep-copying (#4303),"* Share unchanged models in update_table_metadata instead of deep-copying
+
+update_table_metadata ended in model_copy(deep=True), so every call copied the
+whole table history (snapshots, logs, schemas) and its cost grew with the number
+of snapshots the table keeps. Transaction.table_metadata calls it on every read
+and catalogs call it once more on commit, which made one append to a table with
+10,000 snapshots take seconds.
+
+Copy only the list and dict fields of the metadata and share the frozen models
+they hold, like TableMetadata.Builder in the Java implementation. The base
+metadata stays isolated from a list append or dict assignment on the result.
+
+Closes #4294
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+* Inline the container copy into update_table_metadata
+
+The helper had a single caller, as suggested in review.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+---------
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",c97d6fc660709fa1832bb0480f7280c1ed3d80dd,4303,false,Claude Opus 5.5,2,17,1,pyiceberg; tests
+apache/iceberg-python,f2ca41e3433f55fbea5408d5a3116892d74726cf,f2ca41e,linzch3,linzch3@outlook.com,2026-11-12T19:39:11Z,GitHub,noreply@github.com,2026-11-12T19:39:11Z,Fix TruncateTransform.satisfies_order_of for different widths (#4275),"* Fix TruncateTransform.satisfies_order_of for different widths
+
+satisfies_order_of read source_type, which is never set on TruncateTransform,
+so comparing two truncate transforms with different widths raised
+AttributeError. The source type is not known on the unbound transform, and a
+wider truncation only preserves the order of a narrower one for strings, so
+only equal transforms are reported as satisfying the order.
+
+Closes #3680
+
+Generated-by: Grok Bot (AI coding assistant)
+
+* Match the Java implementation of TruncateTransform.satisfies_order_of
+
+A truncate transform satisfies the order of another truncate transform when
+its width is greater than or equal to the other's, as in the Java Truncate
+implementation. This no longer reads the missing source_type attribute.
+
+Generated-by: Grok Bot (AI coding assistant)
+
+* Port the truncate sort order tests from the Java reference implementation
+
+Mirror TestSortOrder#testSatisfiesTruncateFieldOrder at the transform
+level, since pyiceberg has no SortOrder.satisfies.
+
+Generated-by: AI-assisted
+
+---------
+
+Co-authored-by: linzch3 <20380442+linzch3@users.noreply.github.com>",8d1aa1509078db09711eb6a983d33fdaa105f14a,4275,false,linzch3,2,21,5,pyiceberg; tests
+apache/iceberg-python,533dea9e8251870abaca9d3bf2af4f28b8aea73d,533dea9,Mohammad Sohail Shaikh,122166523+sohailshk@users.noreply.github.com,2026-11-12T19:49:26Z,GitHub,noreply@github.com,2026-11-12T19:49:26Z,Reject duplicate partition field names (#4305),"* Reject duplicate partition field names
+
+validate_partition_name returned early when the partition name was not
+also a schema column, so its empty-name and uniqueness checks only ran
+for names that matched a column. update_spec could then commit a spec
+with two fields of the same name (for example through rename_field),
+after which appends failed and Java cannot load the metadata.
+create_table did not check uniqueness at all because it passed a fresh
+set for every field.
+
+Run the empty-name and uniqueness checks first, and track the names seen
+so far in assign_fresh_partition_spec_ids.
+
+* Move the empty partition name case to its own test",f2ca41e3433f55fbea5408d5a3116892d74726cf,4305,false,,3,45,5,pyiceberg; tests
+apache/iceberg-python,0008d65c57dd3820ee0bc5d9e07cfca130de06d4,0008d65,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-12T19:51:40Z,GitHub,noreply@github.com,2026-11-12T19:51:40Z,REST: Keep vended storage credentials for staged tables (#4329),,533dea9e8251870abaca9d3bf2af4f28b8aea73d,4329,false,,2,29,3,pyiceberg; tests

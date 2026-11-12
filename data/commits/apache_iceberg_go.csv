@@ -35784,3 +35784,366 @@ Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
 ---------
 
 Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",3bf14fc0c4d08db52e7022f52379d5dea4f574a9,2494,false,,4,217,10,types.go; types_test.go; view; website
+apache/iceberg-go,cd78cdcfb7a4796583ad0d227660e71333c5b20f,cd78cdc,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T21:24:50+01:00,GitHub,noreply@github.com,2026-11-11T15:24:50-05:00,feat(catalog): add view version rollback helper (#2534),Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>,f515561aecc3c30285af520ef6767e2f206dd934,2534,false,,2,253,0,catalog
+apache/iceberg-go,8dc22069a491ec234815ac3a10ffccbf32414dbc,8dc2206,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T21:27:39+01:00,GitHub,noreply@github.com,2026-11-11T15:27:39-05:00,fix(table): project missing equality delete fields (#2482),"* fix(table): project missing equality delete fields
+
+* fix(table): satisfy linter in equality projection
+
+* refactor(table): share missing equality field projection
+
+* fix(table): key read plans by equality fields
+
+* fix(table): preserve physical rows in equality delete projections
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",cd78cdcfb7a4796583ad0d227660e71333c5b20f,2482,false,,8,792,41,table
+apache/iceberg-go,592809dee9d48a92c4e0e15fa58416e302029b79,592809d,Revanth,revanthcse1@gmail.com,2026-11-11T14:33:09-06:00,GitHub,noreply@github.com,2026-11-11T15:33:09-05:00,feat(rest): support rest.auth.type=basic (#2538),,8dc22069a491ec234815ac3a10ffccbf32414dbc,2538,false,,3,97,21,catalog; website
+apache/iceberg-go,43f24d3efbb722122a102774473ac7cd140de282,43f24d3,Shruthi,sruthi1reddy3@gmail.com,2026-11-11T12:33:36-08:00,GitHub,noreply@github.com,2026-11-11T15:33:36-05:00,fix(table): reject duplicate field IDs when creating table metadata (#2475),"* fix(table): reject duplicate field IDs when creating table metadata
+
+Closes #2393
+
+Signed-off-by: Shruthi Yaramada <shrutyar@amazon.com>
+
+* refactor(table): keep duplicate field ID check unexported, add compatibility note
+
+Signed-off-by: Shruthi Yaramada <shrutyar@amazon.com>
+
+---------
+
+Signed-off-by: Shruthi Yaramada <shrutyar@amazon.com>
+Co-authored-by: Shruthi Yaramada <shrutyar@amazon.com>",592809dee9d48a92c4e0e15fa58416e302029b79,2475,false,Shruthi Yaramada,5,194,0,table; website
+apache/iceberg-go,c17940e8794650d660f9cedcd14bbe21bb919da9,c17940e,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T21:34:42+01:00,GitHub,noreply@github.com,2026-11-11T15:34:42-05:00,feat(encryption/awskms): add AWS KMS client (#2531),"* feat(encryption/awskms): add AWS KMS client
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(encryption/awskms): honor kms.endpoint in registry
+
+Load registry-managed AWS KMS clients with the configured service endpoint.
+Cover Encrypt, Decrypt and GenerateDataKey through the registry loader.
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(encryption/awskms): format endpoint regression test
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",43f24d3efbb722122a102774473ac7cd140de282,2531,false,,4,412,0,encryption; go.mod; go.sum
+apache/iceberg-go,198dc9ec98bad41759eb34fc6d911b0faf78c72b,198dc9e,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T21:45:28+01:00,GitHub,noreply@github.com,2026-11-11T15:45:28-05:00,feat(table): support delete target file size (#2528),"* feat(table): support delete target file size
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs: document delete-file size upgrade behavior
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",c17940e8794650d660f9cedcd14bbe21bb919da9,2528,false,,6,232,7,table; website
+apache/iceberg-go,e006e876d7fc61e9e540b4a121eba005ea38f1fc,e006e87,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T21:56:39+01:00,GitHub,noreply@github.com,2026-11-11T15:56:39-05:00,feat(catalog/dynamodb): implement DynamoDB catalog (#2535),"* feat(catalog/dynamodb): implement DynamoDB catalog
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(catalog/dynamodb): handle commit conflicts and namespace checks
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",198dc9ec98bad41759eb34fc6d911b0faf78c72b,2535,false,,14,1713,20,Makefile; catalog; cmd; go.mod; go.sum; internal; website
+apache/iceberg-go,a34aaed680785b3d92a14a3efb5b02b5527145d6,a34aaed,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T22:03:11+01:00,GitHub,noreply@github.com,2026-11-11T16:03:11-05:00,feat(table): support per-column Parquet compression (#2524),"* feat(table): support per-column Parquet compression
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* refactor(table): simplify Parquet column compression overrides
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(table): format Parquet column compression tests
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): preserve column properties across schema evolution
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style(table): format column property tests
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",e006e876d7fc61e9e540b4a121eba005ea38f1fc,2524,false,,12,1239,41,table; website
+apache/iceberg-go,4a931b04dbfb4f50f08d94178d7bdb14278b8e92,4a931b0,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T22:09:57+01:00,GitHub,noreply@github.com,2026-11-11T16:09:57-05:00,feat(table): normalize changelog rows and compute update images (#2536),"* feat(table): normalize changelog rows and compute update images
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>
+
+* perf(table): gather normalized changelog rows in batches
+
+---------
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>",a34aaed680785b3d92a14a3efb5b02b5527145d6,2536,false,,8,1859,4,table; website
+apache/iceberg-go,6f4b91d71c3aa9445ee107d6cceebf951ce454f2,6f4b91d,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T22:15:45+01:00,GitHub,noreply@github.com,2026-11-11T16:15:45-05:00,fix(literals): match Java float ordering (#2514),"* fix(literals): match Java float ordering
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): preserve signed-zero predicate semantics
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): keep signed zero set pruning conservative
+
+* test(table): cover signed zero deletes for regular writes
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",4a931b04dbfb4f50f08d94178d7bdb14278b8e92,2514,false,,9,659,37,literals.go; literals_float_order_test.go; manifest_test.go; table; visitors.go; visitors_test.go; website
+apache/iceberg-go,5cd34f485805824098048e78ec1bb711689ecbe9,5cd34f4,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T22:18:54+01:00,GitHub,noreply@github.com,2026-11-11T16:18:54-05:00,feat(table): support delete-specific Parquet settings (#2529),"* feat(table): support delete-specific Parquet settings
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): accept Java Parquet setting values
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): validate delete Parquet settings independently
+
+* refactor(table): share Parquet codec parsing
+
+* fix(table): ignore data Bloom settings for delete writes
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",6f4b91d71c3aa9445ee107d6cceebf951ce454f2,2529,false,,8,521,74,table; website
+apache/iceberg-go,4a6aa67bc78d29745c487495e7419832313dddda,4a6aa67,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T22:42:51+01:00,GitHub,noreply@github.com,2026-11-11T16:42:51-05:00,feat(table): support per-column Parquet statistics settings (#2526),"**What**
+
+- Support `write.parquet.stats-enabled.column.*` for data files.
+
+**Why**
+
+- Callers need to choose which Parquet columns store statistics.
+
+**Implementation**
+
+- Resolve logical column names to Parquet paths by field ID.
+- Carry settings through renames and remove them when fields are deleted.
+- Keep delete-file statistics independent from data-column settings.
+
+**References**
+
+- [Spec: file metrics and statistics](https://iceberg.apache.org/spec/#field-level-metrics-and-statistics)
+- [Java: column statistics settings](https://github.com/apache/iceberg/blob/014b3ce5ffbf7c1c51dabb144f4d94e45addcd88/parquet/src/main/java/org/apache/iceberg/parquet/Parquet.java#L361-L376)
+- [Java: settings during schema changes](https://github.com/apache/iceberg/blob/014b3ce5ffbf7c1c51dabb144f4d94e45addcd88/core/src/main/java/org/apache/iceberg/SchemaUpdate.java#L506-L529)",5cd34f485805824098048e78ec1bb711689ecbe9,2526,false,,10,850,6,table; website
+apache/iceberg-go,92476e48dccb59c31eff790d7909b93cca72f680,92476e4,Revanth,revanthcse1@gmail.com,2026-11-11T15:45:48-06:00,GitHub,noreply@github.com,2026-11-11T16:45:48-05:00,feat(rest): support rest.auth.type=sigv4 and keep the delegate Authorization header (#2547),"* feat(rest): support rest.auth.type=sigv4 and keep the delegate Authorization header
+
+* docs(release): note SigV4 keeps the token as Original-Authorization",4a6aa67bc78d29745c487495e7419832313dddda,2547,false,,9,262,28,catalog; website
+apache/iceberg-go,1c59703419dea8e486d2f851d527a0fd4ec9ee20,1c59703,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T22:47:38+01:00,GitHub,noreply@github.com,2026-11-11T16:47:38-05:00,fix(table): return errors from delete record readers (#2541),"* fix(table): return errors from delete record readers
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>
+
+* test(table): use delete file target for error paths
+
+---------
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>",92476e48dccb59c31eff790d7909b93cca72f680,2541,false,,7,549,66,table
+apache/iceberg-go,59a237668bb762a270fc60e10a587353b3ac3390,59a2376,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T23:16:24+01:00,GitHub,noreply@github.com,2026-11-11T17:16:24-05:00,feat(table): configure Parquet read page limits (#2544),"* feat(table): configure Parquet read page limits
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>
+
+* docs(table): clarify Parquet page limit scope
+
+---------
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>",1c59703419dea8e486d2f851d527a0fd4ec9ee20,2544,false,,12,491,14,table; website
+apache/iceberg-go,1fe57668093cb26004277d5f5e21393871d0ed79,1fe5766,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T23:16:52+01:00,GitHub,noreply@github.com,2026-11-11T17:16:52-05:00,perf(table): project filter columns for position deletes (#2543),"* perf(table): project filter columns for position deletes
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>
+
+* test(table): cover nested scan projection
+
+---------
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>",59a237668bb762a270fc60e10a587353b3ac3390,2543,false,,5,491,13,table
+apache/iceberg-go,b06e9fee7de070a4984a419d7c322c28cf82857d,b06e9fe,Minh Vu,vuhoangminh97@gmail.com,2026-11-11T23:21:51+01:00,GitHub,noreply@github.com,2026-11-11T17:21:51-05:00,feat(catalog/sql): support renaming views (#2532),"* feat(catalog/sql): support renaming views
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* feat(catalog): expose view rename capability
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",1fe57668093cb26004277d5f5e21393871d0ed79,2532,false,,6,380,4,catalog; website
+apache/iceberg-go,93fa6d6f5a5cb7b7b449e724729b2dbe651704dc,93fa6d6,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T17:48:15+01:00,GitHub,noreply@github.com,2026-11-12T11:48:15-05:00,feat(io): support remote S3 request signing (#2546),"* feat(io): support remote S3 request signing
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>
+
+* fix(io): use table signing configuration and region
+
+---------
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>",b06e9fee7de070a4984a419d7c322c28cf82857d,2546,false,,15,1925,41,catalog; internal; io; website
+apache/iceberg-go,0dbe828e9537b6ca37130ddca7ca4841ec09e925,0dbe828,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T17:48:41+01:00,GitHub,noreply@github.com,2026-11-12T11:48:41-05:00,feat(table): compute v2 and v3 partition statistics (#2539),"* feat(table): compute v2 and v3 partition statistics
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>
+
+* fix(table): preserve partition statistics with incomplete deletion vectors
+
+* style(table): format partition statistics control flow
+
+---------
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>",93fa6d6f5a5cb7b7b449e724729b2dbe651704dc,2539,false,,5,1138,43,table; website
+apache/iceberg-go,86cd9b51596ab18e09649f363e60d09fa784d49e,86cd9b5,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T17:49:00+01:00,GitHub,noreply@github.com,2026-11-12T11:49:00-05:00,feat(table): support adaptive Parquet bloom filters (#2525),"* feat(table): support adaptive Parquet bloom filters
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): guard adaptive bloom filter sizing
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): cover adaptive bloom filter isolation
+
+* chore(table): format adaptive bloom filter tests
+
+* style(table): fix adaptive bloom filter test lint
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): resolve Bloom settings by field ID
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* test(table): combine Bloom and compression column settings
+
+* fix(table): export adaptive Bloom property constants
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",0dbe828e9537b6ca37130ddca7ca4841ec09e925,2525,false,,11,895,11,table; website
+apache/iceberg-go,39771eb5863a487b28941a500d4e77c295c194d3,39771eb,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T17:50:15+01:00,GitHub,noreply@github.com,2026-11-12T11:50:15-05:00,fix(view): handle missing default namespace consistently (#2467),"* fix(catalog/rest): default view namespace on create
+
+* fix(view): serialize missing default namespace as an empty list
+
+* fix(catalog/rest): preserve default view namespace
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",86cd9b51596ab18e09649f363e60d09fa784d49e,2467,false,,4,88,4,catalog; view
+apache/iceberg-go,453e720854cf96da30e6ef7273a05e33aa6009f0,453e720,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T17:59:07+01:00,GitHub,noreply@github.com,2026-11-12T11:59:07-05:00,test(schema): cover nested case-insensitive lookup collisions (#2479),test(schema): cover nested case-insensitive collisions,39771eb5863a487b28941a500d4e77c295c194d3,2479,false,,1,45,0,schema_name_index_internal_test.go
+apache/iceberg-go,0474af1b03f973c5a76c7a8c8faf7fa8600d7037,0474af1,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T17:59:18+01:00,GitHub,noreply@github.com,2026-11-12T11:59:18-05:00,feat(catalog/sql): support view updates (#2530),"* feat(catalog/sql): support view updates
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* refactor(view): share metadata file writing
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>",453e720854cf96da30e6ef7273a05e33aa6009f0,2530,false,,8,761,41,catalog; view; website
+apache/iceberg-go,6bbdd5840eb31ffff19e4971c9a0cda45835ea2f,6bbdd58,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T17:59:52+01:00,GitHub,noreply@github.com,2026-11-12T11:59:52-05:00,perf(table): prune excluded single-value manifests (#2507),"* fix(table): prune excluded single-value manifests
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* style: fix nlreturn lint in tests
+
+* fix(table): guard signed-zero manifest pruning
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",0474af1b03f973c5a76c7a8c8faf7fa8600d7037,2507,false,,4,365,4,table
+apache/iceberg-go,cfffdb9020db9c94abd64da82244401c3cbb962b,cfffdb9,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T18:01:03+01:00,GitHub,noreply@github.com,2026-11-12T12:01:03-05:00,fix(literals): reject out-of-range nanosecond timestamps (#2508),"* fix(literals): reject out-of-range nanosecond timestamps
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs: note nanosecond timestamp string compatibility
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",6bbdd5840eb31ffff19e4971c9a0cda45835ea2f,2508,false,,3,82,2,literals.go; literals_timestamp_nanos_range_test.go; website
+apache/iceberg-go,210227bcf9befec30f430df58433254af696f47a,210227b,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T18:03:23+01:00,GitHub,noreply@github.com,2026-11-12T12:03:23-05:00,fix(table): reject old-spec global equality deletes (#2550),"* fix(table): reject global deletes during dynamic overwrite
+
+* refactor(table): avoid path map for global equality delete validation
+
+* fix(table): ignore removed global deletes during overwrite",cfffdb9020db9c94abd64da82244401c3cbb962b,2550,false,,2,137,3,table
+apache/iceberg-go,f5ca4b2d0f8660f85dae7ed45cdc7b857bcaada0,f5ca4b2,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T18:04:21+01:00,GitHub,noreply@github.com,2026-11-12T12:04:21-05:00,fix(table): reject v3 row IDs ahead of allocation cursor (#2551),"* fix(table): reject v3 row IDs ahead of allocation cursor
+
+* test(table): reject forward v3 row IDs without mutating allocated state
+
+* test(table): verify row ID allocation recovers after rejection",210227bcf9befec30f430df58433254af696f47a,2551,false,,2,61,0,table
+apache/iceberg-go,7fe39dc3beb8f827e31bdb30b7fbba93eb187f29,7fe39dc,Ayaan,103879986+AynSiddiqui@users.noreply.github.com,2026-11-12T22:42:47+05:30,GitHub,noreply@github.com,2026-11-12T12:12:47-05:00,feat(catalog/rest): send Idempotency-Key on mutations when the server advertises it (#2492),Signed-off-by: Ayaan <ayaansiddiqui68@gmail.com>,f5ca4b2d0f8660f85dae7ed45cdc7b857bcaada0,2492,false,,5,317,30,catalog; website
+apache/iceberg-go,f34d00fbfb002852d2a2e5115faf6677e6de5d54,f34d00f,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T18:17:12+01:00,GitHub,noreply@github.com,2026-11-12T12:17:12-05:00,fix(table): resolve nested equality delete conflict fields (#2554),,7fe39dc3beb8f827e31bdb30b7fbba93eb187f29,2554,false,,3,263,5,table
+apache/iceberg-go,8369526c58400f28518e41f1588646e24338af4b,8369526,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T18:22:34+01:00,GitHub,noreply@github.com,2026-11-12T12:22:34-05:00,fix(name_mapping): preserve fields without mapping IDs (#2512),"* fix(name_mapping): preserve fields without mapping IDs
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): skip id-less mapped columns during reads
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",f34d00fbfb002852d2a2e5115faf6677e6de5d54,2512,false,,5,155,7,name_mapping.go; name_mapping_test.go; table
+apache/iceberg-go,2613212a3b209ca2304f2bb4b3c5199e084d7dbf,2613212,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T18:26:18+01:00,GitHub,noreply@github.com,2026-11-12T12:26:18-05:00,fix(table): harden manifest pruning for incomplete bounds (#2513),"* fix(table): retain manifests with partial partition bounds
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): retain legacy empty-string delete manifests
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(table): retain manifests with mismatched partition summaries
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",8369526c58400f28518e41f1588646e24338af4b,2513,false,,4,450,30,table
+apache/iceberg-go,41cfde467ded21c1ad24c7ef5660f8d404e0123d,41cfde4,Ayaan,103879986+AynSiddiqui@users.noreply.github.com,2026-11-12T22:57:26+05:30,GitHub,noreply@github.com,2026-11-12T12:27:26-05:00,"docs, build: use localhost for AWS_S3_ENDPOINT in README and make integration-env (#2476)","* docs: use localhost for AWS_S3_ENDPOINT in README integration tests
+
+* build: use localhost for AWS_S3_ENDPOINT in integration-env",2613212a3b209ca2304f2bb4b3c5199e084d7dbf,2476,false,,2,2,2,Makefile; README.md
+apache/iceberg-go,40079460b8a4d2b2d2125727f3256e2cacc7f7f0,4007946,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T18:30:06+01:00,GitHub,noreply@github.com,2026-11-12T12:30:06-05:00,fix(table): order v2 position delete files (#2556),,41cfde467ded21c1ad24c7ef5660f8d404e0123d,2556,false,,5,243,15,table
+apache/iceberg-go,15b335944c94f36a05602c287aeaf7e55180954f,15b3359,Colton Loftus,70598503+C-Loftus@users.noreply.github.com,2026-11-12T12:36:26-05:00,GitHub,noreply@github.com,2026-11-12T12:36:26-05:00,feat(table): support geometry Hilbert-curve ordering for data file rewrites (#2517),"Adds `WithCompactionGeometryHilbertOrder`, which orders each partition of a compaction group along a Hilbert curve over the centre of a top-level geometry or geography column's XY bounding box, so rows close in space share files and row groups and spatial filters prune more files. Refs #2043.
+
+- `WithHilbertBits` sets grid resolution (default 16 bits per axis, max 32); `WithHilbertBounds` fixes the extent instead of deriving it from the data.
+- Cannot be combined with `WithCompactionSortOrder`; rejects non-geo columns, out-of-range bits and bad bounds.
+- Output files record no `sort_order_id`, since a Hilbert order is not an Iceberg sort order.
+- Rows with a null or empty geometry go last; geography is ordered on planar x/y with no antimeridian wrapping; the whole group is held in memory.
+- Gather and batching code is shared with the sort strategy with no change to the sort algorithm.
+
+This is not Java's multi-column `hilbert(c1, c2)` sort order (apache/iceberg#16827), which encodes primitive columns and does not accept geometry; the plain `WithCompactionHilbertOrder` name is left free for a Java-compatible option.",40079460b8a4d2b2d2125727f3256e2cacc7f7f0,2517,false,,8,1969,7,table; website
+apache/iceberg-go,a0707fcd60f1bde9d05d6179c9cb24f868055653,a0707fc,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T20:00:50+01:00,GitHub,noreply@github.com,2026-11-12T14:00:50-05:00,fix(transforms): match Java time partition formatting (#2561),Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>,15b335944c94f36a05602c287aeaf7e55180954f,2561,false,,3,66,1,table; transforms.go; transforms_test.go
+apache/iceberg-go,49dd18ecdaa927afd0dd8855b18b41087cb239c3,49dd18e,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T20:09:16+01:00,GitHub,noreply@github.com,2026-11-12T14:09:16-05:00,fix(table): reject concurrent deletes during file replacement (#2549),"* fix(table): validate concurrent deletes for file replacements
+
+* fix(table): validate path-based file replacements
+
+* fix(table): scope concurrent equality deletes by partition
+
+* test(table): verify equality delete overlap across specs
+
+* docs(table): describe partition-scoped rewrite conflicts
+
+* fix(table): detect global deletes with void partition specs
+
+* fix(table): keep rewrite delete validation conservative
+
+* test(table): cover rewrite across partition specs
+
+* docs(table): clarify rewrite delete validation
+
+* fix(table): avoid duplicate rewrite validation",a0707fcd60f1bde9d05d6179c9cb24f868055653,2549,false,,8,285,22,table; website
+apache/iceberg-go,0daed7d01f8deef1fbe5e833bd3ea567c284950e,0daed7d,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T20:22:40+01:00,GitHub,noreply@github.com,2026-11-12T14:22:40-05:00,fix(literals): preserve empty string partition bounds (#2510),"* fix(literals): keep string binary buffers independent
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(literals): preserve empty string partition bounds
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",49dd18ecdaa927afd0dd8855b18b41087cb239c3,2510,false,,5,176,14,literals.go; literals_string_ownership_test.go; table; website
+apache/iceberg-go,37c637e2d9c6e02867337c3e37e8425a5a890690,37c637e,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T20:54:15+01:00,GitHub,noreply@github.com,2026-11-12T14:54:15-05:00,fix(table): reject deletion vectors missing referenced data files (#2560),"* fix(table): reject deletion vectors missing referenced data files
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>
+
+* fix(table): classify duplicate deletion vectors as invalid metadata
+
+---------
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>",0daed7d01f8deef1fbe5e833bd3ea567c284950e,2560,false,,3,170,7,table
