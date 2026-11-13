@@ -9044,3 +9044,126 @@ so far in assign_fresh_partition_spec_ids.
 
 * Move the empty partition name case to its own test",f2ca41e3433f55fbea5408d5a3116892d74726cf,4305,false,,3,45,5,pyiceberg; tests
 apache/iceberg-python,0008d65c57dd3820ee0bc5d9e07cfca130de06d4,0008d65,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-12T19:51:40Z,GitHub,noreply@github.com,2026-11-12T19:51:40Z,REST: Keep vended storage credentials for staged tables (#4329),,533dea9e8251870abaca9d3bf2af4f28b8aea73d,4329,false,,2,29,3,pyiceberg; tests
+apache/iceberg-python,aeaddb18f0c0e2f8f25c85e960410afdd5eda0d4,aeaddb1,ayush,ayushkumarsaha32@gmail.com,2026-11-12T21:59:39Z,GitHub,noreply@github.com,2026-11-12T21:59:39Z,Order -0.0 below 0.0 in data file metrics bounds (#4331),"* Order -0.0 below 0.0 in data file metrics bounds
+
+StatsAggregator.update_min/update_max feed DataFile lower/upper bounds,
+but min(val, current) and max(val, current) keep the first argument on a
+tie, so whichever zero arrives last wins: a late -0.0 lowers an existing
++0.0 upper bound, and a late +0.0 raises an existing -0.0 lower bound.
+The serialized bounds then order above a value present in the file.
+
+Mirror the fix that #4324 applied to partition field summaries: restore
+the stored bound when a zero arrives that would invert the -0.0 < 0.0
+ordering. The argument order here (val first) flips which direction
+needs the guard compared to manifest.py.
+
+Verified failing-first: the new tests fail on main for both arrival
+orders and both float types, and pass with the guard.
+
+Signed-off-by: Ayush Kumar Saha <225407166+AP24110011695@users.noreply.github.com>
+
+* Simplify the negative-zero guards per review
+
+Flip the min/max argument order so a tie keeps the existing value (the
+same shape as PartitionFieldStats.update in manifest.py), which lets the
+guard only handle an incoming zero of the wrong sign and drops the
+previous-value capture. Behavior verified unchanged: the regression
+tests and all zero-arrival interleavings still produce the canonical
+-0.0-below-0.0 bounds.
+
+Signed-off-by: Ayush Kumar Saha <225407166+AP24110011695@users.noreply.github.com>
+
+---------
+
+Signed-off-by: Ayush Kumar Saha <225407166+AP24110011695@users.noreply.github.com>
+Co-authored-by: Ayush Kumar Saha <225407166+AP24110011695@users.noreply.github.com>",0008d65c57dd3820ee0bc5d9e07cfca130de06d4,4331,false,Ayush Kumar Saha,2,32,2,pyiceberg; tests
+apache/iceberg-python,2a1439e82b5be7d400bef87625124bd5986fd85a,2a1439e,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-12T22:30:37Z,GitHub,noreply@github.com,2026-11-12T22:30:37Z,Fix append to a table partitioned by bucket on a time column (#4343),"* Fix append to a table partitioned by bucket on a time column
+
+The bucket transform returns an int, but the time partition representation
+only accepted datetime.time, so every append raised AttributeError. Accept
+the int, as the date, timestamp and uuid handlers already do.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Retrigger CI
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Retrigger CI
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Retrigger CI
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",aeaddb18f0c0e2f8f25c85e960410afdd5eda0d4,4343,false,Isaac,3,41,4,pyiceberg; tests
+apache/iceberg-python,8a79207b9cf76b8ac15aaca8387323ad936cb512,8a79207,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-12T22:39:37Z,GitHub,noreply@github.com,2026-11-12T22:39:37Z,Bind conflict-detection filters with the operation's case sensitivity (#4345),"* Bind conflict-detection filters with the operation's case sensitivity
+
+delete() and overwrite() with case_sensitive=False bound the conflict-detection
+filter case-sensitively when a concurrent commit forced validation, so the
+retry raised ValueError. Pass the operation's case_sensitive setting through
+the validation helpers, as Java does.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Retrigger CI
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Test case-insensitive conflict validation for deleted data and delete files
+
+Add snapshot-isolation retries after a concurrent delete, which reach
+_validate_deleted_data_files, and a mixed-case unit test for
+_added_delete_files and _validate_no_new_delete_files.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",2a1439e82b5be7d400bef87625124bd5986fd85a,4345,false,Isaac,4,198,12,pyiceberg; tests
+apache/iceberg-python,ff5f5d434763310f2976dc24c19f0ad408dc13b4,ff5f5d4,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-11-12T22:40:42Z,GitHub,noreply@github.com,2026-11-12T22:40:42Z,Add ManifestEntry.is_live() (#4351),"Mirror Java's ManifestEntry.isLive() and use it in place of raw status
+comparisons, as suggested in review of #3972.",8a79207b9cf76b8ac15aaca8387323ad936cb512,4351,false,,3,16,4,pyiceberg; tests
+apache/iceberg-python,2317c25c2683baf2fb522828f0457720b7a72770,2317c25,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-12T22:43:24Z,GitHub,noreply@github.com,2026-11-12T22:43:24Z,Rewrite NOT in row filters before the Arrow scan (#4350),"* Rewrite NOT in row filters before the Arrow scan
+
+The manifest and metrics evaluators apply rewrite_not, so not x < 6.0
+decides which files are read as x >= 6.0, but the rows were filtered with
+~(x < 6.0), which is true for NaN. Apply rewrite_not to the bound file
+filter as well, so a NaN row no longer depends on whether its file was read.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Retrigger CI
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",ff5f5d434763310f2976dc24c19f0ad408dc13b4,4350,false,Isaac,2,28,1,pyiceberg; tests
+apache/iceberg-python,5d043a219e2953b6628fa7d02703301c409c9eef,5d043a2,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-11-13T06:11:36Z,GitHub,noreply@github.com,2026-11-13T06:11:36Z,Row lineage: Preserve first_row_id from REST scan planning (#4352),"Preserve first_row_id from REST scan planning
+
+The REST data file model parses first-row-id, but it was dropped when
+converting to a DataFile, so planned scans lost row lineage info.
+
+Part of #4080.",2317c25c2683baf2fb522828f0457720b7a72770,4352,false,,2,9,0,pyiceberg; tests
+apache/iceberg-python,45774e7c10792270abc2b40ffc81167c069368b1,45774e7,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-13T07:01:14Z,GitHub,noreply@github.com,2026-11-13T07:01:14Z,Fix append to a table identity-partitioned on a uuid column (#4360),"Appending to a table identity-partitioned on a uuid column raised
+ArrowNotImplementedError: _determine_partitions groups and filters on
+the arrow.uuid extension type, which PyArrow has no kernels for.
+Use the storage type (fixed_size_binary(16)) of extension-typed partition
+columns; the written data keeps its uuid type.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",5d043a219e2953b6628fa7d02703301c409c9eef,4360,false,Isaac,2,49,1,pyiceberg; tests
+apache/iceberg-python,9eb83957292bd5b17e85c529bea0a84ab8de3a43,9eb8395,Yuang Gao,91290127+YuangGao@users.noreply.github.com,2026-11-13T08:59:54Z,GitHub,noreply@github.com,2026-11-13T08:59:54Z,fix: keep last_updated_ms from preceding the latest metadata-log entry (#4273),,45774e7c10792270abc2b40ffc81167c069368b1,4273,false,,2,21,4,pyiceberg; tests
+apache/iceberg-python,141bae488afb3245b0a9adbefab198fe039772b4,141bae4,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-11-13T19:04:31Z,GitHub,noreply@github.com,2026-11-13T19:04:31Z,Add a shared mixin for state that cannot be pickled (#4357),"Locks, thread-locals and caches have to be dropped when pickling and rebuilt
+afterwards. Each class has handled this with its own __getstate__ and
+__setstate__, and new locks keep landing without it. Add _TransientStateMixin
+and port FsspecFileIO and PyArrowFileIO to it.",9eb83957292bd5b17e85c529bea0a84ab8de3a43,4357,false,,6,99,32,pyiceberg; tests
+apache/iceberg-python,c971ff55633837fc9fa6b314a8419e931cef978a,c971ff5,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-13T19:19:29Z,GitHub,noreply@github.com,2026-11-13T19:19:29Z,Send the pyiceberg User-Agent on S3 remote signing requests (#4367),"S3V4RestSigner posts to the REST catalog's signing endpoint from its own
+requests session, so those calls went out as python-requests/<version>
+instead of the pyiceberg User-Agent that the catalog sends. Share the
+value through a small _user_agent() helper and set it on signer requests
+the same way the catalog session does, after the header properties.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",141bae488afb3245b0a9adbefab198fe039772b4,4367,false,Isaac,3,10,3,pyiceberg; tests

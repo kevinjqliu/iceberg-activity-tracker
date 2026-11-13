@@ -9411,3 +9411,79 @@ Generated-by: Cursor
 Co-authored-by: Cursor <cursoragent@cursor.com>
 Co-authored-by: Ryan Blue <blue@apache.org>",acea99d28a4be93a8c0dfc7bd8ece4a237324243,18853,false,Cursor; Ryan Blue,6,1372,5,core
 apache/iceberg,805a2868ffaab46ca08620a186ace8d990eb8d52,805a286,Yuya Ebihara,ebyhry@gmail.com,2026-11-13T04:14:49+09:00,GitHub,noreply@github.com,2026-11-12T11:14:49-08:00,Open-API: Upgrade hadoop-shaded-guava to 1.6.0 in REST fixture runtime (#18907),,14690428f7a8c0e8f5f1fa04895b1380f371d717,18907,false,,2,2,6,.github; build.gradle
+apache/iceberg,92bed7517acc73a3098e2d9f656b8d2b494fa2a5,92bed75,Russell Spitzer,russell.spitzer@GMAIL.COM,2026-11-12T17:21:15-06:00,GitHub,noreply@github.com,2026-11-12T17:21:15-06:00,Site: Add Iceberg Summit 2027 section to homepage (#18920),,805a2868ffaab46ca08620a186ace8d990eb8d52,18920,false,,2,99,0,site
+apache/iceberg,58cf9d8bba9fe077cbf55d40eae17fd552eaf790,58cf9d8,Steven Zhen Wu,stevenz3wu@gmail.com,2026-11-12T16:42:36-08:00,GitHub,noreply@github.com,2026-11-12T16:42:36-08:00,"API, Core: Add Snapshot.rootManifestLocation() (#17523)","* API, Core: Add Snapshot.rootManifestLocation() for v4 root manifests
+
+v4 snapshot metadata has no format-version field and stores the snapshot's
+root file in root-manifest instead of manifest-list. Add
+Snapshot.rootManifestLocation() and keep manifestListLocation() for v1-v3
+snapshots. Each snapshot sets at most one of the two.",92bed7517acc73a3098e2d9f656b8d2b494fa2a5,17523,false,,12,358,29,api; core
+apache/iceberg,3c2407555f798ed11134e680e064cc87c4e4d2e3,3c24075,Yuya Ebihara,ebyhry@gmail.com,2026-11-13T10:59:47+09:00,GitHub,noreply@github.com,2026-11-12T17:59:47-08:00,Core: Remove unnecessary comments from IncrementalFileCleanup (#18490),,58cf9d8bba9fe077cbf55d40eae17fd552eaf790,18490,false,,1,0,2,core
+apache/iceberg,0d64e103e587831a6b784cf198e5b72df944bb19,0d64e10,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-11-12T22:53:41-08:00,GitHub,noreply@github.com,2026-11-13T07:53:41+01:00,Open-API: Prune REST fixture runtime dependencies (#18899),"* Open-API: Scope JUnit as compileOnly for REST fixture test fixtures
+
+JUnit is only needed to compile RESTServerExtension. Consumers of the
+test fixtures already declare JUnit themselves, so keeping it out of the
+runtime classpath removes 7 unused JARs from the iceberg-rest-fixture
+image.
+
+Generated-by: GitHub Copilot (claude-opus-5.5)
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+Generated-by: GitHub Copilot
+
+* Open-API: Stage REST fixture runtime from a dedicated configuration
+
+The iceberg-rest-fixture image was staged from the test fixtures runtime
+classpath, which resolves the cloud bundles through their default variant
+and stages each shaded bundle JAR alongside its unshaded transitive SDK
+dependencies. Stage the image from a separate configuration that uses the
+shaded bundle JARs instead, as done for iceberg-bundled-guava. Engine
+tests keep consuming testFixturesRuntimeElements unchanged.
+
+Declare hadoop-shaded-guava as testFixturesImplementation so the image
+configuration also picks up the 1.6.0 upgrade.
+
+Generated-by: GitHub Copilot (claude-opus-5.5)
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+Generated-by: GitHub Copilot
+
+* Open-API: Exclude unused hadoop-common transitives from REST fixture image
+
+RESTCatalogServer only needs Configuration and the local FileSystem from
+hadoop-common. Excluding the transitives used for Hadoop RPC, HTTP
+servers, and Kerberos/JWT authentication from the Docker image runtime
+removes 24 unused JARs without changing any resolved versions or the
+test fixtures that engine tests consume.
+
+Generated-by: GitHub Copilot (claude-opus-5.5)
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+Generated-by: GitHub Copilot
+
+* Open-API: Exclude annotation-only JARs from REST fixture image
+
+error_prone_annotations and jspecify only carry annotations that the JVM
+ignores when absent, so the iceberg-rest-fixture image does not need them.
+
+Generated-by: GitHub Copilot (claude-opus-5.5)
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+Generated-by: GitHub Copilot
+
+* Open-API: Remove unused iceberg-bigquery dependency from REST fixture
+
+Nothing in the REST fixture uses iceberg-bigquery, and the engine runtime
+modules that ship BigQueryMetastoreCatalog declare it themselves.
+
+Generated-by: GitHub Copilot (claude-opus-5.5)
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+Generated-by: GitHub Copilot
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",3c2407555f798ed11134e680e064cc87c4e4d2e3,18899,false,Copilot App,1,36,4,build.gradle
+apache/iceberg,a8e37e88aea5d25c30e5006d6ef7ebe4ef4b989e,a8e37e8,GuoYu,511955993@qq.com,2026-11-13T22:42:44+08:00,GitHub,noreply@github.com,2026-11-13T15:42:44+01:00,Flink: Add SinkId to IcebergSink to Prevent Commits from Being Silently Dropped After Stateless Restarts (#18807),,0d64e103e587831a6b784cf198e5b72df944bb19,18807,false,,12,319,63,docs; flink
+apache/iceberg,d16f770e8b12c9c5900330b3229d2ee617e0ec3b,d16f770,Wei Luo,wluo416@gmail.com,2026-11-13T08:28:30-08:00,GitHub,noreply@github.com,2026-11-13T17:28:30+01:00,"AWS, GCP: Skip scheduled credential refresh when refresh is disabled (#18819)",,a8e37e88aea5d25c30e5006d6ef7ebe4ef4b989e,18819,false,,4,96,0,aws; gcp
+apache/iceberg,55e54026ddc44c26265609427a83618d584a1eef,55e5402,GuoYu,511955993@qq.com,2026-11-14T00:46:30+08:00,GitHub,noreply@github.com,2026-11-13T08:46:30-08:00,Flink: Backport add SinkId to IcebergSink to Prevent Commits from Being Silently Dropped After Stateless Restarts (#18926),,d16f770e8b12c9c5900330b3229d2ee617e0ec3b,18926,false,,22,630,126,flink

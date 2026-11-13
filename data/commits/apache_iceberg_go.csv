@@ -36147,3 +36147,159 @@ Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>
 ---------
 
 Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>",0daed7d01f8deef1fbe5e833bd3ea567c284950e,2560,false,,3,170,7,table
+apache/iceberg-go,4f167b34556de9262a177bbcbd9584550e9873e4,4f167b3,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T21:53:25+01:00,GitHub,noreply@github.com,2026-11-12T15:53:25-05:00,fix(table): reject unsafe schema type promotions (#2515),"* fix(table): reject read-only casts in schema evolution
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* docs: note schema promotion compatibility change
+
+* docs: note schema promotion compatibility change
+
+* docs(table): clarify schema evolution promotion rule
+
+* docs: clarify schema promotion compatibility note
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",37c637e2d9c6e02867337c3e37e8425a5a890690,2515,false,,3,122,4,table; website
+apache/iceberg-go,4dcb505098854a3582c5e601f114ec057e1ebc9b,4dcb505,Minh Vu,vuhoangminh97@gmail.com,2026-11-12T23:20:17+01:00,GitHub,noreply@github.com,2026-11-12T17:20:17-05:00,fix(table): reject unparseable name mappings (#2558),"* fix(table): reject unparseable name mappings
+
+* docs: note invalid name mapping behavior",4f167b34556de9262a177bbcbd9584550e9873e4,2558,false,,8,344,25,table; website
+apache/iceberg-go,2ee59f5005c5bbb0a71fd0e83ccb711dd0c5577d,2ee59f5,Minh Vu,vuhoangminh97@gmail.com,2026-11-13T17:52:31+01:00,GitHub,noreply@github.com,2026-11-13T11:52:31-05:00,fix(partitions): validate partition transform sources (#2559),"* fix(partitions): validate partition transform sources
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>
+
+* fix(partitions): centralize source transform validation
+
+* fix(partitions): satisfy perfsprint lint
+
+* fix(table): reject missing partition sources
+
+---------
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>",4dcb505098854a3582c5e601f114ec057e1ebc9b,2559,false,,11,613,11,partition_source_validation_test.go; partitions.go; partitions_test.go; table; transforms.go; website
+apache/iceberg-go,123bc3fb723fa80d2ce7b7abcb9d574141bf2880,123bc3f,Revanth,revanthcse1@gmail.com,2026-11-13T10:59:22-06:00,GitHub,noreply@github.com,2026-11-13T11:59:22-05:00,refactor: use nested type constructors in table package (#2568),"* refactor: use nested type constructors in table package
+
+* refactor: use nested type constructors in table inspect files",2ee59f5005c5bbb0a71fd0e83ccb711dd0c5577d,2568,false,,80,804,1408,table
+apache/iceberg-go,b3fa06990d736d53989f3709a041b16bb8bbc0cf,b3fa069,Minh Vu,vuhoangminh97@gmail.com,2026-11-13T17:59:27+01:00,GitHub,noreply@github.com,2026-11-13T11:59:27-05:00,fix(table): validate snapshot refs when marshaling JSON (#2570),"Validate exported SnapshotRef values before JSON encoding so invalid tag
+retention options and nonpositive retention values cannot be persisted.
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>",123bc3fb723fa80d2ce7b7abcb9d574141bf2880,2570,false,,2,94,0,table
+apache/iceberg-go,bf61ba293f02fc4de805f5d6c465cf8cf8b2fd4d,bf61ba2,Minh Vu,vuhoangminh97@gmail.com,2026-11-13T18:03:44+01:00,GitHub,noreply@github.com,2026-11-13T12:03:44-05:00,fix(schema): reject missing nested struct fields (#2569),"* fix(schema): reject missing nested struct fields
+
+* test(schema): cover missing and null nested struct fields
+
+* fix(schema): emit empty arrays for struct fields
+
+* test(schema): round-trip empty struct fields arrays
+
+* test(schema): expect missing struct fields to be rejected",b3fa06990d736d53989f3709a041b16bb8bbc0cf,2569,false,,2,71,8,types.go; types_test.go
+apache/iceberg-go,e6e39813f5019cd24167dd7717f4ec7a62b8624a,e6e3981,Minh Vu,vuhoangminh97@gmail.com,2026-11-13T18:08:14+01:00,GitHub,noreply@github.com,2026-11-13T12:08:14-05:00,fix(table): track multi-target position delete paths in merge-on-read deletes (#2555),"A v2 position-delete file written by merge-on-read `Delete` can cover several data files and then has no `referenced_data_file`, so its targets skipped the existence check on commit retry and a concurrent rewrite could resurrect deleted rows. The writer now collects each distinct `file_path` it writes and passes them to that check, as Java's writers feed `validateDataFilesExist`.",bf61ba293f02fc4de805f5d6c465cf8cf8b2fd4d,2555,false,,2,197,4,table
+apache/iceberg-go,20f8a4b99ef6d967e7590c7a4208179b92ebde1e,20f8a4b,Minh Vu,vuhoangminh97@gmail.com,2026-11-13T18:09:39+01:00,GitHub,noreply@github.com,2026-11-13T12:09:39-05:00,fix(schema): return error for duplicate IDs in JSON fields (#2564),"* fix(schema): return error for duplicate IDs in JSON fields
+
+* test(schema): cover duplicate IDs in JSON field constructor",e6e39813f5019cd24167dd7717f4ec7a62b8624a,2564,false,,2,60,0,schema.go; schema_json_fields_duplicate_test.go
+apache/iceberg-go,f3983d02a05436e26e043c79015d3387f41c4c33,f3983d0,Minh Vu,vuhoangminh97@gmail.com,2026-11-13T18:10:10+01:00,GitHub,noreply@github.com,2026-11-13T12:10:10-05:00,fix(puffin): reject null property values in metadata (#2566),"* fix(puffin): reject null property values in metadata
+
+* style(puffin): format property wire fields",20f8a4b99ef6d967e7590c7a4208179b92ebde1e,2566,false,,2,139,11,puffin
+apache/iceberg-go,2e64eb97ddd87f711dff16bb04c0f61b902ed546,2e64eb9,Minh Vu,vuhoangminh97@gmail.com,2026-11-13T18:24:19+01:00,GitHub,noreply@github.com,2026-11-13T12:24:19-05:00,fix(mapping): reject ambiguous field-name aliases (#2511),"* fix(mapping): reject ambiguous field-name aliases
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>
+
+* fix(mapping): reject duplicate projected field IDs
+
+---------
+
+Signed-off-by: Minh Vu <vuhoangminh97@gmail.com>",f3983d02a05436e26e043c79015d3387f41c4c33,2511,false,,3,132,16,name_mapping.go; name_mapping_test.go; website
+apache/iceberg-go,0d8d43d98faa109829ff49327f4dc9b16108b6c2,0d8d43d,Shivam Sharma,192242476+ShivamSharma43@users.noreply.github.com,2026-11-13T23:11:56+05:30,GitHub,noreply@github.com,2026-11-13T12:41:56-05:00,fix(table): reject deleting an identifier column (#2523),"* fix(table): reject deleting an identifier column
+
+UpdateSchema.DeleteColumn removed the deleted column from the identifier
+field names, so deleting an identifier column silently dropped it from
+the table's identifier fields. Deleting the struct that contains an
+identifier field, or the same column with different case in
+case-insensitive mode, already failed in Apply.
+
+Keep the identifier field names unchanged on delete, so Apply rejects
+the deleted identifier field unless SetIdentifierField replaces the
+identifier fields, as Java's SchemaUpdate and PyIceberg's UpdateSchema
+do.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Shivam Sharma <192242476+ShivamSharma43@users.noreply.github.com>
+
+* fix(table): check deleted identifier fields against the original schema
+
+As Java's SchemaUpdate does, Apply now looks up each identifier field in
+the original schema and rejects it if that field, or a struct containing
+it, is being deleted. The error now says the identifier field is being
+deleted instead of ""identifier field not found"", and deleting an
+identifier column and adding a new column with the same name no longer
+moves the identifier to the new field. A renamed identifier is not in
+the original schema under its new name, so it skips this check.
+
+Add a compatibility note for the behaviour change.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Shivam Sharma <192242476+ShivamSharma43@users.noreply.github.com>
+
+* test(table): pin delete-then-rename onto a deleted identifier name
+
+Also narrow the releases note: only the plain identifier column delete
+used to succeed; deleting a struct that holds one already failed and now
+reports a clearer error.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+---------
+
+Signed-off-by: Shivam Sharma <192242476+ShivamSharma43@users.noreply.github.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",2e64eb97ddd87f711dff16bb04c0f61b902ed546,2523,false,Claude Opus 5.5,3,123,3,table; website
+apache/iceberg-go,816912e2084a809ce89b9bf9ff400b6b78126079,816912e,Minh Vu,vuhoangminh97@gmail.com,2026-11-13T18:46:54+01:00,GitHub,noreply@github.com,2026-11-13T12:46:54-05:00,fix(table): validate row filters on empty planning paths (#2580),"* fix(table): validate filters on empty plans
+
+Signed-off-by: Minh Vu <38443830+fallintoplace@users.noreply.github.com>
+
+* fix(table): address nlreturn lint
+
+Signed-off-by: Minh Vu <38443830+fallintoplace@users.noreply.github.com>
+
+---------
+
+Signed-off-by: Minh Vu <38443830+fallintoplace@users.noreply.github.com>",0d8d43d98faa109829ff49327f4dc9b16108b6c2,2580,false,,2,219,2,table
+apache/iceberg-go,4f58babe597fd9732f94b68250d351e3973e3ede,4f58bab,Minh Vu,vuhoangminh97@gmail.com,2026-11-13T18:55:20+01:00,GitHub,noreply@github.com,2026-11-13T12:55:20-05:00,refactor(manifest): validate integer partition statistics conversions (#2573),"* fix(manifest): reject lossy partition integer bounds
+
+* test(manifest): cover out-of-range and fractional integer partitions
+
+* test(manifest): reject overflowing int32 partition values
+
+* style(manifest): add blank lines after range checks
+
+* style(manifest): satisfy return spacing lint",816912e2084a809ce89b9bf9ff400b6b78126079,2573,false,,3,164,7,manifest.go; manifest_partition_integer_bounds_test.go; manifest_test.go
+apache/iceberg-go,1f373b1daa7a0d2f9ef228398bb625d0e48911dd,1f373b1,Minh Vu,vuhoangminh97@gmail.com,2026-11-13T20:16:23+01:00,GitHub,noreply@github.com,2026-11-13T14:16:23-05:00,fix(table): reject missing required fields in history logs (#2571),"* fix(table): reject missing fields in table log entries
+
+* style(table): satisfy nlreturn lint
+
+* docs: note stricter table history log validation",4f58babe597fd9732f94b68250d351e3973e3ede,2571,false,,3,143,0,table; website
+apache/iceberg-go,c4aa73ce391667e5b1ec636539d4c90ee9492522,c4aa73c,Minh Vu,vuhoangminh97@gmail.com,2026-11-13T20:21:58+01:00,GitHub,noreply@github.com,2026-11-13T14:21:58-05:00,fix(maintenance): honor gc.enabled for orphan cleanup (#2557),"* fix(maintenance): honor gc.enabled for orphan cleanup
+
+* docs: note orphan cleanup gc requirement
+
+* fix(maintenance): allow safe orphan cleanup plans
+
+* style(maintenance): satisfy return spacing lint",1f373b1daa7a0d2f9ef228398bb625d0e48911dd,2557,false,,3,166,0,table; website
+apache/iceberg-go,62728072f93edd6feb3ab37cb30575490900fb53,6272807,Minh Vu,vuhoangminh97@gmail.com,2026-11-13T21:28:06+01:00,GitHub,noreply@github.com,2026-11-13T15:28:06-05:00,fix(table): reject incomplete statistics metadata (#2572),"* fix(table): validate required statistics metadata fields
+
+Reject missing or null required statistics metadata instead of
+silently decoding zero values. Match Iceberg spec and Java parsers.
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>
+
+* test(table): provide required statistics blob fields
+
+* fix(table): read v0.7.0 null statistics arrays
+
+* test(table): cover legacy null statistics metadata
+
+* test(table): satisfy nlreturn in statistics test
+
+---------
+
+Signed-off-by: fallintoplace <38443830+fallintoplace@users.noreply.github.com>",c4aa73ce391667e5b1ec636539d4c90ee9492522,2572,false,,3,229,4,table

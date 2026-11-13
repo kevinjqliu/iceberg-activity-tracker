@@ -35372,3 +35372,33 @@ Rebased onto main.
   column was added
 
 * test(arrow): read a nested variant under a null struct row",b03f4c2826116e64799c0a0b1fd6669c24251031,2880,false,,3,1747,69,crates
+apache/iceberg-rust,da389801242befa9191ffde4af3824c1c3f2e279,da38980,Liang-Chi Hsieh,viirya@gmail.com,2026-11-12T21:23:24Z,GitHub,noreply@github.com,2026-11-12T21:23:24Z,feat(transaction): update the name mapping when UpdateSchemaAction adds columns (#3665),"* feat(transaction): update the name mapping when UpdateSchemaAction adds columns
+
+When a table has schema.name-mapping.default, UpdateSchemaAction now adds
+entries for added columns to it in the same commit, as Java's
+MappingUtil.update does: new entries go under the parent's entry, an
+existing entry in the same struct loses a name an added column takes, and
+deleted columns keep their entries. A mapping that fails to parse is
+logged and left unchanged.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* fix(transaction): skip name mapping entries for additions under deleted ancestors
+
+An addition whose parent is deleted in the same update is dropped from the
+new schema, and its ID can be assigned again later. Giving it a name
+mapping entry would let id-less files resolve that name to an unrelated
+column. Also look up added names through a map instead of scanning the
+additions for every alias.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",27ce65cd344a3e8b38c28fd9c51e1d4c1b0c487d,3665,false,Isaac,1,391,5,crates
+apache/iceberg-rust,5b1fa2e8e8e94535a22f25cc0ea91b3654e560bf,5b1fa2e,Szehon Ho,szehon.apache@gmail.com,2026-11-12T22:21:17Z,GitHub,noreply@github.com,2026-11-12T22:21:17Z,fix: support fast append across partition specs (#3662),"* fix: support fast append across partition specs
+
+* fix: address multi-spec append review feedback",da389801242befa9191ffde4af3824c1c3f2e279,3662,false,,4,406,85,crates
+apache/iceberg-rust,fa961f5c4e978f93c50b8c117cc32b6228ebf1c8,fa961f5,NoahKusaba,97474796+NoahKusaba@users.noreply.github.com,2026-11-13T07:19:58Z,GitHub,noreply@github.com,2026-11-13T07:19:58Z,refactor(catalog-loader): rename CatalogBuilderFactory to BoxedCatalogBuilderFactory (#3407),"The factories in the registry return a Box<dyn BoxedCatalogBuilder>, not a
+CatalogBuilder, so name the alias after the trait it produces. Suggested in
+review of #3286.",5b1fa2e8e8e94535a22f25cc0ea91b3654e560bf,3407,false,,1,4,4,crates
