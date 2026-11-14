@@ -9167,3 +9167,106 @@ value through a small _user_agent() helper and set it on signer requests
 the same way the catalog session does, after the header properties.
 
 Co-authored-by: Isaac <no-reply@databricks.com>",141bae488afb3245b0a9adbefab198fe039772b4,4367,false,Isaac,3,10,3,pyiceberg; tests
+apache/iceberg-python,47ddb16ae691f8a43dbd9b7bd3388e673f61f60f,47ddb16,Pralay Ghosh,ghoshp83@users.noreply.github.com,2026-11-13T20:07:05Z,GitHub,noreply@github.com,2026-11-13T20:07:05Z,Apply every delete file when rewriting files for a partial delete (#4292),"* Apply every delete file when rewriting files for a partial delete
+
+A partial delete reads each candidate file in full and writes back the
+surviving rows, but planned the rewrite with the delete filter, which also
+prunes delete files by column bounds. Rows removed by a pruned delete file
+came back in the rewritten file. Plan the rewrite without pruning delete
+files; scans are unchanged.
+
+* Rename prune_delete_files to ignore_residuals
+
+* Use a private _ignore_residuals and move the test to test_init.py
+
+Keep the flag private so the public API can be designed separately, and make
+residuals always true when it is set, as Java's ignoreResiduals does. Plan the
+rewrite from the branch head, which leaves Transaction._scan unused.
+
+Move the test next to the other Transaction write tests and reuse the existing
+position delete helper from test_commit_retry.py.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c971ff55633837fc9fa6b314a8419e931cef978a,4292,false,Copilot App; Kevin Liu,3,57,16,pyiceberg; tests
+apache/iceberg-python,dfb0405cc5f375e74f43110e1318062d73d484c3,dfb0405,Xander,zander181@googlemail.com,2026-11-13T20:28:02Z,GitHub,noreply@github.com,2026-11-13T20:28:02Z,Check format version rather than TableMetadataV3 type for encryption (#4368),Matches how the rest of the codebase gates v3 features.,47ddb16ae691f8a43dbd9b7bd3388e673f61f60f,4368,false,,2,4,5,pyiceberg
+apache/iceberg-python,581e716c18e4cda54739ca515a5a543b42756854,581e716,Xander,zander181@googlemail.com,2026-11-13T20:44:51Z,GitHub,noreply@github.com,2026-11-13T20:44:51Z,feat(encryption): [13/N] Write encrypted Parquet data files (#4328),"* Write encrypted Parquet data files
+
+Data files of a table with encryption.key-id are written with Parquet modular
+encryption, using a fresh key and AAD prefix per file, and the key metadata is
+recorded on the DataFile. Like Java, the AAD prefix is not stored in the file.
+
+* Only pass key_metadata to create_writer for encrypted tables
+
+Keeps plaintext writes working with FileFormatModel implementations that
+predate the key_metadata argument.
+
+* Always pass key_metadata to create_writer
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Handle None key_metadata in _parquet_encryption_properties
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",dfb0405cc5f375e74f43110e1318062d73d484c3,4328,false,Copilot App; Kevin Liu,5,96,13,pyiceberg; tests
+apache/iceberg-python,0a2c3d2dd823b73b3f544a04e77c19be68ad09d2,0a2c3d2,Arslan Anjum,muhammad.arslan.anjum@gmail.com,2026-11-13T22:01:32Z,GitHub,noreply@github.com,2026-11-13T22:01:32Z,perf(deletion-vector): avoid payload copies and bitmap reserialization (#4181),"* perf(deletion-vector): use zero-copy memoryview for deserialization
+
+Replace repeated byte string slicing with pointer offset tracking
+via Python's built-in memoryview. This avoids O(N^2) memory buffer
+allocations during parsing, improving throughput by up to 39x on
+large payload sizes.
+
+* Avoid reserializing deletion vectors while parsing
+
+Use PyRoaring's portable serialized size and require memoryview-compatible versions. Cover mixed bitmap encodings and key gaps without reserialization.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Clarify PyRoaring serialized-size comment
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",581e716c18e4cda54739ca515a5a543b42756854,4181,false,Copilot App; Kevin Liu,4,55,15,pyiceberg; pyproject.toml; tests; uv.lock
+apache/iceberg-python,96c458bcd18501edb8af9146d23661cd5d319acf,96c458b,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-14T07:12:42Z,GitHub,noreply@github.com,2026-11-14T07:12:42Z,Build: Bump tornado from 6.6 to 6.6.1 (#4369),"Bumps [tornado](https://github.com/tornadoweb/tornado) from 6.6 to 6.6.1.
+- [Changelog](https://github.com/tornadoweb/tornado/blob/master/docs/releases.rst)
+- [Commits](https://github.com/tornadoweb/tornado/compare/v6.6.0...v6.6.1)
+
+---
+updated-dependencies:
+- dependency-name: tornado
+  dependency-version: 6.6.1
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",0a2c3d2dd823b73b3f544a04e77c19be68ad09d2,4369,false,dependabot[bot],1,46,46,uv.lock
+apache/iceberg-python,52818129dd807206bbf947cb7159a711d2ff5b75,5281812,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-14T07:12:56Z,GitHub,noreply@github.com,2026-11-14T07:12:56Z,Build: Bump soupsieve from 2.9 to 4.0 (#4366),"Bumps [soupsieve](https://github.com/facelessuser/soupsieve) from 2.9 to 4.0.
+- [Release notes](https://github.com/facelessuser/soupsieve/releases)
+- [Commits](https://github.com/facelessuser/soupsieve/compare/2.9...4.0)
+
+---
+updated-dependencies:
+- dependency-name: soupsieve
+  dependency-version: '4.0'
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",96c458bcd18501edb8af9146d23661cd5d319acf,4366,false,dependabot[bot],1,39,7,uv.lock
+apache/iceberg-python,5436520024e3a1fda803ade2488d292bf2a1adab,5436520,prabhleen2317,119912717+prabhleen2317@users.noreply.github.com,2026-11-14T07:58:32Z,GitHub,noreply@github.com,2026-11-14T07:58:32Z,Refactor: Collapse nested if statements into single conditions (#4377),"Collapse nested if statements into single conditions
+
+Merge nested `if a: if b:` blocks into `if a and b:` where the outer
+branch does nothing but guard the inner one. `and` short-circuits
+identically, so behavior is unchanged; this improves
+indentation.",52818129dd807206bbf947cb7159a711d2ff5b75,4377,false,,4,28,31,pyiceberg
+apache/iceberg-python,fce81850a647d81db40c0a67bde13f87cc5afd30,fce8185,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-11-14T08:16:05Z,GitHub,noreply@github.com,2026-11-14T08:16:05Z,Row Lineage: Add metadata column support for _row_id (#4375),Add metadata column support,5436520024e3a1fda803ade2488d292bf2a1adab,4375,false,,6,316,22,pyiceberg; tests

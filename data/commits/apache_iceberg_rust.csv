@@ -35402,3 +35402,70 @@ apache/iceberg-rust,5b1fa2e8e8e94535a22f25cc0ea91b3654e560bf,5b1fa2e,Szehon Ho,s
 apache/iceberg-rust,fa961f5c4e978f93c50b8c117cc32b6228ebf1c8,fa961f5,NoahKusaba,97474796+NoahKusaba@users.noreply.github.com,2026-11-13T07:19:58Z,GitHub,noreply@github.com,2026-11-13T07:19:58Z,refactor(catalog-loader): rename CatalogBuilderFactory to BoxedCatalogBuilderFactory (#3407),"The factories in the registry return a Box<dyn BoxedCatalogBuilder>, not a
 CatalogBuilder, so name the alias after the trait it produces. Suggested in
 review of #3286.",5b1fa2e8e8e94535a22f25cc0ea91b3654e560bf,3407,false,,1,4,4,crates
+apache/iceberg-rust,13f84f93f1a09619f473b788b2a88ef1da0c7102,13f84f9,Anurag Mantripragada,amantripragada@apple.com,2026-11-14T06:05:08Z,GitHub,noreply@github.com,2026-11-14T06:05:08Z,feat(scan): optionally retain column statistics on FileScanTask (#3424),"* feat(scan): optionally retain column statistics on FileScanTask
+
+Add TableScanBuilder::with_column_stats, mirroring Java's
+Scan.includeColumnStats. The named columns resolve to field ids at build
+time with the scan's case sensitivity, and each planned FileScanTask
+carries a FileScanTaskColumnStats holding the data file's value, null and
+NaN counts and lower and upper bounds for only those field ids.
+
+Retention is opt-in: by default column_stats is None, nothing is copied
+from the manifest entry, and the field is omitted when a task is
+serialized, so serialized tasks are unchanged.
+
+* fix(scan): serialize column bounds as spec binary values
+
+Bounds went through Datum's JSON encoding, which writes non-finite floats
+as null and rejects many finite float values when reading them back, so a
+task with such a bound serialized but failed to deserialize. Serialize
+each bound as its type and the spec's single-value binary encoding, as the
+DataFile JSON serde already does, so every bound round-trips exactly.
+
+* refactor(scan): address review of column statistics retention
+
+Retain column_sizes for the requested ids too, matching Java's
+BaseFile(copy, requestedColumnIds). Share the column-name lookup and its
+error with column selection, keep the requested names as an Option like
+column_names so an empty list yields empty statistics, and pass the ids as
+Arc<[i32]>. Skip work for an empty map when filtering, trim the struct
+docs, and cover nested field names.
+
+* fix(scan): reject column names that cannot have statistics
+
+Struct, list and map fields have no statistics of their own, and metadata
+columns are not stored in data files, so requesting stats for them
+silently returned empty maps or failed with a misleading ""not found""
+error. Fail build() with an error that says why. Also cover bounds that
+keep the manifest's type after a type promotion.
+
+* fix(scan): promote column stats bounds to the scan schema type
+
+A manifest written before a type promotion keeps the narrower type, so one
+scan could return an int bound for one file and a long bound for another,
+and Datum cannot order values of different types. Promote bounds to the
+column's type in the scan schema (int to long, float to double, decimal to
+a wider precision) and omit a bound that cannot be promoted.
+
+Box the retained statistics so tasks of scans that never request them do
+not grow, and add a doctest for with_column_stats.
+
+* refactor(scan): resolve column stats types once and trim tests and docs
+
+Resolve each requested column's type when the scan is built, so planning
+no longer looks the column up in the schema for every bound of every
+manifest entry. Rebuild the column stats tests on the builder, one
+behavior per test, and cover list names. Drop private field docs that
+repeated the getter docs, and state the decimal and date-to-timestamp
+promotion rules in the struct docs.
+
+* docs(scan): drop the date to timestamp claim from the column stats docs
+
+A date bound under a timestamp column is stored in 4 bytes, which
+Datum::try_from_bytes cannot decode as a timestamp, so the manifest read
+fails before planning sees the bound. The docs described a case that
+planning never handles.",fa961f5c4e978f93c50b8c117cc32b6228ebf1c8,3424,false,,5,734,16,crates
+apache/iceberg-rust,f99df332478fd9b17e874b6c47d234192ad8f66e,f99df33,Jannik Steinmann,jannik.steinmann@datadoghq.com,2026-11-14T07:06:20Z,GitHub,noreply@github.com,2026-11-14T07:06:20Z,build(deps): update quinn-udp to fix security check (#3686),build(deps): update quinn-udp for RUSTSEC-2026-0538,13f84f93f1a09619f473b788b2a88ef1da0c7102,3686,false,,1,2,2,Cargo.lock
+apache/iceberg-rust,6612395befbfdb5a00f7a059aa62261964d0d081,6612395,alexanderbianchi,75697973+alexanderbianchi@users.noreply.github.com,2026-11-14T07:12:35Z,GitHub,noreply@github.com,2026-11-14T07:12:35Z,fix(arrow): skip data files with a known zero record count (#3682),"* fix(arrow): skip data files with a known zero record count
+
+* test(arrow): simplify empty-file reader regressions",f99df332478fd9b17e874b6c47d234192ad8f66e,3682,false,,1,104,0,crates
