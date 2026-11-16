@@ -9814,3 +9814,145 @@ updated-dependencies:
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",58615f257805bc8af1d429ccef9bc8bcd2b3282c,18971,false,dependabot[bot],4,10,10,gcp-bundle; gradle; kafka-connect
+apache/iceberg,4616acf5f80440e58e18473cfa6755d256341352,4616acf,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-11-15T12:03:33-08:00,GitHub,noreply@github.com,2026-11-15T21:03:33+01:00,Open-API: Track REST fixture image runtime dependencies (#18928),"Open-API: Track REST fixture image runtime dependencies in runtime-deps.txt
+
+Guard the restFixtureRuntime configuration with runtime-deps.gradle so any
+change to the third-party JARs shipped in the iceberg-rest-fixture image fails
+checkRuntimeDeps until the baseline, and open-api LICENSE and NOTICE if
+licenses changed, are reviewed and updated.
+
+Generated-by: GitHub Copilot (Claude Opus 5.5)
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",7b2c3e0bc3afb4b13c6fecca2cedd8d5b9874a49,18928,false,Copilot App,2,38,0,build.gradle; open-api
+apache/iceberg,90a1e71287ac9b1e63b4d21689b90447159b8753,90a1e71,Gera Shegalov,gshegalov@nvidia.com,2026-11-15T19:33:34-08:00,GitHub,noreply@github.com,2026-11-16T11:33:34+08:00,Spark: Report effective split target size as a driver metric (#18709),"* Spark: Report effective split target size in driver metrics
+
+Expose the resolved grouping target to scan analysis tools, including for staged rewrite scans.
+
+Generated-by: Codex
+Signed-off-by: Gera Shegalov <gshegalov@nvidia.com>
+
+* Spark: Make effective split target metric loadable by Spark UI
+
+Spark's SQLAppStatusListener instantiates custom metrics reflectively by
+class name and requires a public zero-argument constructor. The private
+nested metric class could not be loaded, so the value was missing from
+the SQL tab. Move it to a public top-level class in the metrics package,
+label it ""effective split target size (bytes)"", and test that every
+declared scan metric can be loaded the way Spark loads it.
+
+Generated-by: Claude Code
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Gera Shegalov <gshegalov@nvidia.com>
+
+* Spark: Address review feedback on effective split target metric
+
+Initialize the metric to the configured split size so it always has a
+value, which lets staged scans rely on it without an explicit record
+call. Fold the metric class-loading check into the V1 and V2 read
+metric tests, inline the test helpers, drop the test prefix from the
+new tests, and add a runtime filter test.
+
+Generated-by: Claude Code
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Gera Shegalov <gshegalov@nvidia.com>
+
+* Spark: Record effective split target at task-group planning
+
+Record the split target where task groups are planned instead of as a
+side effect of adjustSplitSize, and make the field volatile because
+planning and metric reporting can run on different threads. Compute
+expected test values from TableScanUtil, check metric loadability with
+plain reflection instead of Spark internals, make new test methods
+package-private, and assert the second staged-scan split size.
+
+Generated-by: Claude Code
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Gera Shegalov <gshegalov@nvidia.com>
+
+* Spark: Test metric loadability in its own test
+
+Keep the check that Spark can load every declared scan metric in a
+dedicated test, following the project's one-behavior-per-test
+convention, so a failure points directly at the broken behavior.
+
+Generated-by: Claude Code
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Gera Shegalov <gshegalov@nvidia.com>
+
+* Spark: Report effective split target only from task-group planning
+
+Leave the metric at 0 until task groups are planned, so a scan without a
+snapshot no longer reports the configured split size. Record the staged
+scan's split size where it plans task groups, and keep a single return
+in reportDriverMetrics.
+
+Generated-by: Claude Code
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Gera Shegalov <gshegalov@nvidia.com>
+
+* Spark: Report 0 split target for scans without data
+
+Record 0 whenever planning produces no task groups, including scans whose
+files are all pruned and tables whose data was deleted. Verify the value
+the SQL UI renders instead of checking metric classes by reflection.
+
+Generated-by: Claude Code
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Gera Shegalov <gshegalov@nvidia.com>
+
+* Spark: Reset split target with tasks and test runtime-filter change
+
+Reset the effective split target when runtime filtering resets the task
+groups, so it always reflects the current planning. Make the runtime
+filter test prune large unread files so the target changes from the
+pre-filter value.
+
+Generated-by: Claude Code
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Gera Shegalov <gshegalov@nvidia.com>
+
+* Spark: Report the largest effective split target instead of the sum
+
+Make EffectiveSplitTargetSize a CustomMetric, like NumSplits, because the
+driver reports one non-additive value per scan. Name the runtime filter
+test's sizes and drop the redundant positive checks from the V1/V2 read
+metrics tests.
+
+Generated-by: Claude Code
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Gera Shegalov <gshegalov@nvidia.com>
+
+---------
+
+Signed-off-by: Gera Shegalov <gshegalov@nvidia.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",4616acf5f80440e58e18473cfa6755d256341352,18709,false,Claude Opus 5.5,7,380,28,spark
+apache/iceberg,bc94d8e23c234847cbb5fd45ac35863771bd5a37,bc94d8e,Yuya Ebihara,ebyhry@gmail.com,2026-11-16T13:05:45+09:00,GitHub,noreply@github.com,2026-11-15T20:05:45-08:00,Open-API: Update jackson in runtime-deps.txt (#18982),,90a1e71287ac9b1e63b4d21689b90447159b8753,18982,false,,1,3,3,open-api
+apache/iceberg,42e389e31265655f09e771bde6572cbc2f36196d,42e389e,Daksh Dave,dakshdave51093@gmail.com,2026-11-16T03:35:20-08:00,GitHub,noreply@github.com,2026-11-16T12:35:20+01:00,Core: Do not pass JDBC catalog properties to the driver (#18694),,bc94d8e23c234847cbb5fd45ac35863771bd5a37,18694,false,,3,34,5,core
+apache/iceberg,3d3672513373d0852c23aea87932a1d584ba0a11,3d36725,ump45nose,52391318+ump45nose@users.noreply.github.com,2026-11-16T20:11:57+08:00,GitHub,noreply@github.com,2026-11-16T13:11:57+01:00,Flink: Add timeout to blocking TestIcebergSinkTableMaintenance E2E tests (#18895),,42e389e31265655f09e771bde6572cbc2f36196d,18895,false,,3,9,0,flink
+apache/iceberg,d31f6435926425ad1e4216871e405cacf10cd6b3,d31f643,Daksh Dave,dakshdave51093@gmail.com,2026-11-16T04:16:58-08:00,GitHub,noreply@github.com,2026-11-16T13:16:58+01:00,"API, Core: Make lazy initialization in BaseSnapshot and Schema thread-safe (#18683)",,3d3672513373d0852c23aea87932a1d584ba0a11,18683,false,,2,55,23,api; core
+apache/iceberg,9a11874cd731bfdf97a00fda2486e4c652d10c5e,9a11874,gaborkaszab,gaborkaszab@gmail.com,2026-11-16T15:00:00+01:00,GitHub,noreply@github.com,2026-11-16T15:00:00+01:00,Data: Improve GenericReader to read encrypted files using InputFilesDecryptor (#18481),,d31f6435926425ad1e4216871e405cacf10cd6b3,18481,false,,4,166,22,data
+apache/iceberg,e10447250d41872e7f6c44a035b88c9490c2be43,e104472,Ryan Blue,blue@apache.org,2026-11-16T11:37:40-08:00,GitHub,noreply@github.com,2026-11-16T11:37:40-08:00,Core: Add V4ManifestWriter (#18984),,9a11874cd731bfdf97a00fda2486e4c652d10c5e,18984,false,,11,2032,112,core
+apache/iceberg,ed5788058372c18be1a1b8760957ea7ebf6309c3,ed57880,Anoop Johnson,anoop@apache.org,2026-11-16T14:42:13-08:00,GitHub,noreply@github.com,2026-11-16T15:42:13-07:00,Spark: Reject ExpireSnapshots action on v4 tables (#18999),"* Spark: Reject ExpireSnapshots action on v4 tables
+
+The Spark `ExpireSnapshots` action computes expired files through the
+`all_manifests` metadata table, which is not supported for v4 tables. Guard
+`ExpireSnapshotsSparkAction.expireFiles()` to reject v4 before the expiration
+commit so the table is never partially mutated, reading refreshed metadata so a
+stale handle cannot slip an already-upgraded v4 table through.
+
+Only this Spark action is guarded; core and other-engine expiration stay
+reachable on v4 (they read manifests directly, not metadata tables). The guard
+is also best-effort against a concurrent v3 to v4 upgrade committed between the
+check and RemoveSnapshots' own refresh; closing that race atomically would need
+a core-level gate.
+
+Retarget TestExpireSnapshotsAction to v2/v3, gate the expire-using
+TestRewriteTablePaths tests to v2/v3 while keeping v4 coverage for the rest, and
+add TestExpireSnapshotsActionV4 for the v4 ehavior.
+
+* Spark: Limit this PR to Spark 4.2
+
+Remove the 3.5/4.0/4.1 changes so this PR targets only the latest Spark
+version; those versions will be backported in separate PRs.
+
+* Address review feedback on expire-snapshots v4 tests",e10447250d41872e7f6c44a035b88c9490c2be43,18999,false,,5,137,4,api; spark

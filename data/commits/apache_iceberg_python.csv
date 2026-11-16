@@ -9270,3 +9270,18 @@ branch does nothing but guard the inner one. `and` short-circuits
 identically, so behavior is unchanged; this improves
 indentation.",52818129dd807206bbf947cb7159a711d2ff5b75,4377,false,,4,28,31,pyiceberg
 apache/iceberg-python,fce81850a647d81db40c0a67bde13f87cc5afd30,fce8185,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-11-14T08:16:05Z,GitHub,noreply@github.com,2026-11-14T08:16:05Z,Row Lineage: Add metadata column support for _row_id (#4375),Add metadata column support,5436520024e3a1fda803ade2488d292bf2a1adab,4375,false,,6,316,22,pyiceberg; tests
+apache/iceberg-python,5d4dd14407e4d009da9edb3b11026f6fbb536360,5d4dd14,chenjian2664,chenjian2664@gmail.com,2026-11-15T21:59:34Z,GitHub,noreply@github.com,2026-11-15T21:59:34Z,Reuse a valid Google access token in GoogleAuthManager (#4376),"GoogleAuthManager refreshed its credentials before every REST catalog
+request, so each call made an extra round trip to Google's token
+endpoint. Refresh only when the credentials are not valid, which is
+what google-auth does itself before a request.",fce81850a647d81db40c0a67bde13f87cc5afd30,4376,false,,3,48,1,pyiceberg; tests
+apache/iceberg-python,09960d502b569071cd8a0aef40327160c70f49a5,09960d5,Pralay Ghosh,ghoshp83@users.noreply.github.com,2026-11-15T22:05:04Z,GitHub,noreply@github.com,2026-11-15T22:05:04Z,Check every new delete file for rewritten files on a retry (#4374),"On a retry, the check for new deletes on the data files being replaced
+built its delete index with the operation's filter, so it skipped delete
+files whose column bounds can't match the filter. A partial delete
+rewrites those files in full, so it could commit over a concurrent delete
+outside the filter and bring the deleted rows back.
+
+Check every delete file added since the starting snapshot against the
+replaced data files instead. The filter is no longer used there, so drop
+it from the signature.",5d4dd14407e4d009da9edb3b11026f6fbb536360,4374,false,,4,25,14,pyiceberg; tests
+apache/iceberg-python,fc4d884f46ad56e827a61cab5f6bf263d573b7ec,fc4d884,Vu,europeantimlapses@gmail.com,2026-11-16T08:07:17Z,GitHub,noreply@github.com,2026-11-16T08:07:17Z,fix(avro): skip fixed-width decimal bytes (#4386),Co-authored-by: Minh Vu <vuhoangminh97@gmail.com>,09960d502b569071cd8a0aef40327160c70f49a5,4386,false,Minh Vu,2,15,1,pyiceberg; tests
+apache/iceberg-python,33b4ce511ec0c9dc0f74e38fff5d478ef2ff47dd,33b4ce5,Vu,europeantimlapses@gmail.com,2026-11-16T08:07:25Z,GitHub,noreply@github.com,2026-11-16T08:07:25Z,fix(pyarrow): omit incomplete parquet null counts (#4385),Co-authored-by: Minh Vu <vuhoangminh97@gmail.com>,fc4d884f46ad56e827a61cab5f6bf263d573b7ec,4385,false,Minh Vu,2,70,1,pyiceberg; tests

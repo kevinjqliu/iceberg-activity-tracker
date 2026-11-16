@@ -35507,3 +35507,89 @@ Co-authored-by: blackmwk <257669749+blackmwk@users.noreply.github.com>
 
 Co-authored-by: blackmwk <257669749+blackmwk@users.noreply.github.com>",6612395befbfdb5a00f7a059aa62261964d0d081,3514,false,blackmwk,20,922,403,CHANGELOG.md; Cargo.lock; crates
 apache/iceberg-rust,eeb1e41f959589347ac98a0575a325cdc923f6e9,eeb1e41,Christian,christian@vakamo.com,2026-11-15T08:57:19Z,GitHub,noreply@github.com,2026-11-15T08:57:19Z,fix(transaction): keep the retention settings of main on commit (#3694),,4bd146352e87ef6532f0902f561fd023860f7541,3694,false,,1,30,27,crates
+apache/iceberg-rust,d15dca02c53db98de233e43aeebb6e4d0c620c10,d15dca0,Christian,christian@vakamo.com,2026-11-16T15:20:42Z,GitHub,noreply@github.com,2026-11-16T15:20:42Z,fix(spec): validate the metadata log in build() with the entry for the previous file (#3695),"* fix(spec): validate the metadata log in build() with the entry for the previous file
+
+* test(spec): metadata change after a branch snapshot within the clock-skew tolerance builds",eeb1e41f959589347ac98a0575a325cdc923f6e9,3695,false,,1,64,1,crates
+apache/iceberg-rust,f52ec21e03c82eb00adffb0869867265aca0ff28,f52ec21,Xander,zander181@googlemail.com,2026-11-16T15:33:44Z,GitHub,noreply@github.com,2026-11-16T15:33:44Z,feat(RTAS): add TableMetadataBuilder::build_replacement (#3057),"* feat: add TableMetadataBuilder::build_replacement
+
+Backs `REPLACE TABLE`: swaps the schema, partition spec and sort order
+while keeping the table's uuid, properties and snapshots, and drops the
+main branch so the replaced table has no current snapshot.
+
+Columns the table already has keep their field ids, so data files written
+before the replacement stay readable through the shared columns. New
+columns draw ids above `last_column_id`, never reusing a dropped column's
+id. Partition field ids are likewise reused across historical specs.
+
+Extracts `rebind_to_schema` out of `reassign_ids` so the partition spec
+and sort order can be rebound to a schema whose ids were assigned either
+from scratch or by `assign_fresh_ids`.
+
+Format version 1 is not supported.
+
+* fix docs
+
+* tighten up tests
+
+* nits
+
+* test: cover build_replacement error paths and refs, document id matching
+
+* refactor: take a typed format_version in build_replacement
+
+* refactor: make build_replacement pub(crate) until RTAS uses it
+
+Moves the doc example into a unit test, since a doctest cannot call a
+pub(crate) function.
+
+* fix: return an error when build_replacement runs out of partition ids
+
+Reuses equivalent ids through reuse_partition_field_ids and assigns the
+rest with PartitionSpecBuilder, which errors on overflow instead of
+wrapping. The AddSpec change still carries every field id.",d15dca02c53db98de233e43aeebb6e4d0c620c10,3057,false,,2,929,6,crates
+apache/iceberg-rust,ff0564170e66e2cd79436513bbba4ac831f8a72b,ff05641,Christian,christian@vakamo.com,2026-11-16T15:34:38Z,GitHub,noreply@github.com,2026-11-16T15:34:38Z,fix(arrow): wake equality-delete waiters with the notifier of the started load (#3697),"* fix(arrow): wake equality-delete waiters with the notifier of the started load
+
+Co-authored-by: JeonDaehong <90895144+JeonDaehong@users.noreply.github.com>
+
+* Assert that insert_equality_delete gets the notifier of the started load
+
+---------
+
+Co-authored-by: JeonDaehong <90895144+JeonDaehong@users.noreply.github.com>",f52ec21e03c82eb00adffb0869867265aca0ff28,3697,false,JeonDaehong,2,33,11,crates
+apache/iceberg-rust,58af4edf5158709d8ec01643400ec64cfacc779f,58af4ed,KUAN-HAO HUANG,101171023+rich7420@users.noreply.github.com,2026-11-16T19:43:09Z,GitHub,noreply@github.com,2026-11-16T19:43:09Z,fix(reader): keep pages whose index bounds cannot be compared with the predicate (#3507),"* fix(reader): keep pages whose index bounds cannot be compared with the predicate
+
+Page-index bounds are built with the table field type but the file's
+physical literal. When the two differ, e.g. a long field read against
+INT32 pages written before an int -> long promotion, a double field
+against FLOAT pages, or a UINT_32 column mapped to long, the bounds
+never compare with the predicate literal. Inequality and IN predicates
+treated that as ""cannot match"" and skipped pages holding matching rows.
+
+Keep a page whenever its bound cannot be compared with the literal: the
+inequality check now treats an incomparable bound as a possible match,
+and IN uses all(lt) / all(gt) instead of !any(ge) / !any(le).
+
+* test(reader): cover a mixed UINT_32 page in the page-index evaluator
+
+A page holding both 100 and 3_000_000_000 has a raw signed max below its
+min, which pins the unsigned column order that a later bound widening has
+to zero-extend rather than sign-extend.
+
+* test(reader): cover <= and > on INT32 pages of a promoted long field
+
+* test(reader): cover all four inequality operators on promoted float and timestamp pages
+
+* test(reader): pass RowGroupPageIndex to the page-index evaluator in the promoted-type tests
+
+Arrow 60 (#3257) changed PageIndexEvaluator::eval to take a RowGroupPageIndex
+and removed ParquetMetaData::column_index, so the tests added here no longer
+built after merging main.",ff0564170e66e2cd79436513bbba4ac831f8a72b,3507,false,,1,184,19,crates
+apache/iceberg-rust,c9d52179bb6ffbda339b05ce245436b8651711e2,c9d5217,alexanderbianchi,75697973+alexanderbianchi@users.noreply.github.com,2026-11-16T20:03:35Z,GitHub,noreply@github.com,2026-11-16T20:03:35Z,fix(io): initialize manifest caches only when used (#3679),"Defer Moka cache construction until the first manifest or manifest-list
+read, and skip it entirely when caching is disabled. Share lazy cache
+state across clones and retain existing cache policy and encryption.
+
+Adapted from DataDog/iceberg-rust#34 for upstream main, without the
+fork-specific FileIO rebinding helper.
+
+Co-authored-by: Geoffrey Claude <geoffrey.claude@datadoghq.com>",58af4edf5158709d8ec01643400ec64cfacc779f,3679,false,Geoffrey Claude,1,52,46,crates
+apache/iceberg-rust,4be78085219af9f1c2093bfcea66ff3d847c7613,4be7808,Danny C Jones,daniel.carl@live.com,2026-11-16T22:02:21Z,GitHub,noreply@github.com,2026-11-16T22:02:21Z,fix(spec): write only v2 data_file fields in v2 manifests (#3533),,c9d52179bb6ffbda339b05ce245436b8651711e2,3533,false,,5,228,37,crates
