@@ -9285,3 +9285,28 @@ replaced data files instead. The filter is no longer used there, so drop
 it from the signature.",5d4dd14407e4d009da9edb3b11026f6fbb536360,4374,false,,4,25,14,pyiceberg; tests
 apache/iceberg-python,fc4d884f46ad56e827a61cab5f6bf263d573b7ec,fc4d884,Vu,europeantimlapses@gmail.com,2026-11-16T08:07:17Z,GitHub,noreply@github.com,2026-11-16T08:07:17Z,fix(avro): skip fixed-width decimal bytes (#4386),Co-authored-by: Minh Vu <vuhoangminh97@gmail.com>,09960d502b569071cd8a0aef40327160c70f49a5,4386,false,Minh Vu,2,15,1,pyiceberg; tests
 apache/iceberg-python,33b4ce511ec0c9dc0f74e38fff5d478ef2ff47dd,33b4ce5,Vu,europeantimlapses@gmail.com,2026-11-16T08:07:25Z,GitHub,noreply@github.com,2026-11-16T08:07:25Z,fix(pyarrow): omit incomplete parquet null counts (#4385),Co-authored-by: Minh Vu <vuhoangminh97@gmail.com>,fc4d884f46ad56e827a61cab5f6bf263d573b7ec,4385,false,Minh Vu,2,70,1,pyiceberg; tests
+apache/iceberg-python,3c68d693af0990888fbe3a8d354f2e72aa3008e0,3c68d69,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-17T16:12:32Z,GitHub,noreply@github.com,2026-11-17T16:12:32Z,Keep identifier fields when renaming a struct that contains one (#4393),"Track identifier fields by ID in UpdateSchema
+
+Identifier fields are stored by field ID in the spec, but UpdateSchema kept
+them as dotted names while staging and only rewrote an exact name match on
+rename. Renaming a struct that holds an identifier field left the staged
+name pointing at the old path, so the commit failed with ""Cannot find
+identifier field"".
+
+Keep the identifier field IDs of the starting schema and resolve names
+passed to set_identifier_fields to IDs where they exist. Names that only
+exist after the update, such as newly added columns, are still resolved
+against the resulting schema at commit.",33b4ce511ec0c9dc0f74e38fff5d478ef2ff47dd,4393,false,,2,66,10,pyiceberg; tests
+apache/iceberg-python,a385453ae11a19eb426d0a0fa51afc6bb1015c4f,a385453,prabhleen2317,119912717+prabhleen2317@users.noreply.github.com,2026-11-17T19:28:57Z,GitHub,noreply@github.com,2026-11-17T19:28:57Z,Test: Add unit tests for human-readable date/time formatters (#4388),"* Test: Add unit tests for human-readable date/time formatters
+
+Cover the previously untested to_human_* formatters in
+pyiceberg/utils/datetime.py, plus micros_to_days and days_to_date.
+
+* Add edge cases for pre-epoch and 1582 calendar switch
+
+Cover the Julian/Gregorian boundary (proleptic Gregorian, per spec) in
+days_to_date, and negative pre-1970 inputs in the human-readable
+timestamp formatters, per review feedback.",3c68d693af0990888fbe3a8d354f2e72aa3008e0,4388,false,,1,70,0,tests
+apache/iceberg-python,ab0afe71c07ecb15d274cf1554ebb56e1745da75,ab0afe7,zn-danielbariudin,daniel.bariudin@zeronetworks.com,2026-11-17T20:41:25Z,GitHub,noreply@github.com,2026-11-17T20:41:25Z,Avro: Cache the Avro to Iceberg schema conversion per schema string (#4384),"* Avro: Cache the Avro to Iceberg schema conversion per schema string
+
+* Avro: Cap the schema conversion cacher at 32 enteries",a385453ae11a19eb426d0a0fa51afc6bb1015c4f,4384,false,,2,29,3,pyiceberg; tests

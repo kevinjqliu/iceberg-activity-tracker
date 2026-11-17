@@ -35593,3 +35593,61 @@ fork-specific FileIO rebinding helper.
 
 Co-authored-by: Geoffrey Claude <geoffrey.claude@datadoghq.com>",58af4edf5158709d8ec01643400ec64cfacc779f,3679,false,Geoffrey Claude,1,52,46,crates
 apache/iceberg-rust,4be78085219af9f1c2093bfcea66ff3d847c7613,4be7808,Danny C Jones,daniel.carl@live.com,2026-11-16T22:02:21Z,GitHub,noreply@github.com,2026-11-16T22:02:21Z,fix(spec): write only v2 data_file fields in v2 manifests (#3533),,c9d52179bb6ffbda339b05ce245436b8651711e2,3533,false,,5,228,37,crates
+apache/iceberg-rust,953f956d32cd4cc6803610d32c3e0a0520316f28,953f956,Christian,christian@vakamo.com,2026-11-17T16:44:46Z,GitHub,noreply@github.com,2026-11-17T16:44:46Z,fix(spec): keep refs in format-version 1 table metadata (#3693),"* fix(spec): keep refs in format-version 1 table metadata
+
+* test(spec): cover invalid v1 refs and expiry of v1 refs
+
+* docs: drop the CHANGELOG line for v1 refs
+
+Keeping refs fixes a bug, so it is not a breaking change.",4be78085219af9f1c2093bfcea66ff3d847c7613,3693,false,,3,311,13,crates
+apache/iceberg-rust,7cf825fcfb64a8943ddb627ef7f0b9f09f0c8046,7cf825f,JeonDaehong,90895144+JeonDaehong@users.noreply.github.com,2026-11-17T16:52:22Z,GitHub,noreply@github.com,2026-11-17T16:52:22Z,feat(reader)!: resolve unknown delete-file sizes lazily (#3433),"* feat(reader): resolve unknown delete-file sizes lazily
+
+Execution engines that build scan tasks themselves do not always carry a
+delete file's size. Tasks planned from manifest entries keep the
+recorded size; externally constructed tasks may now leave
+FileScanTaskDeleteFile's file size unset, and the Parquet delete-file
+loader resolves it with one metadata request when the file is first
+loaded. The caching loader loads each delete file once per reader, so
+the request is made once per delete file even when several data files
+reference it.
+
+FileScanTaskDeleteFile::file_size_in_bytes now returns Option<u64>.
+None means unknown, so a size of 0 is no longer a sentinel and is
+rejected like any other size below the Parquet footer minimum.
+
+A failed metadata request is reported with the delete-file path while
+keeping the storage error's kind and retryability. A size below the
+Parquet footer minimum, whether resolved or supplied by the task, fails
+the read rather than dropping the file's deletes. Deletion vectors do
+not use this size and are unchanged.
+
+Co-authored-by: unikdahal <unikdahal03@gmail.com>
+
+* fix(reader): rely on Parquet's footer check for delete-file sizes
+
+Parquet already rejects a size below its footer, so drop the separate
+8-byte check and assert Parquet's error in the test instead.
+
+Also document leaving the size unset when the recorded one can't be
+trusted (apache/iceberg#12554), add a serde round trip for a delete file
+without a size, and tidy the metadata-counting test storage.
+
+* test(reader): drop delete-size tests covered elsewhere
+
+Keep only the footer cases in the delete_file_loader test; the missing
+file and lazy read are covered by test_load_deletes_reports_unknown_size_failures
+and test_read_encrypted_positional_delete_file. Remove the equality-delete
+parse test, which test_unknown_size_equality_deletes_are_resolved_once_and_cached
+already covers through load_deletes.
+
+* test(reader): resolve unknown delete sizes once under concurrent loads
+
+* test(reader): yield in the counting storage so concurrent loads overlap
+
+* fix(scan): keep the delete file size required in the builder
+
+* test(reader): drop qualifications the merge made unnecessary
+
+---------
+
+Co-authored-by: unikdahal <unikdahal03@gmail.com>",953f956d32cd4cc6803610d32c3e0a0520316f28,3433,false,unikdahal,4,408,31,crates

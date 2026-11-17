@@ -36578,3 +36578,66 @@ TestRenameView subtests distinct names.
 
 Signed-off-by: Matt Topol <matt@columnar.tech>",a9e2cc32942d70e8757de904bafd87771f8dc0b6,2581,false,,2,7,2,catalog
 apache/iceberg-go,58032668d6f24e2a6a1b156079af827a9ff38561,5803266,Akriti,akriti.shakya@datazip.io,2026-11-16T21:02:32+05:30,GitHub,noreply@github.com,2026-11-16T16:32:32+01:00,fix(table): reject reuse of a committed RowDelta builder (#2615),,9cf33151459e2c56340240cff5fb022257ce1223,2615,false,,3,189,7,table; website
+apache/iceberg-go,21d6ec03dbdbb35b13da1525c8f8ab7675c6d7d2,21d6ec0,Shivam Sharma,192242476+ShivamSharma43@users.noreply.github.com,2026-11-17T14:00:42+05:30,GitHub,noreply@github.com,2026-11-17T09:30:42+01:00,fix(table): reject AddColumn when the column name already exists (#2626),"UpdateSchema.AddColumn only failed for an existing name when a pending
+update in the same struct had that name. Otherwise it added a second
+column with the same name: Apply returned a schema with duplicate names,
+Commit failed with a visitor error, and in case-insensitive mode a
+column that only differs in case was committed. A name that another
+column is renamed to in the same update was not checked at all.
+
+AddColumn and UnionByNameWith now reject a name that an existing column
+keeps, that another column is renamed to, or that an earlier add used,
+comparing names with the update's case sensitivity. As in Java's
+SchemaUpdate and PyIceberg's UpdateSchema, a deleted column's name can
+still be reused. A column renamed to another name also gives up its
+name, as before.
+
+Signed-off-by: Shivam Sharma <192242476+ShivamSharma43@users.noreply.github.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",58032668d6f24e2a6a1b156079af827a9ff38561,2626,false,Claude Opus 5.5,2,170,30,table
+apache/iceberg-go,4df39aac2ae03c2eca966be6384520ed419f150c,4df39aa,Sylwester Lachiewicz,slachiewicz@apache.org,2026-11-17T16:54:10+01:00,GitHub,noreply@github.com,2026-11-17T16:54:10+01:00,fix(catalog/sql): take the SQLite write lock before reading in write transactions (#2589),,21d6ec03dbdbb35b13da1525c8f8ab7675c6d7d2,2589,false,,5,806,153,catalog
+apache/iceberg-go,8a2b8a5e29e8d0db5bb04d156e0d4f2d138853cd,8a2b8a5,Sylwester Lachiewicz,slachiewicz@apache.org,2026-11-17T17:25:47+01:00,GitHub,noreply@github.com,2026-11-17T11:25:47-05:00,test(catalog/sql): run the nested namespace conformance tests (#2619),Signed-off-by: Sylwester Lachiewicz <slachiewicz@apache.org>,4df39aac2ae03c2eca966be6384520ed419f150c,2619,false,,1,1,2,catalog
+apache/iceberg-go,2915ccd3dc30050e2c7b935a4140ca137c1a0f3f,2915ccd,Revanth,revanthcse1@gmail.com,2026-11-17T10:53:08-06:00,GitHub,noreply@github.com,2026-11-17T17:53:08+01:00,refactor(table): move helpers shared with the inspect files into table/internal (#2614),,8a2b8a5e29e8d0db5bb04d156e0d4f2d138853cd,2614,false,,35,665,578,internal}; table
+apache/iceberg-go,daed1f9764eed7b31b887f3338e4c5572c6a7188,daed1f9,Harrison Crosse,harrison@crosse.dev,2026-11-17T13:49:42-05:00,GitHub,noreply@github.com,2026-11-17T13:49:42-05:00,chore(deps): bump arrow-go to v18.9.0 (#2632),"Bump github.com/apache/arrow-go/v18 from v18.8.0 to v18.9.0, with the transitive bumps that go get and go mod tidy require (thrift, brotli, go-json, cpuid, go-humanize, go-strftime, and the modernc sqlite stack).
+
+No source or test changes were needed. Build, vet, tests, the race detector, golangci-lint v2.14.0 and the Spark 3.5 and 4.0 integration suites all pass unchanged.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",2915ccd3dc30050e2c7b935a4140ca137c1a0f3f,2632,false,,2,40,40,go.mod; go.sum
+apache/iceberg-go,b841c6d12c7022dd8c4ae559e2583b14870d2d01,b841c6d,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-17T19:54:08+01:00,GitHub,noreply@github.com,2026-11-17T19:54:08+01:00,style(catalog/dynamodb): gofumpt the integration test transport (#2621),"The namespace index stub in namespaceQueryTransport.RoundTrip builds its
+http.Response literal across two lines without breaking after the opening
+brace, which gofumpt rejects. It landed with the DynamoDB catalog in #2535.
+CI misses it because golangci-lint run only loads files for the default
+build tags and this file is behind the integration tag, but golangci-lint
+fmt walks every file and flags it locally.
+
+Reflow the literal the way golangci-lint fmt v2.14.0 (the version pinned in
+go-ci.yml) produces it. No behavior change.",daed1f9764eed7b31b887f3338e4c5572c6a7188,2621,false,,1,4,2,catalog
+apache/iceberg-go,537ee2ab7439665a858037cbb14aee3c8aac8ce1,537ee2a,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-17T19:56:01+01:00,GitHub,noreply@github.com,2026-11-17T19:56:01+01:00,refactor(catalog)!: take a context in the SQL and Hive catalog constructors (#2617),"sql.NewCatalog and hive.NewCatalog now take ctx as their first parameter,
+like the rest, hadoop and dynamodb constructors. The SQL catalog runs
+CreateSQLTables and the schema-version query on the caller's ctx instead
+of context.Background(). The Hive client checks ctx before connecting,
+since gohive's ConnectToMetastore takes no context. The sql and hive
+catalog.Register callbacks now pass their ctx through instead of
+dropping it.
+
+hive.NewCatalogWithClient and glue.NewCatalog do no I/O and are
+unchanged. Callers in cmd/iceberg, the tests and the docs are updated,
+and releases.md gains a compatibility note with the migration.
+
+Tests construct both catalogs, directly and through catalog.Load, with
+an already-cancelled context and assert context.Canceled. The SQL test
+covers init_catalog_tables both on and off.",b841c6d12c7022dd8c4ae559e2583b14870d2d01,2617,false,,17,79,27,catalog; cmd; website
+apache/iceberg-go,03af0d2df524cc896422db7589d5acc4414d9f05,03af0d2,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-17T19:57:54+01:00,GitHub,noreply@github.com,2026-11-17T19:57:54+01:00,refactor!: remove VisitBoundPredicateRef from the public API (#2623),"VisitBoundPredicateRef was exported and gated only by an
+internal.BoundPredicateRef parameter. A caller in another module could
+still reach it, because generic type inference lets it pass the zero
+value of a type it cannot name. That handed borrowed literal sets, and
+the precomputed IN extrema, to visitors outside iceberg-go.
+
+Remove the function and move the zero-copy dispatch into
+VisitBoundPredicate. A visitor gets the predicate's own sets, and
+VisitInWithExtrema, only when it has a BorrowBoundSets method whose
+parameter is internal.BoundPredicateRef. Code outside the module cannot
+name that type, so it cannot declare the method.
+
+The four evaluators in table/evaluators.go gain the marker. They are
+unexported and not returned by any exported API, so outside code cannot
+embed them to inherit it.",537ee2ab7439665a858037cbb14aee3c8aac8ce1,2623,false,,7,143,33,bound_set_extrema_internal_test.go; bound_set_literal_view_internal_test.go; exprs_test.go; internal; table; visitors.go; website

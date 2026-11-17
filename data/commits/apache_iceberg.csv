@@ -9956,3 +9956,34 @@ Remove the 3.5/4.0/4.1 changes so this PR targets only the latest Spark
 version; those versions will be backported in separate PRs.
 
 * Address review feedback on expire-snapshots v4 tests",e10447250d41872e7f6c44a035b88c9490c2be43,18999,false,,5,137,4,api; spark
+apache/iceberg,9d07de85da864e1dfc91b64f98438c52d885b704,9d07de8,Neelesh Salian,nssalian@users.noreply.github.com,2026-11-16T15:48:23-08:00,GitHub,noreply@github.com,2026-11-16T15:48:23-08:00,Arrow: Read projected shredded variants in vectorized Parquet reads (#18851),"* Arrow: Read projected shredded variants in vectorized Parquet reads
+
+* skip shredded variants in lists and maps, test a required variant
+
+* PR review fixes: test multiple row groups, note unreachable typed_value throws",ed5788058372c18be1a1b8760957ea7ebf6309c3,18851,false,,8,930,79,arrow; spark
+apache/iceberg,3809f5d026fc96d64eca0178ba52e057842b4b71,3809f5d,Gera Shegalov,gshegalov@nvidia.com,2026-11-16T15:50:51-08:00,GitHub,noreply@github.com,2026-11-16T15:50:51-08:00,"Spark 3.5, 4.0, 4.1: Backport effective split target size driver metric (#18709) (#19000)","Spark 3.5, 4.0, 4.1: Backport effective split target size driver metric
+
+Report the split target used for task-group planning as the
+effectiveSplitTargetSize driver metric, as Spark 4.2 does since #18709.
+
+Generated-by: Claude Code
+
+Signed-off-by: Gera Shegalov <gshegalov@nvidia.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",9d07de85da864e1dfc91b64f98438c52d885b704,19000,false,Claude Opus 5.5,21,1142,84,spark
+apache/iceberg,a6bc1f95e3fe388419fd62186667a3bd08ccd74a,a6bc1f9,Anoop Johnson,anoop@apache.org,2026-11-16T16:16:05-08:00,GitHub,noreply@github.com,2026-11-16T17:16:05-07:00,"Spark 3.5, 4.0, 4.1: Reject ExpireSnapshots action on v4 tables (#19005)","Backport of #18999 (https://github.com/apache/iceberg/pull/18999) to Spark
+3.5, 4.0, and 4.1.",3809f5d026fc96d64eca0178ba52e057842b4b71,19005,false,,12,405,12,spark
+apache/iceberg,f69ed7b7d500261cc4ac30bd7c392eeae3cabd6e,f69ed7b,chenjian2664,chenjian2664@gmail.com,2026-11-17T16:30:35+08:00,GitHub,noreply@github.com,2026-11-17T09:30:35+01:00,Docs: Fix snapshot_id type in compute stats procedures (#18946),,a6bc1f95e3fe388419fd62186667a3bd08ccd74a,18946,false,,1,8,8,docs
+apache/iceberg,2517ec2a7f70721166bd2b2ca0061984e4eb2bdc,2517ec2,Faris Basha TM,72191505+farisbasha@users.noreply.github.com,2026-11-17T15:41:10+05:30,GitHub,noreply@github.com,2026-11-17T11:11:10+01:00,Flink: Fix dead link to the Flink production readiness checklist (#19011),,f69ed7b7d500261cc4ac30bd7c392eeae3cabd6e,19011,false,,9,9,9,flink
+apache/iceberg,56b0034acf15176298651e4796678cf9f408b4a2,56b0034,Anoop Johnson,anoop@apache.org,2026-11-17T11:26:38-08:00,GitHub,noreply@github.com,2026-11-17T11:26:38-08:00,Spark 4.2: Reject ExpireSnapshots action only for tables with root manifests (#19012),"Loosen the guard added in #18999 so that the Spark ExpireSnapshots action
+rejects only tables that have a snapshot with a root manifest, instead of
+all v4 tables. This matches the check used by core RemoveSnapshots
+(#19006) and the manifest-reading metadata tables (#19008).
+
+v4 tables without root manifests are handled like v3 tables again, so
+TestExpireSnapshotsAction and TestRewriteTablePathsAction go back to
+V2_AND_ABOVE.
+
+Addresses review feedback:
+https://github.com/apache/iceberg/pull/19006#discussion_r4594288653",2517ec2a7f70721166bd2b2ca0061984e4eb2bdc,19012,false,,4,50,26,spark
+apache/iceberg,e0fa8465499c4a167e9344bf61c80293b02b436c,e0fa846,Philipp Fischbeck,mail@pfischbeck.de,2026-11-17T21:23:49+01:00,GitHub,noreply@github.com,2026-11-17T12:23:49-08:00,Docs: Add blanks-around-lists markdown linting (#18793),Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>,56b0034acf15176298651e4796678cf9f408b4a2,18793,false,Kevin Liu,10,102,60,docs; site
+apache/iceberg,bb8348b18fa21832048b5fb6873841ba1a8da57e,bb8348b,Ryan Blue,blue@apache.org,2026-11-17T12:47:07-08:00,GitHub,noreply@github.com,2026-11-17T13:47:07-07:00,Core: Add V4ManifestWriter tests for leaf manifests in the root (#19007),,e0fa8465499c4a167e9344bf61c80293b02b436c,19007,false,,14,848,24,core

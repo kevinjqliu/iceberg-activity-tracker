@@ -9823,3 +9823,8 @@ updated-dependencies:
 
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",0425a6aa5cafd82e021f7efdf44a7e10ad7d5d2c,1131,false,dependabot[bot],1,1,1,.github
+apache/iceberg-cpp,a9dace15624a2eba49ba410753c1da952a6415c0,a9dace1,Manu Zhang,OwenZhang1990@gmail.com,2026-11-17T23:05:36+08:00,GitHub,noreply@github.com,2026-11-17T23:05:36+08:00,fix(rest): prevent OAuth client secret redirection during refresh (#1138),"Server-provided catalog configuration could override the OAuth token endpoint or catalog base URI and redirect a retained client secret during token refresh.
+
+Disable trust in server-selected OAuth endpoints by default. When client credentials are configured, require an explicit absolute HTTP(S) token endpoint before any I/O and preserve the client endpoint and trust policy after merging server configuration.
+
+Keep server endpoint overrides available through explicit opt-in, preserve token-only and unauthenticated behavior, and update regression tests to verify the refresh destination and client-secret submission.",7f2792039816e33df6aec1beaa2638de03e3cd11,1138,false,,3,18,11,src
