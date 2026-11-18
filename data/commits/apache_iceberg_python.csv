@@ -9310,3 +9310,239 @@ timestamp formatters, per review feedback.",3c68d693af0990888fbe3a8d354f2e72aa30
 apache/iceberg-python,ab0afe71c07ecb15d274cf1554ebb56e1745da75,ab0afe7,zn-danielbariudin,daniel.bariudin@zeronetworks.com,2026-11-17T20:41:25Z,GitHub,noreply@github.com,2026-11-17T20:41:25Z,Avro: Cache the Avro to Iceberg schema conversion per schema string (#4384),"* Avro: Cache the Avro to Iceberg schema conversion per schema string
 
 * Avro: Cap the schema conversion cacher at 32 enteries",a385453ae11a19eb426d0a0fa51afc6bb1015c4f,4384,false,,2,29,3,pyiceberg; tests
+apache/iceberg-python,0ebc58bfb49d6d8b4bbcc801c1d7d7bf85432cf8,0ebc58b,linzch3,linzch3@outlook.com,2026-11-17T20:59:17Z,GitHub,noreply@github.com,2026-11-17T20:59:17Z,REST: Apply the scan filter when the server omits the residual (#4379),"* REST: Apply the scan filter when the server omits the residual
+
+Use the original request filter for file scan tasks without a server residual so count() applies the same filter as Arrow scans.
+
+* REST: Simplify the default scan filter
+
+---------
+
+Co-authored-by: linzch3 <20380442+linzch3@users.noreply.github.com>",ab0afe71c07ecb15d274cf1554ebb56e1745da75,4379,false,linzch3,3,60,7,pyiceberg; tests
+apache/iceberg-python,46d7835be0ecd101a7de324165fddb1f2d8e1e33,46d7835,Gedalia Kliger,117381134+gedaliakliger@users.noreply.github.com,2026-11-17T21:02:23Z,GitHub,noreply@github.com,2026-11-17T21:02:23Z,Read a list or map column referenced by a null filter (#4400),"* Read a list or map column referenced by a null filter
+
+A scan filter that tests a list or map column for null added the column's own
+field ID to the projected IDs, and prune_columns rejects a list or map selected
+by its own ID. Project the column's nested fields instead.
+
+* Test null filters on list and map columns through a scan",0ebc58bfb49d6d8b4bbcc801c1d7d7bf85432cf8,4400,false,,2,26,1,pyiceberg; tests
+apache/iceberg-python,c125c0bf0cfa94a096065c2b7f9864cfcf7b7c78,c125c0b,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-18T04:25:53Z,GitHub,noreply@github.com,2026-11-18T04:25:53Z,Write gzip metadata files for write.metadata.compression-codec (#4398),"* feat: write gzip metadata files for write.metadata.compression-codec
+
+Metastore catalogs wrote table metadata as .metadata.json even when
+write.metadata.compression-codec was gzip. Name new metadata files
+.gz.metadata.json for gzip, as Java does. None stays the default, and
+other values raise only when metadata is written, so no-op commits on
+existing tables keep working.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Define the metadata codec suffixes next to the gzip reader
+
+Review feedback: keep the codec names and the .gz suffix in serializers.py
+with the reader's GZIP constant, build the error message from the mapping,
+and leave REST out of the property docs.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",46d7835be0ecd101a7de324165fddb1f2d8e1e33,4398,false,Isaac,7,152,5,mkdocs; pyiceberg; tests
+apache/iceberg-python,ce5a1953b228dafc8a31b13751485099eab1f6c6,ce5a195,Ankit Raj,ankitraj.srivastava15@gmail.com,2026-11-18T04:52:42Z,GitHub,noreply@github.com,2026-11-18T04:52:42Z,Replace S3 remote signer headers instead of appending them (#4270),,c125c0bf0cfa94a096065c2b7f9864cfcf7b7c78,4270,false,,2,38,0,pyiceberg; tests
+apache/iceberg-python,08ec3e6272ba3204809a68b59d3d5b789f6d9d2a,08ec3e6,Harrison Crosse,harrison@crosse.dev,2026-11-18T08:32:23Z,GitHub,noreply@github.com,2026-11-18T08:32:23Z,Make `count()` agree with `to_arrow()` for NULL partitions (#4278),"* Read NULL partitions in count() when the row filter rejects NULL
+
+A residual of AlwaysTrue on a file whose partition value is NULL does not
+mean every row matches, because the row filter applied by to_arrow() drops
+NULL rows for predicates such as != or NotNaN. count() added record_count
+for those files and returned more rows than to_arrow().
+
+count() now reads such a file when a field of the file's partition spec has
+a source column that the row filter references outside IsNull/NotNull. With
+such a reference, a file whose spec the table metadata lacks is read too.
+Other files keep the existing behavior.
+
+Closes #4276
+
+* Read files whose partition values are missing in count()
+
+A server-planned file can arrive without partition values. The
+partition-position check raised IndexError for these files. Before,
+count() used their record-count metadata. When the partition values do not
+match the spec's field count, count() now reads the file, as it does for an
+unknown spec.
+
+* Decide only null checks on NULL partition values in residuals
+
+A NULL partition value now decides only `IsNull` and `NotNull` in `ResidualVisitor`. Other predicates on that field stay in the residual, so `count()` reads those files instead of using `record_count`, and returns the same number as `to_arrow()`. This replaces the partition value check in `count()`.
+
+Co-authored-by: Fokko Driesprong <fokko@apache.org>
+
+---------
+
+Co-authored-by: Fokko Driesprong <fokko@apache.org>",ce5a1953b228dafc8a31b13751485099eab1f6c6,4278,false,Fokko Driesprong,3,112,28,pyiceberg; tests
+apache/iceberg-python,d064b320954b31163eef3ff3a34a6e8f20ab75ae,d064b32,Shahzeb Ali,126076773+Shahzeb-DataEngineer@users.noreply.github.com,2026-11-18T09:26:13Z,GitHub,noreply@github.com,2026-11-18T09:26:13Z,fix(expressions): reject fractional strings converting to int/long (#4383),"* fix(expressions): reject fractional strings converting to int/long
+
+Signed-off-by: Shahzeb Ali <126076773+Shahzeb-DataEngineer@users.noreply.github.com>
+
+* test(expressions): expect ValueError for fractional strings to int/long
+
+Signed-off-by: Shahzeb Ali <126076773+Shahzeb-DataEngineer@users.noreply.github.com>
+
+* style: remove stray blank line in test_string_literal
+
+Signed-off-by: Shahzeb Ali <126076773+Shahzeb-DataEngineer@users.noreply.github.com>
+
+* fix: restore closing parentheses on pi_double_lit
+
+Signed-off-by: Shahzeb Ali <126076773+Shahzeb-DataEngineer@users.noreply.github.com>
+
+* fix: correct indentation of sqrt2 assert in test_string_literal
+
+Signed-off-by: Shahzeb Ali <126076773+Shahzeb-DataEngineer@users.noreply.github.com>
+
+* fix: dedent test_integral_decimal_to_integral_type to top level
+
+Signed-off-by: Shahzeb Ali <126076773+Shahzeb-DataEngineer@users.noreply.github.com>
+
+* fix(expressions): check fractional part before range check in StringLiteral.to
+
+Signed-off-by: Shahzeb Ali <126076773+Shahzeb-DataEngineer@users.noreply.github.com>
+
+* test: cover integral string to int/long happy flow in test_string_literal
+
+Signed-off-by: Shahzeb Ali <126076773+Shahzeb-DataEngineer@users.noreply.github.com>
+
+---------
+
+Signed-off-by: Shahzeb Ali <126076773+Shahzeb-DataEngineer@users.noreply.github.com>",08ec3e6272ba3204809a68b59d3d5b789f6d9d2a,4383,false,,2,33,9,pyiceberg; tests
+apache/iceberg-python,108ce0f8a51292a3519b2a41f2ec5d4359b415a1,108ce0f,chenjian2664,chenjian2664@gmail.com,2026-11-18T10:03:22Z,GitHub,noreply@github.com,2026-11-18T10:03:22Z,Remove leftover name-mapping bookkeeping from _ConvertToIceberg (#4381),"Name mapping moved out of this visitor into apply_name_mapping in #1014,
+but the docstring still claims it applies name-mapping IDs, and list()
+and map() still push and pop field names around the _field_id calls,
+which no longer read them.",d064b320954b31163eef3ff3a34a6e8f20ab75ae,4381,false,,1,1,7,pyiceberg
+apache/iceberg-python,b9398279265592537f8d178514f91772151229b0,b939827,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-18T10:06:11Z,GitHub,noreply@github.com,2026-11-18T10:06:11Z,Default ascending sort fields to nulls-first (#4390),"asc() defaulted to nulls-last, and SortField with a str direction did too: the
+validator compared the raw str with the enum. Java and SortField default ascending
+fields to nulls-first, so default asc() to nulls-first and normalize the direction.
+desc() and explicit null orders are unchanged.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",108ce0f8a51292a3519b2a41f2ec5d4359b415a1,4390,false,Isaac,4,36,2,pyiceberg; tests
+apache/iceberg-python,2dd390bffd9f77c9bf1b035f7d086c70373a2867,2dd390b,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-18T10:34:24Z,GitHub,noreply@github.com,2026-11-18T10:34:24Z,Apply rename_field onto the name of a void partition field (#4391),"fix(table): apply rename_field onto a void partition field name
+
+rename_field recursed on the live field when the new name belonged to a
+void partition field, renaming the live field to ""<name>_<field id>"" and
+returning, so the requested rename was dropped. Rename the void field to
+""<new name>_<field id>"" and then record the requested rename, as Java's
+BaseUpdatePartitionSpec.renameField does.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",b9398279265592537f8d178514f91772151229b0,4391,false,Isaac,2,73,1,pyiceberg; tests
+apache/iceberg-python,710d15e8f437f59dc1684dfb9cb49168e505697b,710d15e,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-18T11:00:26Z,GitHub,noreply@github.com,2026-11-18T11:00:26Z,Standardize uuid values on uuid.UUID to fix uuid partition filters (#4370),"* Plan uuid identity partitions with the literal's uuid representation
+
+Manifests are read with uuid partition values as uuid.UUID, while UUID literals
+hold the 16 bytes, so partition filters and residuals on a uuid identity
+partition never matched: EqualTo and In planned no files, and NotEqualTo and
+NotIn planned every file. Give partition values the literal representation
+before the partition and residual evaluators compare them.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Represent uuid values as uuid.UUID in literals and conversions
+
+The Avro reader returns uuid.UUID for uuid values, while UUIDLiteral and
+from_bytes(UUIDType) used the 16 bytes, so the partition and residual
+evaluators, and the projected identity partition values, compared a UUID with
+bytes. Standardize on uuid.UUID, as Java does (Literal<UUID>,
+Conversions.fromByteBuffer): UUIDLiteral wraps a UUID, the string, fixed and
+binary conversions build one, from_bytes(UUIDType) returns one, and identity
+partition values stay UUID. PyArrow gets the 16 bytes. This replaces the
+partition value conversion in the scan planner.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",2dd390bffd9f77c9bf1b035f7d086c70373a2867,4370,false,Isaac,8,176,36,pyiceberg; tests
+apache/iceberg-python,e1fc90e122f13cd6a4e89fecc541e16e04b541e1,e1fc90e,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-18T13:02:58Z,GitHub,noreply@github.com,2026-11-18T13:02:58Z,Add update_partition_statistics() to Table and Transaction (#4397),"* Add update_partition_statistics() to Table and Transaction
+
+Add an UpdatePartitionStatistics builder with set_partition_statistics() and
+remove_partition_statistics(), so callers no longer build update objects by
+hand. Sets apply before removals and absent removals are no-ops, as in Java.
+The RemovePartitionStatisticsUpdate handler therefore no longer raises.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Take partition statistics fields instead of the file object
+
+Review feedback: set_partition_statistics takes snapshot_id, statistics_path
+and file_size_in_bytes and builds the PartitionStatisticsFile, so the model
+can evolve separately from the API. Add docstrings to both public methods.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",710d15e8f437f59dc1684dfb9cb49168e505697b,4397,false,Isaac,6,296,11,mkdocs; pyiceberg; tests
+apache/iceberg-python,d5b740de1357278dc655e2095a1191f351d881fb,d5b740d,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-18T14:08:05Z,GitHub,noreply@github.com,2026-11-18T14:08:05Z,Report NaN value counts for written Parquet files (#4401),"* Report NaN value counts for written Parquet files
+
+Data files written by the PyArrow writer always had an empty
+nan_value_counts map, because the counts were never computed from the
+Parquet metadata. The scan planner supports them, so files written by
+pyiceberg could never be pruned on is_nan, not_nan, or range filters,
+while files written by parquet-mr could.
+
+PyArrow does not expose a NaN count on its Parquet column statistics, so
+count the non-null NaNs of the top-level float and double columns in the
+Arrow table the writer receives, and merge them into the statistics of the
+file. Columns that cannot be counted are left out of the map, which only
+keeps them from being pruned.
+
+* Expect NaN counts on written files in the merge manifest test
+
+* fix(pyarrow): accumulate NaN counts and respect metrics mode
+
+* test(pyarrow): cover NaN count accumulation and metrics mode",e1fc90e122f13cd6a4e89fecc541e16e04b541e1,4401,false,,4,134,6,pyiceberg; tests
+apache/iceberg-python,00573608c68b401a695b2fd29d50f5f3bbec6e6c,0057360,Fokko Driesprong,fokko@apache.org,2026-11-18T18:04:19Z,GitHub,noreply@github.com,2026-11-18T18:04:19Z,Docs: Add module docstring to expression parser (#4378),"Describe what the parser supports and that the grammar should follow ANSI SQL where possible.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",d5b740de1357278dc655e2095a1191f351d881fb,4378,false,Isaac,1,14,0,pyiceberg
+apache/iceberg-python,b104a9d09500633b21de3bdee7503ac1e6201772,b104a9d,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-18T18:30:14Z,GitHub,noreply@github.com,2026-11-18T18:30:14Z,Reject colliding names in case-insensitive Schema lookups (#4389),"* Raise when a case-insensitive lookup matches two columns
+
+The lower-case name index kept only the last of two columns whose
+names differ only by case (ID and id), so case-insensitive lookups
+silently used it. Raise ValueError when two field IDs share a
+lower-case name, as Java does, and let the schema update and metadata
+column checks propagate that error instead of reading it as a missing
+name. Exact-case lookups are unchanged.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Document the case-insensitive collision in find_field and select
+
+Review feedback: the public docstrings now list the ValueError raised when
+case_sensitive is False and two fields have names that differ only by case.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",00573608c68b401a695b2fd29d50f5f3bbec6e6c,4389,false,Isaac,5,172,26,pyiceberg; tests
+apache/iceberg-python,9955502c73758611d5ad69220b67aedb3d4a443e,9955502,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-18T18:52:23Z,GitHub,noreply@github.com,2026-11-18T18:52:23Z,Register the S3 signer on a session instead of a shared client (#4405),"* Register the S3 signer on a session instead of a shared client
+
+_s3 registered the remote signer on the botocore client, which s3fs caches
+and every thread shares. Unregistering the signer before registering it
+again left a window in which a request went out without an Authorization
+header, and the store answered 403 against a remote-signing catalog.
+
+Create an AioSession per filesystem, register the signer on it, and pass it
+to S3FileSystem so every filesystem keeps its own signer and never touches a
+shared client. The path without a signer is unchanged.
+
+* Type S3 session kwargs as Any
+
+AioSession accepts options beyond the string profile, so keep the forwarding dict permissive.",b104a9d09500633b21de3bdee7503ac1e6201772,4405,false,,2,73,5,pyiceberg; tests
+apache/iceberg-python,ba3ae084dcf6c7fd0897f924970d587fc33bd154,ba3ae08,i alarmed alien,ialarmedalien@users.noreply.github.com,2026-11-18T20:17:05Z,GitHub,noreply@github.com,2026-11-18T20:17:05Z,Two concurrent create_namespace requests should raise a NamespaceAlreadyExistsError (#4408),"* Two concurrent create_namespace requests raise a NamespaceAlreadyExistsError
+
+* Missing import",9955502c73758611d5ad69220b67aedb3d4a443e,4408,false,,2,47,12,pyiceberg; tests
+apache/iceberg-python,a1a4f77b1a18c4dc9f3265377e1d1fbed644c77e,a1a4f77,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-18T20:18:39Z,GitHub,noreply@github.com,2026-11-18T20:18:39Z,Decode 4-byte bounds of date columns promoted to timestamp (#4409),"Bounds written before a date to timestamp or timestamp_ns promotion keep their 4-byte day
+count, but from_bytes used the 8-byte decoder for these types, so planning and inspect
+raised struct.error. Scale the day count to micros or nanos and return the exact int, so
+metrics comparisons stay exact (metadata tables can still raise OverflowError for bounds
+outside the Arrow range).
+
+Co-authored-by: Isaac <no-reply@databricks.com>",ba3ae084dcf6c7fd0897f924970d587fc33bd154,4409,false,Isaac,3,82,2,pyiceberg; tests

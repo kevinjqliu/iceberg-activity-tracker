@@ -36641,3 +36641,55 @@ name that type, so it cannot declare the method.
 The four evaluators in table/evaluators.go gain the marker. They are
 unexported and not returned by any exported API, so outside code cannot
 embed them to inherit it.",537ee2ab7439665a858037cbb14aee3c8aac8ce1,2623,false,,7,143,33,bound_set_extrema_internal_test.go; bound_set_literal_view_internal_test.go; exprs_test.go; internal; table; visitors.go; website
+apache/iceberg-go,54271dab0d460efdf6699f0ffde80ddd85f30a79,54271da,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-18T14:34:43+01:00,GitHub,noreply@github.com,2026-11-18T14:34:43+01:00,test(table): add Spark round-trip for dynamic partition overwrite (#2613),,03af0d2df524cc896422db7589d5acc4414d9f05,2613,false,,2,145,0,internal; table
+apache/iceberg-go,736c3872784818c81db111984a232d075041babb,736c387,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-18T14:35:15+01:00,GitHub,noreply@github.com,2026-11-18T14:35:15+01:00,fix(table): assert last-assigned-field-id on UpdateSchema (#2622),"UpdateSchema only required the current schema ID. With commit retries
+enabled by default (#2462), a stale writer could replay an AddSchema
+whose new column reused a field ID that another writer had assigned and
+then dropped. The peer's drop returns the table to the original schema
+ID, so the schema assertion still holds after refresh, and the stale
+column silently reads the dropped column's data.
+
+When UpdateSchema adds a new schema, it now also sends
+AssertLastAssignedFieldID with the transaction base's last-column-id,
+as Java's UpdateRequirements does for AddSchema. The requirement type,
+its REST encoding and local validation in every catalog already exist,
+and the retry path already checks non-rebased requirements against the
+refreshed metadata, so a conflicting writer now fails with
+ErrCommitFailed instead of committing a reused ID. Using the base value
+lets chained schema updates in one transaction dedupe to one
+requirement.
+
+If the stored last-column-id is stale (lower than a field ID in schema
+history), catalogs compare against the stored counter while the
+transaction compares against the builder's raised one. The assertion
+is skipped for that case so schema updates on such tables keep
+working. The first commit writes the raised counter, so later updates
+are protected.
+
+Fixes #2609.",54271dab0d460efdf6699f0ffde80ddd85f30a79,2622,false,,4,93,0,catalog; table; website
+apache/iceberg-go,3d1d6769bff89d2f6277596e3124f3790001d357,3d1d676,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-18T14:35:48+01:00,GitHub,noreply@github.com,2026-11-18T14:35:48+01:00,fix(table): compare promoted partition values after widening (#2620),"After an identity partition source is promoted (int to long, float to
+double), manifests written before the promotion still decode its
+partition values as int32/float32, while newer manifests decode them as
+int64/float64. Partition comparisons treated those equal values as
+different. A v2 merge-on-read Delete on an old data file therefore
+committed a position delete that scan planning then rejected with
+""partition does not match"" (#2605), and equality deletes in a promoted
+float partition skipped the old data files, so deleted rows came back
+(#2610).
+
+partitionsMatch now widens int32 to int64 and float32 to float64 before
+comparing. This covers the position delete check and
+matchEqualityDeletesToData. The equality delete index already widened
+integers in its single-field key; it now widens float32 to float64 too.
+Both widenings are exact, NaNs still compare equal and -0.0 and +0.0
+still differ. No other type pairs are widened, and
+comparablePartitionKey, which the writers use for partition keys, is
+unchanged.
+
+The longer-term fix is to decode old manifests with the current
+partition type, as Java does; that stays a follow-up.",736c3872784818c81db111984a232d075041babb,2620,false,,4,183,8,table
+apache/iceberg-go,c677a641de936e1fa15e243be2bb7c8ad75faf9f,c677a64,Vu,europeantimlapses@gmail.com,2026-11-18T18:09:48+01:00,GitHub,noreply@github.com,2026-11-18T18:09:48+01:00,fix(table): preserve filter sensitivity during conflict checks (#2607),,3d1d6769bff89d2f6277596e3124f3790001d357,2607,false,,7,217,21,table
+apache/iceberg-go,7b6b335397fd99e472526e8e84c42f3f6727de4b,7b6b335,Nishith Mehta,nisan1101@gmail.com,2026-11-18T09:45:41-08:00,GitHub,noreply@github.com,2026-11-18T18:45:41+01:00,fix(table): select newly added schema using last-added marker (#2590),,c677a641de936e1fa15e243be2bb7c8ad75faf9f,2590,false,,2,56,1,table
+apache/iceberg-go,70b256a098126e27ed4868d6956f8a841f7bd9de,70b256a,Vu,europeantimlapses@gmail.com,2026-11-18T18:50:55+01:00,GitHub,noreply@github.com,2026-11-18T18:50:55+01:00,fix(maintenance): reject stale orphan cleanup plans (#2608),,7b6b335397fd99e472526e8e84c42f3f6727de4b,2608,false,,7,499,15,cmd; table; website
+apache/iceberg-go,9b740f5cc6bb2145849a55ce95f90e911329dd68,9b740f5,Vu,europeantimlapses@gmail.com,2026-11-18T18:51:26+01:00,GitHub,noreply@github.com,2026-11-18T18:51:26+01:00,fix(table): reject duplicate data paths in RowDelta (#2602),,70b256a098126e27ed4868d6956f8a841f7bd9de,2602,false,,6,389,51,table; website
+apache/iceberg-go,e7a4d96b505ddcc217efb0f535d03ec7a287d3aa,e7a4d96,Vu,europeantimlapses@gmail.com,2026-11-18T18:52:53+01:00,GitHub,noreply@github.com,2026-11-18T18:52:53+01:00,fix(partitions): reject multi-source built-in transforms in new specs (#2591),,9b740f5cc6bb2145849a55ce95f90e911329dd68,2591,false,,12,509,18,catalog; partitions.go; partitions_json_bench_test.go; partitions_test.go; table; website

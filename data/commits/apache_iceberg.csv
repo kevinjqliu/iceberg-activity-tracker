@@ -9987,3 +9987,53 @@ Addresses review feedback:
 https://github.com/apache/iceberg/pull/19006#discussion_r4594288653",2517ec2a7f70721166bd2b2ca0061984e4eb2bdc,19012,false,,4,50,26,spark
 apache/iceberg,e0fa8465499c4a167e9344bf61c80293b02b436c,e0fa846,Philipp Fischbeck,mail@pfischbeck.de,2026-11-17T21:23:49+01:00,GitHub,noreply@github.com,2026-11-17T12:23:49-08:00,Docs: Add blanks-around-lists markdown linting (#18793),Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>,56b0034acf15176298651e4796678cf9f408b4a2,18793,false,Kevin Liu,10,102,60,docs; site
 apache/iceberg,bb8348b18fa21832048b5fb6873841ba1a8da57e,bb8348b,Ryan Blue,blue@apache.org,2026-11-17T12:47:07-08:00,GitHub,noreply@github.com,2026-11-17T13:47:07-07:00,Core: Add V4ManifestWriter tests for leaf manifests in the root (#19007),,e0fa8465499c4a167e9344bf61c80293b02b436c,19007,false,,14,848,24,core
+apache/iceberg,ecfdad338c7a9c60bda87765c49413f18aef0137,ecfdad3,Anoop Johnson,anoop@apache.org,2026-11-17T13:46:40-08:00,GitHub,noreply@github.com,2026-11-17T13:46:40-08:00,"Spark 3.5, 4.0, 4.1: Reject ExpireSnapshots action only for tables with root manifest (#19016)","Spark 3.5, 4.0, 4.1: Reject ExpireSnapshots action only for tables with root manifests
+
+Backport of #19012 (https://github.com/apache/iceberg/pull/19012) to Spark
+3.5, 4.0, and 4.1.",bb8348b18fa21832048b5fb6873841ba1a8da57e,19016,false,,12,150,78,spark
+apache/iceberg,233d924fec0c3c72dbd4f1636dec8072da309425,233d924,Anoop Johnson,anoop@apache.org,2026-11-17T17:26:08-08:00,GitHub,noreply@github.com,2026-11-17T17:26:08-08:00,Core: Reject manifest-reading metadata tables for tables with root manifest (#19008),"Core: Reject manifest-reading metadata tables for snapshots with root manifests
+
+Metadata tables that read manifests (files, entries, manifests, all_*, ...)
+decode them through the v1-v3 metadata schema. Block the metadata tables
+that are incompatible.
+
+Metadata tables that are independent of the v4 schema (e.g. history,
+snapshots, refs, metadata_log_entries) are compatible and hence not blocked.",ecfdad338c7a9c60bda87765c49413f18aef0137,19008,false,,2,140,0,core
+apache/iceberg,bf00ca292aa74dca22a959e2a0fc835af19ad889,bf00ca2,Prashant Singh,35593236+singhpk234@users.noreply.github.com,2026-11-17T18:07:59-08:00,GitHub,noreply@github.com,2026-11-17T20:07:59-06:00,API: [1/N] Add ReadRestrictions Actions  (#16198),,233d924fec0c3c72dbd4f1636dec8072da309425,16198,false,,18,2162,0,api
+apache/iceberg,d414bdc12daf114373f92e4604c02ba6482a1828,d414bdc,Venkata krishnan Sowrirajan,venkat.sowrirajan@gmail.com,2026-11-17T19:48:38-08:00,GitHub,noreply@github.com,2026-11-17T19:48:38-08:00,Spark 4.1: Keep read metrics from earlier readers in the same task (#18726),"* Spark 4.1: Keep read metrics from earlier readers in the same task
+
+When a task reads several input partitions, Spark 4.1 opens one reader per
+partition and passes the previous reader's metrics through
+initMetricsValues. The readers inherited the no-op default, so numSplits,
+numDeletes and scanDuration only reflected the last reader in each task.
+
+MergingSortedRowDataReader also reports scanDuration now, summed across its
+file readers.
+
+Generated-by: Claude Opus 5.5
+
+* Spark 4.1: Check numDeletes when a task reads several partitions
+
+Extends the subset-key SPJ test so each of the 5 partitions has a
+merge-on-read delete and numDeletes must count all of them, not only the
+last reader's.
+
+Generated-by: Claude Opus 5.5
+
+---------
+
+Co-authored-by: Venkata Krishnan Sowrirajan <vsowrirajan@microsoft.com>",bf00ca292aa74dca22a959e2a0fc835af19ad889,18726,false,Venkata Krishnan Sowrirajan,6,202,13,spark
+apache/iceberg,0d99bcdf2d8e4994e46de648ac073147ff6aaff7,0d99bcd,gaborkaszab,gaborkaszab@gmail.com,2026-11-18T11:02:38+01:00,GitHub,noreply@github.com,2026-11-18T11:02:38+01:00,"Data, MR: IcebergInputFormat to read encrypted delete files (#18484)",,d414bdc12daf114373f92e4604c02ba6482a1828,18484,false,,5,191,14,data; mr
+apache/iceberg,c832d4c9a5c3d5bd9bd98bc82ed39bc52fed9d8b,c832d4c,Anoop Johnson,anoop@apache.org,2026-11-18T05:56:15-08:00,GitHub,noreply@github.com,2026-11-18T06:56:15-07:00,Core: Reject ExpireSnapshots file cleanup for snapshots with root manifests (#19006),,0d99bcdf2d8e4994e46de648ac073147ff6aaff7,19006,false,,2,131,0,core
+apache/iceberg,fb08432422e0617124b83661bc5b7299346bc5a7,fb08432,Yuya Ebihara,ebyhry@gmail.com,2026-11-19T02:14:19+09:00,GitHub,noreply@github.com,2026-11-18T09:14:19-08:00,GCP: Add support for configurable KMS endpoint in GcpKeyManagementClient (#17111),,c832d4c9a5c3d5bd9bd98bc82ed39bc52fed9d8b,17111,false,,4,80,2,gcp
+apache/iceberg,d5d7bf885fb9da5dafb747d7aec74a246ed68aa1,d5d7bf8,drexler-sky,evan123wu@gmail.com,2026-11-18T09:50:13-08:00,GitHub,noreply@github.com,2026-11-18T09:50:13-08:00,Core: Keep all per-column properties in sync on schema changes (#18885),"* Core: Keep all per-column properties in sync on schema changes
+
+* address review comments
+
+* address comments
+
+* address comments
+
+* simplify java doc",fb08432422e0617124b83661bc5b7299346bc5a7,18885,false,,6,155,86,core; spark
+apache/iceberg,13135ae08148b010276fc9c5eb1cfbf2e6e8289c,13135ae,Russell Spitzer,russell.spitzer@GMAIL.COM,2026-11-18T12:12:21-06:00,GitHub,noreply@github.com,2026-11-18T10:12:21-08:00,Examples: Delete examples directory (#19028),"Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>",d5d7bf885fb9da5dafb747d7aec74a246ed68aa1,19028,false,Copilot App; Kevin Liu,5,0,434,.gitattributes; .github; dev; examples
