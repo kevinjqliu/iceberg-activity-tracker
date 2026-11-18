@@ -1,0 +1,264 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-cpp,9c478f7571e89ef6388c4fa776d7a4e5f448cbac,9c478f7,lishuxu,lishuxu@gmail.com,2026-11-04T16:43:28+08:00,GitHub,noreply@github.com,2026-11-04T16:43:28+08:00,feat(auth): implement AuthSessionCache for OAuth2 child sessions (#985),"Cache contextual and table-scoped OAuth2 child sessions so that context
+credentials do not trigger a token request on every catalog call (#962).
+
+AuthSessionCache:
+- Expire entries after auth.session-timeout-ms without access (default
+  1 hour), and when the token of an OAuth2 session expires.
+- Load each key once under concurrent Get() calls, with the loader
+  running outside the lock. Failed loads are not cached.
+- Hand every removed session to the removal listener exactly once. A
+  session loaded after Close() is removed immediately.
+- Sweep expired entries periodically on the auth refresh executor, every
+  session timeout clamped to [1s, 60s]. Without an executor, entries are
+  reclaimed when accessed again or on Close().
+
+OAuth2Manager:
+- Cache contextual sessions by session_id and table sessions by token.
+- Authenticate child token requests with the parent session's headers.
+- Credential child sessions follow token-refresh-enabled and, with
+  refresh enabled, require the auth executor. Token and exchange child
+  sessions do not refresh until refresh via token exchange is supported.
+- Token child sessions no longer carry the parent's credential.
+
+OAuth2Session:
+- Add StopRefreshing(), a non-blocking stop used on cache removal.
+- Add ExpiresAt() and IsRefreshable(), and include the session headers
+  in OAuth2Info().",49b84a0621ef952095aa8ba52bb08fe25ee85976,985,false,,12,1705,40,src,89,4,93,base; feature/api verb; strategic: catalog; medium file count; large churn; release/security/notice signal; has PR number; LanceDB similarity 0.14,Core: Do not cleanup when CREATE transactions fail with 503,- feat(auth): implement AuthSessionCache for OAuth2 child sessions (#985) (Thanks lishuxu!)
+apache/iceberg-cpp,49b84a0621ef952095aa8ba52bb08fe25ee85976,49b84a0,Gang Wu,ustcwg@gmail.com,2026-11-03T22:32:45+08:00,GitHub,noreply@github.com,2026-11-03T22:32:45+08:00,feat(inspect): add task-based scans for snapshots and history (#1066),"- Add Table::Inspect() and task-based metadata scans while retaining
+  column selection, projection, case sensitivity, and time-travel
+  builder configuration from the merged inspection API.
+- Separate task planning from reading with reusable static tasks backed
+  by captured table metadata.
+- Preserve scan configuration and metadata across builder changes and
+  table refreshes.
+- Produce Arrow batches lazily through MetadataScanTaskReader, with
+  reader-controlled batch sizes and independent stream lifetimes.
+- Keep canonical schemas and row conversion in each metadata table
+  implementation, sharing batch construction and projection validation.
+- Consolidate projected-column append helpers with lazy batch construction.
+- Preserve all merged metadata inspection test scenarios and cover planned
+  projections, task reuse, stream lifetimes, batching, and vector<bool>.",d5970d932f4fab508d6bf6e74bea3a7406ccafa9,1066,false,,25,1342,487,metadata_scan_util_internal.h; src,70,10,80,base; feature/api verb; large file count; large churn; multi-area change; correctness signal; has PR number; LanceDB similarity 0.32,Flink: Support UUID type in Avro and Parquet readers and writers,- feat(inspect): add task-based scans for snapshots and history (#1066) (Thanks Gang Wu!)
+apache/iceberg-cpp,8f63dfd5d19dc91838a96e15d38c77414e548f7d,8f63dfd,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-05T02:22:15Z,GitHub,noreply@github.com,2026-11-05T10:22:15+08:00,feat(io): expose FileIO configuration properties (#963),,9c478f7571e89ef6388c4fa776d7a4e5f448cbac,963,false,,5,46,0,src,74,5,79,base; feature/api verb; important area: io; community signal: fileio; medium file count; has PR number; LanceDB similarity 0.18,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- feat(io): expose FileIO configuration properties (#963) (Thanks Sreesh Maheshwar!)
+apache/iceberg-cpp,6f1f04c9ee6458797fc1e6190550fac2665ca081,6f1f04c,Junwang Zhao,zhjwpku@gmail.com,2026-11-07T00:21:08+08:00,GitHub,noreply@github.com,2026-11-07T00:21:08+08:00,feat: add rewrite manifests (#774),,8ec915e167ee453dfe9679d3572bfca70a9be6b1,774,false,,19,3904,10,src,69,6,75,base; feature/api verb; strategic: manifest; medium file count; large churn; has PR number; LanceDB similarity 0.20,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- feat: add rewrite manifests (#774) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,a9dace15624a2eba49ba410753c1da952a6415c0,a9dace1,Manu Zhang,OwenZhang1990@gmail.com,2026-11-17T23:05:36+08:00,GitHub,noreply@github.com,2026-11-17T23:05:36+08:00,fix(rest): prevent OAuth client secret redirection during refresh (#1138),"Server-provided catalog configuration could override the OAuth token endpoint or catalog base URI and redirect a retained client secret during token refresh.
+
+Disable trust in server-selected OAuth endpoints by default. When client credentials are configured, require an explicit absolute HTTP(S) token endpoint before any I/O and preserve the client endpoint and trust policy after merging server configuration.
+
+Keep server endpoint overrides available through explicit opt-in, preserve token-only and unauthenticated behavior, and update regression tests to verify the refresh destination and client-secret submission.",7f2792039816e33df6aec1beaa2638de03e3cd11,1138,false,,3,18,11,src,67,5,72,base; fix; important area: rest; strategic: catalog; correctness signal; has PR number; LanceDB similarity 0.15,Core: Fix row ID assignment for EXISTING entry during a manifest merge,- fix(rest): prevent OAuth client secret redirection during refresh (#1138) (Thanks Manu Zhang!)
+apache/iceberg-cpp,61fa6ed9fc0c654afb256337fb75b893fa7c0dbb,61fa6ed,Xinli Shang,xinlishang@gmail.com,2026-10-29T23:47:32-07:00,GitHub,noreply@github.com,2026-10-30T14:47:32+08:00,"feat: add KeyManagementClient, KmsRegistry and InMemoryKms (#1031)","- KeyManagementClient (core): wraps and unwraps keys with master keys held in
+  a KMS, mirroring Java's interface, including optional key generation.
+- KmsRegistry (core): creates the catalog's KMS client from the same catalog
+  properties as Java, `encryption.kms-type` (aws, gcp, azure) or
+  `encryption.kms-impl` (a registered name). As in Java, a property that is
+  present but empty is a misconfiguration rather than ""no KMS"". Clients are
+  initialized with the catalog properties.
+- InMemoryKms (bundle): master keys in memory, for tests and local use. Wire
+  compatible with Java's MemoryMockKMS, so it unwraps keys written by Java
+  tests. Master keys can be given as catalog properties
+  (encryption.in-memory-kms.key.<id> = Base64).",df19627a27af737452835c60cfb3bd6faf26699d,1031,false,,10,555,3,src,65,6,71,"base; feature/api verb; strategic: catalog, encryption; medium file count; medium churn; has PR number; LanceDB similarity 0.19",Flink: Fix equalityFieldColumns always null in IcebergSink <GuoYu>,"- feat: add KeyManagementClient, KmsRegistry and InMemoryKms (#1031) (Thanks Xinli Shang!)"
+apache/iceberg-cpp,748162b3fa0b7a20181fdf86530b6c6c51dbdf91,748162b,YinZheng-Sun,57469177+YinZheng-Sun@users.noreply.github.com,2026-10-29T13:30:06+08:00,GitHub,noreply@github.com,2026-10-29T13:30:06+08:00,feat(parquet): add statistics-based row group filtering (#956),"## What
+
+Adds `ParquetMetricsRowGroupFilter` to evaluate Iceberg predicates against Parquet footer statistics before reading row groups.
+
+Adds tests covering split intersection, non-contiguous row groups, physical row positions, unprojected filter columns, schema evolution, missing statistics, predicate binding, and delete handling.
+
+## Why
+
+The Parquet reader previously selected row groups only by file split. Filter predicates could not eliminate row groups whose footer statistics ruled out matching rows.
+
+## Behavior change
+
+- Enables statistics-based pruning by default through `read.parquet.row-group-filter.enabled`.
+- Retained row groups still require residual predicate evaluation; this does not implement exact row filtering.
+- Physical row positions and row IDs remain correct across pruned row groups, even when a batch spans multiple row groups.
+- Negated range predicates preserve boolean NOT semantics for nulls. Predicate negation adds a null check, and out-of-range comparisons retain null checks when folded.",f38dfc79bdd4b690b94c49b21000dddf7c285d05,956,false,,24,1814,92,src,65,6,71,base; feature/api verb; large file count; large churn; correctness signal; has PR number; LanceDB similarity 0.21,"Spark, Arrow, Parquet: Add vectorized parquet read support for `DELTA_LENGTH_BYTE_ARRAY` & `DELTA_BYTE_ARRAY` encodings",- feat(parquet): add statistics-based row group filtering (#956) (Thanks YinZheng-Sun!)
+apache/iceberg-cpp,0471f8fba6063bac5c75ed904e74bd5b65be52e1,0471f8f,lishuxu,lishuxu@gmail.com,2026-10-28T15:02:09+08:00,GitHub,noreply@github.com,2026-10-28T15:02:09+08:00,feat(rest): add an option to ignore server OAuth2 endpoints (#1041),"Introduce `rest.auth.oauth2.trust-server-uri` (default: `true`) to control whether server configuration can select the OAuth2 token endpoint.
+
+When set to `false`:
+- The client must explicitly configure an `oauth2-server-uri` starting with `http://` or `https://`.
+- The client endpoint is preserved after merging server defaults and overrides, even when the server changes `uri`.
+
+Also align OAuth2 endpoint path handling with Java and reuse the resolved endpoint for refresh and child sessions. Add focused tests for these behaviors.
+
+The default config merge precedence remains unchanged.",9f00612448baa13cd852d2aac34487eb6138f30e,1041,false,,9,216,119,src,60,6,66,base; feature/api verb; important area: rest; medium file count; medium churn; has PR number; LanceDB similarity 0.21,Spark 4.1: Simplify time travel option extraction in IcebergSource,- feat(rest): add an option to ignore server OAuth2 endpoints (#1041) (Thanks lishuxu!)
+apache/iceberg-cpp,83c41e4455ff4bff0b596eb2ebd4d3bc228364e5,83c41e4,Guotao Yu,guotao.yugt@gmail.com,2026-10-28T16:09:37+08:00,GitHub,noreply@github.com,2026-10-28T16:09:37+08:00,fix(manifest): validate struct child lengths (#1054),,0471f8fba6063bac5c75ed904e74bd5b65be52e1,1054,false,,1,14,0,src,55,6,61,base; fix; important area: manifest; strategic: manifest; has PR number; LanceDB similarity 0.21,Core: Skip unnecessary metadata refresh when producing snapshot event after merge append,- fix(manifest): validate struct child lengths (#1054) (Thanks Guotao Yu!)
+apache/iceberg-cpp,eb929a7ee0e849883c07fd7137f0a028d2e758f2,eb929a7,Manu Zhang,OwenZhang1990@gmail.com,2026-11-12T17:16:06+08:00,GitHub,noreply@github.com,2026-11-12T17:16:06+08:00,feat(inspect): add refs metadata table (#1007),,36e0d1a791f8868bb827986ae48199cced0be52f,1007,false,,15,559,10,inspect}; src,50,7,57,base; feature/api verb; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.22,Core: Fix metadata table scans with useRef by preserving metadata schema,- feat(inspect): add refs metadata table (#1007) (Thanks Manu Zhang!)
+apache/iceberg-cpp,f38dfc79bdd4b690b94c49b21000dddf7c285d05,f38dfc7,Junwang Zhao,zhjwpku@gmail.com,2026-10-28T22:16:54+08:00,GitHub,noreply@github.com,2026-10-28T22:16:54+08:00,fix(rest): preserve scan splits and honor polling deadlines (#1059),"Keep byte ranges when replacing residual filters in REST-planned scan tasks. Bound polling backoff by the remaining timeout and check the budget before issuing another poll.
+
+Apply the response-side timeout check only while the plan is still submitted. Preserve completed tasks and server failures, and release cleanup for cancelled plans, even when the in-flight poll crosses the waiting budget.
+
+Cover normal and incremental scans across direct, polled, and paginated task responses, including split residual replacement and all polling statuses after the timeout.",83c41e4455ff4bff0b596eb2ebd4d3bc228364e5,1059,false,,2,137,13,src,47,8,55,base; fix; important area: rest; correctness signal; has PR number; LanceDB similarity 0.26,Flink: Support UUID type in Avro and Parquet readers and writers,- fix(rest): preserve scan splits and honor polling deadlines (#1059) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,d0ca49fc0c089d0ed4c16b4c4eadcc22faba983f,d0ca49f,Manu Zhang,OwenZhang1990@gmail.com,2026-10-30T22:29:43+08:00,GitHub,noreply@github.com,2026-10-30T22:29:43+08:00,feat(inspect): support selecting columns in metadata table scans (#1008),,a899511ce9eda52e2b79cdb2abfaefccd4841ea3,1008,false,,15,804,83,src,45,9,54,base; feature/api verb; medium file count; medium churn; has PR number; LanceDB similarity 0.29,Core: Fix metadata table scans with useRef by preserving metadata schema,- feat(inspect): support selecting columns in metadata table scans (#1008) (Thanks Manu Zhang!)
+apache/iceberg-cpp,19573767858c16cb64a19e5c20afb303b8c6ada6,1957376,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-12T09:42:05Z,GitHub,noreply@github.com,2026-11-12T17:42:05+08:00,fix: add bundled S3 platform link dependencies (#964),"With a bundled AWS SDK, the installed iceberg-config.cmake recreates
+Arrow::arrow_bundled_dependencies but did not link the macOS frameworks
+and Windows system libraries the bundled AWS libraries need, so static
+consumers failed to link. Link them as Arrow's ArrowConfig.cmake does.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",a810516f33adc20ccbaa201f07e9e340cd6d080b,964,false,Claude Opus 5.5,1,28,0,src,33,3,36,base; feature/api verb; fix; co-authored; downrank routine build/deps; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,- fix: add bundled S3 platform link dependencies (#964) (Thanks Sreesh Maheshwar and Claude Opus 5.5!)
+apache/iceberg-cpp,a899511ce9eda52e2b79cdb2abfaefccd4841ea3,a899511,Guotao Yu,guotao.yugt@gmail.com,2026-10-30T17:33:57+08:00,GitHub,noreply@github.com,2026-10-30T17:33:57+08:00,fix(arrow): make full batch validation configurable (#1043),,942e9af077cf5dacc7daf0eefe55fbe74597b4cf,1043,false,,6,185,44,src,28,7,35,base; fix; medium file count; medium churn; has PR number; LanceDB similarity 0.24,"Core, Spark 4.1: Fix querying equality deletes with schema evolution",- fix(arrow): make full batch validation configurable (#1043) (Thanks Guotao Yu!)
+apache/iceberg-cpp,751e1f798d6169021ec32089e7e74712d4684887,751e1f7,Ankit Sharma,83556797+ankitflow001@users.noreply.github.com,2026-11-03T08:59:32+05:30,GitHub,noreply@github.com,2026-11-03T11:29:32+08:00,fix: suppress -Wunused-parameter and -Wshadow warnings under -Wextra (#1081),,d8ba4f6d377d64cadf019564e2fa77d4550c5ed2,1081,false,,10,23,20,src,24,8,32,base; fix; medium file count; has PR number; LanceDB similarity 0.26,Core: Fix BinPackRewriteFilePlanner producing incorrect output file count with max-files-to-rewrite,- fix: suppress -Wunused-parameter and -Wshadow warnings under -Wextra (#1081) (Thanks Ankit Sharma!)
+apache/iceberg-cpp,a810516f33adc20ccbaa201f07e9e340cd6d080b,a810516,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-11-12T01:41:06-08:00,GitHub,noreply@github.com,2026-11-12T17:41:06+08:00,feat(data): enforce `read.arrow.use-large-list` by file readers (#1062),,eb929a7ee0e849883c07fd7137f0a028d2e758f2,1062,false,,14,764,485,src,24,6,30,base; medium file count; large churn; has PR number; LanceDB similarity 0.18,Bump to Parquet 1.17.0,- feat(data): enforce `read.arrow.use-large-list` by file readers (#1062) (Thanks kamcheungting-db!)
+apache/iceberg-cpp,fd7b2ccd919a30a6726a448587ea42b764c3af71,fd7b2cc,Guotao Yu,guotao.yugt@gmail.com,2026-11-01T18:31:03+08:00,GitHub,noreply@github.com,2026-11-01T18:31:03+08:00,fix(sql): redact passwords in connection URI errors (#1067),,76d8bd732157b8f4a948a3ca2ed669e26fa7dc18,1067,false,,5,78,7,src,24,5,29,base; fix; medium file count; has PR number; LanceDB similarity 0.18,Fix Internal to Generic conversion of TIMESTAMP_NANO,- fix(sql): redact passwords in connection URI errors (#1067) (Thanks Guotao Yu!)
+apache/iceberg-cpp,3bd08083d948df53e56fc6e8f36f42e0ff280a19,3bd0808,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-05T06:50:41Z,GitHub,noreply@github.com,2026-11-05T14:50:41+08:00,fix: include <cstdint> in url_encoder.cc (#1093),"url_encoder.cc uses int8_t but relied on another header to declare it,
+which MinGW's headers don't.
+
+Co-authored-by: Claude Opus 5.5 (1M context) <noreply@anthropic.com>",8f63dfd5d19dc91838a96e15d38c77414e548f7d,1093,false,Claude Opus 5.5 (1M context),1,1,0,src,23,5,28,base; fix; co-authored; has PR number; LanceDB similarity 0.18,Spark 4.1: Introduce modes in SparkWriteBuilder,- fix: include <cstdint> in url_encoder.cc (#1093) (Thanks Sreesh Maheshwar and Claude Opus 5.5 (1M context)!)
+apache/iceberg-cpp,b2ec7c3410578d6134cb9a18c124edcbee1689cd,b2ec7c3,Junwang Zhao,zhjwpku@gmail.com,2026-11-16T16:41:23+08:00,GitHub,noreply@github.com,2026-11-16T16:41:23+08:00,chore(cmake): fix config template indentation (#1110),"The cmake-format pre-commit hook does not check .cmake.in files, but
+we should still keep the formatting consistent.",fa83a616f875996d8cbd49c1f92ebbff33bcb0ed,1110,false,,1,2,2,src,20,6,26,base; fix; has PR number; LanceDB similarity 0.19,Site: Updates for 1.10.1 Release <Huaxin Gao>,- chore(cmake): fix config template indentation (#1110) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,36e0d1a791f8868bb827986ae48199cced0be52f,36e0d1a,Nikita Glebskii,66133525+Femistoclus@users.noreply.github.com,2026-11-11T12:53:25+03:00,GitHub,noreply@github.com,2026-11-11T17:53:25+08:00,perf(json): avoid quadratic copies in ToJsonList and ToJsonMap (#1111),"ToJsonList and ToJsonMap folded with std::accumulate over a nlohmann::json
+init value while the lambda took array_t/object_t by value, so every step
+converted the accumulated json back to array_t/object_t and deep-copied all
+elements serialized so far. Serializing n items was O(n^2), which made
+ToJson(TableMetadata) quadratic in the number of retained snapshots.
+
+Build the array/object directly instead. The output is unchanged.",a82619e7fe158899528c82d87cfbce4b0db1edac,1111,false,,1,22,20,src,20,6,26,base; fix; has PR number; LanceDB similarity 0.20,"Core, Hive: Detect if a view already exists when registering a table",- perf(json): avoid quadratic copies in ToJsonList and ToJsonMap (#1111) (Thanks Nikita Glebskii!)
+apache/iceberg-cpp,a82619e7fe158899528c82d87cfbce4b0db1edac,a82619e,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-11-10T01:38:40-08:00,GitHub,noreply@github.com,2026-11-10T17:38:40+08:00,feat(data): enforce residual filters in the task reader (#1065),,03dd5fe52044af55783babe681c829eea708abae,1065,false,,10,773,60,src,20,5,25,base; medium file count; medium churn; has PR number; LanceDB similarity 0.18,Add TCK tests for Schema Evolution in BaseFormatModelTests,- feat(data): enforce residual filters in the task reader (#1065) (Thanks kamcheungting-db!)
+apache/iceberg-cpp,942e9af077cf5dacc7daf0eefe55fbe74597b4cf,942e9af,Xin Huang,42597328+huan233usc@users.noreply.github.com,2026-10-30T01:29:47-07:00,GitHub,noreply@github.com,2026-10-30T16:29:47+08:00,feat: apply write defaults in DataWriter (#942),"Writing a batch with an older schema should fill omitted columns with Iceberg
+write-default values. This PR adds optional `DataWriterOptions::input_schema`;
+for a required column with initial-default 42 and write-default 7, input
+`[[1], [2]]` writes `[[1, 7], [2, 7]]`.
+
+DataWriter prepares a reusable `WriteProjection` once in `Make` and applies it
+to each batch. The projection matches fields by ID recursively, preserves
+supplied values and explicit nulls, fills missing optional fields with typed
+nulls, and materializes missing fields from their write-default. When no
+`input_schema` is provided, or the schemas are identical, the original Arrow
+batch is passed through without projection.
+
+Incompatible schemas fail before opening the file, including extra input IDs,
+missing required fields without a write-default, optional-to-required fields,
+and concrete-to-unknown writes. Existing primitive types must match; read
+projection behavior is unchanged.
+
+Parquet and Avro writers remain unchanged and continue to expect batches
+matching their complete target schema. The shared projection is implemented in
+core using nanoarrow shared buffers without adding an Arrow C++ dependency.
+
+Addresses the write-path portion of #637.",61fa6ed9fc0c654afb256337fb75b893fa7c0dbb,942,false,,10,856,20,src,20,5,25,base; medium file count; medium churn; has PR number; LanceDB similarity 0.17,Core: Detect and merge duplicate DVs for a data file and merge them before committing,- feat: apply write defaults in DataWriter (#942) (Thanks Xin Huang!)
+apache/iceberg-cpp,cda824400a9032b72850d92df507009da80cebe5,cda8244,Gang Wu,ustcwg@gmail.com,2026-11-09T11:02:23+08:00,GitHub,noreply@github.com,2026-11-09T11:02:23+08:00,fix(cmake): preserve module path when dependency discovery fails (#1097),Co-authored-by: Junwang Zhao <zhjwpku@gmail.com>,89e4c20f47384cee23a5150a71614bd3e621a5c4,1097,false,Junwang Zhao,1,10,17,src,20,3,23,base; fix; co-authored; correctness signal; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,Fix incorrect partition bounds calculation in manifest on deletion,- fix(cmake): preserve module path when dependency discovery fails (#1097) (Thanks Gang Wu and Junwang Zhao!)
+apache/iceberg-cpp,fa83a616f875996d8cbd49c1f92ebbff33bcb0ed,fa83a61,Manu Zhang,OwenZhang1990@gmail.com,2026-11-16T13:29:28+08:00,GitHub,noreply@github.com,2026-11-16T13:29:28+08:00,ci: remove automatic GitHub Copilot review (#1129),"Remove the ASF-managed Copilot code review configuration.
+
+Co-authored-by: Codex <codex@openai.com>",19573767858c16cb64a19e5c20afb303b8c6ada6,1129,false,Codex,1,0,4,.asf.yaml,15,7,22,base; co-authored; has PR number; LanceDB similarity 0.23,Add Flink Quickstart docker image,- ci: remove automatic GitHub Copilot review (#1129) (Thanks Manu Zhang!)
+apache/iceberg-cpp,9d42a74def0be91d35b2a3f8402c9f86290f972c,9d42a74,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-05T06:51:40Z,GitHub,noreply@github.com,2026-11-05T14:51:40+08:00,refactor: use contains for membership checks (#1086),,3bd08083d948df53e56fc6e8f36f42e0ff280a19,1086,false,,4,5,6,src,12,7,19,base; has PR number; LanceDB similarity 0.24,GCP: Add scheduled refresh for storage credentials held by GCSFileIO,- refactor: use contains for membership checks (#1086) (Thanks Sreesh Maheshwar!)
+apache/iceberg-cpp,03dd5fe52044af55783babe681c829eea708abae,03dd5fe,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-10T09:23:47Z,GitHub,noreply@github.com,2026-11-10T17:23:47+08:00,refactor: drop redundant Overloaded deduction guide (#1088),,cda824400a9032b72850d92df507009da80cebe5,1088,false,,1,0,2,src,12,6,18,base; has PR number; LanceDB similarity 0.21,Core: Convert metrics to Content Stats,- refactor: drop redundant Overloaded deduction guide (#1088) (Thanks Sreesh Maheshwar!)
+apache/iceberg-cpp,76d8bd732157b8f4a948a3ca2ed669e26fa7dc18,76d8bd7,Vamsi-2581,245859299+Vamsi-2581@users.noreply.github.com,2026-10-31T12:01:12+05:30,GitHub,noreply@github.com,2026-10-31T14:31:12+08:00,ci: Increase macOS C++20 compatibility timeout to 45 minutes (#1073),,d0ca49fc0c089d0ed4c16b4c4eadcc22faba983f,1073,false,,1,1,1,.github,12,6,18,base; has PR number; LanceDB similarity 0.21,"Revert ""Move deleted files to Hadoop trash if configured """,- ci: Increase macOS C++20 compatibility timeout to 45 minutes (#1073) (Thanks Vamsi-2581!)
+apache/iceberg-cpp,8ec915e167ee453dfe9679d3572bfca70a9be6b1,8ec915e,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-05T08:51:14Z,GitHub,noreply@github.com,2026-11-05T16:51:14+08:00,docs: fix public API comment mismatches (#1085),,44a4e988d0052b4f7f5a38d5141ad8e496449f2c,1085,false,,4,6,6,src,8,3,11,base; fix; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,GCP: Add service account impersonation support for BigQueryMetastoreCatalog <Joy Haldar>,- docs: fix public API comment mismatches (#1085) (Thanks Sreesh Maheshwar!)
+apache/iceberg-cpp,df19627a27af737452835c60cfb3bd6faf26699d,df19627,Saurabh,saurabhofficial@hotmail.com,2026-10-29T10:08:40Z,GitHub,noreply@github.com,2026-10-29T18:08:40+08:00,fix(cmake): Serialize test linking on Windows to avoid applocal races (#1064),"vcpkg's post-link z-applocal steps copy DLLs into the shared test directory
+and collide when Ninja links tests in parallel. Link tests one at a time on
+Windows (https://cmake.org/cmake/help/latest/variable/WIN32.html).
+
+Closes #944",748162b3fa0b7a20181fdf86530b6c6c51dbdf91,1064,false,,1,9,0,src,8,3,11,base; fix; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,Core: Invalidate ShreddedObject serialization cache on remove,- fix(cmake): Serialize test linking on Windows to avoid applocal races (#1064) (Thanks Saurabh!)
+apache/iceberg-cpp,19c41dd7f28de3e9c0434724596d3680c02cdb91,19c41dd,Gang Wu,ustcwg@gmail.com,2026-11-09T09:55:29+08:00,GitHub,noreply@github.com,2026-11-09T09:55:29+08:00,fix(build): avoid digit separators in expected preprocessor checks (#1098),,6f1f04c9ee6458797fc1e6190550fac2665ca081,1098,false,,1,9,9,src,5,3,8,base; fix; downrank routine build/deps; has PR number; LanceDB similarity 0.13; capped LanceDB boost for routine/low-signal commit,Fix Internal to Generic conversion of TIMESTAMP_NANO,- fix(build): avoid digit separators in expected preprocessor checks (#1098) (Thanks Gang Wu!)
+apache/iceberg-cpp,44a4e988d0052b4f7f5a38d5141ad8e496449f2c,44a4e98,Guotao Yu,guotao.yugt@gmail.com,2026-11-05T14:58:32+08:00,GitHub,noreply@github.com,2026-11-05T14:58:32+08:00,"fix(build): pin croaring, nlohmann_json, spdlog, cpr, sqlpp23 fetches (#1082)","These FetchContent downloads had no integrity pin, unlike Arrow,
+nanoarrow, and utf8proc in the same file, so a tampered archive or
+mirror would be compiled unverified. nlohmann_json keeps a URL_HASH
+(its tarball is a stable uploaded release asset). The other four use
+GitHub's auto-generated tag-archive endpoint, which is not byte-stable
+across requests and cannot be hash-pinned reliably (confirmed: the
+same tag download returned different checksums on different
+requests), so they switch to GIT_REPOSITORY + GIT_TAG pinned to the
+tag's full commit SHA, the same pattern already used here for Avro,
+googletest, and google_benchmark.",ce262f54ca1aab4bfacc5ccfc8a1a1716160496f,1082,false,,1,64,36,cmake_modules,5,3,8,base; fix; downrank routine build/deps; has PR number; LanceDB similarity 0.25; capped LanceDB boost for routine/low-signal commit,OpenAPI: Promote the S3 signing endpoint to the main spec,"- fix(build): pin croaring, nlohmann_json, spdlog, cpr, sqlpp23 fetches (#1082) (Thanks Guotao Yu!)"
+apache/iceberg-cpp,ce262f54ca1aab4bfacc5ccfc8a1a1716160496f,ce262f5,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-05T06:52:35Z,GitHub,noreply@github.com,2026-11-05T14:52:35+08:00,docs: document Table thread safety (#1094),Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>,9d42a74def0be91d35b2a3f8402c9f86290f972c,1094,false,Claude Opus 5.5,1,6,0,src,3,3,6,base; co-authored; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Core: Unlink table metadata's last-updated timestamp from snapshot timestamp,- docs: document Table thread safety (#1094) (Thanks Sreesh Maheshwar and Claude Opus 5.5!)
+apache/iceberg-cpp,89e4c20f47384cee23a5150a71614bd3e621a5c4,89e4c20,Junwang Zhao,zhjwpku@gmail.com,2026-11-09T09:55:49+08:00,GitHub,noreply@github.com,2026-11-09T09:55:49+08:00,refactor(test): reuse manifest entry helpers in fast append tests (#1102),Follow-up to #774.,19c41dd7f28de3e9c0434724596d3680c02cdb91,1102,false,,1,10,22,src,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Core: v4 table metadata location should be optional,- refactor(test): reuse manifest entry helpers in fast append tests (#1102) (Thanks Junwang Zhao!)
+apache/iceberg-cpp,7f2792039816e33df6aec1beaa2638de03e3cd11,7f27920,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-16T16:51:50+08:00,GitHub,noreply@github.com,2026-11-16T16:51:50+08:00,chore(deps): bump zizmorcore/zizmor-action from 0.8.0 to 0.8.1 (#1131),"Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.8.0 to 0.8.1.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/53290badfa369cb0bf7ad16342cb62c2fa47ac7b...45d7276c9ca790aabd705e31ca99c6185c3e76dd)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.8.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",0425a6aa5cafd82e021f7efdf44a7e10ad7d5d2c,1131,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Core: Track & close FileIO used for remote scan planning,- chore(deps): bump zizmorcore/zizmor-action from 0.8.0 to 0.8.1 (#1131) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,0425a6aa5cafd82e021f7efdf44a7e10ad7d5d2c,0425a6a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-16T16:41:46+08:00,GitHub,noreply@github.com,2026-11-16T16:41:46+08:00,chore(deps): bump the codeql-action group with 2 updates (#1130),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.39.1 to 4.39.3
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/9b3254085494b55a0f7c4c2b3d2d52cc712ce370...33d7b85da1a04171e211befe2c739303b9a4c066)
+
+Updates `github/codeql-action/analyze` from 4.39.1 to 4.39.3
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/9b3254085494b55a0f7c4c2b3d2d52cc712ce370...33d7b85da1a04171e211befe2c739303b9a4c066)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.39.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.39.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",b2ec7c3410578d6134cb9a18c124edcbee1689cd,1130,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#1130) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,d5970d932f4fab508d6bf6e74bea3a7406ccafa9,d5970d9,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-03T13:10:42+08:00,GitHub,noreply@github.com,2026-11-03T13:10:42+08:00,chore(deps): bump the codeql-action group with 2 updates (#1074),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.39.0 to 4.39.1
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee...9b3254085494b55a0f7c4c2b3d2d52cc712ce370)
+
+Updates `github/codeql-action/analyze` from 4.39.0 to 4.39.1
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee...9b3254085494b55a0f7c4c2b3d2d52cc712ce370)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.39.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.39.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",30a27c9ac6a6e18066a87270cccd5eaad0812ad0,1074,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): bump the codeql-action group with 2 updates (#1074) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,30a27c9ac6a6e18066a87270cccd5eaad0812ad0,30a27c9,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-03T13:10:17+08:00,GitHub,noreply@github.com,2026-11-03T13:10:17+08:00,chore(deps): bump zizmorcore/zizmor-action from 0.7.1 to 0.8.0 (#1075),"Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.7.1 to 0.8.0.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e...53290badfa369cb0bf7ad16342cb62c2fa47ac7b)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.8.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",751e1f798d6169021ec32089e7e74712d4684887,1075,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Core: Propagate Avro compression settings to manifest writers,- chore(deps): bump zizmorcore/zizmor-action from 0.7.1 to 0.8.0 (#1075) (Thanks dependabot[bot]!)
+apache/iceberg-cpp,d8ba4f6d377d64cadf019564e2fa77d4550c5ed2,d8ba4f6,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-02T11:17:13+08:00,GitHub,noreply@github.com,2026-11-02T11:17:13+08:00,chore(deps): bump actions/setup-python from 7.0.0 to 7.1.0 (#1076),"Bumps [actions/setup-python](https://github.com/actions/setup-python) from 7.0.0 to 7.1.0.
+- [Release notes](https://github.com/actions/setup-python/releases)
+- [Commits](https://github.com/actions/setup-python/compare/5fda3b95a4ea91299a34e894583c3862153e4b97...6d4fd22b20465ccc0f7354476588e8df7c9ca0e0)
+
+---
+updated-dependencies:
+- dependency-name: actions/setup-python
+  dependency-version: 7.1.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",fd7b2ccd919a30a6726a448587ea42b764c3af71,1076,false,dependabot[bot],3,3,3,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,Core: Convert metrics to Content Stats,- chore(deps): bump actions/setup-python from 7.0.0 to 7.1.0 (#1076) (Thanks dependabot[bot]!)

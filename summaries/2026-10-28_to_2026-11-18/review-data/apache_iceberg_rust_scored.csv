@@ -1,0 +1,1284 @@
+repository,commit_sha,short_sha,author_name,author_email,author_date,committer_name,committer_email,committer_date,subject,body,parents,pr_number,is_merge_commit,co_authors,files_changed,insertions,deletions,top_level_paths,heuristic_score,lancedb_score,score,score_reasons,lancedb_match,summary_bullet
+apache/iceberg-rust,2079e5851768bc4ef24df707d7faa664406375bf,2079e58,Xuanyi Li,shanelxy@outlook.com,2026-11-04T04:17:28Z,GitHub,noreply@github.com,2026-11-04T04:17:28Z,feat: add geospatial parquet write support [3/3] (#3342),"* feat: add geospatial parquet write support
+
+Aggregate Parquet Geometry statistics into Iceberg file bounds using the spec-defined coordinate encoding. Carry the field type with the bounds state, keep incomplete bounds unknown, and omit Geography bounds until geodesic bounds are supported. Export an unset CRS without Arrow CRS metadata.
+
+Keep spatial bounds out of scalar metrics comparisons. Cover Parquet payload and metadata round-trips, manifest bounds, and scalar filtering separately, with focused tests for coordinate dimensions, wrapping Geometry boxes, and missing statistics.
+
+* fix: preserve supplied geography bounds
+
+Consume existing Parquet bounding boxes for Geography as well as Geometry. Bounds generation and edge interpolation remain the Parquet writer responsibility. Preserve wraparound and serialize full longitude coverage using the canonical range.",200ee6593dee84654a3b98aed724c7d094aa18cf,3342,false,,5,602,27,crates,95,6,101,"base; feature/api verb; strategic: manifest, round-trip; community signal: geography, geometry, geospatial; medium file count; medium churn; correctness signal; has PR number; LanceDB similarity 0.20",Bump to Parquet 1.17.0,- feat: add geospatial parquet write support [3/3] (#3342) (Thanks Xuanyi Li!)
+apache/iceberg-rust,ffdf043e182e0bb492b9b6f026d49b00991e48ba,ffdf043,Liang-Chi Hsieh,viirya@gmail.com,2026-11-09T19:41:44Z,GitHub,noreply@github.com,2026-11-09T19:41:44Z,feat(catalog): support write.metadata.delete-after-commit.enabled (#3582),"* feat(catalog): support write.metadata.delete-after-commit.enabled
+
+Add the `write.metadata.delete-after-commit.enabled` table property
+(default false). When it is set, catalogs that write metadata files
+themselves delete the previous metadata files that fall out of the
+metadata log (bounded by `write.metadata.previous-versions-max`) after
+a successful commit, matching Java's
+`CatalogUtil.deleteRemovedMetadataFiles`.
+
+The shared `delete_removed_metadata_files` helper diffs the base and
+committed metadata logs and deletes best-effort, logging failures
+without failing the commit. It is wired into the memory, SQL and Glue
+catalogs. REST and S3 Tables are left out because the server or
+service owns metadata file cleanup, and HMS does not support commits
+yet.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* test(catalog): cover enabling delete-after-commit in the same commit
+
+Address review: test that cleanup reads the property from the new
+metadata, and say the property must be true in the helper's doc.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",8e8f14459da3d1697fb37bf9514440c1554f5370,3582,false,Isaac,8,349,8,crates,83,9,92,base; feature/api verb; important area: catalog; strategic: catalog; medium file count; medium churn; co-authored; has PR number; LanceDB similarity 0.31,Make StandardEncryptionManager serializable,- feat(catalog): support write.metadata.delete-after-commit.enabled (#3582) (Thanks Liang-Chi Hsieh and Isaac!)
+apache/iceberg-rust,2135b37730c55ba98fecaae8747bffb7105c0ece,2135b37,Marcelo Tesla,maah.celo.v@gmail.com,2026-10-28T09:54:50Z,GitHub,noreply@github.com,2026-10-28T09:54:50Z,fix(expr): prune In predicates that straddle metrics bounds (#3144),"* fix(expr): prune In predicates that straddle metrics bounds
+
+InclusiveMetricsEvaluator and ManifestEvaluator tested each bound against
+the full literal set, so IN lists with values both below lower and above
+upper were not pruned. Narrow the set the way Java, PyIceberg, and
+StrictMetricsEvaluator::not_in already do.
+
+* fix(expr): check In literals against both bounds together
+
+Apply review feedback: use any() instead of clone/retain, and prune
+straddling In predicates in RowGroupMetricsEvaluator too.
+
+* refactor(expr): share In bound check across metrics evaluators
+
+The three In evaluators used the same match. Pull it into a crate-private helper.
+
+* fix(expr): treat NaN metrics bounds as unbounded for In pruning
+
+A valid min or max still prunes when the other bound is NaN, instead of
+bailing on both sides.
+
+* chore(deps): bump ctutils and tokio past rustsec advisories
+
+The security audit fails on ctutils 0.4.2 and warns on tokio 1.53.1. Both versions are already on main. 0.4.5 and 1.53.3 clear the two advisories.
+
+* fix(expr): keep incomparable In literals from pruning
+
+ge and le are false when Datum::partial_cmp is None, so any_literal_in_bounds treated those literals as outside the range. Prune only when every literal is provably below the lower bound or above the upper bound.
+
+* fix(expr): look up row group stats once for In
+
+min_value and max_value each resolved the same statistics. The In path now uses one stats_and_type_for_field_id lookup and still drops a NaN bound before the prune.
+
+---------
+
+Co-authored-by: Marcelo Tesla <9055877+M-Tesla@users.noreply.github.com>",68a17aba6ee0c1500bcb65e881da4c71786bc42a,3144,false,Marcelo Tesla,5,442,66,Cargo.lock; crates,76,8,84,base; fix; strategic: manifest; medium file count; medium churn; multi-area change; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.26,Bump to Parquet 1.17.0,- fix(expr): prune In predicates that straddle metrics bounds (#3144) (Thanks Marcelo Tesla!)
+apache/iceberg-rust,c9d52179bb6ffbda339b05ce245436b8651711e2,c9d5217,alexanderbianchi,75697973+alexanderbianchi@users.noreply.github.com,2026-11-16T20:03:35Z,GitHub,noreply@github.com,2026-11-16T20:03:35Z,fix(io): initialize manifest caches only when used (#3679),"Defer Moka cache construction until the first manifest or manifest-list
+read, and skip it entirely when caching is disabled. Share lazy cache
+state across clones and retain existing cache policy and encryption.
+
+Adapted from DataDog/iceberg-rust#34 for upstream main, without the
+fork-specific FileIO rebinding helper.
+
+Co-authored-by: Geoffrey Claude <geoffrey.claude@datadoghq.com>",58af4edf5158709d8ec01643400ec64cfacc779f,3679,false,Geoffrey Claude,1,52,46,crates,76,6,82,"base; fix; important area: io; strategic: encryption, manifest; community signal: fileio; co-authored; has PR number; LanceDB similarity 0.19",Flink: Support UUID type in Avro and Parquet readers and writers,- fix(io): initialize manifest caches only when used (#3679) (Thanks alexanderbianchi and Geoffrey Claude!)
+apache/iceberg-rust,14d4b5ffe1cc7deede7240c83864f55476da0764,14d4b5f,Javier de la Torre,jatorre@carto.com,2026-11-10T17:31:01Z,GitHub,noreply@github.com,2026-11-10T17:31:01Z,fix(spec): write manifests and manifest lists with the deflate codec (#3643),"* fix(spec): write manifests and manifest lists with the deflate codec
+
+They were written without an avro.codec entry (uncompressed). Readers that assume a default for a
+missing entry refuse them: PyIceberg 0.12 reads it as ""gzip"" and raises 'Unsupported codec: gzip',
+so a table with one snapshot from iceberg-rust cannot be scanned from PyIceberg. Deflate is what
+other writers use for manifests, and it makes them smaller.
+
+* fix(avro): centralize deflate writer defaults
+
+Use a shared internal factory for Avro container writers and verify codec metadata in existing round-trip tests.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",63d3d522c44aec588ebb7207834a37a141c3837a,3643,false,Copilot App; Kevin Liu,5,58,10,crates,74,6,80,"base; fix; important area: spec; strategic: manifest, round-trip; summary signal: round-trip; medium file count; co-authored; has PR number; LanceDB similarity 0.20",Spec: Add v4 content stats representation,"- fix(spec): write manifests and manifest lists with the deflate codec (#3643) (Thanks Javier de la Torre, Copilot App, and Kevin Liu!)"
+apache/iceberg-rust,4bd146352e87ef6532f0902f561fd023860f7541,4bd1463,alexanderbianchi,75697973+alexanderbianchi@users.noreply.github.com,2026-11-15T08:38:08Z,GitHub,noreply@github.com,2026-11-15T08:38:08Z,feat(scan)!: expose portable reader options for planned tasks (#3514),"* feat(scan): expose portable reader options for planned tasks
+
+* refactor(arrow): separate reader options from scan planning
+
+* feat(arrow): include Parquet tuning in shared reader options
+
+* refactor(arrow): refine reader options API after review
+
+* refactor(arrow): address reader configuration review feedback
+
+* fix: preserve scan concurrency defaults for Arrow reads
+
+* refactor(arrow): clarify options API and focus reader tests
+
+* test(arrow): migrate upstream scheduling tests to reader options
+
+* refactor(arrow): retain reader options and address review feedback
+
+* fix(arrow): serialize Parquet preload settings
+
+* fix(arrow): expose preload settings on Parquet options builder
+
+* fix(arrow): expose Parquet preload getters
+
+* refactor(arrow): resolve reader concurrency independently of scans
+
+* refactor(arrow): keep reader concurrency solely in options
+
+* Update crates/iceberg/src/arrow/reader/mod.rs
+
+Co-authored-by: blackmwk <257669749+blackmwk@users.noreply.github.com>
+
+* docs(arrow): clarify reader options migration and preload behavior
+
+---------
+
+Co-authored-by: blackmwk <257669749+blackmwk@users.noreply.github.com>",6612395befbfdb5a00f7a059aa62261964d0d081,3514,false,blackmwk,20,922,403,CHANGELOG.md; Cargo.lock; crates,73,5,78,base; feature/api verb; large file count; large churn; multi-area change; co-authored; correctness signal; has PR number; LanceDB similarity 0.18,Flink: SQL support for dynamic iceberg sink,- feat(scan)!: expose portable reader options for planned tasks (#3514) (Thanks alexanderbianchi and blackmwk!)
+apache/iceberg-rust,beba39c8d62810fa101740bb2dbb03ab0d8f07ac,beba39c,Xuanyi Li,shanelxy@outlook.com,2026-10-28T20:49:40Z,GitHub,noreply@github.com,2026-10-28T20:49:40Z,feat: add geospatial read support [2/3] (#3341),feat: add geospatial read support,af1717ae9287c256b987d0418251443052ead66b,3341,false,,9,421,85,Cargo.lock; Cargo.toml; crates,68,9,77,base; feature/api verb; community signal: geospatial; medium file count; medium churn; multi-area change; has PR number; LanceDB similarity 0.30,"API, Core: Add overwrite-aware table registration",- feat: add geospatial read support [2/3] (#3341) (Thanks Xuanyi Li!)
+apache/iceberg-rust,4be78085219af9f1c2093bfcea66ff3d847c7613,4be7808,Danny C Jones,daniel.carl@live.com,2026-11-16T22:02:21Z,GitHub,noreply@github.com,2026-11-16T22:02:21Z,fix(spec): write only v2 data_file fields in v2 manifests (#3533),,c9d52179bb6ffbda339b05ce245436b8651711e2,3533,false,,5,228,37,crates,63,7,70,base; fix; important area: spec; strategic: manifest; medium file count; medium churn; has PR number; LanceDB similarity 0.22,Add idempotency adapter and E2E coverage,- fix(spec): write only v2 data_file fields in v2 manifests (#3533) (Thanks Danny C Jones!)
+apache/iceberg-rust,68a17aba6ee0c1500bcb65e881da4c71786bc42a,68a17ab,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-28T09:38:02Z,GitHub,noreply@github.com,2026-10-28T09:38:02Z,fix(python): don't install LICENSE and NOTICE into site-packages (#3563),"* fix(python): stop installing LICENSE and NOTICE into site-packages
+
+Including LICENSE and NOTICE in the wheel puts them at the wheel root,
+so installing pyiceberg-core writes site-packages/LICENSE and
+site-packages/NOTICE, which clash with other packages that do the same.
+maturin already copies both into dist-info/licenses, so only include
+them in the sdist.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* fix(python): note why LICENSE and NOTICE are sdist-only
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",6f23a2a7757a44d03f7cbfc9600a3bee6bd480a9,3563,false,Copilot App,1,3,8,bindings,61,8,69,base; fix; community signal: pyiceberg-core; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.26,Fix NPE in `ParquetAvroWriter` when schema contains variant type,- fix(python): don't install LICENSE and NOTICE into site-packages (#3563) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-rust,6f23a2a7757a44d03f7cbfc9600a3bee6bd480a9,6f23a2a,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-28T00:55:40Z,GitHub,noreply@github.com,2026-10-28T00:55:40Z,chore: pin cargo-about and cargo-deny for local license checks (#3561),"* chore(python): pin cargo-about for local license checks
+
+LICENSING.md told contributors to install cargo-about 0.9.2 and then run
+`cargo about` directly, so an existing older install was used silently.
+cargo-about's output differs between versions (0.9.1 drops license files
+that 0.9.2 keeps), so local checks could disagree with CI.
+
+Add `install-cargo-about` and `cargo-about` targets to
+bindings/python/Makefile, following the root Makefile's install-<tool>
+convention, and point LICENSING.md at them. Cross-reference the version
+with the CI action.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* chore(release): use the pinned cargo-deny for dependency license checks
+
+The release guide, dev/release/README.md and create_rc.sh ran
+`licenses.py dependencies check` directly, which uses whatever cargo-deny
+is installed and only checks that one exists. A stale cargo-deny can
+give a different license verdict than CI's 0.19.9.
+
+Run `make check-dependency-licenses` instead, which installs the pinned
+version first.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",de0a6ac8471da43f63382d66fac27d7e56fd273e,3561,false,Copilot App,6,14,6,.github; bindings; dev; website,62,7,69,base; community signal: bindings/python; medium file count; multi-area change; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.24,Docs: Add informational properties section for table comment,- chore: pin cargo-about and cargo-deny for local license checks (#3561) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-rust,72addd94670db273cdb03f4efce23913991a049e,72addd9,Yuang Gao,91290127+YuangGao@users.noreply.github.com,2026-11-06T07:41:53Z,GitHub,noreply@github.com,2026-11-06T07:41:53Z,fix!(io): bound S3 write request size with a configurable part size (#3179),"* fix(io): bound S3 write request size with a configurable part size
+
+* fix(io): store multipart part size as u64 and refresh public API snapshots
+
+* fix(io): validate S3 part size ceiling and cover the one-shot write path
+
+* fix(io): mark the S3 variant non_exhaustive and stabilize the MinIO part-count helper
+
+* fix(io): cap S3 part size at Java's int limit and point slow links to the IO timeout",fedc8e84655b8b93147b7416e1719d89e0ec3238,3179,false,,7,272,23,crates,63,5,68,base; fix; important area: io; strategic: variant; medium file count; medium churn; has PR number; LanceDB similarity 0.17,Spark: Validate Z-order rewrite does not conflict with internal ICEZVALUE column name,- fix!(io): bound S3 write request size with a configurable part size (#3179) (Thanks Yuang Gao!)
+apache/iceberg-rust,59946648ef56dcd5b70d46cc7ef90b25a00ed9fb,5994664,JeonDaehong,90895144+JeonDaehong@users.noreply.github.com,2026-11-06T07:45:40Z,GitHub,noreply@github.com,2026-11-06T07:45:40Z,fix(arrow): release a positional delete file whose load fails (#3435),"* fix(arrow): release a positional delete file whose load fails
+
+try_start_pos_del_load marks a positional delete file Loading, and only
+the success path marked it Loaded. If opening or parsing the file
+failed, or the load was dropped because another delete file failed,
+the entry stayed Loading: a retry on the same loader, a clone of the
+same ArrowReader, or a concurrent load of the same file waited for a
+notification that never came.
+
+The Load action now carries a PosDelLoadGuard. finish() marks the file
+loaded; dropping the guard without finishing removes the Loading marker
+and wakes the waiters. A woken waiter checks the state again and loads
+the file itself if it isn't loaded, instead of assuming it is.
+
+Closes #3434.
+
+* refactor(arrow): assert the Loading invariant when abandoning a load
+
+Only try_start_pos_del_load inserts into positional_deletes, and only the
+guard that it returns changes the entry afterwards, so the entry is always
+the guard's Loading marker when it is abandoned.
+
+* test(arrow): cover waiters that load after an abandoned positional load
+
+Hold the Load guard, poll load_file_for_task for the same file until it
+waits, then drop the guard: the waiter loads the file itself, or returns
+the open error when the file is gone. Also load a positional delete file
+that opens but fails to parse, then rewrite it and load it again on the
+same loader, which hangs without the guard.
+
+* fix(arrow): return a failed positional delete load's error to its waiters
+
+Waiters on a failed load used to retry it one after another, so a missing
+file shared by many tasks was opened once per task. The load now records
+its error and the tasks waiting on that attempt return it. A load dropped
+without an error, when a sibling's error stops load_deletes, still lets
+its waiters retry, and later calls start a new attempt either way.
+
+Abandoning a load also tolerates a poisoned lock, since it runs from Drop.
+
+* test(arrow): keep the sibling's load in flight when another delete file fails
+
+On the current-thread test runtime the local filesystem never yields, so the
+valid file was only loaded on the second call and its guard was never dropped
+mid-load. A test storage now yields before reads and holds one file until the
+test opens a gate.
+
+* fix(arrow): pass the whole load error to waiters",6f6d68bb29d00cd34a93a4d598f882b97020f676,3435,false,,2,598,56,crates,56,9,65,"base; fix; strategic: storage, variant; medium churn; correctness signal; has PR number; LanceDB similarity 0.31",Spark 4.1: New Async Spark Micro Batch Planner,- fix(arrow): release a positional delete file whose load fails (#3435) (Thanks JeonDaehong!)
+apache/iceberg-rust,7cf825fcfb64a8943ddb627ef7f0b9f09f0c8046,7cf825f,JeonDaehong,90895144+JeonDaehong@users.noreply.github.com,2026-11-17T16:52:22Z,GitHub,noreply@github.com,2026-11-17T16:52:22Z,feat(reader)!: resolve unknown delete-file sizes lazily (#3433),"* feat(reader): resolve unknown delete-file sizes lazily
+
+Execution engines that build scan tasks themselves do not always carry a
+delete file's size. Tasks planned from manifest entries keep the
+recorded size; externally constructed tasks may now leave
+FileScanTaskDeleteFile's file size unset, and the Parquet delete-file
+loader resolves it with one metadata request when the file is first
+loaded. The caching loader loads each delete file once per reader, so
+the request is made once per delete file even when several data files
+reference it.
+
+FileScanTaskDeleteFile::file_size_in_bytes now returns Option<u64>.
+None means unknown, so a size of 0 is no longer a sentinel and is
+rejected like any other size below the Parquet footer minimum.
+
+A failed metadata request is reported with the delete-file path while
+keeping the storage error's kind and retryability. A size below the
+Parquet footer minimum, whether resolved or supplied by the task, fails
+the read rather than dropping the file's deletes. Deletion vectors do
+not use this size and are unchanged.
+
+Co-authored-by: unikdahal <unikdahal03@gmail.com>
+
+* fix(reader): rely on Parquet's footer check for delete-file sizes
+
+Parquet already rejects a size below its footer, so drop the separate
+8-byte check and assert Parquet's error in the test instead.
+
+Also document leaving the size unset when the recorded one can't be
+trusted (apache/iceberg#12554), add a serde round trip for a delete file
+without a size, and tidy the metadata-counting test storage.
+
+* test(reader): drop delete-size tests covered elsewhere
+
+Keep only the footer cases in the delete_file_loader test; the missing
+file and lazy read are covered by test_load_deletes_reports_unknown_size_failures
+and test_read_encrypted_positional_delete_file. Remove the equality-delete
+parse test, which test_unknown_size_equality_deletes_are_resolved_once_and_cached
+already covers through load_deletes.
+
+* test(reader): resolve unknown delete sizes once under concurrent loads
+
+* test(reader): yield in the counting storage so concurrent loads overlap
+
+* fix(scan): keep the delete file size required in the builder
+
+* test(reader): drop qualifications the merge made unnecessary
+
+---------
+
+Co-authored-by: unikdahal <unikdahal03@gmail.com>",953f956d32cd4cc6803610d32c3e0a0520316f28,3433,false,unikdahal,4,408,31,crates,59,5,64,"base; fix; strategic: deletion vector, manifest, storage; medium churn; co-authored; correctness signal; has PR number; LanceDB similarity 0.16",Spark: Order results to fix test flakiness with remote scan planning <Eduard Tudenhoefner>,- feat(reader)!: resolve unknown delete-file sizes lazily (#3433) (Thanks JeonDaehong and unikdahal!)
+apache/iceberg-rust,f53314e4fab2e2708bd6b94041b701463653fcc2,f53314e,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-11-04T17:31:07Z,GitHub,noreply@github.com,2026-11-04T17:31:07Z,feat(arrow): read manifest entries into Arrow with arrow-avro (#3388),"* feat(arrow): convert manifest entries to an Arrow RecordBatch
+
+* test(arrow): cover manifest versions, count overflow, and a PyIceberg manifest
+
+* refactor(arrow): assert the shape of the generated manifest_entry schema
+
+* feat(arrow): read manifest entries into Arrow with arrow-avro
+
+* address PR feedback
+
+* Return an error if arrow-avro splits a manifest into more than one batch
+
+* fix v2 discrepancy
+
+* Update manifest reader tests for Arrow Binary mapping
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Export read_manifest_entries by name
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",46e51d80f78906013783c91b74f4d4ef7b4a352b,3388,false,Copilot App; Kevin Liu,7,1474,2,Cargo.lock; Cargo.toml; crates,52,9,61,base; strategic: manifest; medium file count; large churn; multi-area change; co-authored; has PR number; LanceDB similarity 0.29,"Spark, Arrow, Parquet: Add vectorized parquet read support for `DELTA_LENGTH_BYTE_ARRAY` & `DELTA_BYTE_ARRAY` encodings","- feat(arrow): read manifest entries into Arrow with arrow-avro (#3388) (Thanks Matt Butrovich, Copilot App, and Kevin Liu!)"
+apache/iceberg-rust,5b1fa2e8e8e94535a22f25cc0ea91b3654e560bf,5b1fa2e,Szehon Ho,szehon.apache@gmail.com,2026-11-12T22:21:17Z,GitHub,noreply@github.com,2026-11-12T22:21:17Z,fix: support fast append across partition specs (#3662),"* fix: support fast append across partition specs
+
+* fix: address multi-spec append review feedback",da389801242befa9191ffde4af3824c1c3f2e279,3662,false,,4,406,85,crates,49,8,57,base; feature/api verb; fix; medium churn; has PR number; LanceDB similarity 0.26,GCS: Throw NotFoundException for nonexisting input GCS file,- fix: support fast append across partition specs (#3662) (Thanks Szehon Ho!)
+apache/iceberg-rust,cfbfb2789fb8899f3ffceef25e168ad04ab3a5d7,cfbfb27,Sebastian Baunsgaard,seb@bgaard.dk,2026-11-11T10:20:12Z,GitHub,noreply@github.com,2026-11-11T10:20:12Z,fix(arrow): promote FixedSizeList file columns to List (#3629),"fix(arrow): rewrite FixedSizeList file hints to List
+
+parquet-rs picks its list reader from the embedded Arrow schema. Iceberg
+has no fixed-size list type, so coerce FixedSizeList hints to List before
+name mapping and fallback IDs. The 3-level LIST reader then handles null
+rows without PromotePlan conversion or pad filtering.",ebf2d6e6dfcf6c3843aba4dc8ba5b273b7ad326d,3629,false,,3,608,13,crates,49,8,57,base; feature/api verb; fix; medium churn; has PR number; LanceDB similarity 0.27,Spark 4.1: Add Merge WriteSummary to Snapshot Summary,- fix(arrow): promote FixedSizeList file columns to List (#3629) (Thanks Sebastian Baunsgaard!)
+apache/iceberg-rust,c523def0a080dac58ef93e6ecd52abec24f006c2,c523def,Radostin Emanuilov,28630746+emanuilov@users.noreply.github.com,2026-11-09T22:25:43Z,GitHub,noreply@github.com,2026-11-09T22:25:43Z,feat(storage-opendal): configurable retry policy via opendal.retry.* and s3.retry.* (#3605),"* feat(storage-opendal): read the s3.retry.* properties
+
+The S3 operator was always wrapped in `RetryLayer::new()`: 3 retries, a 1 s
+first delay, no jitter. A throttled bucket (S3 `SlowDown`) answers a burst of
+requests faster than that policy gives up, and the error reaches the caller
+after about 7 s.
+
+Define Iceberg Java's `s3.retry.num-retries`, `s3.retry.min-wait-ms` and
+`s3.retry.max-wait-ms` in `iceberg::io` so every S3 backend can read the same
+keys, and apply them to the opendal S3 operator. Setting any of them also turns
+on jitter; with none set the layer stays `RetryLayer::new()`.
+
+Generated-by: Claude Code (Sonnet 5.5)
+
+* feat(storage-opendal): add backend-independent opendal.retry.* properties
+
+`opendal.retry.num-retries`, `opendal.retry.min-wait-ms` and `opendal.retry.max-wait-ms`
+configure the `RetryLayer` of every backend, in the place where the `TimeoutLayer` is
+applied. For S3 each `s3.retry.*` key overrides the matching `opendal.retry.*` key,
+resolved per key; unset keeps OpenDAL's default. Any set key turns jitter on.
+
+Generated-by: Claude Code (Sonnet 5.5)
+
+* refactor(storage-opendal): keep the reviewed retry tests, add only the new cases
+
+Restore the four tests of a767ae1e0 as they were (their S3-only semantics still hold) and
+add only the generic-keys and per-key precedence cases; `s3_retry_layer` stays as a thin
+wrapper of `retry_layer(true)`.
+
+Generated-by: Claude Code (Sonnet 5.5)
+
+* refactor(storage-opendal): resolve s3.retry.* overrides when building the S3 storage
+
+Parse the s3.retry.* properties next to the other s3.* properties and
+overlay them, per key, onto the opendal.retry.* settings of the S3
+variant's client config. OpenDalClientConfig no longer knows about S3, so
+retry_layer takes no backend flag and other backends neither parse nor
+serialize s3.retry.*.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FhHg5U2mpkFVSMgVtmhThk
+
+---------
+
+Co-authored-by: Claude <noreply@anthropic.com>",ffdf043e182e0bb492b9b6f026d49b00991e48ba,3605,false,Claude Opus 5.5; Claude,6,283,9,crates,51,6,57,"base; fix; strategic: opendal, storage, variant; medium file count; medium churn; co-authored; has PR number; LanceDB similarity 0.19",REST Spec: Add unregister table endpoint,"- feat(storage-opendal): configurable retry policy via opendal.retry.* and s3.retry.* (#3605) (Thanks Radostin Emanuilov, Claude Opus 5.5, and Claude!)"
+apache/iceberg-rust,0dc4c601089191a048f45adf07786179ba3cc80d,0dc4c60,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-10T22:49:17Z,GitHub,noreply@github.com,2026-11-10T22:49:17Z,feat(rest): use iceberg-rust as the User-Agent product token (#3668),"The REST catalog spec recommends a standard User-Agent format whose
+library token for Rust is iceberg-rust (apache/iceberg#17727), so send
+iceberg-rust/<version> instead of iceberg-rs/<version>. A header.user-agent
+property still overrides the default.",6c9739191da5e44c5c097714fa68c0e32696ba8f,3668,false,,1,3,3,crates,47,6,53,base; important area: rest; strategic: catalog; has PR number; LanceDB similarity 0.20,OpenAPI: Promote the S3 signing endpoint to the main spec,- feat(rest): use iceberg-rust as the User-Agent product token (#3668) (Thanks Rahul Shivu Mahadev!)
+apache/iceberg-rust,8e8f14459da3d1697fb37bf9514440c1554f5370,8e8f144,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-11-09T10:05:13Z,GitHub,noreply@github.com,2026-11-09T10:05:13Z,ci: add bypass capability for PR limits and document (#3644),"* add bypass capability for PR limits and document, add dannycjones and xanderbailey
+
+* Update CONTRIBUTING.md
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>
+
+* Update .asf.yaml
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",9aa0b489b89944a88a21975b268b8e15de1eeae2,3644,false,Kevin Liu,2,12,0,.asf.yaml; CONTRIBUTING.md,45,8,53,base; feature/api verb; multi-area change; co-authored; has PR number; LanceDB similarity 0.27,"Data, Spark, Flink: Add TCK for File Format API",- ci: add bypass capability for PR limits and document (#3644) (Thanks Matt Butrovich and Kevin Liu!)
+apache/iceberg-rust,46e51d80f78906013783c91b74f4d4ef7b4a352b,46e51d8,Yuang Gao,91290127+YuangGao@users.noreply.github.com,2026-11-04T06:12:54Z,GitHub,noreply@github.com,2026-11-04T06:12:54Z,feat(transaction): add jitter to the commit retry backoff (#3610),"* feat(transaction): add jitter to the commit retry backoff
+
+* test(transaction): compare two backoffs instead of asserting jitter bounds",2079e5851768bc4ef24df707d7faa664406375bf,3610,false,,1,13,0,crates,45,7,52,base; feature/api verb; fix; has PR number; LanceDB similarity 0.24,OpenAPI: Promote the S3 signing endpoint to the main spec,- feat(transaction): add jitter to the commit retry backoff (#3610) (Thanks Yuang Gao!)
+apache/iceberg-rust,4dd8c946432f5e56a3ccc88e5b438a356ba28287,4dd8c94,Swanand Mulay,73115739+swanandx@users.noreply.github.com,2026-10-29T17:34:38Z,GitHub,noreply@github.com,2026-10-29T17:34:38Z,fix(arrow): spawn data file opens on the IO runtime (#3277),"* fix(arrow): spawn data file opens on the IO runtime
+
+Opens run ahead of the reads. Once try_flatten_unordered holds
+concurrency_limit_data_files streams it stops polling the opens, and a
+half-read response keeps part of the HTTP/2 connection window, which
+stalls every other read on that connection.
+
+Spawning the open is what load_deletes already does.
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+* fix(arrow): abort the data file opens when the scan is dropped
+
+A dropped JoinHandle detaches the task, so a cancelled scan left its opens
+fetching a result nobody reads. Add a pub(crate) abort-on-drop handle and
+use it for the opens.
+
+JoinHandle already maps JoinError, so the open needs no second wrapper.
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+* fix(arrow): spawn only the data file open
+
+Only the open needs to escape the polling gap, so the spawn moves inside
+process() and the read() call site returns to what main has.
+
+Two tests in pipeline.rs replace the flow control harness: an open must
+proceed when nothing polls the scan, and a dropped scan must stop opening
+files.
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+* test(arrow): reuse the parquet writer and the scan metrics
+
+counted_scan now builds its file with write_plain_parquet, and the tests
+watch metrics().bytes_read() instead of their own request counter, so the
+counting storage only adds the yield.
+
+The comment above the spawn drops the HTTP/2 detail that #3276 already
+carries.
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+* test(arrow): tighten the open tests and the comments
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+* fix(arrow): spawn the bloom filter fetch
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+* docs(arrow): note what else runs in the spawned open
+
+The spawned task decodes the footer, and the page index when it is
+preloaded. With a split runtime that work runs on the IO runtime.
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>
+
+---------
+
+Signed-off-by: Swanand Mulay <73115739+swanandx@users.noreply.github.com>",beba39c8d62810fa101740bb2dbb03ab0d8f07ac,3277,false,,3,420,20,crates,44,7,51,base; fix; strategic: storage; medium churn; has PR number; LanceDB similarity 0.24,"Spark: Backport: Add Spark app name to env context for Spark v3.4, 3.5, 4.0 <Varun Lakhyani>",- fix(arrow): spawn data file opens on the IO runtime (#3277) (Thanks Swanand Mulay!)
+apache/iceberg-rust,ebf2d6e6dfcf6c3843aba4dc8ba5b273b7ad326d,ebf2d6e,Xander,zander181@googlemail.com,2026-11-11T04:28:20Z,GitHub,noreply@github.com,2026-11-11T04:28:20Z,fix(encryption): reject encryption.key-id on pre-v3 tables (#3659),"* fix(encryption): reject encryption.key-id on pre-v3 tables
+
+EncryptionManager::from_table_metadata returned Ok(None) for v1/v2 tables
+before reading encryption.key-id, so commits to such tables silently wrote
+plaintext manifest lists and manifests. Return DataInvalid instead, matching
+iceberg-python.
+
+* fix(encryption): reject pre-v3 encryption properties on metadata updates
+
+Reject encryption.key-id and encryption.data-key-length when creating a
+table or setting properties below v3, before anything is persisted.
+Pre-v3 tables that already carry them still load, so they can be
+repaired by removing the properties or upgrading to v3, and snapshot
+production on them fails before any manifest is written.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* fix(encryption): reject pre-v3 encryption properties only on table creation
+
+Match Java, which runs EncryptionUtil.checkCompatibility only when
+creating new table metadata: check in TableMetadataBuilder::new and
+leave property updates, loading, and snapshot writes unchanged.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* refactor(spec): inline pre-v3 encryption property check
+
+Only TableMetadataBuilder::new uses it, so check inline like the
+reserved-property check instead of adding a TableProperties method.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* refactor(spec): move pre-v3 encryption check into a helper
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* test(spec): cover pre-v3 encryption check at the builder level
+
+Test v1, v2, and v3 with each encryption property and both together in
+TableMetadataBuilder, where the check lives, instead of through the
+memory catalog.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* fix(spec): reject pre-v3 encryption properties in set_properties
+
+Check in TableMetadataBuilder::set_properties so both table creation and
+property updates reject encryption.key-id and
+encryption.data-key-length below v3, as iceberg-python does. Only the
+properties being set are checked, so existing pre-v3 tables that already
+carry them can still be loaded and updated.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* refactor(spec): rename property format-version check helper
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* fix(spec): check property format compatibility on every metadata build
+
+Run check_properties_format_compatibility in TableMetadataBuilder::build
+against the final properties and format version, so every metadata
+mutation is checked rather than only set_properties. A pre-v3 table that
+already has encryption properties must remove them or upgrade to v3 in
+its next commit; loading it is unaffected.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* refactor(spec): shorten format compatibility helper name
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* fix(spec): reject encryption keys on pre-v3 table metadata
+
+v1 and v2 metadata do not serialize encryption-keys, so a key added
+below v3 was silently dropped on write. Check it in
+check_format_compatibility so every metadata build rejects it.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* test(spec): consolidate pre-v3 encryption tests
+
+Merge the property and encryption-key tests into one table-driven test,
+and keep only the unrelated-update and removal cases for pre-v3 tables
+that already have encryption.key-id.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* test(spec): tidy pre-v3 encryption tests
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",0dc4c601089191a048f45adf07786179ba3cc80d,3659,false,Copilot App; Kevin Liu,1,130,1,crates,43,6,49,"base; fix; strategic: catalog, encryption, manifest, v3; co-authored; has PR number; LanceDB similarity 0.19",Flink: Fix HashKeyGenerator SelectorKey cache ignoring writeParallelism and distributionMode,"- fix(encryption): reject encryption.key-id on pre-v3 tables (#3659) (Thanks Xander, Copilot App, and Kevin Liu!)"
+apache/iceberg-rust,f52ec21e03c82eb00adffb0869867265aca0ff28,f52ec21,Xander,zander181@googlemail.com,2026-11-16T15:33:44Z,GitHub,noreply@github.com,2026-11-16T15:33:44Z,feat(RTAS): add TableMetadataBuilder::build_replacement (#3057),"* feat: add TableMetadataBuilder::build_replacement
+
+Backs `REPLACE TABLE`: swaps the schema, partition spec and sort order
+while keeping the table's uuid, properties and snapshots, and drops the
+main branch so the replaced table has no current snapshot.
+
+Columns the table already has keep their field ids, so data files written
+before the replacement stay readable through the shared columns. New
+columns draw ids above `last_column_id`, never reusing a dropped column's
+id. Partition field ids are likewise reused across historical specs.
+
+Extracts `rebind_to_schema` out of `reassign_ids` so the partition spec
+and sort order can be rebound to a schema whose ids were assigned either
+from scratch or by `assign_fresh_ids`.
+
+Format version 1 is not supported.
+
+* fix docs
+
+* tighten up tests
+
+* nits
+
+* test: cover build_replacement error paths and refs, document id matching
+
+* refactor: take a typed format_version in build_replacement
+
+* refactor: make build_replacement pub(crate) until RTAS uses it
+
+Moves the doc example into a unit test, since a doctest cannot call a
+pub(crate) function.
+
+* fix: return an error when build_replacement runs out of partition ids
+
+Reuses equivalent ids through reuse_partition_field_ids and assigns the
+rest with PartitionSpecBuilder, which errors on overflow instead of
+wrapping. The AddSpec change still carries every field id.",d15dca02c53db98de233e43aeebb6e4d0c620c10,3057,false,,2,929,6,crates,41,6,47,base; feature/api verb; medium churn; has PR number; LanceDB similarity 0.20,OpenAPI: Add CatalogObjectIdentifier schema,- feat(RTAS): add TableMetadataBuilder::build_replacement (#3057) (Thanks Xander!)
+apache/iceberg-rust,13f84f93f1a09619f473b788b2a88ef1da0c7102,13f84f9,Anurag Mantripragada,amantripragada@apple.com,2026-11-14T06:05:08Z,GitHub,noreply@github.com,2026-11-14T06:05:08Z,feat(scan): optionally retain column statistics on FileScanTask (#3424),"* feat(scan): optionally retain column statistics on FileScanTask
+
+Add TableScanBuilder::with_column_stats, mirroring Java's
+Scan.includeColumnStats. The named columns resolve to field ids at build
+time with the scan's case sensitivity, and each planned FileScanTask
+carries a FileScanTaskColumnStats holding the data file's value, null and
+NaN counts and lower and upper bounds for only those field ids.
+
+Retention is opt-in: by default column_stats is None, nothing is copied
+from the manifest entry, and the field is omitted when a task is
+serialized, so serialized tasks are unchanged.
+
+* fix(scan): serialize column bounds as spec binary values
+
+Bounds went through Datum's JSON encoding, which writes non-finite floats
+as null and rejects many finite float values when reading them back, so a
+task with such a bound serialized but failed to deserialize. Serialize
+each bound as its type and the spec's single-value binary encoding, as the
+DataFile JSON serde already does, so every bound round-trips exactly.
+
+* refactor(scan): address review of column statistics retention
+
+Retain column_sizes for the requested ids too, matching Java's
+BaseFile(copy, requestedColumnIds). Share the column-name lookup and its
+error with column selection, keep the requested names as an Option like
+column_names so an empty list yields empty statistics, and pass the ids as
+Arc<[i32]>. Skip work for an empty map when filtering, trim the struct
+docs, and cover nested field names.
+
+* fix(scan): reject column names that cannot have statistics
+
+Struct, list and map fields have no statistics of their own, and metadata
+columns are not stored in data files, so requesting stats for them
+silently returned empty maps or failed with a misleading ""not found""
+error. Fail build() with an error that says why. Also cover bounds that
+keep the manifest's type after a type promotion.
+
+* fix(scan): promote column stats bounds to the scan schema type
+
+A manifest written before a type promotion keeps the narrower type, so one
+scan could return an int bound for one file and a long bound for another,
+and Datum cannot order values of different types. Promote bounds to the
+column's type in the scan schema (int to long, float to double, decimal to
+a wider precision) and omit a bound that cannot be promoted.
+
+Box the retained statistics so tasks of scans that never request them do
+not grow, and add a doctest for with_column_stats.
+
+* refactor(scan): resolve column stats types once and trim tests and docs
+
+Resolve each requested column's type when the scan is built, so planning
+no longer looks the column up in the schema for every bound of every
+manifest entry. Rebuild the column stats tests on the builder, one
+behavior per test, and cover list names. Drop private field docs that
+repeated the getter docs, and state the decimal and date-to-timestamp
+promotion rules in the struct docs.
+
+* docs(scan): drop the date to timestamp claim from the column stats docs
+
+A date bound under a timestamp column is stored in 4 bytes, which
+Datum::try_from_bytes cannot decode as a timestamp, so the manifest read
+fails before planning sees the bound. The docs described a case that
+planning never handles.",fa961f5c4e978f93c50b8c117cc32b6228ebf1c8,3424,false,,5,734,16,crates,40,7,47,"base; strategic: manifest, round-trip; medium file count; medium churn; has PR number; LanceDB similarity 0.23","CI: Make CVE scan blocking on PRs, informational on main",- feat(scan): optionally retain column statistics on FileScanTask (#3424) (Thanks Anurag Mantripragada!)
+apache/iceberg-rust,27ce65cd344a3e8b38c28fd9c51e1d4c1b0c487d,27ce65c,Christian,christian@vakamo.com,2026-11-12T16:31:53Z,GitHub,noreply@github.com,2026-11-12T16:31:53Z,feat(arrow): read unshredded variant columns (#2880),"* feat(arrow): read unshredded variant columns
+
+Rebased onto main.
+
+* fix(arrow): address review on unshredded variant read
+
+- RecordBatchTransformer matches a variant's metadata/value by name, casts
+  binary storage to the table type and sets arrow.parquet.variant on output
+- projection validates projected variants and tags only projected ones
+- files without field ids or name mapping reject variant projection
+- shredded variants fail with FeatureUnsupported linking #3606
+- tests assert the extension end to end, cover a VARIANT-annotated file,
+  dictionary and LargeBinary storage, name mapping and every malformed shape
+
+* fix(arrow): share variant storage check and cover null reads
+
+- projection and RecordBatchTransformer validate variant storage with one
+  check, so both report shredded storage as FeatureUnsupported and
+  malformed storage as DataInvalid naming the column and field id
+- an optional variant metadata field is DataInvalid
+- tests read null variant rows and a file written before the variant
+  column was added
+
+* test(arrow): read a nested variant under a null struct row",b03f4c2826116e64799c0a0b1fd6669c24251031,2880,false,,3,1747,69,crates,40,7,47,"base; strategic: storage, variant; large churn; has PR number; LanceDB similarity 0.22","API, Core: Scan API for partition stats <gaborkaszab>",- feat(arrow): read unshredded variant columns (#2880) (Thanks Christian!)
+apache/iceberg-rust,5370b61638e205d7caf97889affe5da63aea9b16,5370b61,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-11-06T18:05:35Z,GitHub,noreply@github.com,2026-11-06T18:05:35Z,feat(arrow): read manifest lists into Arrow with arrow-avro (#3631),"* feat(arrow): read manifest lists into Arrow with arrow-avro
+
+* refactor(spec): define manifest field IDs next to their fields.
+
+* fix(arrow): reject unknown manifest list format versions",59946648ef56dcd5b70d46cc7ef90b25a00ed9fb,3631,false,,6,627,95,crates,40,7,47,base; strategic: manifest; medium file count; medium churn; has PR number; LanceDB similarity 0.23,docs: Add CREATE DATABASE step before CREATE TABLE in Spark quickstart,- feat(arrow): read manifest lists into Arrow with arrow-avro (#3631) (Thanks Matt Butrovich!)
+apache/iceberg-rust,17b303c0cad70e8249f6284a973b48d51cc3c0d3,17b303c,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-10-28T09:59:01Z,GitHub,noreply@github.com,2026-10-28T09:59:01Z,ci(python): fail wheel license generation when about.toml needs an update (#3562),"* chore(licensing): drop redundant zstd-sys clarification
+
+With cargo-about 0.9.2, which CI uses, the generated wheel LICENSE is
+byte-identical without this clarification: 0.9.2 keeps zstd-sys's
+detected license files, including the Meta notices. The clarification
+was only needed with 0.9.1, and its checksums go stale on every zstd-sys
+bump.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): fail wheel license generation on stale clarifications
+
+`cargo about generate --fail` exits 0 when a clarification's checksum no
+longer matches; it only logs a WARN and falls back to the license
+template, so the wheel LICENSE gets `<year>` placeholders instead of the
+crate's license text. CI passed, and this was only caught by the manual
+check before a release.
+
+Fail the action on a WARN or a placeholder, so a dependency bump that
+needs an about.toml update fails in its own pull request.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): generate wheel licenses once per pull request
+
+The pull request test job regenerated LICENSE and NOTICE on every OS,
+taking 40-70s each, but the output doesn't depend on the OS and the
+built wheels aren't published. Run it on Linux only; the release and
+nightly workflows still run it for every wheel.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): fail wheel license generation on any cargo-about stderr
+
+Matching `WARN` missed cargo-about's other non-fatal problems: `[ERROR]`
+logs such as an unreadable license file, and the codespan `warning:`
+emitted for a clarification whose crate is no longer a dependency. Fail
+when cargo-about writes anything to stderr instead.
+
+Run the cargo-about binary rather than `cargo about`, since the rustup
+proxy writes to stderr when it installs the pinned toolchain, as it does
+on the Ubuntu PR job. cargo-about's own `cargo metadata` call captures
+its stderr.
+
+Match only `<year>`: every accepted license template with placeholders
+contains it.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): set up the toolchain on Linux and call `cargo about`
+
+`cargo-about` and `cargo about` read too alike to tell apart in review.
+The binary was only called directly because the Linux PR job skipped
+setup-builder, so rustup installed the toolchain inside the cargo about
+step and wrote to stderr. Run setup-builder on Linux too, which moves
+that install out of the step. Release and nightly already set up the
+toolchain first, and the generate step's stderr is empty on all of
+their runners.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): write cargo about output with -o
+
+`2>&1 > file | tee` is easy to misread. With `-o`, cargo about writes the
+output file itself, so its stderr is piped to tee as usual. The file
+loses the trailing newline that stdout adds, so the wheel LICENSE has one
+blank line fewer before the entries from third-party-licenses.txt.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): shorten generate-python-license comment
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): install the toolchain in generate-python-license
+
+Revert the bindings_python_ci.yml changes, so PR CI runs the action on
+every OS again and still skips setup-builder on Linux. Instead, the
+action installs the active toolchain before cargo about, so rustup's
+install output stays out of the stderr check for any caller.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): set up the toolchain in generate-python-license
+
+Use setup-builder before installing cargo-about, like the workflows do,
+instead of a bare `rustup toolchain install` in the generate step. The
+Linux PR job doesn't run setup-builder, so without it rustup would
+install the toolchain during `cargo about` and fail the stderr check.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): drop setup-builder comment in generate-python-license
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* docs(python): rewrite LICENSING.md release checks
+
+Say what CI already checks and how to reproduce a failure, then list the
+hand-maintained entries the release manager checks, and how to check
+each.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* ci(python): run setup-builder on the Linux PR job
+
+Set up the toolchain in the one job that calls generate-python-license
+without it, instead of in the action. The other jobs already do, so they
+no longer run setup-builder twice.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",2135b37730c55ba98fecaae8747bffb7105c0ece,3562,false,Copilot App,4,15,23,.github; bindings,40,5,45,base; multi-area change; co-authored; release/security/notice signal; has PR number; LanceDB similarity 0.16,Remove leaked transitive dependencies from Aliyun module runtime Jars,- ci(python): fail wheel license generation when about.toml needs an update (#3562) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-rust,0ebe240a0f73a3efca2ad4a98326b06ccfd2e30e,0ebe240,Liang-Chi Hsieh,viirya@gmail.com,2026-11-03T19:29:17Z,GitHub,noreply@github.com,2026-11-03T19:29:17Z,fix(spec): record ref removals in TableMetadataBuilder::remove_snapshots (#3580),"remove_snapshots dropped refs pointing at removed snapshots without
+recording RemoveSnapshotRef changes, and left current_snapshot_id set
+when main was one of them. Route the dangling refs through remove_ref,
+matching Java's TableMetadata.Builder.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",896f9d6c50ff52fa9e43aec170d3f14bfb40b512,3580,false,Isaac,1,153,2,crates,38,6,44,base; fix; important area: spec; co-authored; has PR number; LanceDB similarity 0.18,Remove runtime Jar from build and deploy,- fix(spec): record ref removals in TableMetadataBuilder::remove_snapshots (#3580) (Thanks Liang-Chi Hsieh and Isaac!)
+apache/iceberg-rust,af1717ae9287c256b987d0418251443052ead66b,af1717a,Anoop Johnson,anoop@apache.org,2026-10-28T10:20:50Z,GitHub,noreply@github.com,2026-10-28T10:20:50Z,perf(scan): skip deleted entries before partition promotion (#3516),"Discard deleted manifest entries before copying their metadata or
+dispatching scan work. Live entries still widen before partition pruning
+and delete matching, consistent with the spec and Java's live-entry scan.
+
+Share the promotion fixtures' old-schema data manifest and source-drop
+setup while preserving their schema, format, and sequence-number cases.
+
+Follow-up to #3483.",17b303c0cad70e8249f6284a973b48d51cc3c0d3,3516,false,,3,67,159,crates,36,6,42,base; strategic: manifest; medium churn; has PR number; LanceDB similarity 0.19,Core: Add manifest partition pruning to DV validation in MergingSnapshotProducer,- perf(scan): skip deleted entries before partition promotion (#3516) (Thanks Anoop Johnson!)
+apache/iceberg-rust,f533cd6175bb42b5788537f589cd9450a3054d27,f533cd6,Minh Vu,vuhoangminh97@gmail.com,2026-11-04T20:50:19Z,GitHub,noreply@github.com,2026-11-04T20:50:19Z,fix(spec): reject non-finite decimal values (#3331),,f53314e4fab2e2708bd6b94041b701463653fcc2,3331,false,,3,100,3,crates,35,6,41,base; fix; important area: spec; has PR number; LanceDB similarity 0.21,Fix NPE in `ParquetAvroWriter` when schema contains variant type,- fix(spec): reject non-finite decimal values (#3331) (Thanks Minh Vu!)
+apache/iceberg-rust,fa961f5c4e978f93c50b8c117cc32b6228ebf1c8,fa961f5,NoahKusaba,97474796+NoahKusaba@users.noreply.github.com,2026-11-13T07:19:58Z,GitHub,noreply@github.com,2026-11-13T07:19:58Z,refactor(catalog-loader): rename CatalogBuilderFactory to BoxedCatalogBuilderFactory (#3407),"The factories in the registry return a Box<dyn BoxedCatalogBuilder>, not a
+CatalogBuilder, so name the alias after the trait it produces. Suggested in
+review of #3286.",5b1fa2e8e8e94535a22f25cc0ea91b3654e560bf,3407,false,,1,4,4,crates,32,6,38,base; strategic: catalog; has PR number; LanceDB similarity 0.21,Hive: Update view query in HMS when replacing view <wuya>,- refactor(catalog-loader): rename CatalogBuilderFactory to BoxedCatalogBuilderFactory (#3407) (Thanks NoahKusaba!)
+apache/iceberg-rust,fedc8e84655b8b93147b7416e1719d89e0ec3238,fedc8e8,Szehon Ho,szehon.apache@gmail.com,2026-11-05T20:10:22Z,GitHub,noreply@github.com,2026-11-05T20:10:22Z,perf(spec): remove snapshots with direct map lookups (#3615),"* perf(spec): remove snapshots with direct map lookups
+
+* chore(spec): address snapshot removal review feedback
+
+---------
+
+Co-authored-by: Andrei Tserakhau <laskoviymishka@gmail.com>",f533cd6175bb42b5788537f589cd9450a3054d27,3615,false,Andrei Tserakhau,1,41,8,crates,30,7,37,base; important area: spec; co-authored; has PR number; LanceDB similarity 0.24,Spec: Add v4 content stats representation,- perf(spec): remove snapshots with direct map lookups (#3615) (Thanks Szehon Ho and Andrei Tserakhau!)
+apache/iceberg-rust,200ee6593dee84654a3b98aed724c7d094aa18cf,200ee65,Liang-Chi Hsieh,viirya@gmail.com,2026-11-03T22:57:48Z,GitHub,noreply@github.com,2026-11-03T22:57:48Z,fix(arrow): map Iceberg Binary to Arrow Binary instead of LargeBinary (#2710),"* fix(arrow): map Iceberg Binary to Arrow Binary instead of LargeBinary
+
+`type_to_arrow_type` mapped `PrimitiveType::Binary` to `DataType::LargeBinary`,
+which is inconsistent with both the Java implementation
+(`ArrowSchemaUtil` maps Iceberg Binary to Arrow `Binary`) and parquet-rs,
+which reads an unannotated Parquet `BYTE_ARRAY` column as `DataType::Binary`
+by default. The mismatch forces an unnecessary cast when reading Binary
+columns and diverges from the rest of the ecosystem.
+
+Map `PrimitiveType::Binary` to `DataType::Binary`. The reverse conversion
+(`arrow_schema_to_schema`), the arrow-to-literal path, and the bucket
+transform already accept both `Binary` and `LargeBinary`, so externally
+produced `LargeBinary` columns keep working.
+
+Closes #2698
+
+* fix(writer): accept LargeBinary equality columns after the Binary mapping change
+
+With Iceberg Binary now mapped to Arrow Binary, the equality delete
+projector builds its output batch against a Binary schema while reusing
+the input arrays as-is, so batches carrying LargeBinaryArray equality
+columns (accepted before) failed RecordBatch::try_new. Cast LargeBinary
+to Binary in RecordBatchProjector::project_batch and add a regression
+test. Also drop redundant `.as_slice()` in test fixtures.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* fix(arrow): accept LargeBinary source columns in partition value calculation
+
+PartitionValueCalculator builds its result struct against the partition
+Arrow type, which now uses Binary for Iceberg binary fields, while the
+identity transform passes the projected LargeBinary column through, so
+StructArray::try_new failed. Move the LargeBinary -> Binary cast from
+RecordBatchProjector::project_batch into project_column so both callers
+get columns matching the projected schema. This also lets truncate
+partitions on binary fields accept LargeBinary input.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",0ebe240a0f73a3efca2ad4a98326b06ccfd2e30e,2710,false,Isaac,5,160,9,crates,27,8,35,base; fix; medium file count; co-authored; has PR number; LanceDB similarity 0.26,"Spark, Arrow, Parquet: Add vectorized parquet read support for `DELTA_LENGTH_BYTE_ARRAY` & `DELTA_BYTE_ARRAY` encodings",- fix(arrow): map Iceberg Binary to Arrow Binary instead of LargeBinary (#2710) (Thanks Liang-Chi Hsieh and Isaac!)
+apache/iceberg-rust,58af4edf5158709d8ec01643400ec64cfacc779f,58af4ed,KUAN-HAO HUANG,101171023+rich7420@users.noreply.github.com,2026-11-16T19:43:09Z,GitHub,noreply@github.com,2026-11-16T19:43:09Z,fix(reader): keep pages whose index bounds cannot be compared with the predicate (#3507),"* fix(reader): keep pages whose index bounds cannot be compared with the predicate
+
+Page-index bounds are built with the table field type but the file's
+physical literal. When the two differ, e.g. a long field read against
+INT32 pages written before an int -> long promotion, a double field
+against FLOAT pages, or a UINT_32 column mapped to long, the bounds
+never compare with the predicate literal. Inequality and IN predicates
+treated that as ""cannot match"" and skipped pages holding matching rows.
+
+Keep a page whenever its bound cannot be compared with the literal: the
+inequality check now treats an incomparable bound as a possible match,
+and IN uses all(lt) / all(gt) instead of !any(ge) / !any(le).
+
+* test(reader): cover a mixed UINT_32 page in the page-index evaluator
+
+A page holding both 100 and 3_000_000_000 has a raw signed max below its
+min, which pins the unsigned column order that a later bound widening has
+to zero-extend rather than sign-extend.
+
+* test(reader): cover <= and > on INT32 pages of a promoted long field
+
+* test(reader): cover all four inequality operators on promoted float and timestamp pages
+
+* test(reader): pass RowGroupPageIndex to the page-index evaluator in the promoted-type tests
+
+Arrow 60 (#3257) changed PageIndexEvaluator::eval to take a RowGroupPageIndex
+and removed ParquetMetaData::column_index, so the tests added here no longer
+built after merging main.",ff0564170e66e2cd79436513bbba4ac831f8a72b,3507,false,,1,184,19,crates,24,9,33,base; fix; medium churn; has PR number; LanceDB similarity 0.29,Kafka Connect: fix table UUID check,- fix(reader): keep pages whose index bounds cannot be compared with the predicate (#3507) (Thanks KUAN-HAO HUANG!)
+apache/iceberg-rust,63d3d522c44aec588ebb7207834a37a141c3837a,63d3d52,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-11-10T00:51:08Z,GitHub,noreply@github.com,2026-11-10T00:51:08Z,build(python): build pyiceberg-core wheel with opt-level = 3 (#3653),"* build(python): build pyiceberg-core wheel with opt-level = 3
+
+* update docs",e6bb84e24e820a54a7ef37fa192951a4ca1a1dab,3653,false,,1,4,3,bindings,30,3,33,base; community signal: pyiceberg-core; has PR number; LanceDB similarity 0.21; capped LanceDB boost for routine/low-signal commit,"Docker, Docs, Site: Add Flink quickstart",- build(python): build pyiceberg-core wheel with opt-level = 3 (#3653) (Thanks Matt Butrovich!)
+apache/iceberg-rust,ff0564170e66e2cd79436513bbba4ac831f8a72b,ff05641,Christian,christian@vakamo.com,2026-11-16T15:34:38Z,GitHub,noreply@github.com,2026-11-16T15:34:38Z,fix(arrow): wake equality-delete waiters with the notifier of the started load (#3697),"* fix(arrow): wake equality-delete waiters with the notifier of the started load
+
+Co-authored-by: JeonDaehong <90895144+JeonDaehong@users.noreply.github.com>
+
+* Assert that insert_equality_delete gets the notifier of the started load
+
+---------
+
+Co-authored-by: JeonDaehong <90895144+JeonDaehong@users.noreply.github.com>",f52ec21e03c82eb00adffb0869867265aca0ff28,3697,false,JeonDaehong,2,33,11,crates,23,6,29,base; fix; co-authored; has PR number; LanceDB similarity 0.21,"Core, Spark: Moving Spark to use the new FormatModel API",- fix(arrow): wake equality-delete waiters with the notifier of the started load (#3697) (Thanks Christian and JeonDaehong!)
+apache/iceberg-rust,b03f4c2826116e64799c0a0b1fd6669c24251031,b03f4c2,Ethan Woodbury,ewoodbury@x.ai,2026-11-12T08:12:13Z,GitHub,noreply@github.com,2026-11-12T08:12:13Z,fix(arrow): keep struct presence when its requested children are missing (#3438),"* fix(arrow): keep struct presence when its requested children are missing
+
+When none of a struct's requested children are in a Parquet file and
+another column is projected, the projection mask selected no leaf under
+the struct, so it read as NULL on every row. Read one leaf under such a
+struct for its definition level, like Java's PresenceColumnSelector:
+inner structs first, then the leaf with the lowest repetition level,
+then the first. A leaf under a map reads the whole map, and a candidate
+must pass the projection's type check.
+
+Closes #3378
+
+* fix(arrow): count list views in the presence walk, group projected field ids
+
+* fix(arrow): record no presence leaf under a list view",cfbfb2789fb8899f3ffceef25e168ad04ab3a5d7,3438,false,,1,614,39,crates,24,5,29,base; fix; medium churn; has PR number; LanceDB similarity 0.17,Spark: Backport: Add ExecutorService support to RewriteTablePath,- fix(arrow): keep struct presence when its requested children are missing (#3438) (Thanks Ethan Woodbury!)
+apache/iceberg-rust,6f6d68bb29d00cd34a93a4d598f882b97020f676,6f6d68b,龙骑士k,37928252+dragonknightk@users.noreply.github.com,2026-11-06T07:45:07Z,GitHub,noreply@github.com,2026-11-06T07:45:07Z,fix(transform): avoid overflow panic in truncate at integer minimum (#3573),"* fix(transform): match Java truncate wrapping arithmetic
+
+## Which issue does this PR close?
+
+- Closes issue 3141.
+
+## What changes are included in this PR?
+
+`truncate_i32` used `rem_euclid`, while `truncate_i64` and `truncate_decimal_i128` used `(v % w + w) % w`. Both shapes differ from Iceberg Java's `TruncateUtil`, which relies on `int`/`long` overflow wrapping:
+
+- For `truncate_i32`, `rem_euclid` never overflows, so any width above `2^30` produced a different partition value than Java.
+- For the other two, the final subtraction overflowed at the integer minimum, panicking in debug builds and wrapping to the Java value only in release builds.
+
+All three helpers now use `wrapping_sub` and `wrapping_add`, so every width reproduces the Java result in both debug and release builds. Each helper has a comment noting that the formula intentionally matches Java, so it is not ""simplified"" back to `rem_euclid` later. The function signatures, the public API, and the call sites are unchanged.
+
+## Are these changes tested?
+
+Three unit tests in `crates/iceberg/src/transform/truncate.rs`. All expected values were computed with Iceberg Java's `TruncateUtil` (1.11.0, JDK 17):
+
+- `test_truncate_int_matches_java` covers the three `i32` cases from the issue, plus the smallest width where `(v % w) + w` can overflow (`2^30 + 1`) and a tiny value at the maximum width. Each case is checked through both `transform` on an array and `transform_literal`.
+- `test_truncate_long_min_matches_java` covers `i64::MIN` with widths 1000 and `i32::MAX`, through the same two paths.
+- `test_truncate_decimal_i128_min_does_not_panic` pins that the decimal path does not panic at `i128::MIN`. That value is outside the range of a 38-digit Iceberg decimal, and Java's `truncateDecimal` works on `BigInteger`, so there is no wrapping result to compare against.
+
+Reverting the helpers to their previous bodies makes all three tests fail. For the `i64` cases the old formula happens to give the Java values once wrapped, so it is caught by the debug-build overflow panic.
+
+## AI Disclosure
+
+Human-led contribution. Codex and Grok Bot, working for dragonknightk, assisted with this change. All submitted content was reviewed by a human before submission.
+
+* fix(transform): follow the spec for truncate remainders
+
+* test(transform): document truncate wrap results and assert the i128 value",72addd94670db273cdb03f4efce23913991a049e,3573,false,,1,92,3,crates,20,8,28,base; fix; has PR number; LanceDB similarity 0.26,"Core, Spark: add the comment table property key",- fix(transform): avoid overflow panic in truncate at integer minimum (#3573) (Thanks 龙骑士k!)
+apache/iceberg-rust,953f956d32cd4cc6803610d32c3e0a0520316f28,953f956,Christian,christian@vakamo.com,2026-11-17T16:44:46Z,GitHub,noreply@github.com,2026-11-17T16:44:46Z,fix(spec): keep refs in format-version 1 table metadata (#3693),"* fix(spec): keep refs in format-version 1 table metadata
+
+* test(spec): cover invalid v1 refs and expiry of v1 refs
+
+* docs: drop the CHANGELOG line for v1 refs
+
+Keeping refs fixes a bug, so it is not a breaking change.",4be78085219af9f1c2093bfcea66ff3d847c7613,3693,false,,3,311,13,crates,24,3,27,base; fix; important area: spec; medium churn; downrank routine build/deps; has PR number; LanceDB similarity 0.30; capped LanceDB boost for routine/low-signal commit,REST Spec: clarify uniqueness of ETags for table metadata responses,- fix(spec): keep refs in format-version 1 table metadata (#3693) (Thanks Christian!)
+apache/iceberg-rust,6612395befbfdb5a00f7a059aa62261964d0d081,6612395,alexanderbianchi,75697973+alexanderbianchi@users.noreply.github.com,2026-11-14T07:12:35Z,GitHub,noreply@github.com,2026-11-14T07:12:35Z,fix(arrow): skip data files with a known zero record count (#3682),"* fix(arrow): skip data files with a known zero record count
+
+* test(arrow): simplify empty-file reader regressions",f99df332478fd9b17e874b6c47d234192ad8f66e,3682,false,,1,104,0,crates,20,7,27,base; fix; has PR number; LanceDB similarity 0.25,Core: Fix BinPackRewriteFilePlanner producing incorrect output file count with max-files-to-rewrite,- fix(arrow): skip data files with a known zero record count (#3682) (Thanks alexanderbianchi!)
+apache/iceberg-rust,eeb1e41f959589347ac98a0575a325cdc923f6e9,eeb1e41,Christian,christian@vakamo.com,2026-11-15T08:57:19Z,GitHub,noreply@github.com,2026-11-15T08:57:19Z,fix(transaction): keep the retention settings of main on commit (#3694),,4bd146352e87ef6532f0902f561fd023860f7541,3694,false,,1,30,27,crates,20,6,26,base; fix; has PR number; LanceDB similarity 0.20,"CI: Make CVE scan blocking on PRs, informational on main",- fix(transaction): keep the retention settings of main on commit (#3694) (Thanks Christian!)
+apache/iceberg-rust,da389801242befa9191ffde4af3824c1c3f2e279,da38980,Liang-Chi Hsieh,viirya@gmail.com,2026-11-12T21:23:24Z,GitHub,noreply@github.com,2026-11-12T21:23:24Z,feat(transaction): update the name mapping when UpdateSchemaAction adds columns (#3665),"* feat(transaction): update the name mapping when UpdateSchemaAction adds columns
+
+When a table has schema.name-mapping.default, UpdateSchemaAction now adds
+entries for added columns to it in the same commit, as Java's
+MappingUtil.update does: new entries go under the parent's entry, an
+existing entry in the same struct loses a name an added column takes, and
+deleted columns keep their entries. A mapping that fails to parse is
+logged and left unchanged.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* fix(transaction): skip name mapping entries for additions under deleted ancestors
+
+An addition whose parent is deleted in the same update is dropped from the
+new schema, and its ID can be assigned again later. Giving it a name
+mapping entry would let id-less files resolve that name to an unrelated
+column. Also look up added names through a map instead of scanning the
+additions for every alias.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",27ce65cd344a3e8b38c28fd9c51e1d4c1b0c487d,3665,false,Isaac,1,391,5,crates,19,6,25,base; medium churn; co-authored; has PR number; LanceDB similarity 0.20,Hive: Update view query in HMS when replacing view <wuya>,- feat(transaction): update the name mapping when UpdateSchemaAction adds columns (#3665) (Thanks Liang-Chi Hsieh and Isaac!)
+apache/iceberg-rust,d15dca02c53db98de233e43aeebb6e4d0c620c10,d15dca0,Christian,christian@vakamo.com,2026-11-16T15:20:42Z,GitHub,noreply@github.com,2026-11-16T15:20:42Z,fix(spec): validate the metadata log in build() with the entry for the previous file (#3695),"* fix(spec): validate the metadata log in build() with the entry for the previous file
+
+* test(spec): metadata change after a branch snapshot within the clock-skew tolerance builds",eeb1e41f959589347ac98a0575a325cdc923f6e9,3695,false,,1,64,1,crates,20,3,23,base; fix; important area: spec; downrank routine build/deps; has PR number; LanceDB similarity 0.33; capped LanceDB boost for routine/low-signal commit,OpenAPI: Promote the S3 signing endpoint to the main spec,- fix(spec): validate the metadata log in build() with the entry for the previous file (#3695) (Thanks Christian!)
+apache/iceberg-rust,1ee5c72a7a56f5b519e7bf5c8c04660f5f070d78,1ee5c72,Jegor van Opdorp,jegorvanopdorp@gmail.com,2026-10-30T22:40:54Z,GitHub,noreply@github.com,2026-10-30T22:40:54Z,fix(spec): format dropped-source integer partition values (#3432),"* Format dropped-source integer partition values
+
+* fix(spec): format dropped-source decimal and uuid partition values
+
+* Summarize deleted files with a schema that still has their partition sources
+
+* Print int and long partition values across promotion
+
+* Resolve the summary schema once per partition spec
+
+* Build the dropped-source test history in promotion order",4dd8c946432f5e56a3ccc88e5b438a356ba28287,3432,false,,3,115,9,crates,20,3,23,base; fix; important area: spec; downrank routine build/deps; has PR number; LanceDB similarity 0.23; capped LanceDB boost for routine/low-signal commit,Core: Prevent exceptions in ExpressionUtil for unpartitioned tables,- fix(spec): format dropped-source integer partition values (#3432) (Thanks Jegor van Opdorp!)
+apache/iceberg-rust,e6bb84e24e820a54a7ef37fa192951a4ca1a1dab,e6bb84e,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-11-10T00:31:55Z,GitHub,noreply@github.com,2026-11-10T00:31:55Z,ci: temporarily ignore SQLite advisory blocked by sqlx (#3660),"Document the dev-only SQLite usage and remove the exception once sqlx supports a patched libsqlite3-sys release.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",c523def0a080dac58ef93e6ecd52abec24f006c2,3660,false,Copilot App,1,6,0,.cargo,15,5,20,base; co-authored; has PR number; LanceDB similarity 0.17,Remove runtime Jar from build and deploy,- ci: temporarily ignore SQLite advisory blocked by sqlx (#3660) (Thanks Kevin Liu and Copilot App!)
+apache/iceberg-rust,9aa0b489b89944a88a21975b268b8e15de1eeae2,9aa0b48,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-11-09T10:03:56Z,GitHub,noreply@github.com,2026-11-09T10:03:56Z,docs: ask agents to consider public API maintenance (#3638),"* docs: ask agents to consider public API maintenance
+
+* docs: lead public API guidance with justification",5370b61638e205d7caf97889affe5da63aea9b16,3638,false,,1,17,0,AGENTS.md,0,3,3,base; downrank docs/tests/benchmarks; has PR number; LanceDB similarity 0.26; capped LanceDB boost for routine/low-signal commit,"API, Core: Add FileIO to Scan API",- docs: ask agents to consider public API maintenance (#3638) (Thanks Matt Butrovich!)
+apache/iceberg-rust,6c9739191da5e44c5c097714fa68c0e32696ba8f,6c97391,Gabriel,45515538+gabotechs@users.noreply.github.com,2026-11-10T19:34:43Z,GitHub,noreply@github.com,2026-11-10T19:34:43Z,Bump to Arrow 60 (#3257),"* Bump to Arrow 60
+
+* fix(arrow): borrow page indexes and cover missing offsets
+
+---------
+
+Co-authored-by: Kevin Liu <kevinjqliu@users.noreply.github.com>",b879b9626754501f025516ce0f0e9535fa6fd414,3257,false,Kevin Liu,8,312,229,Cargo.lock; Cargo.toml; crates,-32,3,-29,base; medium file count; medium churn; multi-area change; co-authored; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Bump to Parquet 1.17.0,- Bump to Arrow 60 (#3257) (Thanks Gabriel and Kevin Liu!)
+apache/iceberg-rust,f99df332478fd9b17e874b6c47d234192ad8f66e,f99df33,Jannik Steinmann,jannik.steinmann@datadoghq.com,2026-11-14T07:06:20Z,GitHub,noreply@github.com,2026-11-14T07:06:20Z,build(deps): update quinn-udp to fix security check (#3686),build(deps): update quinn-udp for RUSTSEC-2026-0538,13f84f93f1a09619f473b788b2a88ef1da0c7102,3686,false,,1,2,2,Cargo.lock,-40,3,-37,base; fix; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,Kafka Connect: Fix CVE-2025-67721 in io.airlift:aircompressor by bumping to 2.0.3,- build(deps): update quinn-udp to fix security check (#3686) (Thanks Jannik Steinmann!)
+apache/iceberg-rust,b879b9626754501f025516ce0f0e9535fa6fd414,b879b96,Adam Gutglick,adamgsal@gmail.com,2026-11-10T17:37:52Z,GitHub,noreply@github.com,2026-11-10T17:37:52Z,chore: Bump reqwest to 0.13.5 (#3666),Bump reqwest to 0.13.5,14d4b5ffe1cc7deede7240c83864f55476da0764,3666,false,,3,29,76,Cargo.lock; Cargo.toml; crates,-43,3,-40,base; multi-area change; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,Bump to Parquet 1.17.0,- chore: Bump reqwest to 0.13.5 (#3666) (Thanks Adam Gutglick!)
+apache/iceberg-rust,896f9d6c50ff52fa9e43aec170d3f14bfb40b512,896f9d6,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-02T07:46:48Z,GitHub,noreply@github.com,2026-11-02T07:46:48Z,chore(deps): Bump reqwest from 0.12.28 to 0.13.4 (#3603),"Bumps [reqwest](https://github.com/seanmonstar/reqwest) from 0.12.28 to 0.13.4.
+- [Release notes](https://github.com/seanmonstar/reqwest/releases)
+- [Changelog](https://github.com/seanmonstar/reqwest/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/seanmonstar/reqwest/compare/v0.12.28...v0.13.4)
+
+---
+updated-dependencies:
+- dependency-name: reqwest
+  dependency-version: 0.13.4
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",8aa089a20b0c5469a9aa53cd0e494d1e81a7b628,3603,false,dependabot[bot],0,0,0,,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,OpenAPI: Add SetPartitionStatisticsUpdate/RemovePartitionStatisticsUpdate to TableUpdate,- chore(deps): Bump reqwest from 0.12.28 to 0.13.4 (#3603) (Thanks dependabot[bot]!)
+apache/iceberg-rust,8aa089a20b0c5469a9aa53cd0e494d1e81a7b628,8aa089a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-02T07:46:22Z,GitHub,noreply@github.com,2026-11-02T07:46:22Z,chore(deps): Bump uuid from 1.26.0 to 1.29.0 (#3602),"Bumps [uuid](https://github.com/uuid-rs/uuid) from 1.26.0 to 1.29.0.
+- [Release notes](https://github.com/uuid-rs/uuid/releases)
+- [Commits](https://github.com/uuid-rs/uuid/compare/v1.26.0...v1.29.0)
+
+---
+updated-dependencies:
+- dependency-name: uuid
+  dependency-version: 1.29.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",b000159b13816b80a5fca424fc55e00e9007f736,3602,false,dependabot[bot],1,2,2,Cargo.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,OpenAPI: Add CatalogObjectIdentifier schema,- chore(deps): Bump uuid from 1.26.0 to 1.29.0 (#3602) (Thanks dependabot[bot]!)
+apache/iceberg-rust,b000159b13816b80a5fca424fc55e00e9007f736,b000159,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-02T07:45:56Z,GitHub,noreply@github.com,2026-11-02T07:45:56Z,chore(deps): Bump rand from 0.9.5 to 0.10.2 (#3601),"Bumps [rand](https://github.com/rust-random/rand) from 0.9.5 to 0.10.2.
+- [Release notes](https://github.com/rust-random/rand/releases)
+- [Changelog](https://github.com/rust-random/rand/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/rust-random/rand/compare/0.9.5...0.10.2)
+
+---
+updated-dependencies:
+- dependency-name: rand
+  dependency-version: 0.10.2
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",b91bad9b3f10f5fd5000e2cd00204db68554323c,3601,false,dependabot[bot],0,0,0,,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,AWS: Add scheduled refresh for the S3FileIO held storage credentials,- chore(deps): Bump rand from 0.9.5 to 0.10.2 (#3601) (Thanks dependabot[bot]!)
+apache/iceberg-rust,b91bad9b3f10f5fd5000e2cd00204db68554323c,b91bad9,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-02T07:45:33Z,GitHub,noreply@github.com,2026-11-02T07:45:33Z,chore(deps): Bump actions/download-artifact from 8.0.1 to 8.0.2 (#3599),"Bumps [actions/download-artifact](https://github.com/actions/download-artifact) from 8.0.1 to 8.0.2.
+- [Release notes](https://github.com/actions/download-artifact/releases)
+- [Commits](https://github.com/actions/download-artifact/compare/3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c...9000827ccba6bdab643e8b6fd33ac0654aef8333)
+
+---
+updated-dependencies:
+- dependency-name: actions/download-artifact
+  dependency-version: 8.0.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",37d2ddd04c8f02de57e67ec1c12d68a8c8784666,3599,false,dependabot[bot],2,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Core: Convert metrics to Content Stats,- chore(deps): Bump actions/download-artifact from 8.0.1 to 8.0.2 (#3599) (Thanks dependabot[bot]!)
+apache/iceberg-rust,37d2ddd04c8f02de57e67ec1c12d68a8c8784666,37d2ddd,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-02T07:45:03Z,GitHub,noreply@github.com,2026-11-02T07:45:03Z,chore(deps): Bump pyo3 from 0.29.1 to 0.29.3 (#3600),"Bumps [pyo3](https://github.com/pyo3/pyo3) from 0.29.1 to 0.29.3.
+- [Release notes](https://github.com/pyo3/pyo3/releases)
+- [Changelog](https://github.com/PyO3/pyo3/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/pyo3/pyo3/compare/v0.29.1...v0.29.3)
+
+---
+updated-dependencies:
+- dependency-name: pyo3
+  dependency-version: 0.29.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",31694b04edd7cf66a2fa77c04099683fa6ec2063,3600,false,dependabot[bot],1,10,10,Cargo.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.28; capped LanceDB boost for routine/low-signal commit,Evaluating dependency changes,- chore(deps): Bump pyo3 from 0.29.1 to 0.29.3 (#3600) (Thanks dependabot[bot]!)
+apache/iceberg-rust,31694b04edd7cf66a2fa77c04099683fa6ec2063,31694b0,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-02T07:44:38Z,GitHub,noreply@github.com,2026-11-02T07:44:38Z,chore(deps): Bump taiki-e/install-action from 2.87.21 to 2.87.31 (#3598),"Bumps [taiki-e/install-action](https://github.com/taiki-e/install-action) from 2.87.21 to 2.87.31.
+- [Release notes](https://github.com/taiki-e/install-action/releases)
+- [Changelog](https://github.com/taiki-e/install-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/taiki-e/install-action/compare/4cef1412cce204788f482e778a0b9187f9626a29...1e29709c0ec63babbe8f266397a465f29a825f91)
+
+---
+updated-dependencies:
+- dependency-name: taiki-e/install-action
+  dependency-version: 2.87.31
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",335d0e0851b8ba5ee7977f6ba88cd4fadd7b5238,3598,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.24; capped LanceDB boost for routine/low-signal commit,"API, Core: Scan API for partition stats <gaborkaszab>",- chore(deps): Bump taiki-e/install-action from 2.87.21 to 2.87.31 (#3598) (Thanks dependabot[bot]!)
+apache/iceberg-rust,335d0e0851b8ba5ee7977f6ba88cd4fadd7b5238,335d0e0,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-02T07:44:13Z,GitHub,noreply@github.com,2026-11-02T07:44:13Z,chore(deps): Bump aws-credential-types from 1.2.14 to 1.3.0 (#3597),"Bumps [aws-credential-types](https://github.com/smithy-lang/smithy-rs) from 1.2.14 to 1.3.0.
+- [Release notes](https://github.com/smithy-lang/smithy-rs/releases)
+- [Changelog](https://github.com/smithy-lang/smithy-rs/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/smithy-lang/smithy-rs/commits)
+
+---
+updated-dependencies:
+- dependency-name: aws-credential-types
+  dependency-version: 1.3.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",d0b6d07dda6a928f888a6509bb5f090bafe75305,3597,false,dependabot[bot],1,2,2,Cargo.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.22; capped LanceDB boost for routine/low-signal commit,Core: Remove deprecation from ViewProperties.WRITE_METADATA_LOCATION,- chore(deps): Bump aws-credential-types from 1.2.14 to 1.3.0 (#3597) (Thanks dependabot[bot]!)
+apache/iceberg-rust,d0b6d07dda6a928f888a6509bb5f090bafe75305,d0b6d07,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-02T07:43:46Z,GitHub,noreply@github.com,2026-11-02T07:43:46Z,chore(deps): Bump rust-lang/crates-io-auth-action from 1.0.5 to 1.0.6 (#3596),"Bumps [rust-lang/crates-io-auth-action](https://github.com/rust-lang/crates-io-auth-action) from 1.0.5 to 1.0.6.
+- [Release notes](https://github.com/rust-lang/crates-io-auth-action/releases)
+- [Commits](https://github.com/rust-lang/crates-io-auth-action/compare/c6f97d42243bad5fab37ca0427f495c86d5b1a18...3268eb413133e2960fa4ae0e963ca76380c54cd9)
+
+---
+updated-dependencies:
+- dependency-name: rust-lang/crates-io-auth-action
+  dependency-version: 1.0.6
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",9662e5748d7aeaa8b7efe94d404151bda9b6e97c,3596,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,https://github.com/apache/iceberg/milestone/59,- chore(deps): Bump rust-lang/crates-io-auth-action from 1.0.5 to 1.0.6 (#3596) (Thanks dependabot[bot]!)
+apache/iceberg-rust,9662e5748d7aeaa8b7efe94d404151bda9b6e97c,9662e57,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-02T07:43:05Z,GitHub,noreply@github.com,2026-11-02T07:43:05Z,chore(deps): Bump crate-ci/typos from 1.50.2 to 1.51.1 (#3595),"Bumps [crate-ci/typos](https://github.com/crate-ci/typos) from 1.50.2 to 1.51.1.
+- [Release notes](https://github.com/crate-ci/typos/releases)
+- [Changelog](https://github.com/crate-ci/typos/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/crate-ci/typos/compare/512fc24f32f44ab01972217aaaf3dc86ec234d53...7f9d0819ca1c008ade73f4b41fa9d258d48f605b)
+
+---
+updated-dependencies:
+- dependency-name: crate-ci/typos
+  dependency-version: 1.51.1
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",61242697fa93b8845526e4b4dd532344c9b9d316,3595,false,dependabot[bot],1,1,1,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.18; capped LanceDB boost for routine/low-signal commit,Flink: Support Variant to Flink 2.1,- chore(deps): Bump crate-ci/typos from 1.50.2 to 1.51.1 (#3595) (Thanks dependabot[bot]!)
+apache/iceberg-rust,61242697fa93b8845526e4b4dd532344c9b9d316,6124269,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-02T07:42:38Z,GitHub,noreply@github.com,2026-11-02T07:42:38Z,chore(deps): Bump the codeql-action group with 2 updates (#3594),"Bumps the codeql-action group with 2 updates: [github/codeql-action/init](https://github.com/github/codeql-action) and [github/codeql-action/analyze](https://github.com/github/codeql-action).
+
+
+Updates `github/codeql-action/init` from 4.38.2 to 4.39.1
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2...9b3254085494b55a0f7c4c2b3d2d52cc712ce370)
+
+Updates `github/codeql-action/analyze` from 4.38.2 to 4.39.1
+- [Release notes](https://github.com/github/codeql-action/releases)
+- [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/github/codeql-action/compare/2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2...9b3254085494b55a0f7c4c2b3d2d52cc712ce370)
+
+---
+updated-dependencies:
+- dependency-name: github/codeql-action/init
+  dependency-version: 4.39.1
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: codeql-action
+- dependency-name: github/codeql-action/analyze
+  dependency-version: 4.39.1
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: codeql-action
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",5a4c52f0867f0ab32ab7c44dd709acac6bcc3c4e,3594,false,dependabot[bot],1,2,2,.github,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.15; capped LanceDB boost for routine/low-signal commit,"Spark: fix NPE thrown for MAP/LIST columns on DELETE, UPDATE, and MERGE operations",- chore(deps): Bump the codeql-action group with 2 updates (#3594) (Thanks dependabot[bot]!)
+apache/iceberg-rust,5a4c52f0867f0ab32ab7c44dd709acac6bcc3c4e,5a4c52f,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-02T07:41:54Z,GitHub,noreply@github.com,2026-11-02T07:41:54Z,chore(deps): Bump tokio from 1.53.3 to 1.54.1 (#3593),"Bumps [tokio](https://github.com/tokio-rs/tokio) from 1.53.3 to 1.54.1.
+- [Release notes](https://github.com/tokio-rs/tokio/releases)
+- [Commits](https://github.com/tokio-rs/tokio/compare/tokio-1.53.3...tokio-1.54.1)
+
+---
+updated-dependencies:
+- dependency-name: tokio
+  dependency-version: 1.54.1
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",fb72fc954e366e3e07e24212f62a01d5de8c89bf,3593,false,dependabot[bot],1,15,15,Cargo.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.19; capped LanceDB boost for routine/low-signal commit,Build: Bump roaringbitmap from 1.3.0 to 1.6.0,- chore(deps): Bump tokio from 1.53.3 to 1.54.1 (#3593) (Thanks dependabot[bot]!)
+apache/iceberg-rust,fb72fc954e366e3e07e24212f62a01d5de8c89bf,fb72fc9,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-02T07:41:27Z,GitHub,noreply@github.com,2026-11-02T07:41:27Z,chore(deps): Bump the arrow-parquet group with 8 updates (#3592),"Bumps the arrow-parquet group with 8 updates:
+
+| Package | From | To |
+| --- | --- | --- |
+| [arrow-arith](https://github.com/apache/arrow-rs) | `59.3.0` | `59.3.2` |
+| [arrow-array](https://github.com/apache/arrow-rs) | `59.3.0` | `59.3.2` |
+| [arrow-buffer](https://github.com/apache/arrow-rs) | `59.3.0` | `59.3.2` |
+| [arrow-cast](https://github.com/apache/arrow-rs) | `59.3.0` | `59.3.2` |
+| [arrow-ord](https://github.com/apache/arrow-rs) | `59.3.0` | `59.3.2` |
+| [arrow-schema](https://github.com/apache/arrow-rs) | `59.3.0` | `59.3.2` |
+| [arrow-select](https://github.com/apache/arrow-rs) | `59.3.0` | `59.3.2` |
+| [arrow-string](https://github.com/apache/arrow-rs) | `59.3.0` | `59.3.2` |
+
+
+Updates `arrow-arith` from 59.3.0 to 59.3.2
+- [Release notes](https://github.com/apache/arrow-rs/releases)
+- [Changelog](https://github.com/apache/arrow-rs/blob/59.3.2/CHANGELOG.md)
+- [Commits](https://github.com/apache/arrow-rs/compare/59.3.0...59.3.2)
+
+Updates `arrow-array` from 59.3.0 to 59.3.2
+- [Release notes](https://github.com/apache/arrow-rs/releases)
+- [Changelog](https://github.com/apache/arrow-rs/blob/59.3.2/CHANGELOG.md)
+- [Commits](https://github.com/apache/arrow-rs/compare/59.3.0...59.3.2)
+
+Updates `arrow-buffer` from 59.3.0 to 59.3.2
+- [Release notes](https://github.com/apache/arrow-rs/releases)
+- [Changelog](https://github.com/apache/arrow-rs/blob/59.3.2/CHANGELOG.md)
+- [Commits](https://github.com/apache/arrow-rs/compare/59.3.0...59.3.2)
+
+Updates `arrow-cast` from 59.3.0 to 59.3.2
+- [Release notes](https://github.com/apache/arrow-rs/releases)
+- [Changelog](https://github.com/apache/arrow-rs/blob/59.3.2/CHANGELOG.md)
+- [Commits](https://github.com/apache/arrow-rs/compare/59.3.0...59.3.2)
+
+Updates `arrow-ord` from 59.3.0 to 59.3.2
+- [Release notes](https://github.com/apache/arrow-rs/releases)
+- [Changelog](https://github.com/apache/arrow-rs/blob/59.3.2/CHANGELOG.md)
+- [Commits](https://github.com/apache/arrow-rs/compare/59.3.0...59.3.2)
+
+Updates `arrow-schema` from 59.3.0 to 59.3.2
+- [Release notes](https://github.com/apache/arrow-rs/releases)
+- [Changelog](https://github.com/apache/arrow-rs/blob/59.3.2/CHANGELOG.md)
+- [Commits](https://github.com/apache/arrow-rs/compare/59.3.0...59.3.2)
+
+Updates `arrow-select` from 59.3.0 to 59.3.2
+- [Release notes](https://github.com/apache/arrow-rs/releases)
+- [Changelog](https://github.com/apache/arrow-rs/blob/59.3.2/CHANGELOG.md)
+- [Commits](https://github.com/apache/arrow-rs/compare/59.3.0...59.3.2)
+
+Updates `arrow-string` from 59.3.0 to 59.3.2
+- [Release notes](https://github.com/apache/arrow-rs/releases)
+- [Changelog](https://github.com/apache/arrow-rs/blob/59.3.2/CHANGELOG.md)
+- [Commits](https://github.com/apache/arrow-rs/compare/59.3.0...59.3.2)
+
+---
+updated-dependencies:
+- dependency-name: arrow-arith
+  dependency-version: 59.3.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: arrow-parquet
+- dependency-name: arrow-array
+  dependency-version: 59.3.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: arrow-parquet
+- dependency-name: arrow-buffer
+  dependency-version: 59.3.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: arrow-parquet
+- dependency-name: arrow-cast
+  dependency-version: 59.3.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: arrow-parquet
+- dependency-name: arrow-ord
+  dependency-version: 59.3.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: arrow-parquet
+- dependency-name: arrow-schema
+  dependency-version: 59.3.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: arrow-parquet
+- dependency-name: arrow-select
+  dependency-version: 59.3.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: arrow-parquet
+- dependency-name: arrow-string
+  dependency-version: 59.3.2
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: arrow-parquet
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",1ee5c72a7a56f5b519e7bf5c8c04660f5f070d78,3592,false,dependabot[bot],1,19,19,Cargo.lock,-70,3,-67,base; co-authored; downrank bot; downrank dependency bump; downrank routine build/deps; has PR number; LanceDB similarity 0.17; capped LanceDB boost for routine/low-signal commit,OpenAPI: Promote the S3 signing endpoint to the main spec,- chore(deps): Bump the arrow-parquet group with 8 updates (#3592) (Thanks dependabot[bot]!)
