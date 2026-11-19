@@ -9833,3 +9833,91 @@ apache/iceberg-cpp,77fbd76e50dc8d5fb296bd8214a6fd7fe20627f7,77fbd76,Manu Zhang,O
 BREAKING CHANGE: remove the exported SnapshotsScan, HistoryScan, and RefsScan classes and their direct Make factories.
 
 Co-authored-by: Codex <codex@openai.com>",a9dace15624a2eba49ba410753c1da952a6415c0,1139,false,Codex,6,63,51,src
+apache/iceberg-cpp,6c7b2a5e69d0499284f7c27f0d8013c7f4315b35,6c7b2a5,Gang Wu,ustcwg@gmail.com,2026-11-19T10:49:52+08:00,GitHub,noreply@github.com,2026-11-19T10:49:52+08:00,fix: retain transaction base metadata across table refresh (#1140),"* fix: retain transaction base metadata across table refresh
+
+Keep the metadata builder base alive independently of the shared Table and replace both during rebase. Add a deterministic lifetime regression for caller-triggered refresh.
+
+* refactor: reset transaction base and metadata builder together
+
+Centralize the ownership update for initialization and rebase, and keep the regression focused on base metadata surviving table refresh.
+
+* ci: pin CMake to 4.4.5 for sanitizer tests
+
+Avoid the Boost.Locale source_group configuration failure with CMake 4.5.0 and verify that the pinned version is used.
+
+---------
+
+Co-authored-by: Codex <codex@openai.com>",77fbd76e50dc8d5fb296bd8214a6fd7fe20627f7,1140,false,Codex,4,34,6,.github; src
+apache/iceberg-cpp,f14ac87ea2c3abd47fdafbad266440662fae7781,f14ac87,Saurabh,saurabhofficial@hotmail.com,2026-11-19T08:21:34+05:30,GitHub,noreply@github.com,2026-11-19T10:51:34+08:00,feat(benchmark): add metrics evaluator benchmarks (#1116),"* feat(benchmark): add metrics evaluator benchmarks
+
+Add Google Benchmark coverage for InclusiveMetricsEvaluator and
+StrictMetricsEvaluator. Each benchmark evaluates one data file per
+iteration with a prebuilt evaluator, as in scan planning, and is
+parameterized by the number of predicates in the filter.
+
+Also add an add_iceberg_benchmark() CMake helper.
+
+Part of #690.
+
+* feat(benchmark): run metrics evaluator benchmarks with and without nulls
+
+Nulls let several predicates skip reading the bounds, so measure both cases.
+
+---------
+
+Co-authored-by: Saurabh Kumar <skumar1415@bloomberg.net>",6c7b2a5e69d0499284f7c27f0d8013c7f4315b35,1116,false,Saurabh Kumar,2,218,5,src
+apache/iceberg-cpp,1e90d9890d7be9f73a2351d75017b007f3e9d2c7,1e90d98,Gang Wu,ustcwg@gmail.com,2026-11-19T10:55:52+08:00,GitHub,noreply@github.com,2026-11-19T10:55:52+08:00,fix: return null row lineage when first_row_id is unassigned (#1137),"Parquet and Avro readers currently inherit sequence numbers or preserve physical lineage values when a data file has no assigned first_row_id. The v3 specification requires both _row_id and _last_updated_sequence_number to be null in this case. We should apply this rule to Parquet and both Avro decoding paths, and update existing tests to cover missing and physically stored lineage columns.",f14ac87ea2c3abd47fdafbad266440662fae7781,1137,false,,8,54,23,src
+apache/iceberg-cpp,dc57c8fcc828e18a8d5b4dd434ad79ec9d02665a,dc57c8f,Manu Zhang,OwenZhang1990@gmail.com,2026-11-19T13:52:05+08:00,GitHub,noreply@github.com,2026-11-19T13:52:05+08:00,fix(ci): pin CMake for AWS and Windows SQL tests (#1148),,1e90d9890d7be9f73a2351d75017b007f3e9d2c7,1148,false,,2,23,0,.github
+apache/iceberg-cpp,e5b0639038b3b42efc825d267dc5be9e7855c188,e5b0639,Junwang Zhao,zhjwpku@gmail.com,2026-11-19T19:50:18+08:00,GitHub,noreply@github.com,2026-11-19T19:50:18+08:00,fix(ci): pin CMake and fix Windows shared builds (#1149),"Pin CMake to 4.4.5 across C++ build workflows to avoid the
+Boost.Locale configuration failure with CMake 4.5.
+
+Move Avro and Parquet reader/writer constructors out of line so
+Impl is complete when unique_ptr cleanup is instantiated.",dc57c8fcc828e18a8d5b4dd434ad79ec9d02665a,1149,false,,12,81,12,.github; src
+apache/iceberg-cpp,82ee439591bbcdb30501a7a967728ad26bd19188,82ee439,Gang Wu,ustcwg@gmail.com,2026-11-19T20:19:39+08:00,GitHub,noreply@github.com,2026-11-19T20:19:39+08:00,fix: preserve staged manifest dependencies during transaction replay (#1104),"Transaction replay currently calls `CleanupUpdates()` before reapplying
+pending updates. This deletes staged files that later updates in the same
+transaction may still reference.
+
+For example:
+
+1. A staged append creates manifest M0.
+2. A later `RewriteManifests` replaces M0 with a caller-provided manifest.
+3. An unrelated property update forces the transaction to replay.
+4. Cleanup deletes M0, and the append generates a different manifest path.
+5. The rewrite fails because its declared source manifest no longer exists.
+
+Simply retaining all cached state is also unsafe. A manifest can keep the
+same path while inheriting different sequence numbers or row IDs on replay.
+Derived caches and explicit replacements must not silently carry values
+from an earlier attempt into the committed snapshot.
+
+Separate replay preparation from terminal file cleanup:
+
+- Add `PrepareForReplay()` to reset attempt-dependent state without deleting
+  staged files. FastAppend and MergingSnapshotUpdate reuse their immutable
+  append outputs. MergingSnapshotUpdate clears derived filter/merge caches,
+  and RewriteManifests rebuilds its rewrite outputs.
+- Validate the sequence number, minimum sequence number, and first row ID of
+  explicitly replaced source manifests. Changed inheritance metadata causes
+  a validation failure.
+- Preserve copied-manifest summaries across attempts. Resume incomplete
+  copy batches from the first uncopied input, and merge each copy's summary
+  only after that copy succeeds.
+- Centralize generated-file cleanup in SnapshotUpdate's staging registry,
+  including owned merged-DV files. After success, protect files referenced
+  by every retained snapshot added by the transaction, including intermediate
+  and staged-only snapshots.
+- Derive expected snapshot IDs from the final `AddSnapshot` changes. Skip
+  snapshot-file cleanup if committed metadata omits any expected snapshot
+  or file discovery fails, so a partial keep-set cannot delete live files.
+  Known failures and aborts clean staged files; unknown outcomes preserve them.
+- Reset per-attempt reporting snapshots and expiration cleanup plans.
+  A cherry-pick that becomes a fast-forward must not report an abandoned
+  draft, and a no-op expiration must not execute an earlier cleanup plan.
+
+Redundant cleanup helpers and file tracking are removed, and the cleanup
+contract now explicitly leaves physical deletion to the staging registry.
+
+Regression coverage includes repeated append-to-rewrite replay, inherited
+metadata changes across branches, stale replacement rejection, copied
+manifest reuse and copy resumption, intermediate snapshot retention, and
+cherry-pick transitions to fast-forward.",e5b0639038b3b42efc825d267dc5be9e7855c188,1104,false,,15,652,223,src

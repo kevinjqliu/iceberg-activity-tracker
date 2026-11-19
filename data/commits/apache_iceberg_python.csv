@@ -9546,3 +9546,73 @@ metrics comparisons stay exact (metadata tables can still raise OverflowError fo
 outside the Arrow range).
 
 Co-authored-by: Isaac <no-reply@databricks.com>",ba3ae084dcf6c7fd0897f924970d587fc33bd154,4409,false,Isaac,3,82,2,pyiceberg; tests
+apache/iceberg-python,8f6ea309f5a0e6bfea8dcfe50e2f45702e0753a2,8f6ea30,Faris Basha TM,72191505+farisbasha@users.noreply.github.com,2026-11-18T21:17:17Z,GitHub,noreply@github.com,2026-11-18T21:17:17Z,Fix the BigQuery namespace-exists error message (#4415),"The message was a plain string, so it showed the literal
+""{database_name}"" instead of the namespace name. Make it an f-string
+and add a test for create_namespace on an existing dataset.",a1a4f77b1a18c4dc9f3265377e1d1fbed644c77e,4415,false,,2,16,3,pyiceberg; tests
+apache/iceberg-python,f26689aaa29135a31fc14474dd363c7600d1e173,f26689a,Gedalia Kliger,117381134+gedaliakliger@users.noreply.github.com,2026-11-18T21:29:44Z,GitHub,noreply@github.com,2026-11-18T21:29:44Z,Write decimal default values in plain notation (#4420),"Write decimal JSON single values in plain notation
+
+str() renders a Decimal with a small magnitude in scientific notation, so a
+decimal(20, 8) default of zero was written to table metadata as 0E-8. The spec
+uses the digits after the decimal point to carry the scale, and Java writes
+toPlainString() for a non-negative scale.",8f6ea309f5a0e6bfea8dcfe50e2f45702e0753a2,4420,false,,2,7,0,pyiceberg; tests
+apache/iceberg-python,7c425ed9eea62263e6e5ae508fc02c60e70cb29c,7c425ed,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-19T12:44:56Z,GitHub,noreply@github.com,2026-11-19T12:44:56Z,Read deletion vectors whose first bitmaps are empty (#4425),"DeletionVector.to_vector() built its chunked array without a type, so an
+empty first bitmap (positions only at or above 2**32) or a vector with no
+bitmaps raised ArrowInvalid, and a vector of only empty bitmaps came back
+null-typed. Build it as int64.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",f26689aaa29135a31fc14474dd363c7600d1e173,4425,false,Isaac,2,22,1,pyiceberg; tests
+apache/iceberg-python,85dbedc66847dc6ebef5e52e52391fe73970d5c3,85dbedc,Shivam Sharma,192242476+ShivamSharma43@users.noreply.github.com,2026-11-19T14:49:39Z,GitHub,noreply@github.com,2026-11-19T14:49:39Z,Remove partition statistics of removed snapshots (#4364),"RemoveSnapshotsUpdate dropped the statistics files of removed snapshots
+but kept their partition statistics files, so expire_snapshots left
+partition-statistics entries that point at snapshots that no longer
+exist. Iceberg Java removes both in TableMetadata.Builder.
+
+
+Claude-Session: https://claude.ai/code/session_012XPuJeHi7A5CeHSKHjHmwx
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",7c425ed9eea62263e6e5ae508fc02c60e70cb29c,4364,false,Claude Opus 5.5,2,34,2,pyiceberg; tests
+apache/iceberg-python,d6e660af265340b8b56e64d8ab9af273fb74a594,d6e660a,Alex Stephen,1325798+rambleraptor@users.noreply.github.com,2026-11-19T15:30:49Z,GitHub,noreply@github.com,2026-11-19T15:30:49Z,Row lineage: Read _last_updated_sequence_number (#4413),"* Row lineage: Read _last_updated_sequence_number
+
+Carry the data sequence number of each data file on FileScanTask, and fill
+null _last_updated_sequence_number values with it, as the Java readers do.
+The value is null when the file has no first row ID or no data sequence
+number, such as for files planned by a REST server.
+
+Part of #4080.
+
+* Row lineage: Show first_row_id in inspect.files()
+
+Add the first_row_id column to the files metadata tables, matching the
+Java files table schema.
+
+Part of #4080.",85dbedc66847dc6ebef5e52e52391fe73970d5c3,4413,false,,7,121,21,mkdocs; pyiceberg; tests
+apache/iceberg-python,87d414398fd7b1b91b488ab4a3d5c2951aab295c,87d4143,Fokko Driesprong,fokko@apache.org,2026-11-19T18:06:34Z,GitHub,noreply@github.com,2026-11-19T18:06:34Z,Point agents at the Iceberg spec and Java reference implementation (#4426),"* Point agents at the Iceberg spec and Java reference implementation
+
+Agents had no instruction to validate behavior against the spec, or to
+fall back to the Java implementation where the spec is ambiguous.
+
+* Address review: drop link-check disables, add REST spec, broaden Java guidance
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",d6e660af265340b8b56e64d8ab9af273fb74a594,4426,false,Isaac,1,6,0,AGENTS.md
+apache/iceberg-python,046e5843cffe86b076ecac3ccd69d452cf58b504,046e584,Xander,zander181@googlemail.com,2026-11-19T20:28:03Z,GitHub,noreply@github.com,2026-11-19T20:28:03Z,feat(encryption): [14/N] Add EncryptedOutputFile (#4380),"* Add EncryptedOutputFile
+
+Writes a file, such as a manifest, as an AGS1 stream and records its key
+metadata with the written file length.
+
+* Close EncryptedOutputFile stream even if the write fails
+
+Otherwise garbage collection calls close again and retries the write.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Add @override to EncryptedOutputFile methods
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",87d414398fd7b1b91b488ab4a3d5c2951aab295c,4380,false,Copilot App; Kevin Liu,2,102,4,pyiceberg; tests

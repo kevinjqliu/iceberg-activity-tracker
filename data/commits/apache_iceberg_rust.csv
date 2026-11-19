@@ -35713,3 +35713,77 @@ Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 
 Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",5ebaa020e647a66007dbacea92a98ba7da860eb2,3652,false,Copilot App; Kevin Liu,5,812,212,bindings; crates
+apache/iceberg-rust,219078c9d8d82cdc431af77a430e07c8fe56bd65,219078c,Shawn Chang,schang@apache.org,2026-11-19T15:00:33Z,GitHub,noreply@github.com,2026-11-19T15:00:33Z,perf(scan): parse manifests concurrently (#3670),"* perf(scan): parse manifests concurrently
+
+TableScan::plan_files loads manifests from one task spawned on the io
+runtime, and ManifestReader::read parsed each manifest on that task, so
+the Avro decoding of every manifest in a snapshot ran one after another
+while the other workers idled. Planning a 601-manifest table spent about
+80% of its time in Manifest::try_from_avro_bytes on a single core.
+
+ManifestReader now takes an optional Runtime and runs the parse on its
+cpu handle, which is what Runtime::cpu is documented for; the fetch
+stays on the calling io task. The scan passes the table's runtime
+through ObjectCache::get_manifest, so up to
+concurrency_limit_manifest_files parses run in parallel. ObjectCache
+itself stores no runtime, so Table::with_runtime keeps sharing it.
+
+Spawning the whole per-manifest future on io() would parallelise but
+keep CPU work on the io runtime; spawning it on cpu() would run storage
+IO on a runtime that an engine using iceberg-rust for planning only may
+build without an IO driver. spawn rather than spawn_blocking keeps the
+parse within the worker count the embedding engine sized cpu() with,
+matching how the entry stages in plan_files already spawn their work.
+
+A panic or cancellation in a parse surfaces as ErrorKind::Unexpected
+through JoinHandle, and try_for_each_concurrent stops starting new
+manifests on the first error, so the plan stream ends with that error
+exactly as it does for a read error.
+
+plan_bench medians (4 workers): SF10 23.9 -> 7.0 ms,
+SF100 232.9 -> 65.4 ms.
+
+(cherry picked from commit ce885c91743e7b6a33c70017ca224173865f758b)
+
+* refactor(scan): require a runtime on ManifestReader and name the manifest on JoinError
+
+ManifestReader took an Option<Runtime>, which left two parse paths: the
+spawned one the scan uses and an inline one that catalog::utils'
+delete_data_files and several tests still took, so manifests read while
+dropping a table were parsed serially. The runtime is now a constructor
+argument, with_runtime is gone, and delete_data_files builds its reader
+from the table. The inline-vs-spawned equivalence test goes with the
+inline path it compared against.
+
+A JoinError from the spawned parse (a panic, or a cpu runtime shut down
+mid-plan) carried only ""spawned task failed""; a parse error already names
+the manifest. The reader now attaches the manifest path as context, so
+every failure out of ManifestReader::read names the file. ObjectCache
+wraps the error with the path too, which is why the scan-level
+cancellation test passed without this; a reader-level test fails without
+it. The scan-level test also asserts the path now, matching its corrupt
+and missing siblings.
+
+* refactor(scan): bind the parse runtime to ObjectCache instead of passing it per call
+
+ObjectCache::get_manifest took a &Runtime on every call, which threaded a
+runtime through PlanContext, ManifestFileContext and validate_files_not_live
+only to hand it to the ManifestReader it builds. The cache now owns the
+runtime it parses on, taken at construction from the TableBuilder, and
+get_manifest has its original signature again.
+
+Table::with_runtime rebinds the cache through ObjectCache::with_runtime,
+which clones the moka cache: a moka Cache is a handle to shared storage,
+so the rebound table keeps every entry the original loaded while its
+misses parse on the new runtime. The with_runtime test now checks both,
+by building the table on a runtime it then shuts down: a cache that kept
+the old runtime fails its first miss, and a cache that did not share
+storage cannot answer for a manifest list whose file has been removed.
+
+* docs(scan): note that manifest reads parse on the table's cpu runtime
+
+Table::manifest_reader and ManifestReader::read now say the parse runs on
+the cpu runtime and fails with ErrorKind::Unexpected once that runtime has
+shut down. The scan-level cancellation test credits ObjectCache's wrapper
+for the manifest path, and points to the reader-level test that pins the
+reader's own context.",641f59049e0aefad0c60e19915ecdb54933e002f,3670,false,,6,264,42,crates
