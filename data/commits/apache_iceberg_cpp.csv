@@ -9921,3 +9921,102 @@ Regression coverage includes repeated append-to-rewrite replay, inherited
 metadata changes across branches, stale replacement rejection, copied
 manifest reuse and copy resumption, intermediate snapshot retention, and
 cherry-pick transitions to fast-forward.",e5b0639038b3b42efc825d267dc5be9e7855c188,1104,false,,15,652,223,src
+apache/iceberg-cpp,847b70c956518d5db15b8f46aae67e50b5d97b62,847b70c,Junwang Zhao,zhjwpku@gmail.com,2026-11-20T11:19:25+08:00,GitHub,noreply@github.com,2026-11-20T11:19:25+08:00,fix(catalog): honor format-version when creating tables (#1080),"SqlCatalog::CreateTable previously always created V2 tables and rejected
+an explicit format-version table property as a reserved key, preventing
+callers from selecting the table format version during creation.
+
+Resolve the requested version in the shared TableMetadata::Make entry
+point, validate it before narrowing, and remove the control property
+before persisting table properties. Keep V2 as the default and preserve
+the explicit-version overload's reserved-property checks.
+
+Preserve the initial version through staged create transactions. Initialize
+SQL and in-memory catalog create builders from the first version update
+and replay subsequent upgrades in order, allowing staged tables to upgrade
+before their create transaction commits.
+
+Add parameterized coverage for supported and invalid versions, reserved
+properties, ordinary and staged creates, and staged V1/V2-to-V3 upgrades.
+Verify the version and properties after reload and in SQL metadata JSON.",82ee439591bbcdb30501a7a967728ad26bd19188,1080,false,,8,391,4,src
+apache/iceberg-cpp,e0f15236ffe530dc1c7ba530b6e146cf534647cf,e0f1523,Manu Zhang,OwenZhang1990@gmail.com,2026-11-20T15:18:36+08:00,GitHub,noreply@github.com,2026-11-20T15:18:36+08:00,feat(inspect): capture scan inputs and open snapshot tasks (#1120),"## Purpose
+
+Regular data-table scans already support snapshot selection through `UseSnapshot()`, `UseRef()`, and `AsOfTime()`. `MetadataScanBuilder` also already exposes these selectors, but its implemented metadata tables (`snapshots`, `history`, and `refs`) use in-memory static tasks and reject time-travel selection.
+
+This PR adds a generic snapshot-task execution path for the upcoming FilesTable (#876), ManifestsTable (#1121), and PartitionsTable (#1122) implementations. Those tables need to read metadata rows for a selected snapshot. The table implementations follow in their own PRs.
+
+A source-table refresh after `NewScan()` must not change a builder's captured inputs. Built scans, tasks, and row streams retain their inputs for their own lifetimes. This PR supplies that ownership contract and builds directly on main.
+
+## Changes and rationale
+
+- **Capture consistent inputs.** The builder captures metadata and FileIO, then derives the schema through `SchemaForScan(captured_metadata)`. FileIO is held separately from `MetadataScanContext` and passed to the table's `MakeScan()` hook, so snapshot tasks retain the captured IO even after a source refresh.
+- **Share snapshot-task execution.** Define `SnapshotMetadataTask` alongside `StaticMetadataTask` in `metadata_scan_task.h/.cc`. Its factory validates the context, FileIO, and row-reader callback. `MetadataScanTaskReader` opens it through that callback, allowing table-specific readers without a dispatch branch for every table.
+- **Validate before reading.** Centralize required metadata/schema checks in `MetadataScanContext::Validate()`, check whole-column projections, and resolve snapshot IDs, references, or timestamps against captured metadata. Reference lookup reuses `SnapshotUtil::LatestSnapshot()` after strict reference validation. Empty main selections return `nullptr`; dangling snapshot IDs remain errors. Main-branch detection is shared through `SnapshotUtil::IsMainBranch()`.
+- **Retain execution inputs.** Tasks can be reopened with independent streams and configurable batch sizes. The builder, task, and active stream each retain the FileIO they need; static in-memory scans do not require FileIO.
+
+## Public API and ABI changes
+
+The public virtual getter changes its return type:
+
+```diff
+- virtual const std::shared_ptr<Schema>& schema() const = 0;
++ virtual std::shared_ptr<Schema> schema() const = 0;
+```
+
+The member function remains `const`. Returning the pointer by value lets implementations copy it under their schema-cache lock, giving callers ownership that remains valid when the cache is replaced. This copies the `shared_ptr`, not the `Schema`.
+
+Derived metadata tables must also update their protected `MakeScan()` override to accept the builder-captured `std::shared_ptr<FileIO>` as its second argument. The PR adds the protected `SchemaForScan()` hook, `SnapshotMetadataTask`, and `TaskKind::kSnapshot`. Existing binary consumers must be rebuilt.
+
+## Execution scope
+
+The initial snapshot scan plans one task using an in-process row-reader callback. Splitting work into multiple tasks and providing serializable task descriptions are follow-up work for parallel and distributed execution.
+
+## Validation
+
+- All 62 metadata tests passed, including missing-input checks, repeated task opening, static scanning without FileIO, and the new FileIO-capture regression across source refresh and builder/scan/task destruction.
+- C++20 public-header compatibility passed.
+- Required pre-commit and changed-code clang-tidy 22.1.8 passed.
+
+Local validation covers the standalone static Debug scan implementation and tests, rebuilt against this revision with unchanged cached static dependencies. Dependent table PRs must pass captured FileIO separately when adapting their `MakeScan()` overrides.",847b70c956518d5db15b8f46aae67e50b5d97b62,1120,false,,21,544,44,src
+apache/iceberg-cpp,021f7a1e1b8216af87d51dfa7bc3b1af830320da,021f7a1,Guotao Yu,guotao.yugt@gmail.com,2026-11-20T17:59:37+08:00,GitHub,noreply@github.com,2026-11-20T17:59:37+08:00,fix(util): guard against OOB read on unvalidated decimal scale deltas (#1084),"Decimal::Rescale and Decimal::Compare index the decimal powers-of-ten
+table by a scale delta guarded only by an ICEBERG_DCHECK, a no-op in
+release builds. DecimalType does not bound scale at construction, so an
+out-of-range scale (e.g. from a metadata type string like
+decimal(9,2000000000)) can drive an out-of-bounds read.
+
+Compute the delta in 64 bits to avoid signed overflow, and replace the
+DCHECK with a real range check: Rescale returns its existing data-loss
+error, and Compare returns the correct sign-based ordering, since
+aligning a nonzero operand past the table's range always overflows.",e0f15236ffe530dc1c7ba530b6e146cf534647cf,1084,false,,2,58,6,src
+apache/iceberg-cpp,687e3562f13891bce4abe8cd5a6c97656ef580cf,687e356,Xiening Dai,xndai@users.noreply.github.com,2026-11-20T06:51:51-08:00,GitHub,noreply@github.com,2026-11-20T22:51:51+08:00,feat(util): add location resolve and relativize helpers (#1124),"Add LocationUtil::HasScheme, ResolveLocation and RelativizeLocation for
+v4 relative paths, as defined in the spec's ""Paths in Metadata""
+section.
+
+- HasScheme is strict RFC 3986 scheme detection on every platform.
+- ResolveLocation returns absolute paths unchanged and joins relative
+  paths to the table location with ""/"", with no normalization or URI
+  parsing. If the table location already ends in ""/"", no second
+  separator is added, since object stores such as S3 treat ""//"" as
+  part of the key.
+- RelativizeLocation strips the table location and one separator when
+  a path is under it, and otherwise returns the path unchanged.
+
+Tests cover every example in the spec's path resolution table, plus
+trailing slashes, sibling prefixes, schemes, escaped characters and
+round trips.
+
+Closes #1123",021f7a1e1b8216af87d51dfa7bc3b1af830320da,1124,false,,3,243,0,src
+apache/iceberg-cpp,0764a5d8f2b401889e39d70f91fc3263767bed78,0764a5d,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-20T16:30:31Z,GitHub,noreply@github.com,2026-11-21T00:30:31+08:00,fix(rest): make HttpClient safe for concurrent requests (#1090),"* fix(rest): make HttpClient safe for concurrent requests
+
+HttpClient sent every request through one cpr::ConnectionPool, and
+libcurl does not support sharing a connection cache between threads.
+Overlapping requests, for example from token refresh or the metrics
+executor, could crash. Give each in-flight request its own pool and
+reuse idle pools.
+
+HttpResponse now copies the status, body and headers out of
+cpr::Response, whose curl handle must be freed before its pool is
+reused.
+
+Closes #1089
+
+Co-authored-by: Claude Opus 5.5 (1M context) <noreply@anthropic.com>",687e3562f13891bce4abe8cd5a6c97656ef580cf,1090,false,Claude Opus 5.5 (1M context),5,186,66,src

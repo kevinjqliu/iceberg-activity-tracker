@@ -36701,3 +36701,129 @@ Signed-off-by: badalprasadsingh <badal@datazip.io>",503c6d0daa1d0b7a44c52ee229e9
 apache/iceberg-go,b6050faa333a8e016f8f1d8ba1e934c19ab9d0ca,b6050fa,Vu,europeantimlapses@gmail.com,2026-11-19T14:22:47+01:00,GitHub,noreply@github.com,2026-11-19T14:22:47+01:00,feat(catalog)!: support isolated FileIO registries (#2612),,bc7d187598f7a3d99eb3e65436d5d79821400601,2612,false,,26,1434,57,catalog; view; website
 apache/iceberg-go,502180be8eb8b5da58285ca64deb60b486ae7e36,502180b,Ayaan,103879986+AynSiddiqui@users.noreply.github.com,2026-11-19T18:54:16+05:30,GitHub,noreply@github.com,2026-11-19T14:24:16+01:00,fix(table): write position deletes with the data file's partition spec (#2639),,b6050faa333a8e016f8f1d8ba1e934c19ab9d0ca,2639,false,,13,194,39,table; website
 apache/iceberg-go,f7dc20dfcf567302c443cc538839bd6421cc7312,f7dc20d,Vu,europeantimlapses@gmail.com,2026-11-19T17:04:31+01:00,GitHub,noreply@github.com,2026-11-19T17:04:31+01:00,fix(table): load full snapshot history before expiration (#2601),,502180be8eb8b5da58285ca64deb60b486ae7e36,2601,false,,14,626,24,catalog; cmd; table; website
+apache/iceberg-go,89805b77d62269050e8168c1d31ea11c84721f71,89805b7,Vu,europeantimlapses@gmail.com,2026-11-20T08:54:59+01:00,GitHub,noreply@github.com,2026-11-20T08:54:59+01:00,fix(table): prevent unsigned partition values from wrapping (#2658),,f7dc20dfcf567302c443cc538839bd6421cc7312,2658,false,,3,341,2,table; website
+apache/iceberg-go,74b684cf085355bfddba0d2c74743bacd5d2eae3,74b684c,Eugen,evgenij.ushin@gmail.com,2026-11-20T12:14:23+03:00,GitHub,noreply@github.com,2026-11-20T10:14:23+01:00,fix(metrics): export commit total_* metrics as OTel gauges (#2666),Signed-off-by: EugenYushin <evgenij.ushin@gmail.com>,89805b77d62269050e8168c1d31ea11c84721f71,2666,false,,3,177,18,metrics; website
+apache/iceberg-go,f4139d3ddcd932e802f196da03fbff67f22e2a56,f4139d3,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-20T20:05:41+01:00,GitHub,noreply@github.com,2026-11-20T20:05:41+01:00,test(catalogtest): cover views (#2651),"* test(catalogtest): cover views
+
+Add a views slice to the catalog conformance suite. RunCatalogTests runs
+it for catalogs that implement catalog.ViewCatalog, found with
+catalog.As, which today means REST, SQL and Hive. Other catalogs skip it
+and Config gets no new flag.
+
+The tests cover create then load (identifier, schema, SQL and dialect),
+a duplicate create returning ErrViewAlreadyExists and leaving the
+original view alone, load and drop of a missing view returning
+ErrNoSuchView, ListViews before a create, after it and after a drop,
+CheckViewExists before and after, and DropNamespace on a namespace that
+still holds a view returning ErrNamespaceNotEmpty.
+
+Views are created with TableSchema (field IDs 1 and 2), so catalogs that
+assign fresh IDs on create and catalogs that keep the given IDs report
+the same schema. ID assignment is out of scope here, as are UpdateView
+and RenameView.
+
+Always register the view subtests and skip them when the catalog does not
+implement ViewCatalog or its view calls return iceberg.ErrNotImplemented.",74b684cf085355bfddba0d2c74743bacd5d2eae3,2651,false,,2,254,1,catalog
+apache/iceberg-go,c78f76e42e52b4e6e6ee70b97a92f4e89f62a970,c78f76e,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-20T20:07:43+01:00,GitHub,noreply@github.com,2026-11-20T20:07:43+01:00,refactor(table)!: move table/substrait to table/internal/substrait (#2649),"ConvertExpr, ConvertSchema and NewExtensionSet return substrait-go v8
+and arrow compute/exprs types, which pins those third-party types into
+the exported API. The package is only used inside table, so move it
+under table/internal with its tests, benchmark and the embedded
+functions_set.yaml, and update the four importing files in table.
+
+This is a pure move: package name, code and behavior are unchanged.
+Code importing table/substrait no longer compiles and there is no
+replacement. substrait-go stays a module dependency because table
+still uses it internally.",f4139d3ddcd932e802f196da03fbff67f22e2a56,2649,false,,13,6,6,internal}; table; website
+apache/iceberg-go,7fec85142880c0a84d81cda1f160ea4d64ccf191,7fec851,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-20T20:08:15+01:00,GitHub,noreply@github.com,2026-11-20T20:08:15+01:00,refactor(io)!: hide gocloud types in blobfs and gcs behind interfaces (#2635),"blobfs.New returned a struct embedding *blob.Bucket, so every gocloud
+bucket method was part of our API. The struct is now unexported and New
+returns a FileIO interface made of the iceberg-go io interfaces it already
+implemented, plus io.Closer so callers can still close the bucket. The
+struct keeps embedding *blob.Bucket, as agreed on the issue.
+
+NewWriter and Writer exposed *blob.WriterOptions and *blob.Writer and
+gcs.ParseGCSConfig returned *gcsblob.Options. None had callers outside
+their package, so they are unexported. blobfs.New still takes a
+*blob.Bucket on purpose.
+
+No behavior change. The hadoop catalog assertion and the azure and rest
+tests now use the interface, and releases.md gets a compatibility note.
+
+Part of #2062.",c78f76e42e52b4e6e6ee70b97a92f4e89f62a970,2635,false,,8,68,93,catalog; io; website
+apache/iceberg-go,88bce2dd294ab4d83eac188879600df51c04ebe0,88bce2d,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-20T20:08:37+01:00,GitHub,noreply@github.com,2026-11-20T20:08:37+01:00,refactor!: fix the remaining initialisms in exported names (#2648),"Rename the last exported identifiers that break Go initialism style,
+following #2307 and #2310:
+
+  table.PropertyUuid              -> table.PropertyUUID
+  table.PropertyCurrentSnapshotId -> table.PropertyCurrentSnapshotID
+  table.ReassignedIds             -> table.ReassignedIDs
+  table.WriteTask.Uuid            -> table.WriteTask.UUID
+  glue.CatalogIdKey               -> glue.CatalogIDKey
+  io.ADLSSasTokenPrefix           -> io.ADLSSASTokenPrefix
+  rest.Oauth2AuthManager          -> rest.OAuth2AuthManager
+  rest.NewOauth2AuthManager       -> rest.NewOAuth2AuthManager
+
+The OAuth2 names now match AuthTypeOAuth2 and WithOAuthToken. Callers,
+tests, doc comments, the nil-source panic message and the website docs
+are updated. Property strings, config keys, JSON and unexported names
+are unchanged, and no deprecated aliases are kept.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",7fec85142880c0a84d81cda1f160ea4d64ccf191,2648,false,,28,112,111,catalog; internal; io; table; website
+apache/iceberg-go,15c1bf0dc0184ca21a062e51ae9b89af0ee9da21,15c1bf0,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-20T20:10:27+01:00,GitHub,noreply@github.com,2026-11-20T20:10:27+01:00,test: check type parsing against the iceberg-verification types fixtures (#2654),"Add TestVerificationTypes, which runs the cases in
+table-spec/types/{primitive,nested,variant,geospatial}/cases.json from an
+iceberg-verification checkout named by ICEBERG_VERIFICATION_DIR, and skips
+when the variable is unset.
+
+Each input is read as the type of a schema field. A valid case must decode
+to the README's language-neutral shape and, when it has a canonical
+spelling, re-serialize to it; an invalid case must be rejected. A mismatch
+on a ""should"" case is reported as advisory_fail through t.Skipf.
+
+geometry-crs84 and geography-crs84-spherical are listed in
+typesFixturesSkip: iceberg-go drops the default CRS and algorithm when
+writing, so it emits geometry and geography instead of the canonical
+parameterized form. That is left for a separate fix. Listed cases still run
+and skip only while they fail; one that passes, or a list entry that names
+no case, fails the test so the list stays current.",88bce2dd294ab4d83eac188879600df51c04ebe0,2654,false,,1,180,0,types_verification_test.go
+apache/iceberg-go,490da9e26e3c0156d26e51a1f0051d0fb80baa02,490da9e,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-20T20:10:41+01:00,GitHub,noreply@github.com,2026-11-20T20:10:41+01:00,test(table): read the iceberg-verification reference tables (#2636),"Add TestReferenceTables, which opens every table listed in
+reference-tables/index.json of an apache/iceberg-verification checkout
+with table.NewFromLocation, scans each snapshot in the table's
+expected/scan.json, and compares the rows with the expected ones as a
+multiset. Both sides are decoded by the Iceberg type of each field ID
+and compared in one canonical form: lists keep their order, maps compare
+as a set of key/value pairs, and a timestamptz compares as microseconds.
+A type the decoder does not handle yet fails the test, so a pin bump
+that brings new types cannot pass silently.
+
+The test reads the checkout path from ICEBERG_VERIFICATION_DIR and skips
+when it is unset, so go test ./... stays hermetic. It also skips when
+/tmp/iceberg-verification, the sentinel root the fixtures' absolute
+paths use, does not resolve.
+
+CI checks out iceberg-verification at a pinned commit on the ubuntu
+go1.27.1 job, creates the symlink and runs the test. Bumping the pin is
+how new reference tables get adopted. All six tables at this pin pass.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",15c1bf0dc0184ca21a062e51ae9b89af0ee9da21,2636,false,,2,452,0,.github; table
+apache/iceberg-go,c4d5b993c934ad6d82d5b075ff364d6bab522c5b,c4d5b99,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-20T20:11:10+01:00,GitHub,noreply@github.com,2026-11-20T20:11:10+01:00,test(encryption): give the concurrent ReadAt timing test more headroom (#2640),"TestStandardEncryptionManager_ConcurrentReadAtOverlaps runs 8 concurrent
+ReadAt calls over a file with a simulated per-read delay and requires them
+to finish within half of the serial time. With a 20 ms delay that bound is
+80 ms, which leaves about 60 ms for scheduler jitter. Under -race on the
+macOS runner that was not enough: the test took 85.8 ms on #2637 and
+failed the same way on #2602.
+
+Raise the delay to 100 ms and keep the bound at half the serial time
+(400 ms). Concurrent reads still take about one delay, and a serialized
+implementation takes about 800 ms and still fails.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",490da9e26e3c0156d26e51a1f0051d0fb80baa02,2640,false,,1,1,1,encryption
+apache/iceberg-go,7eff76695998c58f62d35ec3f0f5ee90621af9fe,7eff766,Shruthi,sruthi1reddy3@gmail.com,2026-11-20T12:26:58-08:00,GitHub,noreply@github.com,2026-11-20T21:26:58+01:00,fix(schema): reject duplicate field IDs when reading schema JSON (#2585),,c4d5b993c934ad6d82d5b075ff364d6bab522c5b,2585,false,,9,299,8,catalog; schema.go; schema_test.go; table; view; website
+apache/iceberg-go,8b3c96972ac8f891fea1652a9d5ff046a27b68aa,8b3c969,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-20T21:27:55+01:00,GitHub,noreply@github.com,2026-11-20T21:27:55+01:00,fix(table): report a promoted identity partition once in the partitions table and partition statistics (#2637),"After an identity partition source is promoted from int to long (or float
+to double), manifests written before the promotion decode the partition
+value as int32 (float32) and newer ones as int64 (float64). The partition
+aggregate tree keys those apart, so Inspect().Partitions() and partition
+statistics returned two rows for the same partition.
+
+CoercePartition and PartitionAggregateTree.LookupPartition now widen
+int32 to int64 when the partition field is long and float32 to float64
+when it is double. Both widenings are exact, so values that differ still
+land in separate rows. ComparablePartitionKey is unchanged.",7eff76695998c58f62d35ec3f0f5ee90621af9fe,2637,false,,6,193,4,table
+apache/iceberg-go,4f5b7f8562347e88d702aa661ba19f8c96a13308,4f5b7f8,Neelesh Salian,nssalian@users.noreply.github.com,2026-11-20T12:32:08-08:00,GitHub,noreply@github.com,2026-11-20T21:32:08+01:00,fix(compaction): match float partitions across a float to double promotion (#2653),,8b3c96972ac8f891fea1652a9d5ff046a27b68aa,2653,false,,4,101,9,table

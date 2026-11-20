@@ -9616,3 +9616,49 @@ Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 
 Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",87d414398fd7b1b91b488ab4a3d5c2951aab295c,4380,false,Copilot App; Kevin Liu,2,102,4,pyiceberg; tests
+apache/iceberg-python,b84df8dd70d2ed6f8a527b742549cb691d4ae5f6,b84df8d,Rahul Seervi,156231451+Rahul-cs50@users.noreply.github.com,2026-11-19T21:12:31Z,GitHub,noreply@github.com,2026-11-19T21:12:31Z,Fix `inspect.entries()` when `column_sizes` is missing (#4199),"* Fix inspect.entries() for data files without column_sizes
+
+column_sizes is optional in a data file, but entries() built it with
+dict(entry.data_file.column_sizes), which raises TypeError when it is
+missing. DuckDB writes data files without it. Use the `or {}` that
+
+Closes #4186
+
+* Shorten the comment in the missing-metrics test
+
+* Set spec_id on the test DataFile
+
+The snapshot producer now reads DataFile.spec_id, so the test failed
+after rebasing onto main.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Drop the Parquet write from the missing-metrics test
+
+inspect only reads manifests, so the data file doesn't need to exist.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Kevin Liu <kevin.jq.liu@gmail.com>
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",046e5843cffe86b076ecac3ccd69d452cf58b504,4199,false,Copilot App; Kevin Liu,2,30,2,pyiceberg; tests
+apache/iceberg-python,07216edd0eca59c1d398e8f77f61ad2d9ae2ef2f,07216ed,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-11-20T04:18:05Z,GitHub,noreply@github.com,2026-11-20T04:18:05Z,Add AWS KMS client and Spark-encrypted table read tests (#4431),"* Add integration tests for reading Spark-encrypted tables
+
+Spark writes encrypted v3 tables through its hive catalog with Java's UnitestKMS, and PyIceberg reads them with a matching in-memory KMS.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Check that Spark encrypts Parquet data files
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+* Use AWS KMS backed by moto for encryption integration tests
+
+Adds AwsKeyManagementClient and a moto KMS service, replacing UnitestKMS and the iceberg-core tests jar in the Spark image.
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",b84df8dd70d2ed6f8a527b742549cb691d4ae5f6,4431,false,Copilot App,5,253,0,dev; pyiceberg; tests
