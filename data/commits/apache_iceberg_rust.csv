@@ -35788,3 +35788,71 @@ shut down. The scan-level cancellation test credits ObjectCache's wrapper
 for the manifest path, and points to the reader-level test that pins the
 reader's own context.",641f59049e0aefad0c60e19915ecdb54933e002f,3670,false,,6,264,42,crates
 apache/iceberg-rust,986153cb568d5296cf541fba77348ac927189112,986153c,Xuanwo,github@xuanwo.io,2026-11-20T10:13:12Z,GitHub,noreply@github.com,2026-11-20T10:13:12Z,chore(deps): bump opendal from 0.58 to 0.59 (#3728),,219078c9d8d82cdc431af77a430e07c8fe56bd65,3728,false,,2,310,343,Cargo.lock; Cargo.toml
+apache/iceberg-rust,0e83f8531eac166d7e22bd6a276d3940abdb16a1,0e83f85,Matt Butrovich,mbutrovich@users.noreply.github.com,2026-11-21T00:17:46Z,GitHub,noreply@github.com,2026-11-21T00:17:46Z,fix(arrow): evaluate filters on columns missing from a data file against their identity partition value or initial-default (#3302),"* fix(arrow): evaluate filters on columns missing from a data file against their identity partition value or initial-default
+
+* dedupe some test code.
+
+* address PR feedback. negate NOT in residual, test equality deletes on missing columns
+
+* address PR feedback",986153cb568d5296cf541fba77348ac927189112,3302,false,,6,891,61,crates
+apache/iceberg-rust,a7160a0a2318028df1a8ae88abbb3b5d611fa3d8,a7160a0,Joseph Lenton,JosephLenton@users.noreply.github.com,2026-11-21T06:02:25Z,GitHub,noreply@github.com,2026-11-21T06:02:25Z,fix: table UUID partitions not working (#2916),"* chore: add a test that recreates the uuid partition error
+
+* fix: update to turn UUIDs into Strings for Partitions
+
+* chore: add a unit test for RawLiteralEnum::try_from with uuid
+
+* chore: move UUID partition test to use datafusion integration tests
+
+* feat: restrict UUID partitions to only hyphenated UUIDs
+
+* refactor: move from serde solution to avro solution
+
+* feat: add logicalType uuid to the uuid transported by avro
+
+* revert: undo adding rest_catalog to integration tests
+
+* chore: update to use Avro 0.22 changes
+
+* revert: go back to using serde_json::Value
+
+* docs: add a comment on hyphenated needing to match java
+
+* chore: add a test going through ManifestWriter::write_manifest_file
+
+* chore: improve the error message on hyphenated UUID
+
+* chore: change unreachable path to an error
+
+* chore: add Avro UUID roundtrip test
+
+* docs: clarified some of the comment behaviour better
+
+* chore: add datum roundtrip test
+
+* chore: add Datum avro uuid round trip test
+
+* refactor: change from RawLiteralEnum::Uuid to RawLiteralEnum::Fixed
+
+* chore: add avro uuid to datum test
+
+* refactor: remove Result return type from avro_uuid_schema()
+
+* refactor: rename datum tests to clarify 16 bytes
+
+* refactor: change round trip tests to use manifest reader / writer
+
+* chore: add a test to confirm uuid turns into avro fixed 16
+
+* chore: add json tests
+
+* chore: add a comment to clarify the serialisation behaviour
+
+* refactor: simplify the serde value Primitive UUID to Literal UUID branches
+
+* refactor: update manifest tests to match branch building
+
+* chore: update explanation of the use of avro's fixed serialize
+
+* refactor: merge the manifest writer tests into a single test with multiple cases
+
+* chore: update tests to new ManifestReader api",0e83f8531eac166d7e22bd6a276d3940abdb16a1,2916,false,,4,490,26,crates

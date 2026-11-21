@@ -10161,3 +10161,58 @@ Co-authored-by: Isaac <no-reply@databricks.com>",2d6bb0118c4e082ae97b637b479d79d
 apache/iceberg,4defa7803421fe58c54f1bb3af6915181f7c91fa,4defa78,Gang Wu,ustcwg@gmail.com,2026-11-21T01:30:23+08:00,GitHub,noreply@github.com,2026-11-20T09:30:23-08:00,Docs: Add Singdata to vendors page (#19053),,a96e7d28c0a77bd4f944ba8f477421be94800460,19053,false,,2,5,0,site
 apache/iceberg,4bf4e1986e7a522f84f7d6aed21a13ea1ba30ee9,4bf4e19,Yuya Ebihara,ebyhry@gmail.com,2026-11-21T02:37:21+09:00,GitHub,noreply@github.com,2026-11-20T09:37:21-08:00,Build: Skip checkRuntimeDeps in core-tests and build-checks (#18983),,4defa7803421fe58c54f1bb3af6915181f7c91fa,18983,false,,1,2,2,.github
 apache/iceberg,abbb3f3588b1f1ef06bc0fa6eb05327fffdbdd32,abbb3f3,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-20T09:55:44-08:00,GitHub,noreply@github.com,2026-11-20T10:55:44-07:00,Spark 4.2: Implement RepairTable action (#17622),,4bf4e1986e7a522f84f7d6aed21a13ea1ba30ee9,17622,false,,11,2283,87,api; core; spark
+apache/iceberg,79e42ffbcdbd3f4f936abc76f0f6415539fa0fef,79e42ff,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-20T14:05:45-08:00,GitHub,noreply@github.com,2026-11-20T14:05:45-08:00,"Spark 3.5, 4.0, 4.1: Backport RepairTable action (#17622) (#19068)","* Spark 4.1: Backport RepairTable action (#17622)
+
+The new files are copied from Spark 4.2 as is, and the changes to
+BaseSparkAction, RewriteManifestsSparkAction and SparkActions are the
+same as in the merged Spark 4.2 commit.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Spark 4.0: Backport RepairTable action (#17622)
+
+The new files are copied from Spark 4.2 as is, and the changes to
+BaseSparkAction, RewriteManifestsSparkAction and SparkActions are the
+same as in the merged Spark 4.2 commit.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Spark 3.5: Backport RepairTable action (#17622)
+
+The new files are copied from Spark 4.2 as is, and the changes to
+BaseSparkAction, RewriteManifestsSparkAction and SparkActions are the
+same as in the merged Spark 4.2 commit.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",abbb3f3588b1f1ef06bc0fa6eb05327fffdbdd32,19068,false,Isaac,27,6738,258,spark
+apache/iceberg,a56ec9e444082e32b3ab0755c3dba95421aeea72,a56ec9e,GuoYu,511955993@qq.com,2026-11-21T06:08:13+08:00,GitHub,noreply@github.com,2026-11-20T14:08:13-08:00,Flink: Backport add periodic and timed reload of the lookup join full cache (#19059),,79e42ffbcdbd3f4f936abc76f0f6415539fa0fef,19059,false,,16,1256,78,flink
+apache/iceberg,76e9ed1663056af861d72db065ceea06ae21ff34,76e9ed1,Ryan Blue,blue@apache.org,2026-11-20T14:40:50-08:00,GitHub,noreply@github.com,2026-11-20T14:40:50-08:00,Core: Implement minimal v4 writes in MergingSnapshotProducer (#19030),,a56ec9e444082e32b3ab0755c3dba95421aeea72,19030,false,,16,1448,110,core
+apache/iceberg,aae4f5919a794e02ce906e4229c452a3f7663459,aae4f59,Steven Zhen Wu,stevenz3wu@gmail.com,2026-11-20T16:04:01-08:00,GitHub,noreply@github.com,2026-11-20T16:04:01-08:00,"API, Core: Revert reading geo bounds as GeospatialBound (#18394) (#19070)","Revert ""Core: Read geometry and geography bounds as GeospatialBound (#18394)""
+
+This reverts commit ea47af380c0bf41a64fac858d0d89d1227db0418.",76e9ed1663056af861d72db065ceea06ae21ff34,19070,false,,6,32,315,api; core
+apache/iceberg,0ff724da9d835b11de2a472e80ddc45245c4010d,0ff724d,Steven Zhen Wu,stevenz3wu@gmail.com,2026-11-20T22:15:57-08:00,GitHub,noreply@github.com,2026-11-20T22:15:57-08:00,Spec: List identity and bucket source types explicitly (#18545),"New primitive types should not silently become identity sources, and the
+expressions spec must use the same source-type lists as the table spec.",aae4f5919a794e02ce906e4229c452a3f7663459,18545,false,,2,3,3,format
+apache/iceberg,d07fce62cf6df95c2a4655d6fadb5db82c498885,d07fce6,mengna-lin,mengna_lin@apple.com,2026-11-21T09:41:59-08:00,GitHub,noreply@github.com,2026-11-21T09:41:59-08:00,"Backport Spark 3.5, 4.0, 4.1: Best-effort ExpireSnapshots when metadata reachable only from expired snapshots is missing (#19071)","* Spark 3.5, 4.0, 4.1: Best-effort ExpireSnapshots when metadata reachable only from expired snapshots is missing
+
+ExpireSnapshotsSparkAction fails if a manifest list or manifest
+reachable from an expired snapshot is already gone. The snapshots are
+already expired at that point, so retrying cannot make progress and
+orphans accumulate. Skip such missing metadata when it is reachable
+only from expired snapshots, log it, and return the result of the
+files that were deleted.
+
+Backport of #18477 from Spark 4.2.
+
+Generated-by: Claude Code
+
+* Spark 3.5: Check the whole failure chain in the retained snapshot test
+
+Adaptive execution may report several failed stages as one exception
+whose message does not include the missing manifest. Check the full
+stack trace, as the Spark 4.0 test does.
+
+Generated-by: Claude Code",0ff724da9d835b11de2a472e80ddc45245c4010d,19071,false,,9,634,75,spark
+apache/iceberg,44b107ba52cf64e14cfd1f24926a20c51e61de5d,44b107b,Amogh Jahagirdar,amoghj@apache.org,2026-11-21T12:39:30-07:00,GitHub,noreply@github.com,2026-11-21T12:39:30-07:00,"API, Core: Write lowercase file format in V4 manifests (#19076)",Generated-by: Cursor Grok 4.7,d07fce62cf6df95c2a4655d6fadb5db82c498885,19076,false,,7,70,7,api; core

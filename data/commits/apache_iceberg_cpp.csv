@@ -10020,3 +10020,41 @@ reused.
 Closes #1089
 
 Co-authored-by: Claude Opus 5.5 (1M context) <noreply@anthropic.com>",687e3562f13891bce4abe8cd5a6c97656ef580cf,1090,false,Claude Opus 5.5 (1M context),5,186,66,src
+apache/iceberg-cpp,7640fe5a606d3d02f43621bf593ee13bb4c6816e,7640fe5,wzhuo,wngzhuo@gmail.com,2026-11-21T12:23:13+08:00,GitHub,noreply@github.com,2026-11-21T12:23:13+08:00,test: add conformance tests over apache/iceberg-verification fixtures (#1144),"Pin apache/iceberg-verification as a submodule at
+testing/iceberg-verification. Add verification_test to exercise table-spec
+schema and types fixtures through SchemaFromJson and TypeFromJson.
+
+Gate the suite behind ICEBERG_BUILD_VERIFICATION_TESTS, off by default,
+and fail configuration when fixtures are missing. Fail fixture
+divergences and skip advisory ""should"" cases. Keep CI integration deferred.
+
+Four cases currently fail on existing gaps: required unknown types,
+decimal formatting in two cases, and decimal precision error handling.
+
+Extract fixture opening, parsing, and validation into ParseFixture.
+Report non-object cases and cases without string IDs as unique
+cases-<index> load errors instead of aborting GTest registration.
+Preserve empty cases arrays and chain DiffJson branches with else-if.",0764a5d8f2b401889e39d70f91fc3263767bed78,1144,false,,13,644,0,.github; .gitmodules; CMakeLists.txt; README.md; dev; mkdocs; src; testing
+apache/iceberg-cpp,e93b327e4cc2db15c7ff2aa40e02358f6dafdf49,e93b327,Xiening Dai,xndai@users.noreply.github.com,2026-11-20T20:35:31-08:00,GitHub,noreply@github.com,2026-11-21T12:35:31+08:00,fix(update): keep snapshot timestamps strictly increasing (#1152),"The v4 spec requires a snapshot's timestamp-ms to be strictly greater
+than its parent's. SnapshotUpdate stamped new snapshots with the
+current time, so two commits in the same millisecond, or a commit on
+top of a parent from a clock running ahead, broke that rule.
+
+New snapshots now get max(now, parent.timestamp_ms + 1), where the
+parent is the head of the target branch. This matches Java's
+SnapshotProducer.snapshotTimestampMillis (apache/iceberg#16293) and,
+like Java, applies to every format version.
+
+Tests cover a first snapshot, back-to-back commits, a parent in the
+future, and a branch whose parent differs from main's head.",7640fe5a606d3d02f43621bf593ee13bb4c6816e,1152,false,,2,124,4,src
+apache/iceberg-cpp,71c1faae64c15ba216da97770ea70449af48763b,71c1faa,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-21T07:54:30Z,GitHub,noreply@github.com,2026-11-21T15:54:30+08:00,refactor: remove [[nodiscard]] from functions not returning Status/Result (#1087),"Removes `[[nodiscard]]` from functions that don't return `Status`/`Result`: the `Equals` overrides, `SchemaField::optional()`, and the `ErrorCollector` getters. `Status`/`Result` returns keep it.
+
+Unused results from these functions aren't bugs worth warning about.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)",e93b327e4cc2db15c7ff2aa40e02358f6dafdf49,1087,false,,6,10,10,src
+apache/iceberg-cpp,1492e50bfddd7b192bd061086ceb88eb143a25c8,1492e50,FenjuFu,92919259+FenjuFu@users.noreply.github.com,2026-11-21T16:29:15+08:00,GitHub,noreply@github.com,2026-11-21T16:29:15+08:00,fix(ci): isolate example builds by C++ standard (#1106),"The Windows C++20 and C++23 example steps reuse example/build. Give each standard a separate directory (build/cxx20 and build/cxx23) so the second build does not remove binaries from the first. Validate that the standard is numeric before using it in a directory name.
+
+Refs #1101; dependency downloads and sccache finalization are outside this change.
+
+Signed-off-by: FenjuFu <92919259+FenjuFu@users.noreply.github.com>",71c1faae64c15ba216da97770ea70449af48763b,1106,false,,1,10,1,ci
+apache/iceberg-cpp,3bec501eb9f422154cacb1308a751eab6adfebe1,3bec501,Guotao Yu,guotao.yugt@gmail.com,2026-11-21T23:29:30+08:00,GitHub,noreply@github.com,2026-11-21T23:29:30+08:00,fix(release): verify archives before signing (#1096),,1492e50bfddd7b192bd061086ceb88eb143a25c8,1096,false,,1,40,1,dev

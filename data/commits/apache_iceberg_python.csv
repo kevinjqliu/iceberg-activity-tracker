@@ -9662,3 +9662,40 @@ Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
 ---------
 
 Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>",b84df8dd70d2ed6f8a527b742549cb691d4ae5f6,4431,false,Copilot App,5,253,0,dev; pyiceberg; tests
+apache/iceberg-python,fda710e49eb092bf88e4037a0c59cdb10ad278b7,fda710e,Ankit Raj,ankitraj.srivastava15@gmail.com,2026-11-21T06:53:51Z,GitHub,noreply@github.com,2026-11-21T06:53:51Z,Round float and double literals to decimal on the shortest repr (#4442),,07216edd0eca59c1d398e8f77f61ad2d9ae2ef2f,4442,false,,2,17,2,pyiceberg; tests
+apache/iceberg-python,f323f289581bfb3f29fd3b4b806f4748045cae5f,f323f28,Gedalia Kliger,117381134+gedaliakliger@users.noreply.github.com,2026-11-21T06:54:36Z,GitHub,noreply@github.com,2026-11-21T06:54:36Z,Encode * and ~ in partition paths the way Java does (#4443),"partition_to_path uses quote_plus to match java.net.URLEncoder, but the
+two differ on ""*"" (Java keeps it) and ""~"" (Java escapes it), so the
+same partition got a different path from PyIceberg than from Java.",fda710e49eb092bf88e4037a0c59cdb10ad278b7,4443,false,,2,15,2,pyiceberg; tests
+apache/iceberg-python,535425d2d6abc1bcf3cf3e867f6e266eb108b34b,535425d,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-21T07:15:40Z,GitHub,noreply@github.com,2026-11-21T07:15:40Z,Core: Check only snapshots an attempt added when detecting a landed commit (#4447),"A transaction can register a producer that stages no snapshot, such as a
+delete that matches no files during an overwrite. The landed-attempt check
+required a snapshot for every producer, so it never detected a commit that
+landed and was reported as failed. The retry then raised a validation error
+and deleted the manifests of the snapshot that had already landed.
+
+Check the snapshots the attempt actually added instead.",f323f289581bfb3f29fd3b4b806f4748045cae5f,4447,false,,2,35,3,pyiceberg; tests
+apache/iceberg-python,286397383e65dff3bef67f43b6fe32a9da30eea0,2863973,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-21T15:07:30Z,GitHub,noreply@github.com,2026-11-21T15:07:30Z,Tests: Enumerate Arrow and Iceberg primitive type conversions (#4448),"Add table-driven tests that cover every supported primitive Arrow type,
+every unsupported type, and the round trip for every primitive Iceberg
+type. This makes the conversion matrix explicit instead of relying on
+per-type tests that are easy to miss when a type is added.",535425d2d6abc1bcf3cf3e867f6e266eb108b34b,4448,false,,1,86,0,tests
+apache/iceberg-python,9004c6cb89df559068e9879bc85d3985d7de5ba5,9004c6c,Kevin Liu,kevinjqliu@users.noreply.github.com,2026-11-21T19:24:26Z,GitHub,noreply@github.com,2026-11-21T19:24:26Z,Default writes to merge append (#3743),"* Default writes to merge append
+
+* Document fast append tradeoffs
+
+* Fix order-dependent partition overwrite assertion
+
+* Test merge append default end to end
+
+* Fix eol
+
+* Fix whitespace
+
+* Fix whitespace
+
+---------
+
+Co-authored-by: Fokko Driesprong <fokko@apache.org>",286397383e65dff3bef67f43b6fe32a9da30eea0,3743,false,Fokko Driesprong,6,36,10,mkdocs; pyiceberg; tests
+apache/iceberg-python,f91ce53145fa6780961c23092fa75f090ae853f2,f91ce53,Seunghyeon Yang,61305117+1yangsh@users.noreply.github.com,2026-11-21T19:48:55Z,GitHub,noreply@github.com,2026-11-21T19:48:55Z,REST: Map commit_table 404 and 503 responses like Java (#4465),"commit_table documents NoSuchTableError for a missing table, but a 404
+was not mapped and surfaced as a generic RESTError. A 503 raised
+ServiceUnavailableError, while Java's CommitErrorHandler treats 500,
+502, 503 and 504 as CommitStateUnknownException, since the server may
+have applied the commit.",9004c6cb89df559068e9879bc85d3985d7de5ba5,4465,false,,2,31,0,pyiceberg; tests
