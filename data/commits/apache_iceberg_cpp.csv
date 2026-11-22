@@ -10058,3 +10058,80 @@ Refs #1101; dependency downloads and sccache finalization are outside this chang
 
 Signed-off-by: FenjuFu <92919259+FenjuFu@users.noreply.github.com>",71c1faae64c15ba216da97770ea70449af48763b,1106,false,,1,10,1,ci
 apache/iceberg-cpp,3bec501eb9f422154cacb1308a751eab6adfebe1,3bec501,Guotao Yu,guotao.yugt@gmail.com,2026-11-21T23:29:30+08:00,GitHub,noreply@github.com,2026-11-21T23:29:30+08:00,fix(release): verify archives before signing (#1096),,1492e50bfddd7b192bd061086ceb88eb143a25c8,1096,false,,1,40,1,dev
+apache/iceberg-cpp,cc20e0ec60798a5a3ecb3cd10ab0bb037d0dce7e,cc20e0e,Deepak N,54300705+deepaknettem@users.noreply.github.com,2026-11-21T19:01:01-08:00,GitHub,noreply@github.com,2026-11-22T11:01:01+08:00,fix(expression): handle missing lower bound in StrictMetricsEvaluator… (#1153),"**Problem:**
+In StrictMetricsVisitor::NotIn, if lower_bounds is not set for a column and upper_bounds is present, literals_view is always empty and NotIn always returns kRowsMustMatch (true).
+
+For example, let's say there's a file with a single row id = 50, upper_bound = 50, and no lower_bound is set.
+For a statement like `DELETE FROM t WHERE id NOT IN (40, 50)` (which should keep row 50), StrictMetricsEvaluator returns true instead of false, so ManifestFilterManager::ShouldDelete is incorrectly marking the file for deletion and drops row 50.
+
+**Fix:**
+Treat a missing lower_bound or upper_bound as unbounded on that side in StrictMetricsVisitor::NotIn. This seems to match Java's StrictEvalVisitor.notIn implementation.
+
+**Tests:**
+Added tests in strict_metrics_evaluator_test.cc for missing lower_bound, missing upper_bound, and both bounds missing. Verified the missing lower_bound test fails before the fix and passes after the fix. Also ran expression_test and pre-commit.",3bec501eb9f422154cacb1308a751eab6adfebe1,1153,false,,2,100,18,src
+apache/iceberg-cpp,4002e3139d1eb7b750a3dc73cbef0e1fc50f7650,4002e31,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-11-22T08:21:51-08:00,GitHub,noreply@github.com,2026-11-23T00:21:51+08:00,feat(scan): Support split and parallel scans - Part-3: lazy split and group planning (#1113),"## What this PR does
+
+Adds task-group planning for parallel scans, on top of the byte ranges from #976 and the range-aware Parquet reads from #1002:
+
+- `DataTableScan::PlanTasksStream()` — lazy, fallible stream of `FileScanTaskGroup`
+- `DataTableScan::PlanTasks()` — the same, collected into a vector
+
+Eligible Parquet files are split into byte ranges, and the tasks are packed into groups of roughly `read.split.target-size` bytes.
+
+## How it works
+
+```
+          PlanFilesStream()
+                 |
+                 v
+          Whole Parquet file larger than target? -- no --> keep task as is
+                 |
+                yes
+                 v
+          Valid manifest split_offsets?
+             | yes                    | no
+             v                        v
+          merge intervals          fixed-size byte ranges
+          toward target            (shorter final range if needed)
+                 |                    |
+                 +---------+----------+
+                           v
+                 pack tasks into groups
+                           |
+                           v
+                  FileScanTaskGroup stream
+```
+
+**Packing** — follows Java Iceberg’s first-fit and eviction rules:
+
+- task weight = `max(range bytes + delete content bytes, (1 + delete files) * open-file-cost)`; a deletion vector counts its blob size, not its container file size
+- a task joins the first open group that still fits
+- at most `planning-lookback` groups stay open; when a new one opens, the largest open group is closed first
+- at most 1,024 tasks per group; a task heavier than the target becomes its own group
+
+**Files that stay whole:** files at or below the target size, non-Parquet files, and Parquet files whose valid manifest offsets yield only one range.
+
+## Settings
+
+| Property | Default | Resolves from |
+|---|---|---|
+| `read.split.target-size` | 128 MB | scan option > table property > default |
+| `read.split.planning-lookback` | 10 | same |
+| `read.split.open-file-cost` | 4 MB | same |
+
+Malformed or invalid values fail planning before any planning work starts.
+
+## Stream behavior
+
+Single pass, lazy, owns the underlying task stream and its metrics, and can outlive the scan. An executor set with `PlanWith()` is borrowed and must stay alive until the group stream is destroyed. Destroying the stream mid-consumption releases all planning resources. The stream retains the current file’s remaining splits across calls to `Next()`. Splitting requires no data-file I/O or Parquet bundle registration.
+
+## Tests
+
+- `table_test` (core-only, includes `ScanTaskPlanningTest`): split coverage and merging, delete files and residual filters carried into every split, mixed Parquet/Avro groups, the Java weight formula, group packing (first fit, lookback, 1,024 cap, oversized singleton), settings precedence and errors, incremental consumption, early destruction.
+- Bundled `scan_test`, across manifest format versions: split offsets used with no footer read (the file path does not exist), fixed-size ranges for missing or invalid offsets, files at or below target stay whole, every row read exactly once across splits, scan option beats table property, no-snapshot scans, delete files carried into every split.
+
+`pre-commit` is clean.
+
+## Related
+
+Part 1 #976 · Part 2a #1002 · Part 2b #1062 · Part 2c #1065. The bounded parallel reader and end-to-end validation follow in later parts.",cc20e0ec60798a5a3ecb3cd10ab0bb037d0dce7e,1113,false,,10,1249,0,src

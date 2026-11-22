@@ -9699,3 +9699,9 @@ was not mapped and surfaced as a generic RESTError. A 503 raised
 ServiceUnavailableError, while Java's CommitErrorHandler treats 500,
 502, 503 and 504 as CommitStateUnknownException, since the server may
 have applied the commit.",9004c6cb89df559068e9879bc85d3985d7de5ba5,4465,false,,2,31,0,pyiceberg; tests
+apache/iceberg-python,f3e735ebe6fb5d6b1dce744a22ecce10a0f7afdf,f3e735e,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-21T20:09:32Z,GitHub,noreply@github.com,2026-11-21T20:09:32Z,Raise on case-insensitive duplicate names in StructType.field_by_name (#4424),"field_by_name(case_sensitive=False) returned the first field on a struct with ID and id, so
+union_by_name silently matched a new id column to ID. Raise ValueError on any case-insensitive
+lookup of such a struct, as Java's caseInsensitiveField does, so union_by_name fails instead.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",f91ce53145fa6780961c23092fa75f090ae853f2,4424,false,Isaac,4,81,3,pyiceberg; tests
+apache/iceberg-python,ee86b4beffd0a40a0fedf1e045302be8cfeca7eb,ee86b4b,Artemii Dubovoi,31593103+amdubovoi@users.noreply.github.com,2026-11-21T20:52:57Z,GitHub,noreply@github.com,2026-11-21T20:52:57Z,fix(io): pass GCS token expiry to gcsfs (#4089),,f3e735ebe6fb5d6b1dce744a22ecce10a0f7afdf,4089,false,,2,33,1,pyiceberg; tests
