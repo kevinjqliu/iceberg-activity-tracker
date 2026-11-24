@@ -10135,3 +10135,81 @@ Single pass, lazy, owns the underlying task stream and its metrics, and can outl
 ## Related
 
 Part 1 #976 · Part 2a #1002 · Part 2b #1062 · Part 2c #1065. The bounded parallel reader and end-to-end validation follow in later parts.",cc20e0ec60798a5a3ecb3cd10ab0bb037d0dce7e,1113,false,,10,1249,0,src
+apache/iceberg-cpp,6f00fd9e1e3c45628291f330fc1880cd75df4089,6f00fd9,Deepak N,54300705+deepaknettem@users.noreply.github.com,2026-11-22T15:40:31-08:00,GitHub,noreply@github.com,2026-11-23T07:40:31+08:00,feat(expression): implement StartsWith in StrictMetricsEvaluator (#1154),"### **Problem**
+
+Support for StartsWith metadata-based pruning
+
+StrictMetricsEvaluator is called from DeleteFiles or OverwriteFiles for metadata-based evaluation / pruning. It checks whether every row in a data file is guaranteed to match the predicate. It is important to make sure we don't have false positives here, otherwise we will have correctness issues.
+
+Per the spec, string lower_bounds and upper_bounds are stored in manifest entries as UTF-8 bytes. The bounds are drawn only from non-null values in a column. If the column contains null, startsWith doesn't match all rows, so return false.
+
+**_Edge case:_** Writers can truncate the bounds (for example truncate(16)). Even with truncation, lower_bound <= min and max <= upper_bound still hold, so checking both bounds would still be safe. Note: If a bound was truncated shorter than the prefix, StartsWith should return false.
+
+### **Fix**
+
+Java Reference Implementation: [StrictEvalVisitor.java](https://github.com/apache/iceberg/blob/282ff355692a71e6e974fa96c5ecd8bd9e3d5fe2/api/src/main/java/org/apache/iceberg/expressions/StrictEvalVisitor.java#L386)
+
+For StartsWith to return true, these are the conditions:
+- Top-level column reference (not a transform or nested column, where null counts may be missing).
+- No nulls (CanContainNulls needs to be false).
+- Both lower_bounds and upper_bounds should be present.
+- Both bounds start with the prefix.
+
+NotStartsWith will be handled in a separate follow-up PR to keep changes small, however Not(NotStartsWith) gets rewritten as StartsWith, so included a test case for this.
+
+### **Tests**
+Mostly ported the StartsWith tests from Java, plus some cases:
+* missing bound
+* optional columns with and without null counts
+* nested string columns with stats
+* transform terms
+* non-string/null bind rejection,
+* Not(NotStartsWith(...)) rewrite
+* multibyte UTF-8 strings.
+
+To verify my understanding, also wrote an e2e test in delete_files_test.cc (not included in this PR to keep the diff small) using Parquet files with truncated bounds, Avro manifests, DeleteFiles::DeleteFromRowFilter, and TableScan to verify the full flow, I considered including this test in the current PR, but felt like an overkill.",4002e3139d1eb7b750a3dc73cbef0e1fc50f7650,1154,false,,2,218,3,src
+apache/iceberg-cpp,ce9b4f6ae055299ae1050f96a4aa60a5a1e4e33e,ce9b4f6,Deepak N,54300705+deepaknettem@users.noreply.github.com,2026-11-22T18:15:02-08:00,GitHub,noreply@github.com,2026-11-23T10:15:02+08:00,fix(expression): handle missing nan_value_counts in InclusiveMetricsEvaluator for float/double (#1155),"### **Problem**
+
+This is a corner-case correctness issue in InclusiveMetricsEvaluator::UniqueValue for float and double columns when nan_value_counts is unset by a writer.
+
+Per the Iceberg spec (https://iceberg.apache.org/spec/#field-level-metrics-and-statistics), lower_bounds and upper_bounds don't consider NaNs, and nan_value_counts is optional (a missing entry means unknown, not 0).
+
+**As an example**: Let's assume a file has only two float values {5.0, NaN} with null_value_counts = 0 and nan_value_counts is **not set**.
+
+In this case, both lower and upper bounds are 5.0. The existing implementation for UniqueValue is matching it when it should not, and both NotEq(col, 5.0) and NotIn(col, {5.0}) incorrectly prune the file.
+
+### **Fix**
+
+Mostly ported from Java's InclusiveEvalVisitor.uniqueValue / InclusiveMetricsEvaluator.mayContainNaN.
+
+Added a MayContainNaN() helper.
+
+References:
+* Java [uniqueValue]( https://github.com/apache/iceberg/blob/main/api/src/main/java/org/apache/iceberg/expressions/InclusiveEvalVisitor.java#L437-L459)
+* Java [mayContainNaNs](https://github.com/apache/iceberg/blob/main/api/src/main/java/org/apache/iceberg/expressions/InclusiveMetricsEvaluator.java#L113-L116)
+* C++ [CanContainNaNs](https://github.com/apache/iceberg-cpp/blob/main/src/iceberg/expression/strict_metrics_evaluator.cc#L472-L491)
+
+### **Tests**
+
+Added a new unit test covering both float and double columns across zero, empty, missing field ID, and non-zero nan_value_counts and null_value_counts.
+
+Java TestInclusiveMetricsEvaluator also seems to be missing a test for missing nan_value_counts on float/double (but the implementation looks correct). We can open a separate test PR in apache/iceberg for the test.",6f00fd9e1e3c45628291f330fc1880cd75df4089,1155,false,,2,97,6,src
+apache/iceberg-cpp,62ea2e21ad8b1bc345871e9ceeefb44d93de17a0,62ea2e2,Sreesh Maheshwar,maheshwarsreesh@gmail.com,2026-11-23T06:09:42Z,GitHub,noreply@github.com,2026-11-23T14:09:42+08:00,fix(rest): make RestCatalog safe to share across threads  (#1092),,ce9b4f6ae055299ae1050f96a4aa60a5a1e4e33e,1092,false,,4,89,5,src
+apache/iceberg-cpp,3219693a74d7041b24d8648088643d8493acb301,3219693,Junwang Zhao,zhjwpku@gmail.com,2026-11-23T17:54:52+08:00,GitHub,noreply@github.com,2026-11-23T17:54:52+08:00,fix(transform): compute year and month across the full date range (#1158),"Iceberg's year transform counts years since 1970. For 32768-01-01,
+the expected result is 32768 - 1970 = 30798. Converting the date to
+std::chrono::year can wrap 32768 to -32768, producing -34738 after
+subtracting 1970. With only this upper bound, year(d) IN (0, 1) can
+then skip a file containing rows from 1970. The month transform has
+the same calendar range limit.
+
+Split epoch days into 400-year Gregorian cycles using floor division.
+Convert the day within a cycle to a calendar date in 1970 through
+2369, then add the cycle offset using 64-bit arithmetic. Both
+transforms now handle dates and timestamps on either side of the epoch.
+
+Test the change from 32767 to 32768, both ends of the date and
+microsecond timestamp ranges, and nanosecond timestamps just before
+the epoch. The regression fails with the previous implementation.
+All 431 utility tests and 578 schema tests pass.",62ea2e21ad8b1bc345871e9ceeefb44d93de17a0,1158,false,,2,59,125,src
+apache/iceberg-cpp,ce5b37a7ba7e91ed984a474d859aba75b08adb8f,ce5b37a,Junwang Zhao,zhjwpku@gmail.com,2026-11-24T00:01:13+08:00,GitHub,noreply@github.com,2026-11-24T00:01:13+08:00,refactor(expression): make Bound::reference() const (#1161),Return a read-only field reference so callers can inspect a const bound expression. Update the four overrides and exercise the accessor through a const Bound reference.,3219693a74d7041b24d8648088643d8493acb301,1161,false,,6,13,7,src
+apache/iceberg-cpp,55a2894b6342357c0b5f04a72f310b34c6a31b7f,55a2894,Gang Wu,ustcwg@gmail.com,2026-11-24T07:44:11+08:00,GitHub,noreply@github.com,2026-11-24T07:44:11+08:00,fix: fail scans when position deletes/DVs don't match data file partition (#1159),,ce5b37a7ba7e91ed984a474d859aba75b08adb8f,1159,false,,3,137,1,src

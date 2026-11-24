@@ -9705,3 +9705,48 @@ lookup of such a struct, as Java's caseInsensitiveField does, so union_by_name f
 
 Co-authored-by: Isaac <no-reply@databricks.com>",f91ce53145fa6780961c23092fa75f090ae853f2,4424,false,Isaac,4,81,3,pyiceberg; tests
 apache/iceberg-python,ee86b4beffd0a40a0fedf1e045302be8cfeca7eb,ee86b4b,Artemii Dubovoi,31593103+amdubovoi@users.noreply.github.com,2026-11-21T20:52:57Z,GitHub,noreply@github.com,2026-11-21T20:52:57Z,fix(io): pass GCS token expiry to gcsfs (#4089),,f3e735ebe6fb5d6b1dce744a22ecce10a0f7afdf,4089,false,,2,33,1,pyiceberg; tests
+apache/iceberg-python,4f24f48d985c4963b99fff5b90953a154e17933a,4f24f48,GayathriSrividya,gayathrirajavarapu7@gmail.com,2026-11-22T21:27:22Z,GitHub,noreply@github.com,2026-11-22T21:27:22Z,Fix duplicate file checks after commit retry (#4446),"* Fix duplicate file checks after commit retry
+
+Revalidate add_files duplicate paths against the refreshed branch snapshot before rebuilding a retried snapshot.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+* Merge retry validation into concurrency checks
+
+* Use validation exceptions for retried duplicate files
+
+Raise ValidationException when a duplicate is discovered during a commit retry so cleanup only runs for validation failures known to be safe. Keep ValueError for the initial duplicate check.
+
+---------
+
+Co-authored-by: Gayathri Srividya Rajavarapu <gayathrir@Gayathris-MacBook-Air.local>
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>",ee86b4beffd0a40a0fedf1e045302be8cfeca7eb,4446,false,Copilot; Gayathri Srividya Rajavarapu,3,51,5,pyiceberg; tests
+apache/iceberg-python,fef852f4375569f2a5d94ad0af2a2ec870f877ec,fef852f,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-22T21:32:40Z,GitHub,noreply@github.com,2026-11-22T21:32:40Z,Keep the properties dict passed to create_table unchanged (#4456),"new_table_metadata popped format-version from the caller's properties
+dict, so reusing one dict gave the requested version only to the first
+table. Pop from a copy, and make the Glue and DynamoDB create paths,
+which relied on the pop, write the new metadata's properties instead.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",4f24f48d985c4963b99fff5b90953a154e17933a,4456,false,Isaac,7,66,6,pyiceberg; tests
+apache/iceberg-python,736181485276e12b1ab1f04980ac7db29c933f94,7361814,Dewey Dunnington,dewey@dunnington.ca,2026-11-23T09:01:49Z,GitHub,noreply@github.com,2026-11-23T09:01:49Z,Ensure GEOMETRY and GEOGRAPHY tables can be read by pyiceberg (#4422),"* simplify dependency
+
+* algorithm checks
+
+* add srid:0 support
+
+* add geoarrow -> Iceberg
+
+* implement roundtrip read test",fef852f4375569f2a5d94ad0af2a2ec870f877ec,4422,false,,9,386,128,mkdocs; pyiceberg; pyproject.toml; tests; uv.lock
+apache/iceberg-python,dc0216ac799bee1ae93f309f369e619c08e4def9,dc0216a,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-23T21:40:53Z,GitHub,noreply@github.com,2026-11-23T21:40:53Z,Build: Bump mistune from 3.3.3 to 3.3.4 (#4473),"Bumps [mistune](https://github.com/lepture/mistune) from 3.3.3 to 3.3.4.
+- [Release notes](https://github.com/lepture/mistune/releases)
+- [Changelog](https://github.com/lepture/mistune/blob/main/docs/changes.rst)
+- [Commits](https://github.com/lepture/mistune/compare/v3.3.3...v3.3.4)
+
+---
+updated-dependencies:
+- dependency-name: mistune
+  dependency-version: 3.3.4
+  dependency-type: indirect
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",736181485276e12b1ab1f04980ac7db29c933f94,4473,false,dependabot[bot],1,11,11,uv.lock

@@ -35856,3 +35856,71 @@ apache/iceberg-rust,a7160a0a2318028df1a8ae88abbb3b5d611fa3d8,a7160a0,Joseph Lent
 * refactor: merge the manifest writer tests into a single test with multiple cases
 
 * chore: update tests to new ManifestReader api",0e83f8531eac166d7e22bd6a276d3940abdb16a1,2916,false,,4,490,26,crates
+apache/iceberg-rust,7eeb3afec3147300372746ba67cb83268524bea9,7eeb3af,blackmwk,257669749+blackmwk@users.noreply.github.com,2026-11-23T09:19:37Z,GitHub,noreply@github.com,2026-11-23T09:19:37Z,chore(deps): bump url to 2.5.9 for RUSTSEC-2026-0592 (#3758),,a7160a0a2318028df1a8ae88abbb3b5d611fa3d8,3758,false,,2,5,5,Cargo.lock; Cargo.toml
+apache/iceberg-rust,95c4273714a90c2095d66392ccad25c832344262,95c4273,kurtoskalac,vuhoangminh97@proton.me,2026-11-23T10:10:36Z,GitHub,noreply@github.com,2026-11-23T10:10:36Z,docs: update the install guide for 0.11.0 (#3755),Co-authored-by: kurtoskalac <359376012+kurtoskalac@users.noreply.github.com>,7eeb3afec3147300372746ba67cb83268524bea9,3755,false,kurtoskalac,1,3,3,website
+apache/iceberg-rust,90e454aa51863afd0ad70dd92cf0a2aed1995e07,90e454a,Oleks V,comphead@users.noreply.github.com,2026-11-23T20:22:47Z,GitHub,noreply@github.com,2026-11-23T20:22:47Z,fix(reader): keep matching rows when filtering a promoted column (#3540),"* fix(reader): keep matching rows when filtering a promoted column
+
+Predicates are bound to the table schema, but the row filter evaluated
+them on batches in the file's physical types. For a file written before
+an int -> long, float -> double, or decimal precision promotion,
+try_cast_literal cast the literal down to the file type, so an
+out-of-range literal became null and dropped every row, and a double
+literal was rounded to f32.
+
+Convert the filter columns to the table schema with a
+RecordBatchTransformer, as the reader does for its output, and make
+try_cast_literal fail instead of returning null. Page-index pruning is
+left to #3507 and #3521.
+
+Part of #3122.
+
+* test(reader): cover files without field ids and date promotion; name the strict cast
+
+Reuse read_once in assert_promoted_reads, read each file with and without a
+field id, and add a date -> timestamp case. Explain why try_cast_literal
+sets safe: false.
+
+* perf(reader): build the row filter transformer from the filter fields only
+
+The transformer converts its whole schema to Arrow on each file's first
+batch. Give it a schema of the top-level filter fields so that setup no
+longer grows with the table's width.
+
+* fix(reader): build the row filter schema from each leaf's top-level field
+
+A filter leaf nested in a struct has no top-level field of its own, so
+the filter schema missed it and the transformer failed with `field not
+found` once nested predicates reach the row filter (#2906). Take each
+leaf's top-level field, prune it to the filter leaves, and pass the
+top-level ids in leaf order.
+
+* fix(reader): reject a filter leaf that is not in the scan schema
+
+filter_schema skipped a leaf without an accessor in the scan schema, so
+the converted filter batch had fewer columns than the predicate's column
+positions, and the predicate panicked with an index out of bounds. Only
+a task whose predicate was bound to another schema gets there. Fail with
+DataInvalid instead, as validate_equality_ids does for equality deletes
+and the row group evaluator does with default options.
+
+* fix(spec): return an empty struct from prune_columns for an empty selection
+
+PruneColumn::schema unwrapped the visited struct, so selecting nothing
+panicked before prune_columns reached its fallback to an empty struct.
+Return the value as is, so the fallback applies.
+
+* refactor(reader): simplify the row filter schema and its tests
+
+- filter_schema returns only the schema. The transformer's root ids are
+  its top-level fields, and the empty-selection guard is gone now that
+  prune_columns handles it.
+- Use invalid_data! for the unknown-leaf error, and drop the unused
+  schema id.
+- try_cast_literal's doc no longer cites Binary and LargeBinary, which
+  now map to one Arrow type.
+- test_predicate_converter_rejects_lossy_literal_cast reuses
+  apply_predicate_to_batch, which now takes the file's message type and
+  returns the predicate's result.
+- test_predicate_on_promoted_column keeps one case per promotion. The
+  dropped cases passed or failed together with the kept ones under every
+  mutation of the row filter.",95c4273714a90c2095d66392ccad25c832344262,3540,false,,4,221,39,crates

@@ -36827,3 +36827,412 @@ int32 to int64 when the partition field is long and float32 to float64
 when it is double. Both widenings are exact, so values that differ still
 land in separate rows. ComparablePartitionKey is unchanged.",7eff76695998c58f62d35ec3f0f5ee90621af9fe,2637,false,,6,193,4,table
 apache/iceberg-go,4f5b7f8562347e88d702aa661ba19f8c96a13308,4f5b7f8,Neelesh Salian,nssalian@users.noreply.github.com,2026-11-20T12:32:08-08:00,GitHub,noreply@github.com,2026-11-20T21:32:08+01:00,fix(compaction): match float partitions across a float to double promotion (#2653),,8b3c96972ac8f891fea1652a9d5ff046a27b68aa,2653,false,,4,101,9,table
+apache/iceberg-go,51e815ff403795fb5eed4006507fccea79673572,51e815f,Tanmay Rauth,t_rauth@apple.com,2026-11-23T05:29:22-08:00,GitHub,noreply@github.com,2026-11-23T14:29:22+01:00,feat(table): compute per-column NDV sketches over a snapshot (#2444),"Add Table.ComputeNDVs, which scans a snapshot and builds a DataSketches
+Theta sketch per top-level primitive column, returning the estimated
+number of distinct values and the serialized sketch keyed by field ID.
+
+Values are hashed using Iceberg single-value serialization, matching the
+encoding other implementations use, so estimates are comparable. Nulls
+are skipped. Explicitly named non-primitive or nested columns are
+rejected, as in Iceberg-Java.
+
+Return NDVStats with the analyzed snapshot, and an empty result when the
+table has no snapshot. Skip geometry/geography by default and reject them
+by name, select only sketched columns in the scan, and report unknown
+names as ErrInvalidArgument. Add type and delete/snapshot test matrices.
+
+Pin the resolved snapshot so columns follow its schema, as Iceberg-Java
+does, rather than the current schema. Skip unknown-typed columns like geo
+ones, document that empty values are not counted, and add nanosecond
+timestamp cases on V3 tables.
+
+Columns is already keyed by field ID. Adding the field back later is
+compatible; removing it after release would not be.",4f5b7f8562347e88d702aa661ba19f8c96a13308,2444,false,,2,948,0,table
+apache/iceberg-go,31c1c25bf60041d757ccffd9e360324009868434,31c1c25,Ayaan,103879986+AynSiddiqui@users.noreply.github.com,2026-11-23T23:02:42+05:30,GitHub,noreply@github.com,2026-11-23T12:32:42-05:00,fix(table): keep v2 position deletes when a v3 delete writes a file's first DV (#2669),"* fix(table): keep v2 position deletes when a v3 delete writes a file's first DV
+
+When a v3 merge-on-read Delete gives a data file its first deletion vector,
+merge the positions from that file's v2 position delete files into the DV
+and remove the file-scoped ones in the same snapshot, as Java's
+BaseDVFileWriter does. Partition-scoped files are kept.
+
+Fixes #2604
+
+Signed-off-by: Ayaan <ayaansiddiqui68@gmail.com>
+
+* fix(table): load only folded v2 position deletes and document non-replay
+
+Pass the partial files' paths to readDeletesForPaths so a partition-wide v2
+delete file no longer loads every target into memory. Add a test that fails
+without foldPositionDeletes skipping files that already have a DV, and note in
+the Delete docs and the unreleased compatibility notes that dropping v2
+position delete files makes the commit non-replayable.
+
+Signed-off-by: Ayaan <ayaansiddiqui68@gmail.com>
+
+---------
+
+Signed-off-by: Ayaan <ayaansiddiqui68@gmail.com>",51e815ff403795fb5eed4006507fccea79673572,2669,false,,5,342,14,table; website
+apache/iceberg-go,aaba0d7bd2df5c1cd71341515e40734328f20d9c,aaba0d7,Harrison Crosse,harrison@crosse.dev,2026-11-23T12:41:09-05:00,GitHub,noreply@github.com,2026-11-23T12:41:09-05:00,perf(table): keep dictionary entry results across batches (#2445),"* perf(table): match single-column equality deletes per dictionary entry
+
+When a single string or binary equality key column arrives as a dictionary
+no larger than the batch, match each dictionary entry once and map rows
+through their indices instead of encoding a key per row.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* perf(table): keep dictionary entry results across batches
+
+When a single string or binary equality key column arrives as a dictionary larger than the batch, look up each referenced entry at most once and keep the results for later batches of the file that carry the same dictionary object. arrow-go's Parquet reader reuses the dictionary object across the batches of a row group while the dictionary is unchanged (apache/arrow-go#1444). Reusing results by identity relies on Arrow arrays being immutable.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* refactor(table): try the entry bitmap before the dictionary memo
+
+The entry bitmap already declines dictionaries larger than the batch, so the dictionary size threshold now lives in one place.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* test(table): run the dictionary memo tests for every string and binary type
+
+Build each dictionary with the Arrow builder for its value type so the four memo arms and the int64 offsets run against the expected rows.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(table): check dictionary value type before resetting equality delete memo
+
+Avoid allocating or clearing the dictionary entry memo when an unsupported dictionary value type falls back to the generic path.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+---------
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",31c1c25bf60041d757ccffd9e360324009868434,2445,false,,2,465,0,table
+apache/iceberg-go,2f5fc8058848f937409404d783b6aefa091060bf,2f5fc80,Harrison Crosse,harrison@crosse.dev,2026-11-23T12:48:33-05:00,GitHub,noreply@github.com,2026-11-23T12:48:33-05:00,fix(table): start the scan for position deletes lazily (#2673),"writePositionDeletesForFiles started the scan that finds the rows to delete before the delete could still fail. The scan's workers start at once and exit only when their records are read or the context ends. An early return left those workers running, and the position delete files they had read retained, until the caller's context ended. With a context that outlives the delete, each retry after a transient storage error leaked both again.
+
+The scan now starts inside the sequence it returns, so a caller that fails before reading a record never creates workers, and an error from starting the scan is yielded instead of returned.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",aaba0d7bd2df5c1cd71341515e40734328f20d9c,2673,false,,2,214,43,table
+apache/iceberg-go,2a3feee6ccff41391ccee400eecde4f5f9953cbe,2a3feee,Harrison Crosse,harrison@crosse.dev,2026-11-23T12:52:42-05:00,GitHub,noreply@github.com,2026-11-23T12:52:42-05:00,"test(table): add scan row filter regression tests for `StartsWith`, embedded dictionaries and decimals (#2676)","test(table): add scan row-filter regression tests
+
+Add scan row-filter regression tests covering:
+- StartsWith and NotStartsWith predicates (#2416)
+- Embedded Arrow dictionary columns written with stored ARROW:schema (#2425)
+- Decimal(10, 2) IsNull, NotNull, and In predicates (arrow-go#1456, arrow-go#1457)
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",2f5fc8058848f937409404d783b6aefa091060bf,2676,false,,1,257,0,table
+apache/iceberg-go,6ef2d55c228ae8d77ffd17146a6eb99cbb836dce,6ef2d55,Shivam Sharma,192242476+ShivamSharma43@users.noreply.github.com,2026-11-23T23:31:19+05:30,GitHub,noreply@github.com,2026-11-23T13:01:19-05:00,fix(table): update the table's name mapping on schema changes (#2646),"* fix(table): update the table's name mapping on schema changes
+
+UpdateSchema only updated schema.name-mapping.default when the caller
+passed a mapping with WithNameMapping, which nothing in the repo does.
+After AddColumn or RenameColumn the property still described the old
+schema, so files without field IDs could not be resolved for the new or
+renamed column. AddDataFilesByPath sets the mapping on first use, and a
+later file carrying an added column failed with ""missing field_id"".
+
+When no mapping is passed, BuildUpdates now updates the table's own
+mapping if it has one, as Java's SchemaUpdate and PyIceberg's
+UpdateSchema do. Tables without the property are left unchanged, and an
+explicit WithNameMapping still takes precedence.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Shivam Sharma <192242476+ShivamSharma43@users.noreply.github.com>
+
+* fix(table): keep an empty name mapping valid on schema updates
+
+UpdateNameMapping returns nil when no mapping entry keeps a name, as for
+[] or entries with empty names, which the spec allows. A rename or
+delete then wrote null to schema.name-mapping.default, and scans and
+add-files rejected the property as invalid. Write [] instead.
+
+Move the name mapping tests into update_schema_test.go, and add a
+compatibility note: schema updates now rewrite the table's name mapping,
+so a new column that reuses a name freed by DeleteColumn or RenameColumn
+maps to that name in older files without field IDs.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Signed-off-by: Shivam Sharma <192242476+ShivamSharma43@users.noreply.github.com>
+
+* docs(table): say why an unparsable name mapping is left alone
+
+The schema change goes ahead and keeps the stored value, as Java does.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+---------
+
+Signed-off-by: Shivam Sharma <192242476+ShivamSharma43@users.noreply.github.com>
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",2a3feee6ccff41391ccee400eecde4f5f9953cbe,2646,false,Claude Opus 5.5,3,208,2,table; website
+apache/iceberg-go,a00f48dedefd331af8849e70f1e7a3fd2bcf3c6d,a00f48d,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-23T19:04:41+01:00,GitHub,noreply@github.com,2026-11-23T13:04:41-05:00,refactor!: move AWS config context helpers from utils to awsconfig (#2638),"* refactor!: move AWS config context helpers from utils to awsconfig
+
+The public utils package held only WithAWSConfig and GetAWSConfig, which
+attach an *aws.Config to a context and read it back. Move them to a new
+root package, awsconfig, with the same names, behavior and unexported
+context key, and delete utils.
+
+Update the importers in catalog/glue, catalog/dynamodb, io/gocloud/s3
+and encryption/awskms and their tests, and the comment in
+catalog/rest/vended_creds.go that names the helper. Files that also use
+internal/awsconfig already import it as internalaws, so there is no
+name clash.
+
+Callers migrate by changing the import path from
+github.com/apache/iceberg-go/utils to github.com/apache/iceberg-go/awsconfig
+and the qualifier from utils to awsconfig. A compatibility note is added
+to releases.md.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>
+
+* refactor!: rename awsconfig context helpers to NewContext and FromContext
+
+awsconfig.WithAWSConfig and awsconfig.GetAWSConfig stuttered and clashed with
+the catalog WithAWSConfig options. Fold the utils release note into one entry.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>
+
+---------
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",6ef2d55c228ae8d77ffd17146a6eb99cbb836dce,2638,false,,13,39,38,awsconfig}; catalog; encryption; io; website
+apache/iceberg-go,f3961f0f2afaf4606780a15e64f8e61781305eb0,f3961f0,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-23T13:48:08-05:00,GitHub,noreply@github.com,2026-11-23T13:48:08-05:00,build(deps): bump the gomod_updates group with 16 updates (#2685),"* build(deps): bump the gomod_updates group with 16 updates
+
+Bumps the gomod_updates group with 16 updates:
+
+| Package | From | To |
+| --- | --- | --- |
+| [github.com/aws/aws-sdk-go-v2](https://github.com/aws/aws-sdk-go-v2) | `1.47.8` | `1.48.0` |
+| [github.com/aws/aws-sdk-go-v2/config](https://github.com/aws/aws-sdk-go-v2) | `1.33.16` | `1.33.18` |
+| [github.com/aws/aws-sdk-go-v2/credentials](https://github.com/aws/aws-sdk-go-v2) | `1.20.16` | `1.21.0` |
+| [github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager](https://github.com/aws/aws-sdk-go-v2) | `0.5.5` | `0.5.7` |
+| [github.com/aws/aws-sdk-go-v2/service/dynamodb](https://github.com/aws/aws-sdk-go-v2) | `1.73.2` | `1.74.0` |
+| [github.com/aws/aws-sdk-go-v2/service/glue](https://github.com/aws/aws-sdk-go-v2) | `1.174.0` | `1.176.0` |
+| [github.com/aws/aws-sdk-go-v2/service/kms](https://github.com/aws/aws-sdk-go-v2) | `1.62.5` | `1.62.6` |
+| [github.com/aws/aws-sdk-go-v2/service/s3](https://github.com/aws/aws-sdk-go-v2) | `1.114.9` | `1.114.10` |
+| [github.com/aws/smithy-go](https://github.com/aws/smithy-go) | `1.28.8` | `1.28.9` |
+| [github.com/klauspost/compress](https://github.com/klauspost/compress) | `1.20.3` | `1.20.4` |
+| [github.com/twmb/avro](https://github.com/twmb/avro) | `1.9.0` | `1.9.1` |
+| gocloud.dev | `0.47.0` | `0.49.0` |
+| [golang.org/x/exp](https://github.com/golang/exp) | `0.0.0-20260813180055-c1d0aacb2297` | `0.0.0-20261014143641-f0251eb4aa3e` |
+| [golang.org/x/mod](https://github.com/golang/mod) | `0.42.0` | `0.43.0` |
+| [golang.org/x/term](https://github.com/golang/term) | `0.47.0` | `0.48.0` |
+| [google.golang.org/api](https://github.com/googleapis/google-api-go-client) | `0.311.0` | `0.315.0` |
+
+
+Updates `github.com/aws/aws-sdk-go-v2` from 1.47.8 to 1.48.0
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/v1.47.8...v1.48.0)
+
+Updates `github.com/aws/aws-sdk-go-v2/config` from 1.33.16 to 1.33.18
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/config/v1.33.16...config/v1.33.18)
+
+Updates `github.com/aws/aws-sdk-go-v2/credentials` from 1.20.16 to 1.21.0
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/credentials/v1.20.16...v1.21.0)
+
+Updates `github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager` from 0.5.5 to 0.5.7
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/feature/s3/transfermanager/v0.5.5...feature/s3/transfermanager/v0.5.7)
+
+Updates `github.com/aws/aws-sdk-go-v2/service/dynamodb` from 1.73.2 to 1.74.0
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/s3/v1.73.2...service/s3/v1.74.0)
+
+Updates `github.com/aws/aws-sdk-go-v2/service/glue` from 1.174.0 to 1.176.0
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/ec2/v1.174.0...service/ec2/v1.176.0)
+
+Updates `github.com/aws/aws-sdk-go-v2/service/kms` from 1.62.5 to 1.62.6
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/iot/v1.62.5...service/iot/v1.62.6)
+
+Updates `github.com/aws/aws-sdk-go-v2/service/s3` from 1.114.9 to 1.114.10
+- [Release notes](https://github.com/aws/aws-sdk-go-v2/releases)
+- [Commits](https://github.com/aws/aws-sdk-go-v2/compare/service/s3/v1.114.9...service/s3/v1.114.10)
+
+Updates `github.com/aws/smithy-go` from 1.28.8 to 1.28.9
+- [Release notes](https://github.com/aws/smithy-go/releases)
+- [Changelog](https://github.com/aws/smithy-go/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/aws/smithy-go/compare/v1.28.8...v1.28.9)
+
+Updates `github.com/klauspost/compress` from 1.20.3 to 1.20.4
+- [Release notes](https://github.com/klauspost/compress/releases)
+- [Commits](https://github.com/klauspost/compress/compare/v1.20.3...v1.20.4)
+
+Updates `github.com/twmb/avro` from 1.9.0 to 1.9.1
+- [Commits](https://github.com/twmb/avro/compare/v1.9.0...v1.9.1)
+
+Updates `gocloud.dev` from 0.47.0 to 0.49.0
+
+Updates `golang.org/x/exp` from 0.0.0-20260813180055-c1d0aacb2297 to 0.0.0-20261014143641-f0251eb4aa3e
+- [Commits](https://github.com/golang/exp/commits)
+
+Updates `golang.org/x/mod` from 0.42.0 to 0.43.0
+- [Commits](https://github.com/golang/mod/compare/v0.42.0...v0.43.0)
+
+Updates `golang.org/x/term` from 0.47.0 to 0.48.0
+- [Commits](https://github.com/golang/term/compare/v0.47.0...v0.48.0)
+
+Updates `google.golang.org/api` from 0.311.0 to 0.315.0
+- [Release notes](https://github.com/googleapis/google-api-go-client/releases)
+- [Changelog](https://github.com/googleapis/google-api-go-client/blob/main/CHANGES.md)
+- [Commits](https://github.com/googleapis/google-api-go-client/compare/v0.311.0...v0.315.0)
+
+---
+updated-dependencies:
+- dependency-name: github.com/aws/aws-sdk-go-v2
+  dependency-version: 1.48.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/config
+  dependency-version: 1.33.18
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/credentials
+  dependency-version: 1.21.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager
+  dependency-version: 0.5.7
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/dynamodb
+  dependency-version: 1.74.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/glue
+  dependency-version: 1.176.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/kms
+  dependency-version: 1.62.6
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/aws-sdk-go-v2/service/s3
+  dependency-version: 1.114.10
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/aws/smithy-go
+  dependency-version: 1.28.9
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/klauspost/compress
+  dependency-version: 1.20.4
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: github.com/twmb/avro
+  dependency-version: 1.9.1
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: gocloud.dev
+  dependency-version: 0.49.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: golang.org/x/exp
+  dependency-version: 0.0.0-20261014143641-f0251eb4aa3e
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+  dependency-group: gomod_updates
+- dependency-name: golang.org/x/mod
+  dependency-version: 0.43.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: golang.org/x/term
+  dependency-version: 0.48.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+- dependency-name: google.golang.org/api
+  dependency-version: 0.315.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+  dependency-group: gomod_updates
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+* fix(io/azure): build service URLs without gocloud's domain allowlist
+
+gocloud.dev v0.49.0 makes azureblob.NewServiceURL reject http unless IsLocalEmulator is set, and reject https endpoints outside AllowedStorageDomains. That broke Azurite and any custom adls.endpoint. Build the URL in createServiceURL with the format v0.47.0 produced, and mark the integration test's Azurite helper as a local emulator.
+
+Signed-off-by: Matt Topol <matt@columnar.tech>
+
+---------
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Signed-off-by: Matt Topol <matt@columnar.tech>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: Matt Topol <matt@columnar.tech>",a00f48dedefd331af8849e70f1e7a3fd2bcf3c6d,2685,false,dependabot[bot]; Matt Topol,5,183,144,go.mod; go.sum; io
+apache/iceberg-go,b09b8e1b9d3d06587457377d9635549bc1827e5e,b09b8e1,Harrison Crosse,harrison@crosse.dev,2026-11-23T13:52:18-05:00,GitHub,noreply@github.com,2026-11-23T13:52:18-05:00,fix(table): report the error from a rolling writer that left the factory (#2672),"* fix(table): report the error from a rolling writer that left the factory
+
+A rolling data writer that fails, for example when a data file upload fails as it rolls to a new file, removes itself from the writer factory. closeAll and abortAll listed only the writers still in the factory, so closeAll missed the error whenever the failed writer had left the factory before it ran. Unless a fanout worker called Add on that writer first, nothing read the error and the write committed without that writer's rows.
+
+Keep every writer that getOrCreateRollingDataWriter makes in a list and have writerList return it. closeAll now reads the failed writer's error, and abortAll joins the writers that left the factory. This fixes the data fanout writer, which partitioned appends, overwrites, copy on write deletes and WriteRecords without clustering use, and the position delete fanout writer. Partitioned equality deletes share the factory and are fixed too.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(table): clone writer slice returned by writerList
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+---------
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",f3961f0f2afaf4606780a15e64f8e61781305eb0,2672,false,,4,164,10,table
+apache/iceberg-go,e4866cd3936d4e08cccbd43918776abeeda43129,e4866cd,Harrison Crosse,harrison@crosse.dev,2026-11-23T13:53:59-05:00,GitHub,noreply@github.com,2026-11-23T13:53:59-05:00,feat(table): add `WithDictionaryColumns` scan option (#2677),"* feat(table): add WithDictionaryColumns scan option
+
+WithDictionaryColumns returns the named string and binary columns as
+Arrow dictionary<int32, utf8|binary> arrays. The Parquet reader reads them
+as dictionaries, and the projection re-encodes any column a file returns
+plain or as a large type, so the declared schema and every batch agree.
+Columns read only for a row filter, delete-file reads and internal scans
+are unaffected.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* docs(table): document filtered scan decoding and defaultToArray context
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+---------
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",b09b8e1b9d3d06587457377d9635549bc1827e5e,2677,false,,10,939,24,table; website
+apache/iceberg-go,58f95650fd83d3af536327d955db3014d6a9bf85,58f9565,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-23T19:59:42+01:00,GitHub,noreply@github.com,2026-11-23T13:59:42-05:00,fix(types): keep an explicit default CRS and algorithm when writing geometry and geography (#2667),"* fix(types): keep an explicit default CRS and algorithm when writing geometry and geography
+
+Parsing a type string went through GeometryTypeOf and GeographyTypeOf,
+which drop OGC:CRS84 and spherical. A schema that said
+geometry(OGC:CRS84) or geography(OGC:CRS84, spherical) was written back
+as geometry and geography.
+
+The type-string parser now still validates through those constructors
+but stores the CRS and algorithm as written. Bare geometry and geography
+are unchanged, and the constructors keep normalizing, so types built
+from Arrow schemas are written as before. Equals compares CRS() and
+Algorithm(), so an explicit default and an implied one are still the
+same type.
+
+This makes the geometry-crs84 and geography-crs84-spherical cases in
+iceberg-verification's table-spec/types/geospatial/cases.json pass.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>
+
+* docs(types): note to compare geo types through CRS() and Algorithm()
+
+The parser can now keep an explicit default CRS or algorithm, so the raw
+fields no longer imply the default when empty.
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>
+
+---------
+
+Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",e4866cd3936d4e08cccbd43918776abeeda43129,2667,false,,2,82,7,types.go; types_test.go
