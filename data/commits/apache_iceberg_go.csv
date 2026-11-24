@@ -37236,3 +37236,19 @@ Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>
 ---------
 
 Signed-off-by: laskoviymishka <laskoviymishka@gmail.com>",e4866cd3936d4e08cccbd43918776abeeda43129,2667,false,,2,82,7,types.go; types_test.go
+apache/iceberg-go,dca0ec642f43106d9f3bc84fbc1dae0bfbfc9b4f,dca0ec6,Shivam Sharma,192242476+ShivamSharma43@users.noreply.github.com,2026-11-24T16:56:12+05:30,GitHub,noreply@github.com,2026-11-24T12:26:12+01:00,"fix(table): allow schema updates with struct, list or map write defaults (#2628)",,58f95650fd83d3af536327d955db3014d6a9bf85,2628,false,,2,86,1,table
+apache/iceberg-go,20bef470a0fd774cc77b2efbd96cd80d347e3ba1,20bef47,Edward Shen,495430312@qq.com,2026-11-24T21:17:00+08:00,GitHub,noreply@github.com,2026-11-24T14:17:00+01:00,fix(transforms): zero-pad year partition values to match Java (#2688),"YearTransform.ToHumanString rendered the year with strconv.Itoa, so
+years below 1000 lost their leading zeros: 0001-01-01 landed in
+ts_year=1/ and 0935-07-12 in ts_year=935/. Java's
+TransformUtil.humanYear and PyIceberg's to_human_year pad to four
+digits with the sign inside the width, so a table written by
+iceberg-go alongside Spark or PyIceberg gets two different
+directories for the same partition value.
+
+Format with %04d, matching both implementations, including year 0,
+negative years (-001) and years beyond 9999, which are not truncated.
+
+Fixes #2603",dca0ec642f43106d9f3bc84fbc1dae0bfbfc9b4f,2688,false,,4,55,2,table; transforms.go; transforms_test.go; website
+apache/iceberg-go,4ea6ff7f51acd0d18cb6f92887f1e7cff5ab4498,4ea6ff7,Badal Prasad Singh,badal@datazip.io,2026-11-24T20:22:29+05:30,GitHub,noreply@github.com,2026-11-24T15:52:29+01:00,ci(lint): enable the unused linter (#2701),"minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",20bef470a0fd774cc77b2efbd96cd80d347e3ba1,2701,false,,4,6,8,.golangci.yml; cmd; internal; table

@@ -10213,3 +10213,15 @@ the epoch. The regression fails with the previous implementation.
 All 431 utility tests and 578 schema tests pass.",62ea2e21ad8b1bc345871e9ceeefb44d93de17a0,1158,false,,2,59,125,src
 apache/iceberg-cpp,ce5b37a7ba7e91ed984a474d859aba75b08adb8f,ce5b37a,Junwang Zhao,zhjwpku@gmail.com,2026-11-24T00:01:13+08:00,GitHub,noreply@github.com,2026-11-24T00:01:13+08:00,refactor(expression): make Bound::reference() const (#1161),Return a read-only field reference so callers can inspect a const bound expression. Update the four overrides and exercise the accessor through a const Bound reference.,3219693a74d7041b24d8648088643d8493acb301,1161,false,,6,13,7,src
 apache/iceberg-cpp,55a2894b6342357c0b5f04a72f310b34c6a31b7f,55a2894,Gang Wu,ustcwg@gmail.com,2026-11-24T07:44:11+08:00,GitHub,noreply@github.com,2026-11-24T07:44:11+08:00,fix: fail scans when position deletes/DVs don't match data file partition (#1159),,ce5b37a7ba7e91ed984a474d859aba75b08adb8f,1159,false,,3,137,1,src
+apache/iceberg-cpp,31dfc3d385facbdb4fcb6bda995da702c98fa1fe,31dfc3d,Manu Zhang,OwenZhang1990@gmail.com,2026-11-24T23:37:59+08:00,GitHub,noreply@github.com,2026-11-24T23:37:59+08:00,"fix(metadata): validate format versions in JSON, builders, and properties (#1162)","Require format-version in table metadata and upgrade actions to be
+an exact JSON integer in the int8_t range. Validate the supported
+version when loading metadata and when building or upgrading tables.
+
+Share the int8_t supported-range predicate across metadata parsing,
+creation, builders, and property updates. Check wider property values
+before narrowing so out-of-range inputs cannot alias supported versions.
+
+Cover JSON type and range errors, invalid builder versions, and
+nonpositive version properties. Update the REST parse-error assertion.
+
+Co-authored-by: Codex <codex@openai.com>",55a2894b6342357c0b5f04a72f310b34c6a31b7f,1162,false,Codex,9,155,21,src
