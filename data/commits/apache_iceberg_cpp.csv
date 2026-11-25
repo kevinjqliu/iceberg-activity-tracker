@@ -10225,3 +10225,22 @@ Cover JSON type and range errors, invalid builder versions, and
 nonpositive version properties. Update the REST parse-error assertion.
 
 Co-authored-by: Codex <codex@openai.com>",55a2894b6342357c0b5f04a72f310b34c6a31b7f,1162,false,Codex,9,155,21,src
+apache/iceberg-cpp,5740b95c4467247cd76b28277d5f49abb439ecda,5740b95,Manu Zhang,OwenZhang1990@gmail.com,2026-11-25T13:06:42+08:00,GitHub,noreply@github.com,2026-11-25T13:06:42+08:00,feat(inspect): add manifests metadata table (#1121),,31dfc3d385facbdb4fcb6bda995da702c98fa1fe,1121,false,,12,839,13,src
+apache/iceberg-cpp,83a613510b90a993369337eb987bd95114317bd0,83a6135,Hyeonho Kim,jwalag87@gmail.com,2026-11-25T16:29:35+09:00,GitHub,noreply@github.com,2026-11-25T15:29:35+08:00,fix: wrong serialization for partition spec legacy v1 (#1171),,5740b95c4467247cd76b28277d5f49abb439ecda,1171,false,,2,15,1,src
+apache/iceberg-cpp,7c05bb3af55210fb7237c17668fe0bcb9494f8a1,7c05bb3,wzhuo,wngzhuo@gmail.com,2026-11-25T17:57:15+08:00,GitHub,noreply@github.com,2026-11-25T17:57:15+08:00,"fix: write decimal types in the spec's canonical ""decimal(P, S)"" form (#1146)","Appendix C of the spec serializes a decimal type as ""decimal(<P>, <S>)"",
+with ""decimal(9, 2)"" as its example, since apache/iceberg#18145. ToJson
+wrote ""decimal(9,2)"". DecimalType::ToString and Java already write the
+spaced form.
+
+TypeFromJson accepts both spellings, so existing metadata still reads.
+
+Closes #1142.",83a613510b90a993369337eb987bd95114317bd0,1146,false,,2,10,2,src
+apache/iceberg-cpp,2bf4a30585897c935d0a234001f415fd2f01df68,2bf4a30,wzhuo,wngzhuo@gmail.com,2026-11-25T22:25:39+08:00,GitHub,noreply@github.com,2026-11-25T22:25:39+08:00,fix: return an error for decimal precision above 38 in TypeFromJson (#1147),"TypeFromJson passed the parsed precision straight to the DecimalType
+constructor, whose ICEBERG_CHECK_OR_DIE throws IcebergError when the
+precision exceeds 38. A type string such as ""decimal(39,0)"", or a schema
+or table metadata containing one, threw instead of returning an error.
+
+Check the precision against DecimalType::kMaxPrecision before
+constructing the type and return a JsonParseError.
+
+Closes #1143.",7c05bb3af55210fb7237c17668fe0bcb9494f8a1,1147,false,,2,35,0,src

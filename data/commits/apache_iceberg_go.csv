@@ -37252,3 +37252,36 @@ Fixes #2603",dca0ec642f43106d9f3bc84fbc1dae0bfbfc9b4f,2688,false,,4,55,2,table; 
 apache/iceberg-go,4ea6ff7f51acd0d18cb6f92887f1e7cff5ab4498,4ea6ff7,Badal Prasad Singh,badal@datazip.io,2026-11-24T20:22:29+05:30,GitHub,noreply@github.com,2026-11-24T15:52:29+01:00,ci(lint): enable the unused linter (#2701),"minor
 
 Signed-off-by: badalprasadsingh <badal@datazip.io>",20bef470a0fd774cc77b2efbd96cd80d347e3ba1,2701,false,,4,6,8,.golangci.yml; cmd; internal; table
+apache/iceberg-go,b1fa4e35db82be51f5adae831400913acea9a38d,b1fa4e3,Revanth,revanthcse1@gmail.com,2026-11-25T02:02:08-06:00,GitHub,noreply@github.com,2026-11-25T09:02:08+01:00,refactor!: unexport nested type and schema identifier fields (#2655),,4ea6ff7f51acd0d18cb6f92887f1e7cff5ab4498,2655,false,,53,854,687,catalog; data_file_codec_bench_test.go; data_file_codec_fingerprint_test.go; data_file_codec_test.go; defaults.go; defaults_test.go; manifest.go; metadata_columns.go; name_mapping.go; nested_type_json_internal_test.go; partitions.go; partitions_test.go; schema.go; schema_clone_internal_test.go; schema_column_path_test.go; schema_compatibility.go; schema_conversions.go; schema_conversions_test.go; schema_highest_field_id_bench_test.go; schema_identifier_fields_validation_test.go; schema_name_index_bench_test.go; schema_name_index_internal_test.go; schema_test.go; table; types.go; types_internal_test.go; types_test.go; types_verification_test.go; variant_extract_test.go; view; website
+apache/iceberg-go,6b528c3280c0915b40a492a2ed5029379be1c669,6b528c3,Badal Prasad Singh,badal@datazip.io,2026-11-25T13:33:18+05:30,GitHub,noreply@github.com,2026-11-25T09:03:18+01:00,refactor(table): remove dead initial fields from add-schema and add-sort-order updates (#2700),"minor
+
+Signed-off-by: badalprasadsingh <badal@datazip.io>",b1fa4e35db82be51f5adae831400913acea9a38d,2700,false,,2,1,7,table
+apache/iceberg-go,190395aa4537692dda09c0b1b5b4a47505735b59,190395a,kurtoskalac,vuhoangminh97@proton.me,2026-11-25T09:03:58+01:00,GitHub,noreply@github.com,2026-11-25T09:03:58+01:00,docs: update feature support and reference guides (#2684),"Signed-off-by: Kurtorkalacs <359376012+kurtoskalac@users.noreply.github.com>
+Co-authored-by: Kurtorkalacs <359376012+kurtoskalac@users.noreply.github.com>",6b528c3280c0915b40a492a2ed5029379be1c669,2684,false,Kurtorkalacs,6,239,57,README.md; website
+apache/iceberg-go,fd7cf3d16c182b7ed384352dd4a65d38fb3eb5dd,fd7cf3d,kurtoskalac,vuhoangminh97@proton.me,2026-11-25T09:04:33+01:00,GitHub,noreply@github.com,2026-11-25T09:04:33+01:00,docs: make Getting Started runnable on a released version (#2682),"Signed-off-by: Chimney Cake <359376012+kurtoskalac@users.noreply.github.com>
+Co-authored-by: Chimney Cake <359376012+kurtoskalac@users.noreply.github.com>",190395aa4537692dda09c0b1b5b4a47505735b59,2682,false,Chimney Cake,8,261,256,README.md; dev; website
+apache/iceberg-go,5f27a580840f620a617bac70764574bb95c1630e,5f27a58,Shivam Sharma,192242476+ShivamSharma43@users.noreply.github.com,2026-11-25T13:34:52+05:30,GitHub,noreply@github.com,2026-11-25T09:04:52+01:00,fix: write decimal column defaults as strings in metadata JSON (#2696),"iceberg.Decimal has no JSON encoding and its decimal128 value has no
+exported fields, so a decimal initial-default or write-default was
+written as {""Val"":{},""Scale"":2} and the value was lost. Write the
+spec's single-value form, a string such as ""14.20"", as Java's
+SingleValueParser does.
+
+Closes #2695
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",fd7cf3d16c182b7ed384352dd4a65d38fb3eb5dd,2696,false,Claude Opus 5.5,3,104,0,table; types.go; types_test.go
+apache/iceberg-go,5a847af6980254155ad2237da861645e0d721358,5a847af,Badal Prasad Singh,badal@datazip.io,2026-11-25T13:35:11+05:30,GitHub,noreply@github.com,2026-11-25T09:05:11+01:00,chore: fix package docs that show the license header or nothing (#2694),,5f27a580840f620a617bac70764574bb95c1630e,2694,false,,17,229,2,.golangci.yml; awsconfig; catalog; config; doc.go; puffin; table; view
+apache/iceberg-go,e11ba54bc0db06a3b07466c6a1f86db37c5e4f01,e11ba54,Harrison Crosse,harrison@crosse.dev,2026-11-25T03:07:01-05:00,GitHub,noreply@github.com,2026-11-25T09:07:01+01:00,fix(table): keep list view offset width when projecting arrays (#2670),"ToRequestedSchema labeled a list_view column as large_list_view while reusing its 32 bit offsets and sizes buffers. Arrow then read each pair of int32 entries as one int64, so the returned array was malformed and ValidateFull rejected it. A large_list_view column had no case at all and failed with a nil pointer error inside the schema visitor. Project list_view to list_view and large_list_view to large_list_view so the buffers keep the width they were written with.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>",5a847af6980254155ad2237da861645e0d721358,2670,false,,2,57,0,table
+apache/iceberg-go,c861b995b678853aaefc097cabe05892478bccfc,c861b99,Shivam Sharma,192242476+ShivamSharma43@users.noreply.github.com,2026-11-25T13:37:25+05:30,GitHub,noreply@github.com,2026-11-25T09:07:25+01:00,fix(table): reject case-only duplicate names when renaming a column (#2630),,e11ba54bc0db06a3b07466c6a1f86db37c5e4f01,2630,false,,2,174,32,table
+apache/iceberg-go,0cbb5affc36f116204f44b982df4d2d132029729,0cbb5af,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-25T17:05:41+01:00,GitHub,noreply@github.com,2026-11-25T17:05:41+01:00,test(table): build nested types with constructors in dict col tests (#2706),"test(table): build nested types with constructors in dictionary column tests
+
+landed just before it with new tests in scan_dictionary_columns_test.go that
+build those types as struct literals. Each PR was green on its own, but
+together they stop the table package tests from compiling, so Go, Go
+Integration and Audit and Verify have all been failing on main since
+b1fa4e35.
+
+Switch the literals to NewStructType, NewListType and NewMapType. The
+required flags stay false, the same as the zero values the literals had,
+so the schemas under test don't change.",c861b995b678853aaefc097cabe05892478bccfc,2706,false,,1,20,20,table

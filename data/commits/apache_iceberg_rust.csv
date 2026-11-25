@@ -35924,3 +35924,69 @@ Return the value as is, so the fallback applies.
 - test_predicate_on_promoted_column keeps one case per promotion. The
   dropped cases passed or failed together with the kept ones under every
   mutation of the row filter.",95c4273714a90c2095d66392ccad25c832344262,3540,false,,4,221,39,crates
+apache/iceberg-rust,b058267a71a067f2782ff710ab03c4c250c51959,b058267,Jiajia Li,lijiajia@outlook.com,2026-11-25T09:05:46Z,GitHub,noreply@github.com,2026-11-25T09:05:46Z,feat(rest): support vended storage credentials with per-prefix FileIO (#2651),"* feat(rest): use vended storage credentials from LoadTable response
+
+* feat(rest): per-prefix vended credentials with opt-in delegation header
+
+* fix(io): bound delete_stream memory by flushing per-prefix batches
+
+* fix(rest): route vended credentials by prefix and keep them in object cache
+
+* test(rest): cover vended credentials reaching FileIO and prefix routing
+
+* docs(io): note that prefix matching is raw-string, as in Java
+
+* fix(rest): keep vended credentials on register_table
+
+* test(io): prefixed credentials survive FileIO serialization
+
+* docs(rest): note that only Transaction can reach update_table
+
+* fix(io): keep cached storages out of FileIO's Debug
+
+* fix(transaction): act with the refreshed FileIO and reload on any location change
+
+* fix(transaction): keep the table's initialized storage when a reload changes nothing
+
+* fix(transaction): return the actions' FileIO and never replay a durable commit
+
+* fix(rest): preserve context in update_table
+
+* fix(io): delete through nested prefix storages in delete_prefix
+
+* fix(rest): replace inherited credential sets with vended ones
+
+* fix(io): keep nested prefix deletes within their own prefix
+
+* fix(io): reject nested raw prefixes and route delete_prefix by directory
+
+* docs: simplify vended credential comments
+
+* refactor: drop redundant location check and overlapping tests
+
+* test(transaction): implement test actions as StatelessAction
+
+* refactor(io): carry vended credentials in StorageConfig for storage factories to apply
+
+* refactor(io): build StorageConfig with TypedBuilder and reuse StorageCredential in REST
+
+* refactor(io): pass a built StorageConfig through FileIOBuilder::with_config
+
+* refactor(storage/opendal): hold OpenDalStorage in PrefixedStorage and validate credential prefixes
+
+* test(storage/opendal): parameterize PrefixedStorage tests with rstest
+
+* refactor(io): keep the last storage credential per prefix in StorageConfig
+
+* fix(storage/opendal): skip credentials with unsupported schemes when resolving
+
+A credential whose prefix has an unknown scheme was passed to every backend,
+so an invalid config in it failed paths it can never match. Also hold a
+StorageConfig instead of its props and credentials, and correct the
+DELETE_BATCH_SIZE comment: 1000 is Java's maximum, not its default.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+---------
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",90e454aa51863afd0ad70dd92cf0a2aed1995e07,2651,false,Claude Opus 5.5,13,874,90,Cargo.lock; crates

@@ -9760,3 +9760,31 @@ on unrelated PRs.
 Replace the per-line disable comments with a single ignorePattern, so
 new github.com links are covered without annotations and neighboring
 non-GitHub links on the same line are still checked.",dc0216ac799bee1ae93f309f369e619c08e4def9,4474,false,,3,10,0,.github; .markdown-link-check.json; dev
+apache/iceberg-python,e69c6e7153a2c4a39ed669683e116766d7ea6cf4,e69c6e7,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-25T19:16:59Z,GitHub,noreply@github.com,2026-11-25T19:16:59Z,Core: Cache manifest and manifest-list bytes per FileIO (#4335),Cache manifest and manifest-list bytes per FileIO,c5a39b5d0cfb2145726bd39fe7d9e4198b4bc60f,4335,false,,4,341,3,pyiceberg; tests
+apache/iceberg-python,36069b76e16b09d144d0b6450776d860975f25af,36069b7,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-25T19:52:41Z,GitHub,noreply@github.com,2026-11-25T19:52:41Z,Test add_files duplicate checks on branches (#4347),"* Check add_files duplicates against the target branch
+
+add_files(branch=...) checked duplicates only against the current
+snapshot, so adding a file to a branch twice committed it again and
+doubled the rows. The check now also covers the target branch's
+snapshot, reading shared snapshots and manifests once.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Keep only the add_files branch tests
+
+#4446 made the duplicate check use the target branch, so the code change is no
+longer needed. Keep the branch tests as coverage for it, and drop the test for
+a file referenced only by main, which #4446 allows.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",e69c6e7153a2c4a39ed669683e116766d7ea6cf4,4347,false,Isaac,1,58,0,tests
+apache/iceberg-python,9fc6a0816c5038a0b65d0af925ea51ea721748be,9fc6a08,Sohail Shaikh,122166523+sohailshk@users.noreply.github.com,2026-11-25T20:01:19Z,GitHub,noreply@github.com,2026-11-25T20:01:19Z,"REST: Read an explicit null config, storage-credentials, defaults or overrides as empty (#4353)","* REST: Read an explicit null config, storage-credentials, defaults or overrides as empty
+
+A REST server that serializes unset fields as null made loading a table or view, or constructing the catalog, fail. Java reads a null config as empty.
+
+* Use annotated types for null-tolerant REST fields",36069b76e16b09d144d0b6450776d860975f25af,4353,false,,2,47,7,pyiceberg; tests
+apache/iceberg-python,4e604fe30d06ced1dc21853d7bbd7176aabf41d4,4e604fe,Sohail Shaikh,122166523+sohailshk@users.noreply.github.com,2026-11-25T20:45:05Z,GitHub,noreply@github.com,2026-11-25T20:45:05Z,Assign sequential partition field ids when reading v1 metadata without them (#4354),"In v1 the partition field ids were not tracked and were assigned sequentially from 1000 in each spec. A v1 partition spec whose fields have no field-id failed to parse, with a TypeError for two or more fields.",9fc6a0816c5038a0b65d0af925ea51ea721748be,4354,false,,2,60,0,pyiceberg; tests
+apache/iceberg-python,bdebaf35ae5215b6679c418b926ca174bda8953b,bdebaf3,Sohail Shaikh,122166523+sohailshk@users.noreply.github.com,2026-11-25T22:13:05Z,GitHub,noreply@github.com,2026-11-25T22:13:05Z,Pick the latest timestamp in snapshot_as_of_timestamp instead of the last log entry (#4361),"The snapshot log is not guaranteed to be ordered by timestamp, so iterating it in reverse could return an older snapshot when entries were appended out of order.",4e604fe30d06ced1dc21853d7bbd7176aabf41d4,4361,false,,2,37,4,pyiceberg; tests
