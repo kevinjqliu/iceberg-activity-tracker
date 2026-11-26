@@ -35990,3 +35990,25 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---------
 
 Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",90e454aa51863afd0ad70dd92cf0a2aed1995e07,2651,false,Claude Opus 5.5,13,874,90,Cargo.lock; crates
+apache/iceberg-rust,ac3bae41ffb56b8652a23fee9b41d532dd5f250b,ac3bae4,Burak,burake1009@gmail.com,2026-11-25T23:47:42Z,GitHub,noreply@github.com,2026-11-25T23:47:42Z,fix(spec): read the manifest schema id from the schema when schema-id is missing (#3635),"* fix(spec): read the manifest schema id from the schema when schema-id is missing
+
+* test: build one v2 header in the manifest metadata tests
+
+---------
+
+Co-authored-by: Burak Ozakinci <burakoz@amazon.com>",b058267a71a067f2782ff710ab03c4c250c51959,3635,false,Burak Ozakinci,1,34,1,crates
+apache/iceberg-rust,59731e8e8559d4a17e850d983dde629400ed90e6,59731e8,Xander,zander181@googlemail.com,2026-11-26T08:38:14Z,GitHub,noreply@github.com,2026-11-26T08:38:14Z,fix(transaction): keep only the first requirement on each value (#3701),"* fix(transaction): keep only the first requirement on each value
+
+Each action derives its requirements from the transaction-local table, so
+a second action asserts state that an earlier action in the same
+transaction wrote. Catalogs check requirements against the transaction
+base, so two fast appends in one transaction failed with
+""Requirement failed: Branch or tag `main` not found"". The first
+requirement on each value is the one derived from the base; later ones on
+the same value are now dropped. Refs are matched by name.
+
+Prior art: #3075, which took the same approach alongside other changes.
+
+* docs(transaction): shorten merge_requirements comment
+
+* test(transaction): commit an added column and a sort order on it in one transaction",ac3bae41ffb56b8652a23fee9b41d532dd5f250b,3701,false,,1,146,5,crates

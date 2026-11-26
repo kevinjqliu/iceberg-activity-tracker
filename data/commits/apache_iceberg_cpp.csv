@@ -10244,3 +10244,14 @@ Check the precision against DecimalType::kMaxPrecision before
 constructing the type and return a JsonParseError.
 
 Closes #1143.",7c05bb3af55210fb7237c17668fe0bcb9494f8a1,1147,false,,2,35,0,src
+apache/iceberg-cpp,ef33e74310109a077e23eab167801d27eac83b62,ef33e74,Hyeonho Kim,jwalag87@gmail.com,2026-11-26T18:10:01+09:00,GitHub,noreply@github.com,2026-11-26T17:10:01+08:00,fix: manifest file metadata content typo (#1175),,2bf4a30585897c935d0a234001f415fd2f01df68,1175,false,,3,35,8,src
+apache/iceberg-cpp,c47f2a49034f545f63de83637cf45802d7658509,c47f2a4,Manu Zhang,OwenZhang1990@gmail.com,2026-11-26T20:46:14+08:00,GitHub,noreply@github.com,2026-11-26T20:46:14+08:00,build: enforce minimum Arrow and Parquet versions (#1119),,ef33e74310109a077e23eab167801d27eac83b62,1119,false,,3,13,4,cmake_modules; mkdocs; src
+apache/iceberg-cpp,63dd48a58ba65135627d453d5aecdd2f828175a2,63dd48a,Hyeonho Kim,jwalag87@gmail.com,2026-11-26T23:06:08+09:00,GitHub,noreply@github.com,2026-11-26T22:06:08+08:00,fix: inconsistency after remove partition specs (#1179),,c47f2a49034f545f63de83637cf45802d7658509,1179,false,,2,31,0,src
+apache/iceberg-cpp,372e4212a1d22ade516d4cdc5d41be9b85bd4417,372e421,Junwang Zhao,zhjwpku@gmail.com,2026-11-26T22:52:50+08:00,GitHub,noreply@github.com,2026-11-26T22:52:50+08:00,fix(expression): skip file pruning when timestamp hours can wrap (#1176),"The hour transform returns an int32. A large microsecond timestamp can
+wrap to a negative hour, causing hour(ts) >= 0 to skip a file that
+contains the epoch.
+
+Use hour bounds for pruning only when both ends of the microsecond
+timestamp range fit in int32 hours. Nanosecond timestamps always fit,
+so they can still use a single bound.",63dd48a58ba65135627d453d5aecdd2f828175a2,1176,false,,2,99,22,src
+apache/iceberg-cpp,037190e0637c71d1466c830d5b2a8f34c5f13d42,037190e,Gang Wu,ustcwg@gmail.com,2026-11-26T23:03:38+08:00,GitHub,noreply@github.com,2026-11-26T23:03:38+08:00,refactor: add bin packing utility (#1170),,372e4212a1d22ade516d4cdc5d41be9b85bd4417,1170,false,,6,418,115,src

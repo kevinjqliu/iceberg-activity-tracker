@@ -9788,3 +9788,156 @@ A REST server that serializes unset fields as null made loading a table or view,
 * Use annotated types for null-tolerant REST fields",36069b76e16b09d144d0b6450776d860975f25af,4353,false,,2,47,7,pyiceberg; tests
 apache/iceberg-python,4e604fe30d06ced1dc21853d7bbd7176aabf41d4,4e604fe,Sohail Shaikh,122166523+sohailshk@users.noreply.github.com,2026-11-25T20:45:05Z,GitHub,noreply@github.com,2026-11-25T20:45:05Z,Assign sequential partition field ids when reading v1 metadata without them (#4354),"In v1 the partition field ids were not tracked and were assigned sequentially from 1000 in each spec. A v1 partition spec whose fields have no field-id failed to parse, with a TypeError for two or more fields.",9fc6a0816c5038a0b65d0af925ea51ea721748be,4354,false,,2,60,0,pyiceberg; tests
 apache/iceberg-python,bdebaf35ae5215b6679c418b926ca174bda8953b,bdebaf3,Sohail Shaikh,122166523+sohailshk@users.noreply.github.com,2026-11-25T22:13:05Z,GitHub,noreply@github.com,2026-11-25T22:13:05Z,Pick the latest timestamp in snapshot_as_of_timestamp instead of the last log entry (#4361),"The snapshot log is not guaranteed to be ordered by timestamp, so iterating it in reverse could return an older snapshot when entries were appended out of order.",4e604fe30d06ced1dc21853d7bbd7176aabf41d4,4361,false,,2,37,4,pyiceberg; tests
+apache/iceberg-python,46749af65be8cb091310316b8a23025b3a0f512d,46749af,Ankit Kumar,57802410+Ankitkj1999@users.noreply.github.com,2026-11-25T22:17:52Z,GitHub,noreply@github.com,2026-11-25T22:17:52Z,fix(inspect): map partition record by field id to support renamed partition fields (#4363),"* fix(inspect): map partition record by field id to support renamed partition fields
+
+When a partition field is renamed (via update_spec().rename_field() or via v1 auto-renaming voided fields on re-add), specs_struct() adopts the latest field names per field_id. Previously, inspect.py constructed partition dicts using the historical spec's field names directly, causing PyArrow conversion to silently drop pre-rename partition values as None (or misattribute them to newly added fields sharing the old name).
+
+This updates InspectTable.entries(), partitions(), and _get_files_from_manifest() to map partition field values by field_id using specs_struct() names, and keys partitions_map by (spec_id, partition_record_dict) to track partition stats per specification layout.
+
+* style(inspect): use direct lookup for partition field ID mapping",bdebaf35ae5215b6679c418b926ca174bda8953b,4363,false,,2,70,7,pyiceberg; tests
+apache/iceberg-python,6874e73e86a59572e755f92b2f7415f5f7819f6d,6874e73,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-25T22:26:03Z,GitHub,noreply@github.com,2026-11-25T22:26:03Z,Convert float literals to wide decimal columns without InvalidOperation (#4372),"FloatLiteral.to(DecimalType) and DoubleLiteral.to(DecimalType) quantize the
+value under the default 28-digit decimal context, so a value whose quantized
+form has more digits raised decimal.InvalidOperation: amt > 1e26 on a
+decimal(38, 2) column, or amt < 0.5 on a decimal(38, 30) column. Quantize under
+a context with enough precision for the result.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",46749af65be8cb091310316b8a23025b3a0f512d,4372,false,Isaac,2,23,9,pyiceberg; tests
+apache/iceberg-python,7389e2d45590220f3e80ac048c6df70ab069dcad,7389e2d,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-25T22:44:30Z,GitHub,noreply@github.com,2026-11-25T22:44:30Z,Write Parquet page indexes by default (#4402),"* Add an opt-in property to write Parquet page indexes
+
+Readers that support page indexes can skip non-matching pages during
+predicate evaluation, but PyIceberg never wrote them. Add the
+write.parquet.page-index-enabled table property, off by default so the
+current output and file sizes are preserved, and pass it to the Parquet
+writer.
+
+* feat(pyarrow): write parquet page indexes by default
+
+* Revert ""feat(pyarrow): write parquet page indexes by default""
+
+This reverts commit d172ab9de3d898a6699adc7e30984afe61a03e42.
+
+* feat(pyarrow): write parquet page indexes by default
+
+* test(integration): update column sizes for parquet page indexes
+
+* Remove whitespace
+
+* Apply suggestion
+
+---------
+
+Co-authored-by: Fokko Driesprong <fokko@apache.org>",6874e73e86a59572e755f92b2f7415f5f7819f6d,4402,false,Fokko Driesprong,5,39,12,mkdocs; pyiceberg; tests
+apache/iceberg-python,f3d147b7f4c4a2d0fe9d436c02bf14eae41fc9c5,f3d147b,raul ferreira,raufer92@gmail.com,2026-11-25T22:49:22Z,GitHub,noreply@github.com,2026-11-25T22:49:22Z,Build: Use stdlib compression.zstd on Python 3.14+ and build CPython 3.15 wheels (#4395),"zstandard publishes no cp315 wheel; Python 3.14 ships compression.zstd (PEP 784).
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",7389e2d45590220f3e80ac048c6df70ab069dcad,4395,false,Claude Opus 5.5,5,58,30,.github; pyiceberg; pyproject.toml; uv.lock
+apache/iceberg-python,5c3a2bc6a8659d8c575935f504ce87a7991eac50,5c3a2bc,Rahul Shivu Mahadev,51690557+rahulsmahadev@users.noreply.github.com,2026-11-25T23:16:05Z,GitHub,noreply@github.com,2026-11-25T23:16:05Z,Document why promote() allows string <-> binary and fixed(16) -> uuid (#4410),"* Deprecate implicit non-spec type changes in update_column
+
+update_column applied string <-> binary and fixed(16) -> uuid silently,
+using the read-side promote(). Check the spec's promotion list instead.
+Those three pairs now warn with a DeprecationWarning, and are rejected
+in a later release unless allow_incompatible_changes=True is set.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Retrigger CI
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Allow non-spec type changes in update_column and document them
+
+Drop the deprecation: update_column keeps using promote(), the one place
+for type promotions. Comment why promote() allows string <-> binary and
+fixed(16) -> uuid, and test that update_column allows them.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Co-authored-by: Isaac <no-reply@databricks.com>",f3d147b7f4c4a2d0fe9d436c02bf14eae41fc9c5,4410,false,Isaac,3,20,1,pyiceberg; tests
+apache/iceberg-python,926808efce03c5833d0b8b64cf7510aa0d6e3627,926808e,Krishna Prasad Chapagain,63334032+entertainingrover01@users.noreply.github.com,2026-11-25T23:36:47Z,GitHub,noreply@github.com,2026-11-25T23:36:47Z,Support downcasting time64[ns] to time64[us] on write (#1169) (#4471),"Iceberg time is microsecond precision, so time64[ns] columns previously
+failed schema conversion with 'Unsupported type: time64[ns]'. Mirror the
+existing timestamp[ns] downcast behavior: with the
+'downcast-ns-timestamp-to-us-on-write' property set, time64[ns] converts
+to TimeType (with a warning) and time64[ns] arrays are cast to
+time64[us] on write; without it, conversion raises a TypeError pointing
+at the property. time64[us] behavior is unchanged.
+
+Co-authored-by: Krishna Prasad Chapagain <kchap225@uic.edu>",5c3a2bc6a8659d8c575935f504ce87a7991eac50,4471,false,Krishna Prasad Chapagain,3,63,3,pyiceberg; tests
+apache/iceberg-python,2308f9939cc7a6ac7b4b528853113ce860a75aae,2308f99,dependabot[bot],49699333+dependabot[bot]@users.noreply.github.com,2026-11-26T08:06:27Z,GitHub,noreply@github.com,2026-11-26T08:06:27Z,Build: Bump zizmorcore/zizmor-action from 0.6.2 to 0.8.1 (#3920),"* Build: Bump zizmorcore/zizmor-action from 0.6.2 to 0.8.1
+
+Bumps [zizmorcore/zizmor-action](https://github.com/zizmorcore/zizmor-action) from 0.6.2 to 0.8.1.
+- [Release notes](https://github.com/zizmorcore/zizmor-action/releases)
+- [Commits](https://github.com/zizmorcore/zizmor-action/compare/3dc1ecc9bcb9e94e9b2c709687979e1298497054...45d7276c9ca790aabd705e31ca99c6185c3e76dd)
+
+---
+updated-dependencies:
+- dependency-name: zizmorcore/zizmor-action
+  dependency-version: 0.6.3
+  dependency-type: direct:production
+  update-type: version-update:semver-patch
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+* Use self-repository syntax for reusable workflows
+
+Fixes the zizmor self-repository finding.
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+* Bump allowlist-check to v1.0.4 for self-repository syntax support
+
+Co-authored-by: Isaac <no-reply@databricks.com>
+
+---------
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: Fokko Driesprong <fokko@apache.org>
+Co-authored-by: Isaac <no-reply@databricks.com>",926808efce03c5833d0b8b64cf7510aa0d6e3627,3920,false,Isaac; dependabot[bot]; Fokko Driesprong,4,5,5,.github
+apache/iceberg-python,d6a229cd1e1bdab72d254d959551fd615e19b92c,d6a229c,Abanoub Doss,abanoub.doss@gmail.com,2026-11-26T08:07:07Z,GitHub,noreply@github.com,2026-11-26T08:07:07Z,feat: support arrow pycapsule streams (#3447),"* feat: support arrow pycapsule streams
+
+Adopt the Arrow PyCapsule interface on both sides of the read/write
+boundary. append/overwrite accept any object implementing
+__arrow_c_stream__ (coerced to a streaming RecordBatchReader), and
+Table plus every scan expose __arrow_c_stream__ via BaseScan (not just
+DataScan) so any Arrow consumer can ingest them.
+
+* test: update arrow input error expectations
+
+* fix: keep BaseScan free of new abstract methods
+
+* fix: remove Table.__arrow_c_stream__
+
+* fix: export scan arrow c streams without field ids
+
+* fix: cast arrow view types on write
+
+* test: tighten arrow capsule coverage
+
+* fix: accept arrow c stream input for partitioned tables
+
+* docs: describe arrow c stream input and scan export
+
+* fix: clean up arrow c stream comments, docs and duplicate view cast",2308f9939cc7a6ac7b4b528853113ce860a75aae,3447,false,,9,377,47,mkdocs; pyiceberg; tests
+apache/iceberg-python,829cbb94da728e15ddd5dca7f62cc66b0130fee4,829cbb9,linzch3,linzch3@outlook.com,2026-11-26T08:46:38Z,GitHub,noreply@github.com,2026-11-26T08:46:38Z,Clarify missing literal errors in row filters (#4416),"Give the parser names for scalar and list literals so missing values report what is expected.
+
+Co-authored-by: linzch3 <20380442+linzch3@users.noreply.github.com>",d6a229cd1e1bdab72d254d959551fd615e19b92c,4416,false,linzch3,2,16,2,pyiceberg; tests
+apache/iceberg-python,c017b204cd61ae42d89a1f11c701ed7e2eaa3d50,c017b20,Gedalia Kliger,117381134+gedaliakliger@users.noreply.github.com,2026-11-26T16:02:49Z,GitHub,noreply@github.com,2026-11-26T16:02:49Z,Reject dropping a SqlCatalog namespace that has child namespaces (#4469),"drop_namespace only checked for tables, so dropping a parent namespace
+deleted its properties and reported success while its children kept it
+listed. Java's JdbcCatalog.dropNamespace throws NamespaceNotEmptyException
+in this case.",829cbb94da728e15ddd5dca7f62cc66b0130fee4,4469,false,,2,16,0,pyiceberg; tests
+apache/iceberg-python,49413d1e4b40fc6e9a147c1450968c7bbc30d3d4,49413d1,g0itb4,ipmeterbridge@pm.me,2026-11-26T16:27:57Z,GitHub,noreply@github.com,2026-11-26T16:27:57Z,Relabel UTC aliases when projecting timestamptz_ns columns (#4468),"* Relabel UTC aliases when projecting timestamptz_ns columns
+
+* Reinstate `raise`
+
+---------
+
+Co-authored-by: g0itb4 <253692991+g0itb4@users.noreply.github.com>
+Co-authored-by: Fokko Driesprong <fokko@apache.org>",c017b204cd61ae42d89a1f11c701ed7e2eaa3d50,4468,false,g0itb4; Fokko Driesprong,2,40,0,pyiceberg; tests
+apache/iceberg-python,fb317b2ad7cf3e144d38a972f4e3c2ab31039598,fb317b2,Shivam Sharma,192242476+ShivamSharma43@users.noreply.github.com,2026-11-26T18:05:50Z,GitHub,noreply@github.com,2026-11-26T18:05:50Z,Leave intermediate snapshots out of the snapshot log (#4470),"A commit that sets main more than once, such as an overwrite, added every
+snapshot to the snapshot log, so time travel could resolve to a snapshot
+that was never the committed state of the table. Keep only the last one,
+like Java does.
+
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",49413d1e4b40fc6e9a147c1450968c7bbc30d3d4,4470,false,Claude Opus 5.5,3,70,0,pyiceberg; tests
