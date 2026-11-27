@@ -10255,3 +10255,25 @@ Use hour bounds for pruning only when both ends of the microsecond
 timestamp range fit in int32 hours. Nanosecond timestamps always fit,
 so they can still use a single bound.",63dd48a58ba65135627d453d5aecdd2f828175a2,1176,false,,2,99,22,src
 apache/iceberg-cpp,037190e0637c71d1466c830d5b2a8f34c5f13d42,037190e,Gang Wu,ustcwg@gmail.com,2026-11-26T23:03:38+08:00,GitHub,noreply@github.com,2026-11-26T23:03:38+08:00,refactor: add bin packing utility (#1170),,372e4212a1d22ade516d4cdc5d41be9b85bd4417,1170,false,,6,418,115,src
+apache/iceberg-cpp,598a0cc969c5d389f00846e2c14ae2c92d55f823,598a0cc,Deepak N,54300705+deepaknettem@users.noreply.github.com,2026-11-26T18:15:20-08:00,GitHub,noreply@github.com,2026-11-27T10:15:20+08:00,feat(expression): implement NotStartsWith in StrictMetricsEvaluator (#1177),"---------
+
+Co-authored-by: wzhuo <wngzhuo@gmail.com>",037190e0637c71d1466c830d5b2a8f34c5f13d42,1177,false,wzhuo,2,225,3,src
+apache/iceberg-cpp,f926712c880da36c9e952c15334f8514d4d2c97c,f926712,kamcheungting-db,91572897+kamcheungting-db@users.noreply.github.com,2026-11-26T19:19:55-08:00,GitHub,noreply@github.com,2026-11-27T11:19:55+08:00,perf(expression): Support split and parallel scans - Part-3.5: compile Evaluator expressions and compare raw values (#1166),"Evaluator::Evaluate() visited the bound expression for every row, copying
+shared_ptrs while dispatching on each predicate, and built a Literal for
+every compared value. Building a Literal copies the type's shared_ptr
+singleton and, for strings and bytes, the value itself. With several
+threads evaluating residual filters, the atomic reference count of the
+shared type object became the bottleneck: a parallel scan with a per-row
+residual ran slower than a serial one.
+
+Evaluator::Make() now compiles the bound expression once into evaluation
+nodes. Literal and unary predicates on a field reference of a primitive
+type read the field's raw scalar and compare it with the bound literal,
+matching Literal ordering: null and out-of-range literals are unordered,
+floating-point values use the total order, decimals compare across
+scales, and strings and bytes compare as unsigned bytes. Set predicates,
+transforms, and any value without a raw representation still go through
+the literal-based visitor, so results and errors are unchanged. And/Or
+still evaluate both sides, so a failing row still reports its error.
+
+Co-authored-by: Isaac <no-reply@databricks.com>",598a0cc969c5d389f00846e2c14ae2c92d55f823,1166,false,Isaac,3,677,6,src

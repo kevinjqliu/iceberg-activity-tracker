@@ -9941,3 +9941,43 @@ that was never the committed state of the table. Keep only the last one,
 like Java does.
 
 Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",49413d1e4b40fc6e9a147c1450968c7bbc30d3d4,4470,false,Claude Opus 5.5,3,70,0,pyiceberg; tests
+apache/iceberg-python,f11347dd061159fb592895f3ffa2fc54047f25df,f11347d,Anurag-S1ngh,anuragsingh2313@gmail.com,2026-11-27T09:03:32Z,GitHub,noreply@github.com,2026-11-27T09:03:32Z,Fix scan filters at the edges of the date and float ranges (#4406),"* Fix scan filters at the edges of the date and float ranges
+
+Year and month partitions raised OverflowError when a filter projected
+past 9999-12-31 or before 0001-01-01, because the transform converted the
+day count to a datetime.date. Compute years and months from the day count
+with integer arithmetic, so projections just past the last representable
+date produce year 10000 and match no partition instead of raising.
+
+A Python float became a DoubleLiteral, and converting that to a float
+column turned inf into FloatAboveMax or FloatBelowMin, which bound the
+predicate to AlwaysFalse or AlwaysTrue. inf is a valid float value, so
+convert it to a FloatLiteral like any other float that fits.
+
+* fix(datetime): floor-divide the era in the civil date conversion
+
+The C++ algorithm truncates toward zero and compensates with z - 146096, but Python's // already floors. The correction made the era one too small for days before 0000-03-01, so year and month partitions before year 1 projected to the wrong partition.
+
+* test(datetime): drop nanos asserts beyond the timestamp_ns range
+
+A timestamp_ns cannot hold 2932897 days, so the asserts covered an input no table can contain.
+
+* test(io): cover infinity range filters and deletes
+
+A double infinity on a float column now binds as a float literal, so <, <=, > and >= match rows instead of binding to always true or always false.
+
+---------
+
+Co-authored-by: Fokko Driesprong <fokko@apache.org>",fb317b2ad7cf3e144d38a972f4e3c2ab31039598,4406,false,Fokko Driesprong,6,133,11,pyiceberg; tests
+apache/iceberg-python,0b8b26a8992fd04a0372875795347a1cf4a24ee7,0b8b26a,Ankit Kumar,57802410+Ankitkj1999@users.noreply.github.com,2026-11-27T09:42:30Z,GitHub,noreply@github.com,2026-11-27T09:42:30Z,fix(inspect): resolve dropped partition source columns in specs_struct (#4356),"When a partition column is removed and subsequently dropped from the table schema, historical partition specs still reference the dropped source_id. specs_struct() previously only looked up field IDs in the current schema, causing inspect metadata tables to fail with ValueError and manifests partition summaries to lose bound values.
+
+This updates specs_struct() to fall back to historical schemas when resolving source column types, and updates inspect manifest generation to look up partition types from specs_struct().",f11347dd061159fb592895f3ffa2fc54047f25df,4356,false,,4,143,6,pyiceberg; tests
+apache/iceberg-python,7864d4c34e90711da363041bc5de4bdeff777823,7864d4c,chenjian2664,chenjian2664@gmail.com,2026-11-27T09:57:43Z,GitHub,noreply@github.com,2026-11-27T09:57:43Z,Read py-catalog-impl from the catalog configuration (#4301),"load_catalog only looked for py-catalog-impl in its keyword arguments, so
+the documented .pyiceberg.yaml and PYICEBERG_CATALOG__* settings were
+ignored and loading failed with ""URI missing"". When the implementation was
+passed as an argument, the custom catalog also lost the properties from the
+configuration. Read it from the merged configuration and pass that
+configuration to the custom catalog.
+
+test_missing_uri patched the configuration with a MagicMock rather than a
+Config, so it now patches an empty Config again.",0b8b26a8992fd04a0372875795347a1cf4a24ee7,4301,false,,3,17,4,pyiceberg; tests

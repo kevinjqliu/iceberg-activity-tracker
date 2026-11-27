@@ -37291,3 +37291,107 @@ Co-authored-by: Vu <europeantimlapses@gmail.com>",0cbb5affc36f116204f44b982df4d2
 apache/iceberg-go,bcb707fd59541da269cbe7ba9187c9c69c4fc8db,bcb707f,Akriti,akriti.shakya@datazip.io,2026-11-26T14:06:54+05:30,GitHub,noreply@github.com,2026-11-26T09:36:54+01:00,fix(table): reject concurrently added duplicate files in AddDataFiles and AddDataFilesByPath (#2678),,e6d7a447d8dedf8184155d0b22b2e88b62c719bc,2678,false,,6,468,7,table; website
 apache/iceberg-go,206f640f1798965daae6b511a2ba298f05d614c1,206f640,Matt Faltyn,76570855+mattfaltyn@users.noreply.github.com,2026-11-26T10:37:54+02:00,GitHub,noreply@github.com,2026-11-26T09:37:54+01:00,fix(table): omit incomplete Parquet statistics (#2597),,bcb707fd59541da269cbe7ba9187c9c69c4fc8db,2597,false,,18,545,96,table
 apache/iceberg-go,b9a9bd92e4d89ef9b2619a65d018e9e9905d456c,b9a9bd9,Revanth,revanthcse1@gmail.com,2026-11-26T02:43:21-06:00,GitHub,noreply@github.com,2026-11-26T09:43:21+01:00,test(view): check identifier field IDs are copied end to end (#2711),,206f640f1798965daae6b511a2ba298f05d614c1,2711,false,,3,10,4,types.go; view; website
+apache/iceberg-go,911ada48be09f7856f100692b042899109b2fdfe,911ada4,riverandeye,41494099+riverandeye@users.noreply.github.com,2026-11-28T03:11:13+09:00,GitHub,noreply@github.com,2026-11-27T13:11:13-05:00,perf(table): skip single-value data files for != and NOT IN (#2728),"* perf(table): skip single-value data files for != and NOT IN
+
+Signed-off-by: riverandeye <riverandeye@gmail.com>
+
+* refactor(table): rename uniqueValue to findUniqueValue
+
+Signed-off-by: riverandeye <riverandeye@gmail.com>
+
+---------
+
+Signed-off-by: riverandeye <riverandeye@gmail.com>",b9a9bd92e4d89ef9b2619a65d018e9e9905d456c,2728,false,,3,176,3,table
+apache/iceberg-go,e8061a26a8fc0ce7585ab92e3cd8c2a1a0bc9a7b,e8061a2,riverandeye,41494099+riverandeye@users.noreply.github.com,2026-11-28T06:48:52+09:00,GitHub,noreply@github.com,2026-11-27T22:48:52+01:00,fix(table): keep empty string and binary bounds (#2709),"An empty string or binary value serializes to zero bytes, and
+ToDataFile only recorded bounds with len > 0, so these bounds were
+dropped. MaxAsBytes also returned no upper bound when the max was """",
+treating it like a prefix that could not be incremented. A file whose
+string column holds only """" got neither bound and could not be skipped
+by scans, while Java writes empty bounds for the same rows.
+
+Record a bound whenever MinAsBytes/MaxAsBytes return a non-nil slice,
+keep empty values non-nil in toBytes, and return no upper bound only
+when truncation found no greater prefix.
+
+Fixes #2708",911ada48be09f7856f100692b042899109b2fdfe,2709,false,,4,185,12,table
+apache/iceberg-go,8f76442118937909ff0025419cdc9f7b0a39bbbb,8f76442,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-27T22:49:23+01:00,GitHub,noreply@github.com,2026-11-27T22:49:23+01:00,test(catalogtest): cover CreateTable with a partition spec and a sort order (#2698),"The conformance suite only called CreateTable with WithProperties. Add
+CreateTableWithPartitionSpec and CreateTableWithSortOrder, following
+Java's CatalogTests.testCompleteCreateTable: create the table with
+WithPartitionSpec or WithSortOrder, load it again, and check the spec or
+order against what was passed.
+
+The partition spec uses bucket(16) on id and identity on data; the sort
+order uses data asc nulls-first and bucket(16) on id desc nulls-last.
+Catalogs assign fresh IDs on create, so fields are compared by name,
+transform, direction and null order, and each source ID is resolved to
+its column name in the loaded schema instead of comparing raw IDs.
+
+WithLocation is left for a later slice, since the location a server
+accepts differs per catalog.",e8061a26a8fc0ce7585ab92e3cd8c2a1a0bc9a7b,2698,false,,3,120,13,catalog
+apache/iceberg-go,0f294d68cc82d61aebfe30d1a040f4e1381897a1,0f294d6,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-27T22:49:57+01:00,GitHub,noreply@github.com,2026-11-27T22:49:57+01:00,ci: run the iceberg-verification types fixtures (#2692),"TestVerificationTypes skips unless ICEBERG_VERIFICATION_DIR is set, and
+the CI step that sets it only ran TestReferenceTables in ./table, so the
+types fixtures were never checked. Run the root-package test in the same
+step, against the same pinned iceberg-verification checkout, and rename
+the step to cover both.
+
+The pinned ref already carries table-spec/types/, so it stays as it is.",8f76442118937909ff0025419cdc9f7b0a39bbbb,2692,false,,2,8,5,.github; types_verification_test.go
+apache/iceberg-go,1575c010beb81620576b8a4cada2590d11184bc2,1575c01,Harrison Crosse,harrison@crosse.dev,2026-11-27T16:54:42-05:00,GitHub,noreply@github.com,2026-11-27T22:54:42+01:00,fix(table): convert Parquet millisecond timestamps to microseconds (#2675),"Iceberg maps a Parquet TIMESTAMP(MILLIS) column to a microsecond timestamp or timestamptz, but DataFileStatsFromMeta recorded raw millisecond manifest bounds (producing wrong order-preserving partition values such as day(ts)), row group pruning compared raw millisecond statistics against microsecond literals, and dictionary and bloom filter lookups compared microsecond bytes against stored milliseconds.
+
+Scale TIMESTAMP(MILLIS) Int64 statistics to microseconds in both DataFileStatsFromMeta (via wrapStatsForType) and parquetStatsBounds, omitting bounds when multiplying by 1000 would overflow int64. Skip dictionary and bloom filter predicates for TIMESTAMP(MILLIS) columns in wrapPqArrowReader.GetRecords so matching row groups are never dropped.
+
+Signed-off-by: Harrison Crosse <harrison@crosse.dev>
+
+* fix(table): normalize Parquet millisecond timestamps to microseconds on read
+
+Parquet TIMESTAMP(MILLIS) columns map to Iceberg microsecond timestamps, so row filters and equality-delete key encoders expect timestamp[us] arrays. Previously wrapPqArrowReader exposed timestamp[ms] from Schema, PrunedSchema, and GetRecords, causing row filters to fail with a type mismatch and equality deletes on timestamp columns to encode raw millisecond keys that never matched microsecond deletes.
+
+Normalize timestamp[ms] fields (including nested struct, list, map, and dictionary columns) to timestamp[us] in wrapPqArrowReader.Schema, PrunedSchema, and GetRecords while preserving time zones, nullability, and field metadata. Return an error if scaling a non-null millisecond value by 1000 overflows int64, and keep a zero-copy fast path when no millisecond timestamp is present.",0f294d68cc82d61aebfe30d1a040f4e1381897a1,2675,false,,9,2466,42,table
+apache/iceberg-go,6ab0cfe4d290975c6ce0d7fbccf74b4e7e648079,6ab0cfe,Akriti,akriti.shakya@datazip.io,2026-11-28T03:25:00+05:30,GitHub,noreply@github.com,2026-11-27T22:55:00+01:00,fix(table): reject adding a column under a parent that will be deleted (#2723),,1575c010beb81620576b8a4cada2590d11184bc2,2723,false,,2,93,0,table
+apache/iceberg-go,11cb57ebabd0efdda561f92712233285f7b835ad,11cb57e,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-27T22:55:41+01:00,GitHub,noreply@github.com,2026-11-27T22:55:41+01:00,docs: state the compatibility promise for third-party types (#2693),"Add a release note listing the third-party types that stay in the
+exported API at v1: arrow-go v18 (the table API and the decimal and
+variant literals), aws.Config, oauth2.TokenSource, the OpenTelemetry
+metric.Meter, and the gohive Thrift structs in hive.HiveClient.
+
+If any of them has to move to a new major version, iceberg-go moves to
+a new major version too, as agreed on #2062.",6ab0cfe4d290975c6ce0d7fbccf74b4e7e648079,2693,false,,1,1,0,website
+apache/iceberg-go,244f12b2f3cf06410578dc096144dff583ab6c9a,244f12b,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-27T22:57:25+01:00,GitHub,noreply@github.com,2026-11-27T22:57:25+01:00,test(catalogtest): cover RegisterTable and PurgeTable (#2691),"The conformance suite never called RegisterTable or PurgeTable, so a
+catalog could return the wrong sentinel for either and CI would not
+notice.
+
+Add five cases in catalog/catalogtest/register_purge.go, following
+Java's CatalogTests:
+
+- a table dropped without purge can be registered again from its
+  metadata file and loads with the same identifier, metadata location
+  and schema;
+- registering over an existing table fails with ErrTableAlreadyExists;
+- registering into a missing namespace fails with ErrNoSuchNamespace;
+- a purged table is gone and LoadTable fails with ErrNoSuchTable;
+- purging a missing table fails with ErrNoSuchTable.
+
+The register cases find catalog.RegisterableCatalog with catalog.As and
+skip when the catalog does not implement it, so they run on REST, Hive
+and DynamoDB and skip on SQL and Hadoop. The purge cases run on every
+wired catalog. File removal is not checked, since PurgeTable deletes
+files on a best-effort basis.",11cb57ebabd0efdda561f92712233285f7b835ad,2691,false,,4,168,2,catalog; internal
+apache/iceberg-go,f9c9ea2468a5d55ed5503a8b3592f5c31eb6457d,f9c9ea2,Andrei Tserakhau,laskoviymishka@gmail.com,2026-11-27T22:57:48+01:00,GitHub,noreply@github.com,2026-11-27T22:57:48+01:00,refactor: add iceberg.UUID alias and use it in the root package (#2697),"Add internal/uuid, the only file in the root package's dependency graph
+that imports github.com/google/uuid. It defines the UUID alias and thin
+New, NewRandom, Parse and FromBytes wrappers plus Nil. The helpers stay
+internal so the only new exported name is the iceberg.UUID alias.
+
+The root package's code and tests now use iceberg.UUID and internal/uuid
+instead of google/uuid. Since UUID is a type alias, every exported
+signature is the same type as before and existing callers are
+unaffected. Later changes move the other packages over, and a final one
+can point the alias at the standard library behind a Go 1.27 build tag.",244f12b2f3cf06410578dc096144dff583ab6c9a,2697,false,,16,108,59,expr_json.go; expr_json_test.go; exprs.go; exprs_test.go; internal; literals.go; literals_test.go; manifest.go; manifest_test.go; transforms.go; uuid.go; variant_cast.go; variant_cast_test.go; variant_extract.go; visitors.go; visitors_test.go
+apache/iceberg-go,9304132dcd647c6b7bc48498f107543bcd21d905,9304132,Harshil Valecha,harshilvalecha@gmail.com,2026-11-28T03:28:29+05:30,GitHub,noreply@github.com,2026-11-27T22:58:29+01:00,fix(table): reject deletion vectors with a mismatched partition (#2521),"RowDelta.Commit never checked that an added deletion vector carries the
+partition spec and partition of the data file it references. The spec
+requires them to match, and scans match DVs to data files by path only,
+so a DV built with the current spec after partition evolution committed
+and was applied as if valid.
+
+Resolve each added DV's referenced data file, from the same row delta or
+the current snapshot, and reject the commit when its spec ID or
+partition differs.
+
+Closes #2520",f9c9ea2468a5d55ed5503a8b3592f5c31eb6457d,2521,false,,4,411,15,table

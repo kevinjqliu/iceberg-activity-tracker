@@ -36012,3 +36012,25 @@ Prior art: #3075, which took the same approach alongside other changes.
 * docs(transaction): shorten merge_requirements comment
 
 * test(transaction): commit an added column and a sort order on it in one transaction",ac3bae41ffb56b8652a23fee9b41d532dd5f250b,3701,false,,1,146,5,crates
+apache/iceberg-rust,28970e0f27e0af2e937f7ef2114a77f85f55a8a8,28970e0,Xander,zander181@googlemail.com,2026-11-27T08:50:43Z,GitHub,noreply@github.com,2026-11-27T08:50:43Z,fix(encryption): check the AGS1 stream header on read (#3700),"* fix(encryption): check the AGS1 stream header on read
+
+AesGcmFileRead skipped the 8-byte header, so a stream with the wrong
+magic or an unsupported plaintext block size was decrypted as if it
+were valid AGS1. The header is not authenticated, so it is now read and
+checked along with the first block, matching Java's AesGcmInputStream.
+
+* fix(encryption): take the AGS1 header as a fixed-size array
+
+check_stream_header now takes &[u8; 8], split off with
+split_first_chunk, so it cannot panic on a short slice. The header test
+also covers the empty stream.
+
+* fix(encryption): check the AGS1 header on the first read
+
+Reads that started past block 0 skipped the header check. The first
+read now always checks it, fetching the header separately when block 0
+is not needed, and later reads skip it.
+
+* test(encryption): use rstest cases for the AGS1 header test
+
+Drops the test that pinned which ranges the reader fetches.",59731e8e8559d4a17e850d983dde629400ed90e6,3700,false,,1,99,6,crates
